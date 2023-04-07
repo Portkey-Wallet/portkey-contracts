@@ -32,7 +32,7 @@ public partial class CAContract
             {
                 Name = input.Name,
                 EndPoint = input.EndPoints
-            } 
+            }
         });
         return new Empty();
     }

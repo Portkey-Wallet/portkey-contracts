@@ -91,7 +91,7 @@ public partial class CAContract
         if (guardian == null || !guardian.IsLoginGuardian)
         {
             return new Empty();
-        }
+        } 
 
         guardian.IsLoginGuardian = false;
 

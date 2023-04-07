@@ -1,5 +1,4 @@
 using AElf.Sdk.CSharp.State;
-using AElf.Standards.ACS1;
 using AElf.Types;
 
 namespace Portkey.Contracts.CA;
@@ -45,7 +44,7 @@ public partial class CAContractState : ContractState
     /// </summary>
     public SingletonState<CAServerList> CaServerList { get; set; }
 
-    public SingletonState<AuthorityInfo> MethodFeeController { get; set; }
-    public MappedState<string, MethodFees> TransactionFees { get; set; }
+    // public SingletonState<AuthorityInfo> MethodFeeController { get; set; }
+    // public MappedState<string, MethodFees> TransactionFees { get; set; }
     public SingletonState<ContractDelegationFee> ContractDelegationFee { get; set; } 
 }

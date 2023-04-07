@@ -18,10 +18,10 @@ public partial class CAContract : CAContractContainer.CAContractBase
         State.ServerControllers.Value = new ControllerList { Controllers = { input.ContractAdmin ?? Context.Sender } };
         State.TokenContract.Value =
             Context.GetContractAddressByName(SmartContractConstants.TokenContractSystemName);
-        State.MethodFeeController.Value = new AuthorityInfo
-        {
-            OwnerAddress = Context.Sender
-        };
+        // State.MethodFeeController.Value = new AuthorityInfo
+        // {
+        //     OwnerAddress = Context.Sender
+        // };
         State.Initialized.Value = true;
 
         return new Empty();
