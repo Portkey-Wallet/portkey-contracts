@@ -1,0 +1,226 @@
+syntax = "proto3";
+
+package acs7;
+
+import public "aelf/core.proto";
+import "aelf/options.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+import public "google/protobuf/timestamp.proto";
+
+option (aelf.identity) = "acs7";
+option csharp_namespace = "AElf.Standards.ACS7";
+
+service ACS7 {
+
+    rpc ProposeCrossChainIndexing(CrossChainBlockData) returns (google.protobuf.Empty) {
+    }
+    rpc ReleaseCrossChainIndexingProposal(ReleaseCrossChainIndexingProposalInput) returns (google.protobuf.Empty) {
+    }
+    rpc RequestSideChainCreation(SideChainCreationRequest) returns (google.protobuf.Empty){
+    }
+    rpc ReleaseSideChainCreation(ReleaseSideChainCreationInput) returns (google.protobuf.Empty){
+    }
+    rpc CreateSideChain (CreateSideChainInput) returns (google.protobuf.Int32Value) {
+    }
+    rpc Recharge (RechargeInput) returns (google.protobuf.Empty) {
+    }
+    rpc DisposeSideChain (google.protobuf.Int32Value) returns (google.protobuf.Int32Value) {
+    }
+    rpc AdjustIndexingFeePrice(AdjustIndexingFeeInput)returns(google.protobuf.Empty){
+    }
+
+    rpc VerifyTransaction (VerifyTransactionInput) returns (google.protobuf.BoolValue) {
+        option (aelf.is_view) = true;
+    }
+    rpc GetSideChainIdAndHeight (google.protobuf.Empty) returns (ChainIdAndHeightDict) {
+        option (aelf.is_view) = true;
+    }
+    rpc GetSideChainIndexingInformationList (google.protobuf.Empty) returns (SideChainIndexingInformationList) {
+        option (aelf.is_view) = true;
+    }
+    rpc GetAllChainsIdAndHeight (google.protobuf.Empty) returns (ChainIdAndHeightDict) {
+        option (aelf.is_view) = true;
+    }
+    rpc GetIndexedSideChainBlockDataByHeight (google.protobuf.Int64Value) returns (IndexedSideChainBlockData) {
+        option (aelf.is_view) = true;
+    }
+    rpc GetBoundParentChainHeightAndMerklePathByHeight (google.protobuf.Int64Value) returns (CrossChainMerkleProofContext) {
+        option (aelf.is_view) = true;
+    }
+    rpc GetChainInitializationData (google.protobuf.Int32Value) returns (ChainInitializationData) {
+        option (aelf.is_view) = true;
+    }
+}
+
+message SideChainBlockData {
+    int64 height = 1;
+    aelf.Hash block_header_hash = 2;
+    aelf.Hash transaction_status_merkle_tree_root = 3;
+    int32 chain_id = 4;
+}
+
+message RechargeInput {
+    int32 chain_id = 1;
+    int64 amount = 2;
+}
+
+message IndexedSideChainBlockDataResult {
+    int64 height = 1;
+    aelf.Address miner = 2;
+    repeated SideChainBlockData side_chain_block_data = 3;
+}
+
+message ParentChainBlockData {
+    int64 height = 1;
+    CrossChainExtraData cross_chain_extra_data = 2;
+    int32 chain_id = 3;
+    aelf.Hash transaction_status_merkle_tree_root = 4;
+
+    // Indexed block height from side chain and merkle path for this side chain block
+    map<int64, aelf.MerklePath> indexed_merkle_path = 5;
+    map<string, bytes> extra_data = 6;
+}
+
+message CrossChainExtraData {
+    // Merkle tree root of side chain block transaction status root
+    aelf.Hash transaction_status_merkle_tree_root = 1;
+}
+
+message ChainIdAndHeightDict {
+    map<int32, int64> id_height_dict = 1;
+}
+
+message SideChainIndexingInformationList {
+    repeated SideChainIndexingInformation indexing_information_list = 1;
+}
+
+message SideChainIndexingInformation {
+    int32 chain_id = 1;
+    int64 indexed_height = 2;
+}
+
+message CrossChainBlockData {
+    repeated SideChainBlockData side_chain_block_data_list = 1;
+    repeated ParentChainBlockData parent_chain_block_data_list = 2;
+}
+
+message CrossChainMerkleProofContext {
+    int64 bound_parent_chain_height = 1;
+    aelf.MerklePath merkle_path_from_parent_chain = 2;
+}
+
+message ChainInitializationData {
+    int32 chain_id = 1;
+    aelf.Address creator = 2;
+    google.protobuf.Timestamp creation_timestamp = 3;
+    int64 creation_height_on_parent_chain = 4;
+    bool chain_creator_privilege_preserved = 5;
+    aelf.Address parent_chain_token_contract_address = 6;
+    ChainInitializationConsensusInfo chain_initialization_consensus_info = 7;
+    bytes native_token_info_data = 8;
+    ResourceTokenInfo resource_token_info = 9;
+    ChainPrimaryTokenInfo chain_primary_token_info = 10;
+}
+
+message ChainInitializationToken{
+    bytes native_token_info_data = 1;
+}
+
+message ResourceTokenInfo{
+    bytes resource_token_list_data = 1;
+    map<string, int32> initial_resource_amount = 2;
+}
+
+message ChainPrimaryTokenInfo{
+    bytes chain_primary_token_data = 1;
+    repeated SideChainTokenInitialIssue side_chain_token_initial_issue_list = 2;
+}
+
+message ChainInitializationConsensusInfo{
+    bytes initial_consensus_data = 1;
+}
+
+message SideChainCreationRequest {
+    int64 indexing_price = 1;
+    int64 locked_token_amount = 2;
+    bool is_privilege_preserved = 3;
+    SideChainTokenCreationRequest side_chain_token_creation_request = 4;
+    repeated SideChainTokenInitialIssue side_chain_token_initial_issue_list = 5;
+    map<string, int32> initial_resource_amount = 6;
+}
+
+message SideChainTokenCreationRequest{
+    string side_chain_token_symbol = 1;
+    string side_chain_token_name = 2;
+    int64 side_chain_token_total_supply = 3;
+    int32 side_chain_token_decimals = 4;
+}
+
+message SideChainTokenInitialIssue{
+    aelf.Address address = 1;
+    int64 amount = 2;
+}
+
+message SideChainTokenInfo {
+    string symbol = 1;
+    string token_name = 2;
+    int64 total_supply = 3;
+    int32 decimals = 4;
+    aelf.Address issuer = 5;
+    bool is_burnable = 6;
+}
+
+message RequestChainCreationOutput {
+    int32 chain_id = 1;
+    aelf.Hash proposal_id = 2;
+}
+
+message IndexedParentChainBlockData {
+    int64 local_chain_height = 1;
+    repeated acs7.ParentChainBlockData parent_chain_block_data_list = 2;
+}
+
+message IndexedSideChainBlockData{
+    repeated acs7.SideChainBlockData side_chain_block_data_list = 1;
+}
+
+message ReleaseCrossChainIndexingProposalInput{
+    repeated int32 chain_id_list = 1;
+}
+
+message RecordCrossChainDataInput{
+    CrossChainBlockData proposed_cross_chain_data = 1;
+    aelf.Address proposer = 2;
+}
+
+message CreateSideChainInput{
+    SideChainCreationRequest side_chain_creation_request = 1;
+    aelf.Address proposer = 2;
+}
+
+message ReleaseSideChainCreationInput {
+    aelf.Hash proposal_id = 1;
+}
+
+message AdjustIndexingFeeInput{
+    int32 side_chain_id = 1;
+    int64 indexing_fee = 2;
+}
+
+message SideChainBlockDataIndexed{
+    option (aelf.is_event) = true;
+}
+
+message CrossChainIndexingDataProposedEvent{
+    option (aelf.is_event) = true;
+    acs7.CrossChainBlockData proposed_cross_chain_data = 1;
+    aelf.Hash proposal_id = 2;
+}
+
+message VerifyTransactionInput {
+    aelf.Hash transaction_id = 1;
+    aelf.MerklePath path = 2;
+    int64 parent_chain_height = 3;
+    int32 verified_chain_id = 4;
+}
