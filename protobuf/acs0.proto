@@ -1,0 +1,153 @@
+syntax = "proto3";
+
+package acs0;
+option csharp_namespace = "AElf.Standards.ACS0";
+
+import public "aelf/core.proto";
+import "aelf/options.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+
+service ACS0 {
+    // Actions
+    rpc DeploySystemSmartContract (SystemContractDeploymentInput) returns (aelf.Address) {
+    }
+    rpc DeploySmartContract (ContractDeploymentInput) returns (aelf.Address) {
+    }
+    rpc UpdateSmartContract (ContractUpdateInput) returns (aelf.Address) {
+    }
+    rpc ProposeNewContract (ContractDeploymentInput) returns (aelf.Hash) {
+    }
+    rpc ProposeContractCodeCheck (ContractCodeCheckInput) returns (aelf.Hash) {
+    }
+    rpc ProposeUpdateContract (ContractUpdateInput) returns (aelf.Hash) {
+    }
+    rpc ReleaseApprovedContract (ReleaseContractInput) returns (google.protobuf.Empty) {
+    }
+    rpc ReleaseCodeCheckedContract (ReleaseContractInput) returns (google.protobuf.Empty) {
+    }
+    rpc ValidateSystemContractAddress(ValidateSystemContractAddressInput) returns (google.protobuf.Empty){
+    }
+    rpc SetContractProposerRequiredState (google.protobuf.BoolValue) returns (google.protobuf.Empty) {
+    }
+    // Views
+    rpc CurrentContractSerialNumber (google.protobuf.Empty) returns (google.protobuf.Int64Value) {
+        option (aelf.is_view) = true;
+    }
+    rpc GetContractInfo (aelf.Address) returns (ContractInfo) {
+        option (aelf.is_view) = true;
+    }
+    rpc GetContractAuthor (aelf.Address) returns (aelf.Address) {
+        option (aelf.is_view) = true;
+    }
+    rpc GetContractHash (aelf.Address) returns (aelf.Hash) {
+        option (aelf.is_view) = true;
+    }
+    rpc GetContractAddressByName (aelf.Hash) returns (aelf.Address) {
+        option (aelf.is_view) = true;
+    }
+    rpc GetSmartContractRegistrationByAddress (aelf.Address) returns (aelf.SmartContractRegistration) {
+        option (aelf.is_view) = true;
+    }
+    rpc GetSmartContractRegistrationByCodeHash (aelf.Hash) returns (aelf.SmartContractRegistration) {
+        option (aelf.is_view) = true;
+    }
+}
+
+// Messages
+
+message ContractInfo
+{
+    int64 serial_number = 1;
+    aelf.Address author = 2;
+    sint32 category = 3;
+    aelf.Hash code_hash = 4;
+    bool is_system_contract = 5;
+    int32 version = 6;
+}
+
+message ContractDeploymentInput {
+    sint32 category = 1;
+    bytes code = 2;
+}
+
+message SystemContractDeploymentInput {
+    message SystemTransactionMethodCall {
+        string method_name = 1;
+        bytes params = 2;
+    }
+    message SystemTransactionMethodCallList {
+        repeated SystemTransactionMethodCall value = 1;
+    }
+    sint32 category = 1;
+    bytes code = 2;
+    aelf.Hash name = 3;
+    SystemTransactionMethodCallList transaction_method_call_list = 4;
+}
+
+message ContractUpdateInput {
+    aelf.Address address = 1;
+    bytes code = 2;
+}
+
+message ContractCodeCheckInput{
+    bytes contract_input = 1;
+    bool is_contract_deployment = 2;
+    string code_check_release_method = 3;
+    aelf.Hash proposed_contract_input_hash = 4;
+    sint32 category = 5;
+    bool is_system_contract = 6;
+}
+
+// Events
+message ContractProposed
+{
+    option (aelf.is_event) = true;
+    aelf.Hash proposed_contract_input_hash = 1;
+}
+
+message ContractDeployed
+{
+    option (aelf.is_event) = true;
+    aelf.Address author = 1 [(aelf.is_indexed) = true];
+    aelf.Hash code_hash = 2 [(aelf.is_indexed) = true];
+    aelf.Address address = 3;
+    int32 version = 4;
+    aelf.Hash Name = 5;
+}
+
+message CodeCheckRequired
+{
+    option (aelf.is_event) = true;
+    bytes code = 1;
+    aelf.Hash proposed_contract_input_hash = 2;
+    sint32 category = 3;
+    bool is_system_contract = 4;
+}
+
+message CodeUpdated
+{
+    option (aelf.is_event) = true;
+    aelf.Address address = 1 [(aelf.is_indexed) = true];
+    aelf.Hash old_code_hash = 2;
+    aelf.Hash new_code_hash = 3;
+    int32 version = 4;
+}
+
+message AuthorChanged
+{
+    option (aelf.is_event) = true;
+    aelf.Address address = 1 [(aelf.is_indexed) = true];
+    aelf.Address old_author = 2;
+    aelf.Address new_author = 3;
+}
+
+message ValidateSystemContractAddressInput {
+    aelf.Hash system_contract_hash_name = 1;
+    aelf.Address address = 2;
+}
+
+message ReleaseContractInput {
+    aelf.Hash proposal_id = 1;
+    aelf.Hash proposed_contract_input_hash = 2;
+}

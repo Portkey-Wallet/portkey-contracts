@@ -1,0 +1,218 @@
+syntax = "proto3";
+
+package Profit;
+
+import "aelf/core.proto";
+import "aelf/options.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+
+option csharp_namespace = "AElf.Contracts.Profit";
+
+service ProfitContract {
+    option (aelf.csharp_state) = "AElf.Contracts.Profit.ProfitContractState";
+
+    // Actions
+    rpc CreateScheme (CreateSchemeInput) returns (aelf.Hash) {
+    }
+    rpc AddBeneficiary (AddBeneficiaryInput) returns (google.protobuf.Empty) {
+    }
+    rpc RemoveBeneficiary (RemoveBeneficiaryInput) returns (google.protobuf.Empty) {
+    }
+    rpc AddBeneficiaries (AddBeneficiariesInput) returns (google.protobuf.Empty) {
+    }
+    rpc RemoveBeneficiaries (RemoveBeneficiariesInput) returns (google.protobuf.Empty) {
+    }
+    rpc ContributeProfits (ContributeProfitsInput) returns (google.protobuf.Empty) {
+    }
+    rpc ClaimProfits (ClaimProfitsInput) returns (google.protobuf.Empty) {
+    }
+    rpc DistributeProfits (DistributeProfitsInput) returns (google.protobuf.Empty) {
+    }
+    rpc AddSubScheme (AddSubSchemeInput) returns (google.protobuf.Empty) {
+    }
+    rpc RemoveSubScheme (RemoveSubSchemeInput) returns (google.protobuf.Empty) {
+    }
+    rpc ResetManager (ResetManagerInput) returns (google.protobuf.Empty) {
+    }
+
+    // Views
+    rpc GetManagingSchemeIds (GetManagingSchemeIdsInput) returns (CreatedSchemeIds) {
+        option (aelf.is_view) = true;
+    }
+    rpc GetScheme (aelf.Hash) returns (Scheme) {
+        option (aelf.is_view) = true;
+    }
+    rpc GetSchemeAddress (SchemePeriod) returns (aelf.Address) {
+        option (aelf.is_view) = true;
+    }
+    rpc GetDistributedProfitsInfo (SchemePeriod) returns (DistributedProfitsInfo) {
+        option (aelf.is_view) = true;
+    }
+    rpc GetProfitDetails (GetProfitDetailsInput) returns (ProfitDetails) {
+        option (aelf.is_view) = true;
+    }
+    rpc GetProfitAmount (GetProfitAmountInput) returns (google.protobuf.Int64Value) {
+        option (aelf.is_view) = true;
+    }
+    rpc GetProfitsMap (ClaimProfitsInput) returns (ReceivedProfitsMap) {
+        option (aelf.is_view) = true;
+    }
+}
+
+message CreateSchemeInput {
+    int64 profit_receiving_due_period_count = 1;
+    bool is_release_all_balance_every_time_by_default = 2;
+    int32 delay_distribute_period_count = 3;
+    aelf.Address manager = 4;
+    bool can_remove_beneficiary_directly = 5;
+    aelf.Hash token = 6;
+}
+
+message Scheme {
+    aelf.Address virtual_address = 1;
+    int64 total_shares = 2;
+    aelf.Address manager = 3;
+    int64 current_period = 4;
+    repeated SchemeBeneficiaryShare sub_schemes = 5;
+    bool can_remove_beneficiary_directly = 6;
+    int64 profit_receiving_due_period_count = 7;
+    bool is_release_all_balance_every_time_by_default = 8;
+    aelf.Hash scheme_id = 9;
+    int32 delay_distribute_period_count = 10;
+    map<int64, int64> cached_delay_total_shares = 11;// period -> total shares, max elements count should be delay_distribute_period_count
+    repeated string received_token_symbols = 12;
+}
+
+message SchemeBeneficiaryShare {
+    aelf.Hash scheme_id = 1;
+    int64 shares = 2;
+}
+
+message AddBeneficiaryInput {
+    aelf.Hash scheme_id = 1;
+    BeneficiaryShare beneficiary_share = 2;
+    int64 end_period = 3;
+}
+
+message RemoveBeneficiaryInput {
+    aelf.Address beneficiary = 1;
+    aelf.Hash scheme_id = 2;
+}
+
+message AddBeneficiariesInput {
+    aelf.Hash scheme_id = 1;
+    repeated BeneficiaryShare beneficiary_shares = 2;
+    int64 end_period = 3;
+}
+
+message RemoveBeneficiariesInput {
+    repeated aelf.Address beneficiaries = 1;
+    aelf.Hash scheme_id = 2;
+}
+
+message BeneficiaryShare {
+    aelf.Address beneficiary = 1;
+    int64 shares = 2;
+}
+
+message ClaimProfitsInput {
+    aelf.Hash scheme_id = 1;
+    aelf.Address beneficiary = 2;
+}
+
+message DistributeProfitsInput {
+    aelf.Hash scheme_id = 1;
+    int64 period = 2;
+    map<string, int64> amounts_map = 3;
+}
+
+message ProfitDetails {
+    repeated ProfitDetail details = 1;
+}
+
+message ProfitDetail {
+    int64 start_period = 1;
+    int64 end_period = 2;
+    int64 shares = 3;
+    int64 last_profit_period = 4;
+    bool is_weight_removed = 5;
+}
+
+message ContributeProfitsInput {
+    aelf.Hash scheme_id = 1;
+    int64 amount = 2;
+    int64 period = 3;
+    string symbol = 4;
+}
+
+message AddSubSchemeInput {
+    aelf.Hash scheme_id = 1;
+    aelf.Hash sub_scheme_id = 2;
+    int64 sub_scheme_shares = 3;
+}
+
+message RemoveSubSchemeInput {
+    aelf.Hash scheme_id = 1;
+    aelf.Hash sub_scheme_id = 2;
+    aelf.Address sub_item_creator = 3;
+}
+
+message DistributedProfitsInfo {
+    int64 total_shares = 1;
+    map<string, sint64> amounts_map = 2;
+    bool is_released = 3;
+}
+
+message CreatedSchemeIds {
+    repeated aelf.Hash scheme_ids = 1;
+}
+
+message GetManagingSchemeIdsInput {
+    aelf.Address manager = 1;
+}
+
+message SchemePeriod {
+    aelf.Hash scheme_id = 1;
+    int64 period = 2;
+}
+
+message GetProfitDetailsInput {
+    aelf.Hash scheme_id = 1;
+    aelf.Address beneficiary = 2;
+}
+
+message ResetManagerInput {
+    aelf.Hash scheme_id = 1;
+    aelf.Address new_manager = 2;
+}
+
+message GetProfitAmountInput {
+    aelf.Hash scheme_id = 1;
+    string symbol = 2;
+    aelf.Address beneficiary = 3;
+}
+
+message ReceivedProfitsMap {
+    map<string, int64> value = 1;
+}
+
+// Events
+message SchemeCreated {
+    option (aelf.is_event) = true;
+    aelf.Address virtual_address = 1;
+    aelf.Address manager = 2;
+    int64 profit_receiving_due_period_count = 3;
+    bool is_release_all_balance_every_time_by_default = 4;
+    aelf.Hash scheme_id = 5;
+}
+
+message ProfitsClaimed {
+    option (aelf.is_event) = true;
+    aelf.Address beneficiary = 1;
+    string symbol = 2;
+    int64 amount = 3;
+    int64 period = 4;
+    int64 claimer_shares = 5;
+    int64 total_shares = 6;
+}

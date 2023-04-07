@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+import "acs10.proto";
+
+option csharp_namespace = "AElf.Contracts.ACS10DemoContract";
+
+service ACS10DemoContract {
+    option (aelf.csharp_state) = "AElf.Contracts.ACS10DemoContract.ACS10DemoContractState";
+    option (aelf.base) = "acs10.proto";
+    
+    rpc Initialize (InitializeInput) returns (google.protobuf.Empty) {
+    }
+}
+
+message InitializeInput {
+    int64 minimum_lock_minutes = 1;
+}
