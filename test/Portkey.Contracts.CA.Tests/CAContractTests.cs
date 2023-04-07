@@ -443,4 +443,31 @@ public partial class CAContractTests : CAContractTestBase
                 });
         return delegations;
     }
+
+    [Fact]
+    public async Task InitializeTest()
+    {
+        await CaContractStub.Initialize.SendAsync(new InitializeInput
+        {
+            ContractAdmin = DefaultAddress
+        });
+
+        var result = await CaContractStub.Initialize.SendWithExceptionAsync(new InitializeInput
+        {
+            ContractAdmin = DefaultAddress
+        });
+        result.TransactionResult.Error.ShouldContain("Already initialized.");
+    }
+    
+    [Fact]
+    public async Task InitializeTest_InputNull()
+    {
+        await CaContractStub.Initialize.SendAsync(new InitializeInput());
+        
+        var result = await CaContractStub.Initialize.SendWithExceptionAsync(new InitializeInput
+        {
+            ContractAdmin = DefaultAddress
+        });
+        result.TransactionResult.Error.ShouldContain("Already initialized.");
+    }
 }

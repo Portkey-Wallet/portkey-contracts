@@ -13,14 +13,12 @@ public partial class CAContract
         ValidateCAHolderInfoWithManagerInfosExistsInput input)
     {
         Assert(input != null, "input is null");
-        Assert(CheckHashInput(input!.CaHash), "input.CaHash is null or empty");
+        Assert(IsValidHash(input!.CaHash), "input.CaHash is null or empty");
         Assert(input.ManagerInfos != null, "input.ManagerInfos is null");
 
-        var holderInfo = State.HolderInfoMap[input.CaHash];
-        Assert(holderInfo != null, $"Holder by ca_hash: {input.CaHash} is not found!");
+        var holderInfo = GetHolderInfoByCaHash(input.CaHash);
 
-        ValidateLoginGuardian(input.CaHash, holderInfo, input.LoginGuardians,
-            input.NotLoginGuardians);
+        ValidateLoginGuardian(input.CaHash, holderInfo, input.LoginGuardians);
 
         ValidateManager(holderInfo, input.ManagerInfos);
 
@@ -28,8 +26,7 @@ public partial class CAContract
     }
 
     private void ValidateLoginGuardian(Hash caHash, HolderInfo holderInfo,
-        RepeatedField<Hash> loginGuardianInput,
-        RepeatedField<Hash> notLoginGuardianInput)
+        RepeatedField<Hash> loginGuardianInput)
     {
         var loginGuardians = new RepeatedField<Hash>();
         loginGuardians.AddRange(holderInfo.GuardianList.Guardians.Where(g => g.IsLoginGuardian)
@@ -94,6 +91,7 @@ public partial class CAContract
         foreach (var managerInfo in managerInfosToRemove)
         {
             holderInfo.ManagerInfos.Remove(managerInfo);
+            RemoveContractDelegator(managerInfo);
         }
 
         RemoveDelegators(holderId, managerInfosToRemove);
@@ -109,21 +107,21 @@ public partial class CAContract
             Creator = Context.Sender,
             CaHash = holderId,
             CaAddress = Context.ConvertVirtualAddressToContractAddress(holderId),
-            ManagerInfosAdded = new CAHolderManagerInfoAddedSynced
+            ManagerInfosAdded = new ManagerInfoList
             {
-                ManagerInfosAdded = { managerInfosToAdd }
+                ManagerInfos = { managerInfosToAdd }
             },
-            ManagerInfosRemoved = new CAHolderManagerInfoRemovedSynced
+            ManagerInfosRemoved = new ManagerInfoList
             {
-                ManagerInfosRemoved = { managerInfosToRemove }
+                ManagerInfos = { managerInfosToRemove }
             },
-            LoginGuardiansAdded = new CAHolderLoginGuardianAddedSynced
+            LoginGuardiansAdded = new LoginGuardianList
             {
-                LoginGuardiansAdded = { loginGuardiansAdded }
+                LoginGuardians = { loginGuardiansAdded }
             },
-            LoginGuardiansUnbound = new CAHolderLoginGuardianUnboundSynced
+            LoginGuardiansUnbound = new LoginGuardianList
             {
-                LoginGuardiansUnbound = { loginGuardiansUnbound }
+                LoginGuardians = { loginGuardiansUnbound }
             }
         });
 
@@ -179,7 +177,7 @@ public partial class CAContract
             bool theSame = false;
             foreach (var managerInfo2 in set2)
             {
-                if (managerInfo1.Address == managerInfo2.Address)
+                if (managerInfo1.Address == managerInfo2.Address && managerInfo1.ExtraData == managerInfo2.ExtraData)
                 {
                     theSame = true;
                     break;

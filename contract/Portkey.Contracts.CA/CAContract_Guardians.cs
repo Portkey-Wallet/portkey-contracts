@@ -13,10 +13,8 @@ public partial class CAContract
     {
         Assert(input.CaHash != null && input.GuardianToAdd != null && input.GuardiansApproved.Count != 0,
             "Invalid input.");
-        Assert(State.HolderInfoMap[input.CaHash] != null, "CA holder does not exist.");
-        Assert(State.HolderInfoMap[input.CaHash].GuardianList != null, "No guardians under the holder.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
-        var holderInfo = State.HolderInfoMap[input.CaHash];
+        var holderInfo = GetHolderInfoByCaHash(input.CaHash);
 
         //Whether the guardian to be added has already in the holder info.
         //Filter: guardian.type && guardian.IdentifierHash && VerifierId
@@ -79,10 +77,8 @@ public partial class CAContract
     {
         Assert(input.CaHash != null && input.GuardianToRemove != null && input.GuardiansApproved.Count != 0,
             "Invalid input.");
-        Assert(State.HolderInfoMap[input.CaHash] != null, "CA holder does not exist.");
-        Assert(State.HolderInfoMap[input.CaHash].GuardianList != null, "No guardians under the holder.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
-        var holderInfo = State.HolderInfoMap[input.CaHash];
+        var holderInfo = GetHolderInfoByCaHash(input.CaHash);
         //Select satisfied guardian to remove.
         //Filter: guardian.type && guardian.&& && VerifierId
         var toRemoveGuardian = holderInfo.GuardianList.Guardians.FirstOrDefault(g =>
@@ -133,9 +129,9 @@ public partial class CAContract
 
         State.HolderInfoMap[input.CaHash].GuardianList?.Guardians.Remove(toRemoveGuardian);
 
-        if (State.LoginGuardianMap[input.CaHash][toRemoveGuardian.VerifierId] != null)
+        if (State.LoginGuardianMap[toRemoveGuardian.IdentifierHash][toRemoveGuardian.VerifierId] != null)
         {
-            State.LoginGuardianMap[input.CaHash].Remove(toRemoveGuardian.VerifierId);
+            State.LoginGuardianMap[toRemoveGuardian.IdentifierHash].Remove(toRemoveGuardian.VerifierId);
         }
 
         Context.Fire(new GuardianRemoved
@@ -161,13 +157,11 @@ public partial class CAContract
         Assert(input.CaHash != null && input.GuardianToUpdatePre != null
                                     && input.GuardianToUpdateNew != null && input.GuardiansApproved.Count != 0,
             "Invalid input.");
-        Assert(State.HolderInfoMap[input.CaHash] != null, "CA holder does not exist.");
         Assert(input.GuardianToUpdatePre?.Type == input.GuardianToUpdateNew?.Type &&
                input.GuardianToUpdatePre?.IdentifierHash == input.GuardianToUpdateNew?.IdentifierHash,
             "Inconsistent guardian.");
-        Assert(State.HolderInfoMap[input.CaHash].GuardianList != null, "No guardians under the holder.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
-        var holderInfo = State.HolderInfoMap[input.CaHash];
+        var holderInfo = GetHolderInfoByCaHash(input.CaHash);
 
         //Whether the guardian to be updated in the holder info.
         //Filter: guardian.type && guardian.IdentifierHash && VerifierId

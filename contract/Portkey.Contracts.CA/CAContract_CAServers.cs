@@ -10,7 +10,7 @@ public partial class CAContract
     {
         Assert(State.ServerControllers.Value.Controllers.Contains(Context.Sender), "No permission");
         // Assert(Context.Sender == State.Admin.Value, "No permission.");
-        Assert(!string.IsNullOrEmpty(input.Name) && !string.IsNullOrEmpty(input.EndPoints), "Invalid input.");
+        Assert(!string.IsNullOrWhiteSpace(input.Name) && !string.IsNullOrWhiteSpace(input.EndPoints), "Invalid input.");
         State.CaServerList.Value ??= new CAServerList();
         var existServer = State.CaServerList.Value.CaServers.FirstOrDefault(s => s.Name == input.Name);
         if (existServer != null)
@@ -32,7 +32,7 @@ public partial class CAContract
             {
                 Name = input.Name,
                 EndPoint = input.EndPoints
-            }
+            } 
         });
         return new Empty();
     }
@@ -41,7 +41,7 @@ public partial class CAContract
     {
         Assert(State.ServerControllers.Value.Controllers.Contains(Context.Sender), "No permission");
         // Assert(Context.Sender == State.Admin.Value, "No permission.");
-        Assert(!string.IsNullOrEmpty(input.Name), "Invalid input.");
+        Assert(!string.IsNullOrWhiteSpace(input.Name), "Invalid input.");
         var existServer = State.CaServerList.Value.CaServers.FirstOrDefault(s => s.Name == input.Name);
         if (existServer == null) return new Empty();
         State.CaServerList.Value.CaServers.Remove(existServer);

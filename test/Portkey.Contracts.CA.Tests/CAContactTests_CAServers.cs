@@ -16,6 +16,8 @@ public partial class CAContractTests
         {
             ContractAdmin = DefaultAccount.Address
         });
+        var output = await CaContractStub.GetCAServers.CallAsync(new Empty());
+        output.CaServers.Count.ShouldBe(0);
         //success
         await CaContractStub.AddCAServer.SendAsync( new AddCAServerInput()
         {
@@ -92,6 +94,5 @@ public partial class CAContractTests
             Name = ""
         });
         txResult.TransactionResult.Error.ShouldContain("Invalid input.");
-        
     }
 }

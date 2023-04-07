@@ -49,7 +49,7 @@ namespace AElf.Boilerplate.ContractsContract.Launcher
         private byte[] GetContractCodes()
         {
             return ContractsDeployer.GetContractCodes<DeployContractsSystemTransactionGenerator>(_contractOptions
-                .GenesisContractDir)["Portkey.Contracts"];
+                .GenesisContractDir)["Portkey.Contracts.CA"];
         }
     }
 }

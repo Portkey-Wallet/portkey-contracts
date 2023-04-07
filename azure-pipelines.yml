@@ -97,4 +97,4 @@ jobs:
           reporttypes: 'Cobertura'
           assemblyfilters: '-xunit*'
       - script: bash build.sh --target=Upload-Coverage-Azure
-        displayName: 'Upload data to Codecov'    
+        displayName: 'Upload data to Codecov' 

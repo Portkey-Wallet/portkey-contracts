@@ -14,10 +14,10 @@ public partial class CAContract
         //     "Only Admin has permission to add VerifierServerEndPoints");
         Assert(State.ServerControllers.Value.Controllers.Contains(Context.Sender), "No permission");
         Assert(input != null, "invalid input");
-        Assert(input!.Name != null && !string.IsNullOrEmpty(input.Name), "invalid input name");
+        Assert(!string.IsNullOrWhiteSpace(input!.Name), "invalid input name");
         Assert(input!.EndPoints != null && input.EndPoints.Count != 0, "invalid input endPoints");
-        Assert(input!.ImageUrl != null && !string.IsNullOrEmpty(input.ImageUrl), "invalid input imageUrl");
-        Assert(input!.VerifierAddressList != null && input.VerifierAddressList.Count != 0,
+        Assert(!string.IsNullOrWhiteSpace(input.ImageUrl), "invalid input imageUrl");
+        Assert(input!.VerifierAddressList != null && input.VerifierAddressList.Count > 0,
             "invalid input verifierAddressList");
 
         State.VerifiersServerList.Value ??= new VerifierServerList();
@@ -88,8 +88,8 @@ public partial class CAContract
         //     "Only Admin has permission to remove VerifierServerEndPoints");
         Assert(State.ServerControllers.Value.Controllers.Contains(Context.Sender), "No permission");
         Assert(input != null, "invalid input");
-        Assert(input!.Id != null, "invalid input id");
-        Assert(input.EndPoints != null && input.EndPoints.Count != 0, "invalid input endPoints");
+        Assert(IsValidHash(input!.Id), "invalid input id");
+        Assert(input.EndPoints != null && input.EndPoints.Count > 0, "invalid input endPoints");
         if (State.VerifiersServerList.Value == null) return new Empty();
 
         var server = State.VerifiersServerList.Value.VerifierServers
@@ -130,8 +130,8 @@ public partial class CAContract
         //     "Only Admin has permission to remove VerifierServer");
         Assert(State.ServerControllers.Value.Controllers.Contains(Context.Sender), "No permission");
         Assert(input != null, "invalid input");
-        Assert(input!.Id != null, "invalid input id");
-        if (State.VerifiersServerList.Value == null) return new Empty();
+        Assert(IsValidHash(input!.Id), "invalid input id");
+        if (State.VerifiersServerList.Value == null || State.VerifiersServerList.Value.VerifierServers.Count == 0) return new Empty();
 
         var server = State.VerifiersServerList.Value.VerifierServers
             .FirstOrDefault(server => server.Id == input.Id);
