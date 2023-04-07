@@ -729,7 +729,8 @@ public partial class CAContractTests
                 guardianApprove
             }
         });
-        executionResult.TransactionResult.Error.ShouldContain("CA holder does not exist.");
+        executionResult.TransactionResult.Error.ShouldContain(
+            $"CA holder is null.CA hash:{HashHelper.ComputeFrom("aaa")}");
     }
 
     [Fact]
@@ -908,6 +909,84 @@ public partial class CAContractTests
         return caHash;
     }
 
+    [Fact]
+    public async Task RemoveGuardianTest_SameIdentifierHash()
+    {
+        var caHash = await AddGuardianTest_RepeatedGuardianIdentifierHash_DifferentVerifier();
+        var verificationTime = DateTime.UtcNow;
+        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0);
+        var signature1 =
+            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime, _guardian1, 0);
+        var signature2 =
+            GenerateSignature(VerifierKeyPair2, VerifierAddress2, verificationTime, _guardian1, 0);
+        var guardianApprove = new List<GuardianInfo>
+        {
+            new ()
+            {
+                Type = GuardianType.OfEmail,
+                IdentifierHash = _guardian,
+                VerificationInfo = new VerificationInfo
+                {
+                    Id = _verifierId,
+                    Signature = signature,
+                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{Salt}"
+                }
+            },
+            new ()
+            {
+                Type = GuardianType.OfEmail,
+                IdentifierHash = _guardian1,
+                VerificationInfo = new VerificationInfo
+                {
+                    Id = _verifierId2,
+                    Signature = signature2,
+                    VerificationDoc =
+                        $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress2.ToBase58()},{Salt}"
+                }
+            }
+        };
+
+        await CaContractStubManagerInfo1.SetGuardianForLogin.SendAsync(new SetGuardianForLoginInput
+        {
+            CaHash = caHash,
+            Guardian = new Guardian
+            {
+                IdentifierHash = _guardian1,
+                VerifierId = _verifierId1
+            }
+        });
+        await CaContractStubManagerInfo1.SetGuardianForLogin.SendAsync(new SetGuardianForLoginInput
+        {
+            CaHash = caHash,
+            Guardian = new Guardian
+            {
+                IdentifierHash = _guardian1,
+                VerifierId = _verifierId2
+            }
+        });
+
+        var output = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput
+        {
+            CaHash = caHash,
+            LoginGuardianIdentifierHash = Hash.Empty
+        });
+        output.GuardianList.Guardians.Where(g => g.IsLoginGuardian).ToList().Count.ShouldBe(3);
+        
+        await CaContractStubManagerInfo1.RemoveGuardian.SendAsync(new RemoveGuardianInput
+        {
+            CaHash = caHash,
+            GuardianToRemove = new GuardianInfo
+            {
+                Type = GuardianType.OfEmail,
+                IdentifierHash = _guardian1,
+                VerificationInfo = new VerificationInfo
+                {
+                    Id = _verifierId1
+                }
+            },
+            GuardiansApproved = { guardianApprove }
+        });
+    }
 
     [Fact]
     public async Task RemoveGuardian_failed_guardianNotExits()
@@ -1053,7 +1132,8 @@ public partial class CAContractTests
                 guardianApprove
             }
         });
-        executionResult.TransactionResult.Error.ShouldContain("CA holder does not exist.");
+        executionResult.TransactionResult.Error.ShouldContain(
+            $"CA holder is null.CA hash:{HashHelper.ComputeFrom("aaa")}");
     }
 
     [Fact]
@@ -1933,7 +2013,8 @@ public partial class CAContractTests
                 },
                 GuardiansApproved = { guardianApprove }
             });
-            executionResult.TransactionResult.Error.ShouldContain("CA holder does not exist.");
+            executionResult.TransactionResult.Error.ShouldContain(
+                $"CA holder is null.CA hash:{HashHelper.ComputeFrom("111111")}");
         }
     }
 

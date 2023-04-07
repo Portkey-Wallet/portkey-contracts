@@ -5,6 +5,7 @@
         <PackageId>Portkey.Contracts.CA</PackageId>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <Description>Portkey Contracts</Description>
+        <IsContract>true</IsContract>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
@@ -44,9 +45,5 @@
         <ContractCode Include="..\..\protobuf\ca_contract.proto">
             <Link>Protobuf\Proto\ca_contract.proto</Link>
         </ContractCode>
-    </ItemGroup>
-
-    <ItemGroup>
-      <PackageReference Include="AElf.Contracts.MultiToken" Version="1.2.2" />
     </ItemGroup>
 </Project>

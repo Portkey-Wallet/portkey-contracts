@@ -37,7 +37,7 @@ public partial class CAContract : CAContractContainer.CAContractBase
         //Assert(Context.Sender == State.RegisterOrRecoveryController.Value,"No permission.");
         Assert(State.CreatorControllers.Value.Controllers.Contains(Context.Sender), "No permission");
         Assert(input != null, "Invalid input.");
-        Assert(input!.GuardianApproved != null && CheckHashInput(input.GuardianApproved.IdentifierHash),
+        Assert(input!.GuardianApproved != null && IsValidHash(input.GuardianApproved.IdentifierHash),
             "invalid input guardian");
         Assert(
             input.GuardianApproved!.VerificationInfo != null, "invalid verification");
@@ -194,6 +194,14 @@ public partial class CAContract : CAContractContainer.CAContractBase
             }
         });
     }
+    
+    private void RemoveContractDelegator(ManagerInfo managerInfo)
+    {
+        State.TokenContract.RemoveTransactionFeeDelegator.Send(new RemoveTransactionFeeDelegatorInput
+        {
+            DelegatorAddress = managerInfo.Address,
+        });
+    }
 
     public override Empty SetContractDelegationFee(SetContractDelegationFeeInput input)
     {
@@ -201,7 +209,7 @@ public partial class CAContract : CAContractContainer.CAContractBase
         Assert(input != null && input.DelegationFee != null, "invalid input");
         Assert(input!.DelegationFee!.Amount >= 0, "input can not be less than 0");
 
-        if (State.ContractDelegationFee == null)
+        if (State.ContractDelegationFee.Value == null)
         {
             State.ContractDelegationFee!.Value = new ContractDelegationFee();
         }

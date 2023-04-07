@@ -4,7 +4,7 @@ using Xunit;
 
 namespace Portkey.Contracts.CA;
 
-public partial class CAContractTests : CAContractTestBase
+public partial class CAContractTests
 {
     protected const string GuardianCount = "guardianCount";
     protected const string GuardianApprovedCount = "guardianApprovedCount";

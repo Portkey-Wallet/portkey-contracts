@@ -56,7 +56,7 @@ public partial class CAContractTests
         };
 
         var result = await CaContractStub.ValidateCAHolderInfoWithManagerInfosExists.SendWithExceptionAsync(param);
-        result.TransactionResult.Error.ShouldContain($"Holder by ca_hash: {Hash.Empty} is not found!");
+        result.TransactionResult.Error.ShouldContain($"CA holder is null.CA hash:{Hash.Empty}");
     }
 
     [Fact]

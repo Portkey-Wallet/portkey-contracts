@@ -57,6 +57,10 @@ service CAContract {
 
   // If the managerInfo is already removed, return true
   rpc RemoveManagerInfo (RemoveManagerInfoInput) returns (google.protobuf.Empty) {}
+  
+  rpc RemoveOtherManagerInfo (RemoveOtherManagerInfoInput) returns (google.protobuf.Empty) {}
+  
+  rpc UpdateManagerInfos (UpdateManagerInfosInput) returns (google.protobuf.Empty) {}
 
   // If End Points already exists, return true
   rpc AddVerifierServerEndPoints (AddVerifierServerEndPointsInput) returns (google.protobuf.Empty) {}
@@ -117,8 +121,8 @@ message Guardian {
 enum GuardianType {
   GUARDIAN_TYPE_OF_EMAIL = 0;
   GUARDIAN_TYPE_OF_PHONE = 1;
-  GUARDIAN_TYPE_OF_GOOGLE_ACCOUNT = 2;
-  GUARDIAN_TYPE_OF_APPLE_ID = 3;
+  GUARDIAN_TYPE_OF_GOOGLE = 2;
+  GUARDIAN_TYPE_OF_APPLE = 3;
 }
 
 message VerifierServer {
@@ -144,6 +148,14 @@ message CAServerList {
 
 message ControllerList {
   repeated aelf.Address controllers = 1;
+}
+
+message ManagerInfoList {
+  repeated ManagerInfo manager_infos = 1;
+}
+
+message LoginGuardianList {
+  repeated aelf.Hash login_guardians = 1;
 }
 
 //Input
@@ -302,7 +314,17 @@ message AddManagerInfoInput {
 
 message RemoveManagerInfoInput {
   aelf.Hash ca_hash = 1;
+}
+
+message RemoveOtherManagerInfoInput {
+  aelf.Hash ca_hash = 1;
   ManagerInfo manager_info = 2;
+  repeated GuardianInfo guardians_approved = 3;
+}
+
+message UpdateManagerInfosInput {
+  aelf.Hash ca_hash = 1;
+  repeated ManagerInfo manager_infos = 2;
 }
 
 message AddVerifierServerEndPointsInput {
@@ -444,6 +466,15 @@ message ManagerInfoRemoved {
   string extra_data = 4;
 }
 
+// ManagerInfo updated
+message ManagerInfoUpdated {
+  option (aelf.is_event) = true;
+  aelf.Hash ca_hash = 1 [(aelf.is_indexed) = true];
+  aelf.Address ca_address = 2 [(aelf.is_indexed) = true];
+  aelf.Address manager = 3 [(aelf.is_indexed) = true];
+  string extra_data = 4;
+}
+
 // LoginGuardian unset
 message LoginGuardianUnbound {
   option (aelf.is_event) = true;
@@ -490,28 +521,13 @@ message CAServerRemoved {
   CAServer ca_server_removed = 1;
 }
 
-message CAHolderManagerInfoAddedSynced {
-  repeated ManagerInfo manager_infos_added = 1;
-}
-message CAHolderManagerInfoRemovedSynced {
-  repeated ManagerInfo manager_infos_removed = 2;
-}
-
-message CAHolderLoginGuardianAddedSynced {
-  repeated aelf.Hash login_guardians_added = 1;
-}
-
-message CAHolderLoginGuardianUnboundSynced {
-  repeated aelf.Hash login_guardians_unbound = 1;
-}
-
 message CAHolderSynced {
   option (aelf.is_event) = true;
   aelf.Address creator = 1 [(aelf.is_indexed) = true];
   aelf.Hash ca_hash = 2 [(aelf.is_indexed) = true];
   aelf.Address ca_address = 3 [(aelf.is_indexed) = true];
-  CAHolderManagerInfoAddedSynced manager_infos_added = 4 [(aelf.is_indexed) = true];
-  CAHolderManagerInfoRemovedSynced manager_infos_removed = 5 [(aelf.is_indexed) = true];
-  CAHolderLoginGuardianAddedSynced login_guardians_added = 6 [(aelf.is_indexed) = true];
-  CAHolderLoginGuardianUnboundSynced login_guardians_unbound = 7 [(aelf.is_indexed) = true];
+  ManagerInfoList manager_infos_added = 4 [(aelf.is_indexed) = true];
+  ManagerInfoList manager_infos_removed = 5 [(aelf.is_indexed) = true];
+  LoginGuardianList login_guardians_added = 6 [(aelf.is_indexed) = true];
+  LoginGuardianList login_guardians_unbound = 7 [(aelf.is_indexed) = true];
 }

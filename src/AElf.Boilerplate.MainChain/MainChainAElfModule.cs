@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using AElf.Blockchains.BasicBaseChain;
 using AElf.Boilerplate.SystemTransactionGenerator;
 using AElf.Database;
@@ -36,6 +37,8 @@ namespace AElf.Boilerplate.MainChain
             services.AddKeyValueDbContext<StateKeyValueDbContext>(p => p.UseInMemoryDatabase());
             
             Configure<ContractOptions>(o => o.ContractDeploymentAuthorityRequired = false);
+            
+            context.Services.RemoveAll(s => s.ImplementationType?.Name == "CodeCheckValidationProvider");
         }
     }
 }

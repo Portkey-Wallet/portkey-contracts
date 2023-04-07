@@ -14,11 +14,10 @@ public partial class CAContract
         Assert(input!.CaHash != null, "CaHash should not be null");
         // Guardian should be valid, not null, and be with non-null Value
         Assert(input.Guardian != null, "Guardian should not be null");
-        Assert(CheckHashInput(input.Guardian!.IdentifierHash), "Guardian IdentifierHash should not be null");
+        Assert(IsValidHash(input.Guardian!.IdentifierHash), "Guardian IdentifierHash should not be null");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
 
-        var holderInfo = State.HolderInfoMap[input.CaHash];
-        Assert(holderInfo != null, $"Not found holderInfo by caHash: {input.CaHash}");
+        var holderInfo = GetHolderInfoByCaHash(input.CaHash);
 
         var loginGuardian = input.Guardian;
 
@@ -35,7 +34,6 @@ public partial class CAContract
 
         Assert(isOccupied == CAContractConstants.LoginGuardianIsNotOccupied,
             "Internal error, how can it be?");
-        Assert(holderInfo!.GuardianList != null, $"No guardians found in this holder by caHash: {input.CaHash}");
 
         var guardian = holderInfo.GuardianList!.Guardians.FirstOrDefault(t =>
             t.VerifierId == input.Guardian.VerifierId && t.IdentifierHash == input.Guardian.IdentifierHash &&
@@ -56,7 +54,7 @@ public partial class CAContract
         {
             CaHash = input.CaHash,
             CaAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash),
-            LoginGuardian = input.Guardian,
+            LoginGuardian = guardian,
             Manager = Context.Sender
         });
 
@@ -70,29 +68,27 @@ public partial class CAContract
         Assert(input!.CaHash != null, "CaHash can not be null");
         // Guardian should be valid, not null, and be with non-null Value
         Assert(input.Guardian != null, "Guardian can not be null");
-        Assert(CheckHashInput(input.Guardian!.IdentifierHash), "Guardian IdentifierHash can not be null");
+        Assert(IsValidHash(input.Guardian!.IdentifierHash), "Guardian IdentifierHash can not be null");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
 
-        var holderInfo = State.HolderInfoMap[input.CaHash];
-        Assert(holderInfo != null, $"Not found holderInfo by caHash: {input.CaHash}");
-        Assert(holderInfo!.GuardianList != null, $"No guardians found in this holder by caHash: {input.CaHash}");
+        var holderInfo = GetHolderInfoByCaHash(input.CaHash);
 
         // if CAHolder only have one LoginGuardian,not Allow Unset;
         Assert(holderInfo.GuardianList!.Guardians.Count(g => g.IsLoginGuardian) > 1,
             "only one LoginGuardian,can not be Unset");
         var loginGuardian = input.Guardian;
 
-        if (State.LoginGuardianMap[loginGuardian.IdentifierHash][input.Guardian.VerifierId] == null ||
-            State.LoginGuardianMap[loginGuardian.IdentifierHash][input.Guardian.VerifierId] != input.CaHash)
-        {
-            return new Empty();
-        }
+        // if (State.LoginGuardianMap[loginGuardian.IdentifierHash][input.Guardian.VerifierId] == null ||
+        //     State.LoginGuardianMap[loginGuardian.IdentifierHash][input.Guardian.VerifierId] != input.CaHash)
+        // {
+        //     return new Empty();
+        // }
 
         var guardian = holderInfo.GuardianList!.Guardians.FirstOrDefault(t =>
             t.VerifierId == input.Guardian.VerifierId && t.IdentifierHash == input.Guardian.IdentifierHash &&
             t.Type == input.Guardian.Type);
 
-        if (guardian == null)
+        if (guardian == null || !guardian.IsLoginGuardian)
         {
             return new Empty();
         }
@@ -105,7 +101,7 @@ public partial class CAContract
         {
             CaHash = input.CaHash,
             CaAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash),
-            LoginGuardian = loginGuardian,
+            LoginGuardian = guardian,
             Manager = Context.Sender
         });
 

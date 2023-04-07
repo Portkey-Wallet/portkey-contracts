@@ -13,7 +13,7 @@ public partial class CAContract
     {
         //[type,guardianIdentifierHash,verificationTime,verifierAddress,salt]
         var verificationDoc = guardianInfo.VerificationInfo.VerificationDoc;
-        if (verificationDoc == null || string.IsNullOrEmpty(verificationDoc))
+        if (verificationDoc == null || string.IsNullOrWhiteSpace(verificationDoc))
         {
             return false;
         }
@@ -59,7 +59,7 @@ public partial class CAContract
         return satisfiedGuardians != null;
     }
 
-    private bool CheckHashInput(Hash hash)
+    private bool IsValidHash(Hash hash)
     {
         return hash != null && !hash.Value.IsEmpty;
     }
@@ -67,5 +67,14 @@ public partial class CAContract
     private string GetSaltFromVerificationDoc(string verificationDoc)
     {
         return verificationDoc.Split(",")[4];
+    }
+
+    private HolderInfo GetHolderInfoByCaHash(Hash caHash)
+    {
+        var holderInfo = State.HolderInfoMap[caHash];
+        Assert(holderInfo != null, $"CA holder is null.CA hash:{caHash}");
+        Assert(holderInfo!.GuardianList != null, $"No guardians found in this holder by caHash: {caHash}");
+
+        return holderInfo;
     }
 }
