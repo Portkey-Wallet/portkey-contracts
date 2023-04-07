@@ -1,4 +1,4 @@
-# portkey-contracts
+# Portkey Contracts
 
 BRANCH | AZURE PIPELINES | TESTS | CODE COVERAGE
 -------|-----------------|-------|--------------
