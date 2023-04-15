@@ -32,10 +32,6 @@ elif [[ ${osn} == "linux" ]]; then
                 
       # Move protoc3/include to /usr/local/include/
       mv protoc3/include/* /usr/local/include/
-                
-      # Optional: change owner
-      chown ${USER} /usr/local/bin/protoc
-      chown -R ${USER} /usr/local/include/google
     else
       # Move protoc to /usr/local/bin/
       sudo mv protoc3/bin/* /usr/local/bin/
