@@ -54,10 +54,7 @@ public partial class CAContractTests
         
         result.TransactionResult.Error.ShouldContain("No permission");
         
-        result = await CaContractStub.AddCreatorController.SendWithExceptionAsync(new ControllerInput
-        {
-            
-        });
+        result = await CaContractStub.AddCreatorController.SendWithExceptionAsync(new ControllerInput());
         result.TransactionResult.Error.ShouldContain("Invalid input");
     }
     
@@ -97,10 +94,7 @@ public partial class CAContractTests
         
         result.TransactionResult.Error.ShouldContain("No permission");
         
-        result = await CaContractStub.RemoveCreatorController.SendWithExceptionAsync(new ControllerInput
-        {
-            
-        });
+        result = await CaContractStub.RemoveCreatorController.SendWithExceptionAsync(new ControllerInput());
         result.TransactionResult.Error.ShouldContain("Invalid input");
     }
     
@@ -141,10 +135,7 @@ public partial class CAContractTests
         
         result.TransactionResult.Error.ShouldContain("No permission");
         
-        result = await CaContractStub.AddServerController.SendWithExceptionAsync(new ControllerInput
-        {
-            
-        });
+        result = await CaContractStub.AddServerController.SendWithExceptionAsync(new ControllerInput());
         result.TransactionResult.Error.ShouldContain("Invalid input");
     }
     
@@ -184,10 +175,7 @@ public partial class CAContractTests
         
         result.TransactionResult.Error.ShouldContain("No permission");
         
-        result = await CaContractStub.RemoveServerController.SendWithExceptionAsync(new ControllerInput
-        {
-            
-        });
+        result = await CaContractStub.RemoveServerController.SendWithExceptionAsync(new ControllerInput());
         result.TransactionResult.Error.ShouldContain("Invalid input");
     }
     
@@ -227,10 +215,7 @@ public partial class CAContractTests
         
         result.TransactionResult.Error.ShouldContain("No permission");
         
-        result = await CaContractStub.ChangeAdmin.SendWithExceptionAsync(new AdminInput
-        {
-            
-        });
+        result = await CaContractStub.ChangeAdmin.SendWithExceptionAsync(new AdminInput());
         result.TransactionResult.Error.ShouldContain("Invalid input");
     }
 }
