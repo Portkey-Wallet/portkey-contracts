@@ -29,6 +29,8 @@ elif [[ ${osn} == "linux" ]]; then
     # Move protoc to /usr/local/bin/
     sudo mv protoc3/bin/* /usr/local/bin/
     
+    sudo rm -rf /usr/local/include/google
+    
     # Move protoc3/include to /usr/local/include/
     sudo mv protoc3/include/* /usr/local/include/
     
