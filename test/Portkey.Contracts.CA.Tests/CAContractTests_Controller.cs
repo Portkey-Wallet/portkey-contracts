@@ -33,6 +33,14 @@ public partial class CAContractTests
         result = await CaContractStub.GetCreatorControllers.CallAsync(new Empty());
         result.Addresses.Count.ShouldBe(2);
         result.Addresses.Last().ShouldBe(User1Address);
+        
+        await CaContractStub.AddCreatorController.SendAsync(new ControllerInput
+        {
+            Address = User1Address
+        });
+        
+        result = await CaContractStub.GetCreatorControllers.CallAsync(new Empty());
+        result.Addresses.Count.ShouldBe(2);
     }
 
     [Fact]
@@ -65,6 +73,14 @@ public partial class CAContractTests
         
         var result = await CaContractStub.GetCreatorControllers.CallAsync(new Empty());
         result.Addresses.Count.ShouldBe(1);
+        
+        await CaContractStub.RemoveCreatorController.SendAsync(new ControllerInput
+        {
+            Address = DefaultAddress
+        });
+        
+        result = await CaContractStub.GetCreatorControllers.CallAsync(new Empty());
+        result.Addresses.Count.ShouldBe(0);
         
         await CaContractStub.RemoveCreatorController.SendAsync(new ControllerInput
         {
@@ -114,6 +130,14 @@ public partial class CAContractTests
         result = await CaContractStub.GetServerControllers.CallAsync(new Empty());
         result.Addresses.Count.ShouldBe(2);
         result.Addresses.Last().ShouldBe(User1Address);
+        
+        await CaContractStub.AddServerController.SendAsync(new ControllerInput
+        {
+            Address = User1Address
+        });
+        
+        result = await CaContractStub.GetServerControllers.CallAsync(new Empty());
+        result.Addresses.Count.ShouldBe(2);
     }
 
     [Fact]
@@ -146,6 +170,14 @@ public partial class CAContractTests
         
         var result = await CaContractStub.GetServerControllers.CallAsync(new Empty());
         result.Addresses.Count.ShouldBe(1);
+        
+        await CaContractStub.RemoveServerController.SendAsync(new ControllerInput
+        {
+            Address = DefaultAddress
+        });
+        
+        result = await CaContractStub.GetServerControllers.CallAsync(new Empty());
+        result.Addresses.Count.ShouldBe(0);
         
         await CaContractStub.RemoveServerController.SendAsync(new ControllerInput
         {
@@ -187,6 +219,11 @@ public partial class CAContractTests
         var result = await CaContractStub.GetAdmin.CallAsync(new Empty());
         result.Address.ShouldBe(DefaultAddress);
         
+        await CaContractStub.ChangeAdmin.SendAsync(new AdminInput
+        {
+            Address = DefaultAddress
+        });
+
         await CaContractStub.ChangeAdmin.SendAsync(new AdminInput
         {
             Address = User1Address
