@@ -911,7 +911,7 @@ public partial class CAContractTests
             LoginGuardianIdentifierHash = _guardian
         });
 
-        for (int i = 2; i < 100; i++)
+        for (int i = 2; i < 70; i++)
         {
             await CaContractStub.AddManagerInfo.SendAsync(new AddManagerInfoInput
             {
@@ -928,7 +928,7 @@ public partial class CAContractTests
         {
             LoginGuardianIdentifierHash = _guardian
         });
-        output.ManagerInfos.Count.ShouldBe(100);
+        output.ManagerInfos.Count.ShouldBe(70);
 
         var result = await CaContractStub.AddManagerInfo.SendWithExceptionAsync(new AddManagerInfoInput
         {
