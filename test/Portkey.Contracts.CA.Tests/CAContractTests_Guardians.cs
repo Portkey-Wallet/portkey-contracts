@@ -259,6 +259,50 @@ public partial class CAContractTests
         }
         return caHash;
     }
+    
+     [Fact]
+    public async Task AddGuardianTest_failed_duplicate_verifiedDoc()
+    {
+        var verificationTime = DateTime.UtcNow;
+        var caHash = await CreateHolder();
+        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0,Salt);
+        var signature1 =
+            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime, _guardian1, 0,Salt);
+        var verificationDoc = $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{Salt}";
+        var guardianApprove = new List<GuardianInfo>
+        {
+            new GuardianInfo
+            {
+                Type = GuardianType.OfEmail,
+                IdentifierHash = _guardian,
+                VerificationInfo = new VerificationInfo
+                {
+                    Id = _verifierId,
+                    Signature = signature,
+                    VerificationDoc = verificationDoc
+                }
+            }
+        };
+        var input = new AddGuardianInput
+        {
+            CaHash = caHash,
+            GuardianToAdd = new GuardianInfo
+            {
+                Type = GuardianType.OfEmail,
+                IdentifierHash = _guardian1,
+                VerificationInfo = new VerificationInfo
+                {
+                    Id = _verifierId1,
+                    Signature = signature1,
+                    VerificationDoc =
+                        $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{Salt}"
+                }
+            },
+            GuardiansApproved = { guardianApprove }
+        };
+        var executionResult = await CaContractStubManagerInfo1.AddGuardian.SendWithExceptionAsync(input);
+        executionResult.TransactionResult.Error.ShouldContain("Not Satisfied criterion to create a CA Holder");
+    }
 
 
     [Fact]
