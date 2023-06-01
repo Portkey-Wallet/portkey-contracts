@@ -29,6 +29,9 @@ public partial class CAContract
 
         //Check the verifier signature and data of the guardian to be added.
         Assert(CheckVerifierSignatureAndData(input.GuardianToAdd), "Guardian to add verification failed.");
+        var salt = GetSaltFromVerificationDoc(input.GuardianToAdd!.VerificationInfo!.VerificationDoc);
+        var verifierTime = GetVerifierTimeFromVerificationDoc(input.GuardianToAdd.VerificationInfo.VerificationDoc);
+        State.VerifierDocSaltMap.Set(salt + verifierTime, true);
 
         var guardianApprovedAmount = 0;
         var guardianApprovedList = input.GuardiansApproved
@@ -40,10 +43,11 @@ public partial class CAContract
             if (!IsGuardianExist(input.CaHash, guardian)) continue;
             //Check the verifier signature and data of the guardian to be approved.
             var isApproved = CheckVerifierSignatureAndData(guardian);
-            if (isApproved)
-            {
-                guardianApprovedAmount++;
-            }
+            if (!isApproved) continue;
+            var saltStr = GetSaltFromVerificationDoc(guardian.VerificationInfo!.VerificationDoc);
+            var verifierTimeStr = GetVerifierTimeFromVerificationDoc(guardian.VerificationInfo.VerificationDoc);
+            State.VerifierDocSaltMap.Set(saltStr + verifierTimeStr, true);
+            guardianApprovedAmount++;
         }
 
         //Whether the approved guardians count is satisfied.
@@ -82,9 +86,9 @@ public partial class CAContract
         //Select satisfied guardian to remove.
         //Filter: guardian.type && guardian.&& && VerifierId
         var toRemoveGuardian = holderInfo.GuardianList.Guardians.FirstOrDefault(g =>
-                g.Type == input.GuardianToRemove.Type &&
-                g.IdentifierHash == input.GuardianToRemove.IdentifierHash &&
-                g.VerifierId == input.GuardianToRemove.VerificationInfo.Id);
+            g.Type == input.GuardianToRemove.Type &&
+            g.IdentifierHash == input.GuardianToRemove.IdentifierHash &&
+            g.VerifierId == input.GuardianToRemove.VerificationInfo.Id);
 
         if (toRemoveGuardian == null)
         {
@@ -117,10 +121,11 @@ public partial class CAContract
             if (!IsGuardianExist(input.CaHash, guardian)) continue;
             //Check the verifier signature and data of the guardian to be approved.
             var isApproved = CheckVerifierSignatureAndData(guardian);
-            if (isApproved)
-            {
-                guardianApprovedAmount++;
-            }
+            if (!isApproved) continue;
+            var salt = GetSaltFromVerificationDoc(guardian.VerificationInfo!.VerificationDoc);
+            var verifierTime = GetVerifierTimeFromVerificationDoc(guardian.VerificationInfo.VerificationDoc);
+            State.VerifierDocSaltMap.Set(salt + verifierTime, true);
+            guardianApprovedAmount++;
         }
 
         //Whether the approved guardians count is satisfied.
@@ -201,10 +206,11 @@ public partial class CAContract
             if (!IsGuardianExist(input.CaHash, guardian)) continue;
             //Check the verifier signature and data of the guardian to be approved.
             var isApproved = CheckVerifierSignatureAndData(guardian);
-            if (isApproved)
-            {
-                guardianApprovedAmount++;
-            }
+            if (!isApproved) continue;
+            var salt = GetSaltFromVerificationDoc(guardian.VerificationInfo!.VerificationDoc);
+            var verifierTime = GetVerifierTimeFromVerificationDoc(guardian.VerificationInfo.VerificationDoc);
+            State.VerifierDocSaltMap.Set(salt + verifierTime, true);
+            guardianApprovedAmount++;
         }
 
         //Whether the approved guardians count is satisfied.

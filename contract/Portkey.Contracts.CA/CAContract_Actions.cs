@@ -53,14 +53,15 @@ public partial class CAContract : CAContractContainer.CAContractBase
 
         holderInfo.CreatorAddress = Context.Sender;
         holderInfo.ManagerInfos.Add(input.ManagerInfo);
-
         //Check verifier signature.
         Assert(CheckVerifierSignatureAndData(input.GuardianApproved), "Guardian verification failed.");
-
+        var salt = GetSaltFromVerificationDoc(input.GuardianApproved.VerificationInfo!.VerificationDoc);
+        var verifierTime = GetVerifierTimeFromVerificationDoc(input.GuardianApproved.VerificationInfo!.VerificationDoc);
+        State.VerifierDocSaltMap.Set(salt + verifierTime, true);
         var guardian = new Guardian
         {
             IdentifierHash = input.GuardianApproved.IdentifierHash,
-            Salt = GetSaltFromVerificationDoc(input.GuardianApproved.VerificationInfo!.VerificationDoc),
+            Salt = salt,
             Type = input.GuardianApproved.Type,
             VerifierId = input.GuardianApproved.VerificationInfo.Id,
             IsLoginGuardian = true
@@ -194,7 +195,7 @@ public partial class CAContract : CAContractContainer.CAContractBase
             }
         });
     }
-    
+
     private void RemoveContractDelegator(ManagerInfo managerInfo)
     {
         State.TokenContract.RemoveTransactionFeeDelegator.Send(new RemoveTransactionFeeDelegatorInput

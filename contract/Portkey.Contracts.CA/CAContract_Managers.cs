@@ -38,10 +38,11 @@ public partial class CAContract
             if (!IsGuardianExist(caHash, guardian)) continue;
             //Check the verifier signature and data of the guardian to be approved.
             var isApproved = CheckVerifierSignatureAndData(guardian);
-            if (isApproved)
-            {
-                guardianApprovedAmount++;
-            }
+            if (!isApproved) continue;
+            var salt = GetSaltFromVerificationDoc(guardian.VerificationInfo!.VerificationDoc);
+            var verifierTime = GetVerifierTimeFromVerificationDoc(guardian.VerificationInfo!.VerificationDoc);
+            State.VerifierDocSaltMap.Set(salt + verifierTime, true);
+            guardianApprovedAmount++;
         }
 
         IsJudgementStrategySatisfied(guardians.Count, guardianApprovedAmount,
@@ -129,10 +130,11 @@ public partial class CAContract
             if (!IsGuardianExist(input.CaHash, guardian)) continue;
             //Check the verifier signature and data of the guardian to be approved.
             var isApproved = CheckVerifierSignatureAndData(guardian);
-            if (isApproved)
-            {
-                guardianApprovedAmount++;
-            }
+            if (!isApproved) continue;
+            var salt = GetSaltFromVerificationDoc(guardian.VerificationInfo.VerificationDoc);
+            var verifierTime = GetVerifierTimeFromVerificationDoc(guardian.VerificationInfo.VerificationDoc);
+            State.VerifierDocSaltMap.Set(salt + verifierTime, true);
+            guardianApprovedAmount++;
         }
 
         //Whether the approved guardians count is satisfied.

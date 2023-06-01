@@ -34,6 +34,15 @@ public partial class CAContract
             return false;
         }
 
+        //Check VerifierDoc is Verified.
+        var salt = GetSaltFromVerificationDoc(guardianInfo.VerificationInfo!.VerificationDoc);
+        var verifierTime = GetVerifierTimeFromVerificationDoc(guardianInfo.VerificationInfo!.VerificationDoc);
+        var verifierDocSaltMap = State.VerifierDocSaltMap;
+        if (verifierDocSaltMap[salt + verifierTime])
+        {
+            return false;
+        }
+
         //Check verifier address and data.
         var verifierAddress = Address.FromBase58(verifierDoc[3]);
         var verificationInfo = guardianInfo.VerificationInfo;
@@ -68,6 +77,12 @@ public partial class CAContract
     {
         return verificationDoc.Split(",")[4];
     }
+
+    private string GetVerifierTimeFromVerificationDoc(string verificationDoc)
+    {
+        return verificationDoc.Split(",")[2];
+    }
+
 
     private HolderInfo GetHolderInfoByCaHash(Hash caHash)
     {

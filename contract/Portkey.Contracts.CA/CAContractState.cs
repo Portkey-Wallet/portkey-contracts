@@ -1,3 +1,4 @@
+using System;
 using AElf.Sdk.CSharp.State;
 using AElf.Types;
 
@@ -47,4 +48,7 @@ public partial class CAContractState : ContractState
     // public SingletonState<AuthorityInfo> MethodFeeController { get; set; }
     // public MappedState<string, MethodFees> TransactionFees { get; set; }
     public SingletonState<ContractDelegationFee> ContractDelegationFee { get; set; } 
+    //
+    public MappedState<string,bool> VerifierDocSaltMap { get; set; }
+
 }
