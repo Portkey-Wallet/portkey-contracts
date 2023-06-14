@@ -1,9 +1,6 @@
-using AElf;
-using AElf.Boilerplate.TestBase;
-using AElf.Boilerplate.TestBase.DAppContract;
-using AElf.Boilerplate.TestBase.SmartContractNameProviders;
 using AElf.Contracts.MultiToken;
 using AElf.Cryptography.ECDSA;
+using AElf.Testing.TestBase;
 using AElf.Types;
 
 namespace Portkey.Contracts.CA;

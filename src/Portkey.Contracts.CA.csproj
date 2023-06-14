@@ -13,7 +13,7 @@
 
     <ItemGroup>
         <PackageReference Include="AElf.Sdk.CSharp" Version="1.3.0" />
-        <PackageReference Include="AElf.Tools" Version="1.0.58">
+        <PackageReference Include="AElf.Tools" Version="1.0.2">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>

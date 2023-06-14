@@ -1,7 +1,6 @@
 using System;
 using System.Threading.Tasks;
 using AElf.Contracts.MultiToken;
-using AElf.Kernel.FeeCalculation.Extensions;
 using AElf.Types;
 using Google.Protobuf.WellKnownTypes;
 using Shouldly;

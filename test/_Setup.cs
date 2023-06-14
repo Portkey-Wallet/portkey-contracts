@@ -1,7 +1,6 @@
-﻿using AElf.Boilerplate.TestBase.Contract;
-using AElf.Boilerplate.TestBase.DAppContract;
-using AElf.Cryptography.ECDSA;
+﻿using AElf.Cryptography.ECDSA;
 using AElf.CSharp.Core;
+using AElf.Testing.TestBase;
 
 namespace Portkey.Contracts.CA
 {

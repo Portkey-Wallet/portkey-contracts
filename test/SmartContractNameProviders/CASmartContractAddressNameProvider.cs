@@ -1,7 +1,8 @@
+using AElf;
 using AElf.Kernel.Infrastructure;
 using AElf.Types;
 
-namespace AElf.Boilerplate.TestBase.SmartContractNameProviders;
+namespace Portkey.Contracts.CA;
 
 public class CASmartContractAddressNameProvider
 {

@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using AElf.Boilerplate.TestBase.SmartContractNameProviders;
 using AElf.Kernel.SmartContract.Application;
 using AElf.Types;
 using Volo.Abp.DependencyInjection;

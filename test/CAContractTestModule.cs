@@ -1,16 +1,15 @@
 using System.Collections.Generic;
 using System.IO;
-using AElf.Boilerplate.TestBase;
-using AElf.Boilerplate.TestBase.DAppContract;
 using AElf.ContractTestBase;
 using AElf.ContractTestBase.ContractTestKit;
 using AElf.Kernel.FeeCalculation;
 using AElf.Kernel.SmartContract.Application;
 using AElf.Kernel.SmartContract.ExecutionPluginForMethodFee;
+using AElf.Testing.TestBase;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp;
 using Volo.Abp.Modularity;
-using ContractCodeProvider = AElf.Boilerplate.TestBase.ContractCodeProvider;
+using ContractCodeProvider = AElf.Testing.TestBase.ContractCodeProvider;
 
 namespace Portkey.Contracts.CA;
 
