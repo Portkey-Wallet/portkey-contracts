@@ -29,9 +29,11 @@ public partial class CAContract
 
         //Check the verifier signature and data of the guardian to be added.
         Assert(CheckVerifierSignatureAndData(input.GuardianToAdd), "Guardian to add verification failed.");
-        var salt = GetSaltFromVerificationDoc(input.GuardianToAdd!.VerificationInfo!.VerificationDoc);
-        var verifierTime = GetVerifierTimeFromVerificationDoc(input.GuardianToAdd.VerificationInfo.VerificationDoc);
-        State.VerifierDocSaltMap.Set(salt + verifierTime, true);
+        var key = GetKeyFromVerificationDoc(input.GuardianToAdd?.VerificationInfo.VerificationDoc.Split(","));
+        State.VerifierDocSaltMap.Set(key, true);
+        var operationType = GetOperationFromVerificationDoc(input.GuardianToAdd?.VerificationInfo.VerificationDoc).ToLower();
+        var methodName = nameof(AddGuardian).ToLower();
+        Assert(operationType == methodName, "Invalid operation type.");
 
         var guardianApprovedAmount = 0;
         var guardianApprovedList = input.GuardiansApproved
@@ -44,9 +46,11 @@ public partial class CAContract
             //Check the verifier signature and data of the guardian to be approved.
             var isApproved = CheckVerifierSignatureAndData(guardian);
             if (!isApproved) continue;
-            var saltStr = GetSaltFromVerificationDoc(guardian.VerificationInfo!.VerificationDoc);
-            var verifierTimeStr = GetVerifierTimeFromVerificationDoc(guardian.VerificationInfo.VerificationDoc);
-            State.VerifierDocSaltMap.Set(saltStr + verifierTimeStr, true);
+            var keyHash = GetKeyFromVerificationDoc(guardian.VerificationInfo!.VerificationDoc.Split(","));
+            State.VerifierDocSaltMap.Set(keyHash, true);
+            var operationTypeStr = GetOperationFromVerificationDoc(guardian.VerificationInfo.VerificationDoc).ToLower();
+            Assert(operationTypeStr == methodName, "Invalid operation type.");
+
             guardianApprovedAmount++;
         }
 
@@ -110,6 +114,7 @@ public partial class CAContract
         var guardianApprovedList = input.GuardiansApproved
             .DistinctBy(g => $"{g.Type}{g.IdentifierHash}{g.VerificationInfo.Id}")
             .ToList();
+        const string methodName = nameof(RemoveGuardian);
         foreach (var guardian in guardianApprovedList)
         {
             Assert(
@@ -122,9 +127,11 @@ public partial class CAContract
             //Check the verifier signature and data of the guardian to be approved.
             var isApproved = CheckVerifierSignatureAndData(guardian);
             if (!isApproved) continue;
-            var salt = GetSaltFromVerificationDoc(guardian.VerificationInfo!.VerificationDoc);
-            var verifierTime = GetVerifierTimeFromVerificationDoc(guardian.VerificationInfo.VerificationDoc);
-            State.VerifierDocSaltMap.Set(salt + verifierTime, true);
+            var keyHash = GetKeyFromVerificationDoc(guardian.VerificationInfo.VerificationDoc.Split(","));
+            State.VerifierDocSaltMap.Set(keyHash, true);
+            var operationType =
+                GetOperationFromVerificationDoc(guardian.VerificationInfo.VerificationDoc);
+            Assert(operationType == methodName, "Invalid operation type.");
             guardianApprovedAmount++;
         }
 
@@ -167,7 +174,6 @@ public partial class CAContract
             "Inconsistent guardian.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
-
         //Whether the guardian to be updated in the holder info.
         //Filter: guardian.type && guardian.IdentifierHash && VerifierId
         var existPreGuardian = holderInfo.GuardianList.Guardians.FirstOrDefault(g =>
@@ -207,9 +213,11 @@ public partial class CAContract
             //Check the verifier signature and data of the guardian to be approved.
             var isApproved = CheckVerifierSignatureAndData(guardian);
             if (!isApproved) continue;
-            var salt = GetSaltFromVerificationDoc(guardian.VerificationInfo!.VerificationDoc);
-            var verifierTime = GetVerifierTimeFromVerificationDoc(guardian.VerificationInfo.VerificationDoc);
-            State.VerifierDocSaltMap.Set(salt + verifierTime, true);
+            var keyHash = GetKeyFromVerificationDoc(guardian.VerificationInfo.VerificationDoc.Split(","));
+            State.VerifierDocSaltMap.Set(keyHash, true);
+            var operationType = GetOperationFromVerificationDoc(guardian.VerificationInfo.VerificationDoc);
+            const string methodName = nameof(UpdateGuardian);
+            Assert(operationType == methodName, "Invalid operation type.");
             guardianApprovedAmount++;
         }
 

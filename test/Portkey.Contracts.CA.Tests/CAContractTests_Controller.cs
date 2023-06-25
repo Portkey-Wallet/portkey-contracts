@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using AElf.Contracts.MultiToken;
+using AElf.Types;
 using Google.Protobuf.WellKnownTypes;
 using Shouldly;
 using Xunit;
@@ -13,7 +14,8 @@ public partial class CAContractTests
     {
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
-            ContractAdmin = DefaultAddress
+            ContractAdmin = DefaultAddress,
+            ZeroSmartAddress = Address.FromBase58(CAContractConstants.ZeroSmartAddress)
         });
     }
 

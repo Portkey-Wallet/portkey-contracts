@@ -13,6 +13,8 @@ public partial class CAContract : CAContractContainer.CAContractBase
     public override Empty Initialize(InitializeInput input)
     {
         Assert(!State.Initialized.Value, "Already initialized.");
+        var genesisContractAddress = Context.GetZeroSmartContractAddress();
+        Assert(input.ZeroSmartAddress == genesisContractAddress, "Invalid ZeroSmartAddress.");
         State.Admin.Value = input.ContractAdmin ?? Context.Sender;
         State.CreatorControllers.Value = new ControllerList { Controllers = { input.ContractAdmin ?? Context.Sender } };
         State.ServerControllers.Value = new ControllerList { Controllers = { input.ContractAdmin ?? Context.Sender } };
@@ -50,14 +52,21 @@ public partial class CAContract : CAContractContainer.CAContractBase
 
         var holderInfo = new HolderInfo();
         holderId = HashHelper.ConcatAndCompute(Context.TransactionId, Context.PreviousBlockHash);
-
         holderInfo.CreatorAddress = Context.Sender;
         holderInfo.ManagerInfos.Add(input.ManagerInfo);
         //Check verifier signature.
         Assert(CheckVerifierSignatureAndData(input.GuardianApproved), "Guardian verification failed.");
+        var keyHash = GetKeyFromVerificationDoc(input.GuardianApproved.VerificationInfo!.VerificationDoc.Split(","));
+        State.VerifierDocSaltMap.Set(keyHash, true);
+
+        //Check operationType.
+        var operationType = GetOperationFromVerificationDoc(input.GuardianApproved.VerificationInfo!.VerificationDoc)
+            .ToLower();
+        var methodName = nameof(CreateCAHolder).ToLower();
+        Assert(operationType == methodName, "Invalid operation type.");
+
+
         var salt = GetSaltFromVerificationDoc(input.GuardianApproved.VerificationInfo!.VerificationDoc);
-        var verifierTime = GetVerifierTimeFromVerificationDoc(input.GuardianApproved.VerificationInfo!.VerificationDoc);
-        State.VerifierDocSaltMap.Set(salt + verifierTime, true);
         var guardian = new Guardian
         {
             IdentifierHash = input.GuardianApproved.IdentifierHash,

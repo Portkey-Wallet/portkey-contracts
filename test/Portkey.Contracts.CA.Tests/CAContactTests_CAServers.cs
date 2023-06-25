@@ -1,4 +1,6 @@
+using System;
 using System.Threading.Tasks;
+using AElf.Types;
 using Google.Protobuf.WellKnownTypes;
 using Shouldly;
 using Xunit;
@@ -14,7 +16,8 @@ public partial class CAContractTests
         //set admin
         await CaContractStub.Initialize.SendAsync(new InitializeInput()
         {
-            ContractAdmin = DefaultAccount.Address
+            ContractAdmin = DefaultAccount.Address,
+            ZeroSmartAddress = Address.FromBase58(CAContractConstants.ZeroSmartAddress)
         });
         var output = await CaContractStub.GetCAServers.CallAsync(new Empty());
         output.CaServers.Count.ShouldBe(0);
@@ -62,7 +65,8 @@ public partial class CAContractTests
         //set admin
         await CaContractStub.Initialize.SendAsync(new InitializeInput()
         {
-            ContractAdmin = DefaultAccount.Address
+            ContractAdmin = DefaultAccount.Address,
+            ZeroSmartAddress = Address.FromBase58(CAContractConstants.ZeroSmartAddress)
         });
         await CaContractStub.AddCAServer.SendAsync( new AddCAServerInput()
         {

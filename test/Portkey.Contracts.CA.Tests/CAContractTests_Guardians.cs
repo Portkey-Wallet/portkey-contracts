@@ -42,14 +42,14 @@ public partial class CAContractTests
     }
 
     private ByteString GenerateSignature(ECKeyPair verifier, Address verifierAddress,
-        DateTime verificationTime, Hash guardianType, int type,string salt)
+        DateTime verificationTime, Hash guardianType, int type, string salt, string operationType)
     {
         if (string.IsNullOrWhiteSpace(salt))
         {
             salt = Salt;
         }
 
-        var data = $"{type},{guardianType.ToHex()},{verificationTime},{verifierAddress.ToBase58()},{salt}";
+        var data = $"{type},{guardianType.ToHex()},{verificationTime},{verifierAddress.ToBase58()},{salt},{operationType}";
         var dataHash = HashHelper.ComputeFrom(data);
         var signature = CryptoHelper.SignWithPrivateKey(verifier.PrivateKey, dataHash.ToByteArray());
         return ByteStringHelper.FromHexString(signature.ToHex());
@@ -60,7 +60,8 @@ public partial class CAContractTests
         var verificationTime = DateTime.UtcNow;
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
-            ContractAdmin = DefaultAddress
+            ContractAdmin = DefaultAddress,
+            ZeroSmartAddress = Address.FromBase58(CAContractConstants.ZeroSmartAddress)
         });
         {
             await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
@@ -92,7 +93,8 @@ public partial class CAContractTests
             _verifierId2 = verifierServers.VerifierServers[2].Id;
         }
         var salt = Guid.NewGuid().ToString("N");
-        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0,salt);
+        var operationType = Convert.ToInt32(OperationType.CreateCaholder).ToString();
+        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(10), _guardian, 0,salt,operationType);
         await CaContractStub.CreateCAHolder.SendAsync(new CreateCAHolderInput
         {
             GuardianApproved = new GuardianInfo
@@ -103,7 +105,7 @@ public partial class CAContractTests
                 {
                     Id = _verifierId,
                     Signature = signature,
-                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt}"
+                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(10)},{VerifierAddress.ToBase58()},{salt},{operationType}"
                 }
             },
             ManagerInfo = new ManagerInfo
@@ -144,7 +146,8 @@ public partial class CAContractTests
         var verificationTime = DateTime.UtcNow;
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
-            ContractAdmin = DefaultAddress
+            ContractAdmin = DefaultAddress,
+            ZeroSmartAddress = Address.FromBase58(CAContractConstants.ZeroSmartAddress)
         });
         {
             await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
@@ -175,8 +178,9 @@ public partial class CAContractTests
             _verifierId1 = verifierServers.VerifierServers[1].Id;
             _verifierId2 = verifierServers.VerifierServers[2].Id;
         }
+        var operationType = Convert.ToInt32(OperationType.CreateCaholder).ToString();
         var salt = Guid.NewGuid().ToString("N");
-        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0,salt);
+        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0,salt,operationType);
         await CaContractStub.CreateCAHolder.SendAsync(new CreateCAHolderInput
         {
             GuardianApproved = new GuardianInfo
@@ -187,7 +191,7 @@ public partial class CAContractTests
                 {
                     Id = _verifierId,
                     Signature = signature,
-                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt}"
+                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType}"
                 }
             },
             ManagerInfo = new ManagerInfo
@@ -211,11 +215,11 @@ public partial class CAContractTests
         var verificationTime = DateTime.UtcNow;
         var caHash = await CreateHolder();
         var salt = Guid.NewGuid().ToString("N");
-        var salt1 = Guid.NewGuid().ToString("N");
-        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0,salt);
+        var operationType = Convert.ToInt32(OperationType.AddGuardian).ToString();
+        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0,salt,operationType);
         var signature1 =
-            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime, _guardian1, 0,salt1);
-        var verificationDoc = $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt}";
+            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime.AddSeconds(5), _guardian1, 0,salt,operationType);
+        var verificationDoc = $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType}";
         var guardianApprove = new List<GuardianInfo>
         {
             new GuardianInfo
@@ -242,7 +246,7 @@ public partial class CAContractTests
                     Id = _verifierId1,
                     Signature = signature1,
                     VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{salt1}"
+                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(5)},{VerifierAddress1.ToBase58()},{salt},{operationType}"
                 }
             },
             GuardiansApproved = { guardianApprove }
@@ -265,10 +269,11 @@ public partial class CAContractTests
     {
         var verificationTime = DateTime.UtcNow;
         var caHash = await CreateHolder();
-        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0,Salt);
+        var operationType = Convert.ToInt32(OperationType.AddGuardian).ToString();
+        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(1), _guardian, 0,Salt,operationType);
         var signature1 =
-            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime, _guardian1, 0,Salt);
-        var verificationDoc = $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{Salt}";
+            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime.AddSeconds(2), _guardian1, 0,Salt,operationType);
+        var verificationDoc = $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{Salt},{operationType}";
         var guardianApprove = new List<GuardianInfo>
         {
             new GuardianInfo
@@ -301,7 +306,7 @@ public partial class CAContractTests
             GuardiansApproved = { guardianApprove }
         };
         var executionResult = await CaContractStubManagerInfo1.AddGuardian.SendWithExceptionAsync(input);
-        executionResult.TransactionResult.Error.ShouldContain("Not Satisfied criterion to create a CA Holder");
+        executionResult.TransactionResult.Error.ShouldContain("Guardian to add verification failed.");
     }
 
 
@@ -312,12 +317,12 @@ public partial class CAContractTests
         var salt = Guid.NewGuid().ToString("N");
         var salt1 = Guid.NewGuid().ToString("N");
         var salt2 = Guid.NewGuid().ToString("N");
-        
-        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0,salt);
+        var operationType = Convert.ToInt32(OperationType.AddGuardian).ToString();
+        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(1), _guardian, 0,salt,operationType);
         var signature1 =
-            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime, _guardian1, 0,salt1);
+            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime.AddSeconds(2), _guardian1, 0,salt1,operationType);
         var signature2 =
-            GenerateSignature(VerifierKeyPair2, VerifierAddress2, verificationTime, _guardian1, 0,salt2);
+            GenerateSignature(VerifierKeyPair2, VerifierAddress2, verificationTime.AddSeconds(3), _guardian1, 0,salt2,operationType);
         var caHash = await AddGuardianTest();
         var guardianApprove = new List<GuardianInfo>
         {
@@ -329,7 +334,7 @@ public partial class CAContractTests
                 {
                     Id = _verifierId,
                     Signature = signature,
-                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt}"
+                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(1)},{VerifierAddress.ToBase58()},{salt},{operationType}"
                 }
             },
             new GuardianInfo
@@ -341,7 +346,7 @@ public partial class CAContractTests
                     Id = _verifierId1,
                     Signature = signature1,
                     VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{salt1}"
+                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(2)},{VerifierAddress1.ToBase58()},{salt1},{operationType}"
                 }
             },
         };
@@ -357,7 +362,7 @@ public partial class CAContractTests
                     Id = _verifierId2,
                     Signature = signature2,
                     VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress2.ToBase58()},{salt2}"
+                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(3)},{VerifierAddress2.ToBase58()},{salt2},{operationType}"
                 }
             },
             GuardiansApproved = { guardianApprove }
@@ -381,18 +386,15 @@ public partial class CAContractTests
         var caHash = await AddGuardian();
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
-        var salt1 = Guid.NewGuid().ToString("N");
-        var salt2 = Guid.NewGuid().ToString("N");
-        var salt3 = Guid.NewGuid().ToString("N");
-        var salt4 = Guid.NewGuid().ToString("N");
-        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0,salt);
+        var operationType = Convert.ToInt32(OperationType.AddGuardian).ToString();
+        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(100), _guardian, 0,salt,operationType);
         var signature1 =
-            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime, _guardian1, 0,salt1);
+            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime.AddSeconds(200), _guardian1, 0,salt,operationType);
         var signature2 =
-            GenerateSignature(VerifierKeyPair2, VerifierAddress2, verificationTime, _guardian1, 0,salt2);
-        var signature3 = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian2, 0,salt3);
+            GenerateSignature(VerifierKeyPair2, VerifierAddress2, verificationTime.AddSeconds(300), _guardian1, 0,salt,operationType);
+        var signature3 = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(400), _guardian2, 0,salt,operationType);
         var signature4 =
-            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime, _guardian2, 0,salt4);
+            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime.AddSeconds(500), _guardian2, 0,salt,operationType);
         var guardianApprove = new List<GuardianInfo>
         {
             new GuardianInfo
@@ -403,7 +405,7 @@ public partial class CAContractTests
                 {
                     Id = _verifierId,
                     Signature = signature,
-                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt}"
+                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(100)},{VerifierAddress.ToBase58()},{salt},{operationType}"
                 }
             },
             new GuardianInfo
@@ -415,7 +417,7 @@ public partial class CAContractTests
                     Id = _verifierId1,
                     Signature = signature1,
                     VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{salt1}"
+                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(200)},{VerifierAddress1.ToBase58()},{salt},{operationType}"
                 }
             },
             new GuardianInfo
@@ -426,7 +428,7 @@ public partial class CAContractTests
                 {
                     Id = _verifierId,
                     Signature = signature3,
-                    VerificationDoc = $"{0},{_guardian2.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt3}"
+                    VerificationDoc = $"{0},{_guardian2.ToHex()},{verificationTime.AddSeconds(400)},{VerifierAddress.ToBase58()},{salt},{operationType}"
                 }
             }
         };
@@ -442,7 +444,7 @@ public partial class CAContractTests
                     Id = _verifierId1,
                     Signature = signature4,
                     VerificationDoc =
-                        $"{0},{_guardian2.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{salt4}"
+                        $"{0},{_guardian2.ToHex()},{verificationTime.AddSeconds(500)},{VerifierAddress1.ToBase58()},{salt},{operationType}"
                 }
             },
             GuardiansApproved = { guardianApprove }
@@ -465,16 +467,13 @@ public partial class CAContractTests
         var caHash = await AddGuardianTest_RepeatedGuardianIdentifierHash_DifferentVerifier();
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
-        var salt1 = Guid.NewGuid().ToString("N");
-        var salt2 = Guid.NewGuid().ToString("N");
-        var salt3 = Guid.NewGuid().ToString("N");
-        
-        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0,salt);
+        var operationType = Convert.ToInt32(OperationType.AddGuardian).ToString();
+        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(11), _guardian, 0,salt,operationType);
         var signature1 =
-            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime, _guardian1, 0,salt1);
+            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime.AddSeconds(12), _guardian1, 0,salt,operationType);
         var signature2 =
-            GenerateSignature(VerifierKeyPair2, VerifierAddress2, verificationTime, _guardian1, 0,salt2);
-        var signature3 = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian2, 0,salt3);
+            GenerateSignature(VerifierKeyPair2, VerifierAddress2, verificationTime.AddSeconds(13), _guardian1, 0,salt,operationType);
+        var signature3 = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(14), _guardian2, 0,salt,operationType);
         var guardianApprove = new List<GuardianInfo>
         {
             new GuardianInfo
@@ -485,7 +484,7 @@ public partial class CAContractTests
                 {
                     Id = _verifierId,
                     Signature = signature,
-                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt}"
+                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(11)},{VerifierAddress.ToBase58()},{salt},{operationType}"
                 }
             },
             new GuardianInfo
@@ -497,7 +496,7 @@ public partial class CAContractTests
                     Id = _verifierId1,
                     Signature = signature1,
                     VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{salt1}"
+                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(12)},{VerifierAddress1.ToBase58()},{salt},{operationType}"
                 }
             },
             new GuardianInfo
@@ -509,7 +508,7 @@ public partial class CAContractTests
                     Id = _verifierId2,
                     Signature = signature2,
                     VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress2.ToBase58()},{salt2}"
+                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(13)},{VerifierAddress2.ToBase58()},{salt},{operationType}"
                 }
             }
         };
@@ -524,7 +523,7 @@ public partial class CAContractTests
                 {
                     Id = _verifierId,
                     Signature = signature3,
-                    VerificationDoc = $"{0},{_guardian2.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt3}"
+                    VerificationDoc = $"{0},{_guardian2.ToHex()},{verificationTime.AddSeconds(14)},{VerifierAddress.ToBase58()},{salt},{operationType}"
                 }
             },
             GuardiansApproved = { guardianApprove }
@@ -615,10 +614,10 @@ public partial class CAContractTests
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
         var salt1 = Guid.NewGuid().ToString("N");
-        
-        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian1, 0,salt);
+        var operationType = Convert.ToInt32(OperationType.AddGuardian).ToString();
+        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian1, 0,salt,operationType);
         var signature1 =
-            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime, _guardian1, 0,salt1);
+            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime.AddSeconds(1), _guardian1, 0,salt1,operationType);
         var guardianApprove = new List<GuardianInfo>
         {
             new GuardianInfo
@@ -629,7 +628,7 @@ public partial class CAContractTests
                 {
                     Id = _verifierId,
                     Signature = signature,
-                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt}"
+                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType}"
                 }
             }
         };
@@ -645,7 +644,7 @@ public partial class CAContractTests
                     Id = _verifierId1,
                     Signature = signature1,
                     VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{salt1}"
+                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(1)},{VerifierAddress1.ToBase58()},{salt1},{operationType}"
                 }
             },
             GuardiansApproved = { guardianApprove }
@@ -661,10 +660,10 @@ public partial class CAContractTests
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
         var salt1 = Guid.NewGuid().ToString("N");
-        
-        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian1, 0,salt);
+        var operationType = Convert.ToInt32(OperationType.AddGuardian).ToString();
+        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian1, 0,salt,operationType);
         var signature1 =
-            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime, _guardian1, 0,salt1);
+            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime.AddSeconds(1), _guardian1, 0,salt1,operationType);
         var guardianApprove = new List<GuardianInfo>
         {
             new GuardianInfo
@@ -675,7 +674,7 @@ public partial class CAContractTests
                 {
                     Id = _verifierId,
                     Signature = signature,
-                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt}"
+                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType}"
                 }
             }
         };
@@ -690,7 +689,7 @@ public partial class CAContractTests
                 {
                     Id = _verifierId,
                     Signature = signature1,
-                    VerificationDoc = $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt1}"
+                    VerificationDoc = $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(1)},{VerifierAddress.ToBase58()},{salt1},{operationType}"
                 }
             },
             GuardiansApproved = { guardianApprove }
@@ -706,9 +705,10 @@ public partial class CAContractTests
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
         var salt1 = Guid.NewGuid().ToString("N");
-        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian1, 0,salt);
+        var operationType = Convert.ToInt32(OperationType.AddGuardian).ToString();
+        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian1, 0,salt,operationType);
         var signature1 =
-            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime, _guardian1, 0,salt1);
+            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime.AddSeconds(1), _guardian1, 0,salt1,operationType);
 
         {
             var holderInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput
@@ -730,7 +730,7 @@ public partial class CAContractTests
                         Id = _verifierId,
                         Signature = signature,
                         VerificationDoc =
-                            $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt}"
+                            $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType}"
                     }
                 }
             };
@@ -746,7 +746,7 @@ public partial class CAContractTests
                         Id = _verifierId1,
                         Signature = signature1,
                         VerificationDoc =
-                            $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt1}"
+                            $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(1)},{VerifierAddress.ToBase58()},{salt1},{operationType}"
                     }
                 },
                 GuardiansApproved = { guardianApprove }
@@ -769,9 +769,10 @@ public partial class CAContractTests
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
         var salt1 = Guid.NewGuid().ToString("N");
-        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian1, 0,salt);
+        var operationType = Convert.ToInt32(OperationType.AddGuardian).ToString();
+        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian1, 0,salt,operationType);
         var signature1 =
-            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime, _guardian1, 0,salt1);
+            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime.AddSeconds(1), _guardian1, 0,salt1,operationType);
         var guardianApprove = new List<GuardianInfo>
         {
             new GuardianInfo
@@ -797,7 +798,7 @@ public partial class CAContractTests
                 {
                     Id = _verifierId1,
                     VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt1}",
+                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(1)},{VerifierAddress.ToBase58()},{salt1},{operationType}",
                     Signature = signature1
                 }
             },
@@ -817,9 +818,10 @@ public partial class CAContractTests
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
         var salt1 = Guid.NewGuid().ToString("N");
-        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian1, 0,salt);
+        var operationType = Convert.ToInt32(OperationType.AddGuardian).ToString();
+        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian1, 0,salt,operationType);
         var signature1 =
-            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime, _guardian1, 0,salt1);
+            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime.AddSeconds(1), _guardian1, 0,salt1,operationType);
         var guardianApprove = new List<GuardianInfo>
         {
             new GuardianInfo
@@ -830,7 +832,7 @@ public partial class CAContractTests
                 {
                     Id = _verifierId,
                     Signature = signature,
-                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt}",
+                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType}",
                 }
             }
         };
@@ -846,7 +848,7 @@ public partial class CAContractTests
                         Id = _verifierId1,
                         Signature = signature1,
                         VerificationDoc =
-                            $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt1}",
+                            $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(1)},{VerifierAddress.ToBase58()},{salt1},{operationType}",
                     }
                 },
                 GuardiansApproved =
@@ -880,7 +882,7 @@ public partial class CAContractTests
                         Id = _verifierId1,
                         Signature = signature1,
                         VerificationDoc =
-                            $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt1}",
+                            $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt1},{operationType}",
                     }
                 }
             });
@@ -894,8 +896,9 @@ public partial class CAContractTests
         var verificationTime = DateTime.UtcNow;
         var caHash = await CreateHolder();
         var salt = Guid.NewGuid().ToString("N");
+        var operationType = Convert.ToInt32(OperationType.AddGuardian).ToString();
         var signature1 =
-            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime, _guardian1, 0,salt);
+            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime.AddSeconds(1), _guardian1, 0,salt,operationType);
         var guardianApprove = new List<GuardianInfo>
         {
             new GuardianInfo
@@ -906,7 +909,7 @@ public partial class CAContractTests
                 {
                     Id = _verifierId1,
                     Signature = signature1,
-                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{salt}"
+                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{salt},{operationType}"
                 }
             }
         };
@@ -922,7 +925,7 @@ public partial class CAContractTests
                     Id = _verifierId1,
                     Signature = signature1,
                     VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{salt}"
+                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(1)},{VerifierAddress1.ToBase58()},{salt},{operationType}"
                 }
             },
             GuardiansApproved = { guardianApprove }
@@ -937,11 +940,18 @@ public partial class CAContractTests
         var caHash = await AddGuardianTest();
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
-        var salt1 = Guid.NewGuid().ToString("N");
-        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0,salt);
-        var signature1 =
-            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime, _guardian1, 0,salt1);
-        var guardianApprove = new List<GuardianInfo>
+        var operationType = Convert.ToInt32(OperationType.RemoveGuardian).ToString();
+        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(6), _guardian, 0,salt,operationType);
+        {
+            var holderInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput
+            {
+                CaHash = caHash
+            });
+            holderInfo.GuardianList.Guardians.Count.ShouldBe(2);
+            holderInfo.GuardianList.Guardians.Last().IdentifierHash.ShouldBe(_guardian1);
+        }
+        var removeOperationType = Convert.ToInt32(OperationType.RemoveGuardian).ToString();
+        var guardianApprove1 = new List<GuardianInfo>
         {
             new GuardianInfo
             {
@@ -951,18 +961,10 @@ public partial class CAContractTests
                 {
                     Id = _verifierId,
                     Signature = signature,
-                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt}",
+                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(6)},{VerifierAddress.ToBase58()},{salt},{removeOperationType}",
                 }
             }
         };
-        {
-            var holderInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput
-            {
-                CaHash = caHash
-            });
-            holderInfo.GuardianList.Guardians.Count.ShouldBe(2);
-            holderInfo.GuardianList.Guardians.Last().IdentifierHash.ShouldBe(_guardian1);
-        }
         await CaContractStubManagerInfo1.RemoveGuardian.SendAsync(new RemoveGuardianInput
         {
             CaHash = caHash,
@@ -975,7 +977,7 @@ public partial class CAContractTests
                     Id = _verifierId1
                 }
             },
-            GuardiansApproved = { guardianApprove }
+            GuardiansApproved = { guardianApprove1 }
         });
         {
             var holderInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput
@@ -994,13 +996,10 @@ public partial class CAContractTests
         var caHash = await AddGuardianTest_RepeatedGuardianIdentifierHash_DifferentVerifier();
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
-        var salt1 = Guid.NewGuid().ToString("N");
-        var salt2 = Guid.NewGuid().ToString("N");
-        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0,salt);
-        var signature1 =
-            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime, _guardian1, 0,salt1);
+        var operationType = Convert.ToInt32(OperationType.RemoveGuardian).ToString();
+        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(30), _guardian, 0,salt,operationType);
         var signature2 =
-            GenerateSignature(VerifierKeyPair2, VerifierAddress2, verificationTime, _guardian1, 0,salt2);
+            GenerateSignature(VerifierKeyPair2, VerifierAddress2, verificationTime.AddSeconds(20), _guardian1, 0,salt,operationType);
         var guardianApprove = new List<GuardianInfo>
         {
             new ()
@@ -1011,7 +1010,7 @@ public partial class CAContractTests
                 {
                     Id = _verifierId,
                     Signature = signature,
-                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt}"
+                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(30)},{VerifierAddress.ToBase58()},{salt},{operationType}"
                 }
             },
             new ()
@@ -1023,7 +1022,7 @@ public partial class CAContractTests
                     Id = _verifierId2,
                     Signature = signature2,
                     VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress2.ToBase58()},{salt2}"
+                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(20)},{VerifierAddress2.ToBase58()},{salt},{operationType}"
                 }
             }
         };
@@ -1077,9 +1076,10 @@ public partial class CAContractTests
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
         var salt1 = Guid.NewGuid().ToString("N");
-        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0,salt);
+        var operationType = Convert.ToInt32(OperationType.RemoveGuardian).ToString();
+        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0,salt,operationType);
         var signature1 =
-            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime, _guardian1, 0,salt1);
+            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime.AddSeconds(1), _guardian1, 0,salt1,operationType);
         var guardianApprove = new List<GuardianInfo>
         {
             new GuardianInfo
@@ -1091,7 +1091,7 @@ public partial class CAContractTests
                     Id = _verifierId1,
                     Signature = signature1,
                     VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt1}",
+                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(1)},{VerifierAddress.ToBase58()},{salt1},{operationType}",
                 }
             }
         };
@@ -1119,10 +1119,10 @@ public partial class CAContractTests
         var caHash = await RemoveGuardianTest();
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
-        var salt1 = Guid.NewGuid().ToString("N");
-        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian1, 0,salt);
+        var operationType = Convert.ToInt32(OperationType.RemoveGuardian).ToString();
+        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(6), _guardian1, 0,salt,operationType);
         var signature1 =
-            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime, _guardian1, 0,salt1);
+            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime.AddSeconds(4), _guardian1, 0,salt,operationType);
         var guardianApprove = new List<GuardianInfo>
         {
             new GuardianInfo
@@ -1134,7 +1134,7 @@ public partial class CAContractTests
                     Id = _verifierId,
                     Signature = signature,
                     VerificationDoc =
-                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{salt}",
+                        $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(6)},{VerifierAddress1.ToBase58()},{salt},{operationType}",
                 }
             }
         };
@@ -1158,7 +1158,7 @@ public partial class CAContractTests
                     Id = _verifierId1,
                     Signature = signature1,
                     VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{salt1}",
+                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(4)},{VerifierAddress1.ToBase58()},{salt},{operationType}",
                 }
             },
             GuardiansApproved = { guardianApprove }
@@ -1179,9 +1179,10 @@ public partial class CAContractTests
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
         var salt1 = Guid.NewGuid().ToString("N");
-        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian1, 0,salt);
+        var operationType = Convert.ToInt32(OperationType.RemoveGuardian).ToString();
+        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian1, 0,salt,operationType);
         var signature1 =
-            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime, _guardian1, 0,salt1);
+            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime.AddSeconds(1), _guardian1, 0,salt1,operationType);
         var guardianApprove = new List<GuardianInfo>
         {
             new GuardianInfo
@@ -1193,7 +1194,7 @@ public partial class CAContractTests
                     Id = _verifierId,
                     Signature = signature,
                     VerificationDoc =
-                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{salt}",
+                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{salt},{operationType}",
                 }
             }
         };
@@ -1209,7 +1210,7 @@ public partial class CAContractTests
                     Id = _verifierId1,
                     Signature = signature1,
                     VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{salt1}",
+                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(1)},{VerifierAddress1.ToBase58()},{salt1},{operationType}",
                 }
             },
             GuardiansApproved =
@@ -1228,9 +1229,10 @@ public partial class CAContractTests
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
         var salt1 = Guid.NewGuid().ToString("N");
-        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian1, 0,salt);
+        var operationType = Convert.ToInt32(OperationType.RemoveGuardian).ToString();
+        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian1, 0,salt,operationType);
         var signature1 =
-            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime, _guardian1, 0,salt1);
+            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime, _guardian1, 0,salt1,operationType);
         var guardianApprove = new List<GuardianInfo>
         {
             new GuardianInfo
@@ -1241,7 +1243,7 @@ public partial class CAContractTests
                 {
                     Id = _verifierId,
                     Signature = signature,
-                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt}",
+                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType}",
                 }
             }
         };
@@ -1299,13 +1301,13 @@ public partial class CAContractTests
         var caHash = await AddGuardianTest_RepeatedGuardianIdentifierHash_DifferentVerifier();
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
-        var salt1 = Guid.NewGuid().ToString("N");
-        var salt2 = Guid.NewGuid().ToString("N");
-        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0,salt);
+        var removeOperationType = Convert.ToInt32(OperationType.RemoveGuardian).ToString();
+        var addOperationType = Convert.ToInt32(OperationType.AddGuardian).ToString();
+        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(6), _guardian, 0,salt,removeOperationType);
         var signature1 =
-            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime, _guardian1, 0,salt1);
+            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime, _guardian1, 0,salt,addOperationType);
         var signature2 =
-            GenerateSignature(VerifierKeyPair2, VerifierAddress2, verificationTime, _guardian1, 0,salt2);
+            GenerateSignature(VerifierKeyPair2, VerifierAddress2, verificationTime, _guardian1, 0,salt,addOperationType);
         List<GuardianInfo> guardianApprove;
         {
             guardianApprove = new List<GuardianInfo>
@@ -1319,7 +1321,7 @@ public partial class CAContractTests
                         Id = _verifierId,
                         Signature = signature,
                         VerificationDoc =
-                            $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt}",
+                            $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(6)},{VerifierAddress.ToBase58()},{salt},{removeOperationType}",
                     }
                 },
                 new GuardianInfo
@@ -1331,7 +1333,7 @@ public partial class CAContractTests
                         Id = _verifierId2,
                         Signature = signature2,
                         VerificationDoc =
-                            $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress2.ToBase58()},{salt2}",
+                            $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(7)},{VerifierAddress2.ToBase58()},{salt},{removeOperationType}",
                     }
                 }
             };
@@ -1369,9 +1371,9 @@ public partial class CAContractTests
                 "Cannot remove a Guardian for login, to remove it, unset it first.");
             
             
-            var signature4 = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(5), _guardian, 0,salt);
+            var signature4 = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(5), _guardian, 0,salt,removeOperationType);
             var signature5 =
-                GenerateSignature(VerifierKeyPair2, VerifierAddress2, verificationTime.AddSeconds(5), _guardian1, 0,salt2);
+                GenerateSignature(VerifierKeyPair2, VerifierAddress2, verificationTime.AddSeconds(5), _guardian1, 0,salt,removeOperationType);
             var guardianApprove1 = new List<GuardianInfo>
             {
                 new GuardianInfo
@@ -1383,7 +1385,7 @@ public partial class CAContractTests
                         Id = _verifierId,
                         Signature = signature4,
                         VerificationDoc =
-                            $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(5)},{VerifierAddress.ToBase58()},{salt}",
+                            $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(5)},{VerifierAddress.ToBase58()},{salt},{removeOperationType}",
                     }
                 },
                 new GuardianInfo
@@ -1395,7 +1397,7 @@ public partial class CAContractTests
                         Id = _verifierId2,
                         Signature = signature5,
                         VerificationDoc =
-                            $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(5)},{VerifierAddress2.ToBase58()},{salt2}",
+                            $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(5)},{VerifierAddress2.ToBase58()},{salt},{removeOperationType}",
                     }
                 }
             };
@@ -1467,7 +1469,7 @@ public partial class CAContractTests
                         Id = _verifierId,
                         Signature = signature,
                         VerificationDoc =
-                            $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt}",
+                            $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(6)},{VerifierAddress.ToBase58()},{salt},{removeOperationType}",
                     }
                 }
             };
@@ -1504,7 +1506,7 @@ public partial class CAContractTests
                         Id = _verifierId1,
                         Signature = signature1,
                         VerificationDoc =
-                            $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{salt1}",
+                            $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{salt},{removeOperationType}",
                     }
                 },
                 new GuardianInfo
@@ -1516,7 +1518,7 @@ public partial class CAContractTests
                         Id = _verifierId2,
                         Signature = signature2,
                         VerificationDoc =
-                            $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress2.ToBase58()},{salt2}",
+                            $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress2.ToBase58()},{salt},{removeOperationType}",
                     }
                 }
             };
@@ -1545,7 +1547,8 @@ public partial class CAContractTests
         var caHash = await AddGuardianTest();
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
-        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0,salt);
+        var operationType = Convert.ToInt32(OperationType.UpdateGuardian).ToString();
+        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(6), _guardian, 0,salt,operationType);
         var guardianApprove = new List<GuardianInfo>
         {
             new GuardianInfo
@@ -1556,7 +1559,7 @@ public partial class CAContractTests
                 {
                     Id = _verifierId,
                     Signature = signature,
-                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt}",
+                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(6)},{VerifierAddress.ToBase58()},{salt},{operationType}",
                 }
             }
         };
@@ -1598,13 +1601,12 @@ public partial class CAContractTests
     public async Task UpdateGuardianTest_LoginGuardian()
     {
         var caHash = await AddGuardianTest();
-        var verificationTime = DateTime.UtcNow;
+        var verificationTime = DateTime.UtcNow.AddMinutes(2);
         var salt = Guid.NewGuid().ToString("N");
-        var salt1 = Guid.NewGuid().ToString("N");
-        var salt2 = Guid.NewGuid().ToString("N");
-        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0,salt);
-        var signature1 = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian1, 0,salt1);
-        var signature2 = GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime, _guardian1, 0,salt2);
+        var operationType = Convert.ToInt32(OperationType.AddGuardian).ToString();
+        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0,salt,operationType);
+        var signature1 = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(15), _guardian1, 0,salt,operationType);
+        var signature2 = GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime.AddSeconds(30), _guardian1, 0,salt,operationType);
         var guardianApprove = new List<GuardianInfo>
         {
             new GuardianInfo
@@ -1615,7 +1617,7 @@ public partial class CAContractTests
                 {
                     Id = _verifierId,
                     Signature = signature,
-                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt}"
+                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType}",
                 }
             },
             new GuardianInfo
@@ -1627,7 +1629,7 @@ public partial class CAContractTests
                     Id = _verifierId1,
                     Signature = signature2,
                     VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{salt2}"
+                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(30)},{VerifierAddress1.ToBase58()},{salt},{operationType}"
                 }
             }
         };
@@ -1642,7 +1644,7 @@ public partial class CAContractTests
                 {
                     Id = _verifierId,
                     Signature = signature1,
-                    VerificationDoc = $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt1}"
+                    VerificationDoc = $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(15)},{VerifierAddress.ToBase58()},{salt},{operationType}"
                 }
             },
             GuardiansApproved = { guardianApprove }
@@ -1667,9 +1669,10 @@ public partial class CAContractTests
                 VerifierId = _verifierId
             }
         });
-        var signature3 = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(5), _guardian, 0,salt);
-        var signature4 = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(5), _guardian1, 0,salt1);
-        guardianApprove = new List<GuardianInfo>
+        var updateOperationType = Convert.ToInt32(OperationType.UpdateGuardian).ToString();
+        var signature3 = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(60), _guardian, 0,salt,updateOperationType);
+        var signature4 = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(70), _guardian1, 0,salt,updateOperationType);
+        var guardianApprove1 = new List<GuardianInfo>
         {
             new GuardianInfo
             {
@@ -1679,7 +1682,7 @@ public partial class CAContractTests
                 {
                     Id = _verifierId,
                     Signature = signature3,
-                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(5)},{VerifierAddress.ToBase58()},{salt}"
+                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(60)},{VerifierAddress.ToBase58()},{salt},{updateOperationType}"
                 }
             },
             new GuardianInfo
@@ -1690,7 +1693,7 @@ public partial class CAContractTests
                 {
                     Id = _verifierId,
                     Signature = signature4,
-                    VerificationDoc = $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(5)},{VerifierAddress.ToBase58()},{salt1}"
+                    VerificationDoc = $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(70)},{VerifierAddress.ToBase58()},{salt},{updateOperationType}"
                 }
             }
         };
@@ -1716,7 +1719,7 @@ public partial class CAContractTests
                     Id = _verifierId2
                 }
             },
-            GuardiansApproved = { guardianApprove }
+            GuardiansApproved = { guardianApprove1 }
         });
         var holderInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput
         {
@@ -1746,13 +1749,13 @@ public partial class CAContractTests
     public async Task UpdateGuardianTest_NotLoginGuardian()
     {
         var caHash = await AddGuardianTest();
-        var verificationTime = DateTime.UtcNow;
+        var verificationTime = DateTime.UtcNow.AddMinutes(2);
         var salt = Guid.NewGuid().ToString("N");
-        var salt1 = Guid.NewGuid().ToString("N");
-        var salt2 = Guid.NewGuid().ToString("N");
-        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0,salt);
-        var signature1 = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(1), _guardian1, 0,salt1);
-        var signature2 = GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime, _guardian1, 0,salt2);
+        var updateOperationType = Convert.ToInt32(OperationType.UpdateGuardian).ToString();
+        var addOperationType = Convert.ToInt32(OperationType.AddGuardian).ToString();
+        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0,salt,addOperationType);
+        var signature1 = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(1), _guardian1, 0,salt,addOperationType);
+        var signature2 = GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime, _guardian1, 0,salt,addOperationType);
         var guardianApprove = new List<GuardianInfo>
         {
             new GuardianInfo
@@ -1763,7 +1766,7 @@ public partial class CAContractTests
                 {
                     Id = _verifierId,
                     Signature = signature,
-                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt}"
+                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{addOperationType}"
                 }
             },
             new GuardianInfo
@@ -1775,7 +1778,7 @@ public partial class CAContractTests
                     Id = _verifierId1,
                     Signature = signature2,
                     VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{salt2}"
+                        $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{salt},{addOperationType}"
                 }
             }
         };
@@ -1790,7 +1793,7 @@ public partial class CAContractTests
                 {
                     Id = _verifierId,
                     Signature = signature1,
-                    VerificationDoc = $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(1)},{VerifierAddress.ToBase58()},{salt1}"
+                    VerificationDoc = $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(1)},{VerifierAddress.ToBase58()},{salt},{addOperationType}"
                 }
             },
             GuardiansApproved = { guardianApprove }
@@ -1805,35 +1808,9 @@ public partial class CAContractTests
                 VerifierId = _verifierId1
             }
         });
-        guardianApprove = new List<GuardianInfo>
-        {
-            new GuardianInfo
-            {
-                Type = GuardianType.OfEmail,
-                IdentifierHash = _guardian,
-                VerificationInfo = new VerificationInfo
-                {
-                    Id = _verifierId,
-                    Signature = signature,
-                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt}"
-                }
-            },
-            new GuardianInfo
-            {
-                Type = GuardianType.OfEmail,
-                IdentifierHash = _guardian1,
-                VerificationInfo = new VerificationInfo
-                {
-                    Id = _verifierId1,
-                    Signature = signature2,
-                    VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{salt2}"
-                }
-            }
-        };
-        
-        var signature3 = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(5), _guardian, 0,salt);
-        var signature4 = GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime.AddSeconds(5), _guardian1, 0,salt2);
+
+        var signature3 = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(5), _guardian, 0,salt,updateOperationType);
+        var signature4 = GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime.AddSeconds(5), _guardian1, 0,salt,updateOperationType);
         
         var guardianApprove1 = new List<GuardianInfo>
         {
@@ -1845,7 +1822,7 @@ public partial class CAContractTests
                 {
                     Id = _verifierId,
                     Signature = signature3,
-                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(5)},{VerifierAddress.ToBase58()},{salt}"
+                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(5)},{VerifierAddress.ToBase58()},{salt},{updateOperationType}"
                 }
             },
             new GuardianInfo
@@ -1857,7 +1834,7 @@ public partial class CAContractTests
                     Id = _verifierId1,
                     Signature = signature4,
                     VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(5)},{VerifierAddress1.ToBase58()},{salt2}"
+                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(5)},{VerifierAddress1.ToBase58()},{salt},{updateOperationType}"
                 }
             }
         };
@@ -1918,12 +1895,12 @@ public partial class CAContractTests
         var salt = Guid.NewGuid().ToString("N");
         var salt1 = Guid.NewGuid().ToString("N");
         var salt2 = Guid.NewGuid().ToString("N");
-        
-        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0,salt);
+        var operationType = Convert.ToInt32(OperationType.UpdateGuardian).ToString();
+        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0,salt,operationType);
         var signature1 =
-            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime, _guardian1, 0,salt1);
+            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime, _guardian1, 0,salt1,operationType);
         var signature2 =
-            GenerateSignature(VerifierKeyPair2, VerifierAddress2, verificationTime, _guardian1, 0,salt2);
+            GenerateSignature(VerifierKeyPair2, VerifierAddress2, verificationTime, _guardian1, 0,salt2,operationType);
 
         var guardianApprove = new List<GuardianInfo>
         {
@@ -1935,7 +1912,7 @@ public partial class CAContractTests
                 {
                     Id = _verifierId,
                     Signature = signature,
-                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt}",
+                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType}",
                 }
             },
             new GuardianInfo
@@ -1947,7 +1924,7 @@ public partial class CAContractTests
                     Id = _verifierId1,
                     Signature = signature1,
                     VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{salt1}",
+                        $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{salt1},{operationType}",
                 }
             },
             new GuardianInfo
@@ -1959,7 +1936,7 @@ public partial class CAContractTests
                     Id = _verifierId2,
                     Signature = signature2,
                     VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress2.ToBase58()},{salt2}",
+                        $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress2.ToBase58()},{salt2},{operationType}",
                 }
             },
         };
@@ -2007,11 +1984,12 @@ public partial class CAContractTests
         var salt = Guid.NewGuid().ToString("N");
         var salt1 = Guid.NewGuid().ToString("N");
         var salt2 = Guid.NewGuid().ToString("N");
-        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0,salt);
+        var operationType = Convert.ToInt32(OperationType.UpdateGuardian).ToString();
+        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0,salt, operationType);
         var signature1 =
-            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime, _guardian1, 0,salt1);
+            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime, _guardian1, 0,salt1, operationType);
         var signature2 =
-            GenerateSignature(VerifierKeyPair2, VerifierAddress2, verificationTime, _guardian1, 0,salt2);
+            GenerateSignature(VerifierKeyPair2, VerifierAddress2, verificationTime, _guardian1, 0,salt2, operationType);
 
         var guardianApprove = new List<GuardianInfo>
         {
@@ -2023,7 +2001,7 @@ public partial class CAContractTests
                 {
                     Id = _verifierId,
                     Signature = signature,
-                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt}",
+                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType}",
                 }
             },
             new GuardianInfo
@@ -2035,7 +2013,7 @@ public partial class CAContractTests
                     Id = _verifierId1,
                     Signature = signature1,
                     VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{salt1}",
+                        $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{salt1},{operationType}",
                 }
             },
         };
@@ -2187,11 +2165,12 @@ public partial class CAContractTests
         var salt = Guid.NewGuid().ToString("N");
         var salt1 = Guid.NewGuid().ToString("N");
         var salt2 = Guid.NewGuid().ToString("N");
-        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0,salt);
+        var operationType = Convert.ToInt32(OperationType.UpdateGuardian).ToString();
+        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0,salt,operationType);
         var signature1 =
-            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime, _guardian1, 0,salt1);
+            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime, _guardian1, 0,salt1,operationType);
         var signature2 =
-            GenerateSignature(VerifierKeyPair2, VerifierAddress2, verificationTime, _guardian1, 0,salt2);
+            GenerateSignature(VerifierKeyPair2, VerifierAddress2, verificationTime, _guardian1, 0,salt2,operationType);
 
         var guardianApprove = new List<GuardianInfo>
         {
@@ -2203,7 +2182,7 @@ public partial class CAContractTests
                 {
                     Id = _verifierId,
                     Signature = signature,
-                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt}"
+                    VerificationDoc = $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType}"
                 }
             },
             new GuardianInfo

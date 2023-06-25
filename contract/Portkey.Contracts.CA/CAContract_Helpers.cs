@@ -4,6 +4,7 @@ using AElf;
 using AElf.CSharp.Core.Extension;
 using AElf.Types;
 using Google.Protobuf.WellKnownTypes;
+using Enum = Google.Protobuf.WellKnownTypes.Enum;
 
 namespace Portkey.Contracts.CA;
 
@@ -19,7 +20,7 @@ public partial class CAContract
         }
 
         var verifierDoc = verificationDoc.Split(",");
-        if (verifierDoc.Length != 5)
+        if (verifierDoc.Length != 6)
         {
             return false;
         }
@@ -35,10 +36,10 @@ public partial class CAContract
         }
 
         //Check VerifierDoc is Verified.
-        var salt = GetSaltFromVerificationDoc(guardianInfo.VerificationInfo!.VerificationDoc);
-        var verifierTime = GetVerifierTimeFromVerificationDoc(guardianInfo.VerificationInfo!.VerificationDoc);
         var verifierDocSaltMap = State.VerifierDocSaltMap;
-        if (verifierDocSaltMap[salt + verifierTime])
+
+        var key = GetKeyFromVerificationDoc(verifierDoc);
+        if (verifierDocSaltMap[key])
         {
             return false;
         }
@@ -78,9 +79,17 @@ public partial class CAContract
         return verificationDoc.Split(",")[4];
     }
 
-    private string GetVerifierTimeFromVerificationDoc(string verificationDoc)
+    private string GetOperationFromVerificationDoc(string verificationDoc)
     {
-        return verificationDoc.Split(",")[2];
+        var name = typeof(OperationType).GetEnumName(Convert.ToInt32(verificationDoc.Split(",")[5]));
+        return name;
+    }
+
+    private Hash GetKeyFromVerificationDoc(string[] verificationDoc)
+    {
+        return HashHelper.ConcatAndCompute(HashHelper.ComputeFrom(verificationDoc[2]),
+            HashHelper.ComputeFrom(verificationDoc[3]),
+            HashHelper.ComputeFrom(verificationDoc[1]));
     }
 
 

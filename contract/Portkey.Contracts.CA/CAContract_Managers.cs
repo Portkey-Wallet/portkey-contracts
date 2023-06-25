@@ -32,6 +32,7 @@ public partial class CAContract
         var guardianApprovedList = input.GuardiansApproved
             .DistinctBy(g => $"{g.Type}{g.IdentifierHash}{g.VerificationInfo.Id}")
             .ToList();
+        var methodName = nameof(SocialRecovery).ToLower();
         foreach (var guardian in guardianApprovedList)
         {
             //Whether the guardian exists in the holder info.
@@ -39,9 +40,10 @@ public partial class CAContract
             //Check the verifier signature and data of the guardian to be approved.
             var isApproved = CheckVerifierSignatureAndData(guardian);
             if (!isApproved) continue;
-            var salt = GetSaltFromVerificationDoc(guardian.VerificationInfo!.VerificationDoc);
-            var verifierTime = GetVerifierTimeFromVerificationDoc(guardian.VerificationInfo!.VerificationDoc);
-            State.VerifierDocSaltMap.Set(salt + verifierTime, true);
+            var keyHash = GetKeyFromVerificationDoc(guardian.VerificationInfo!.VerificationDoc.Split(","));
+            State.VerifierDocSaltMap.Set(keyHash, true);
+            var operationType = GetOperationFromVerificationDoc(guardian.VerificationInfo.VerificationDoc).ToLower();
+            Assert(operationType == methodName, "invalid operation type");
             guardianApprovedAmount++;
         }
 
@@ -131,9 +133,11 @@ public partial class CAContract
             //Check the verifier signature and data of the guardian to be approved.
             var isApproved = CheckVerifierSignatureAndData(guardian);
             if (!isApproved) continue;
-            var salt = GetSaltFromVerificationDoc(guardian.VerificationInfo.VerificationDoc);
-            var verifierTime = GetVerifierTimeFromVerificationDoc(guardian.VerificationInfo.VerificationDoc);
-            State.VerifierDocSaltMap.Set(salt + verifierTime, true);
+            var keyHash = GetKeyFromVerificationDoc(guardian.VerificationInfo.VerificationDoc.Split(","));
+            State.VerifierDocSaltMap.Set(keyHash, true);
+            var operationType = GetOperationFromVerificationDoc(guardian.VerificationInfo.VerificationDoc).ToLower();
+            var methodName = nameof(RemoveOtherManagerInfo).ToLower();
+            Assert(operationType == methodName, $"Invalid operation type {operationType}");
             guardianApprovedAmount++;
         }
 

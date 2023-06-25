@@ -15,7 +15,8 @@ public partial class CAContractTests
     {
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
-            ContractAdmin = DefaultAddress
+            ContractAdmin = DefaultAddress,
+            ZeroSmartAddress = Address.FromBase58(CAContractConstants.ZeroSmartAddress)
         });
         await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
         {
@@ -44,7 +45,8 @@ public partial class CAContractTests
     {
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
-            ContractAdmin = User1Address
+            ContractAdmin = User1Address,
+            ZeroSmartAddress = Address.FromBase58(CAContractConstants.ZeroSmartAddress)
         });
         var result = await CaContractStub.AddVerifierServerEndPoints.SendWithExceptionAsync(
             new AddVerifierServerEndPointsInput
@@ -60,7 +62,8 @@ public partial class CAContractTests
     {
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
-            ContractAdmin = DefaultAddress
+            ContractAdmin = DefaultAddress,
+            ZeroSmartAddress = Address.FromBase58(CAContractConstants.ZeroSmartAddress)
         });
         await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
         {
@@ -97,7 +100,8 @@ public partial class CAContractTests
     {
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
-            ContractAdmin = DefaultAddress
+            ContractAdmin = DefaultAddress,
+            ZeroSmartAddress = Address.FromBase58(CAContractConstants.ZeroSmartAddress)
         });
         await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
         {
@@ -142,7 +146,8 @@ public partial class CAContractTests
     {
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
-            ContractAdmin = DefaultAddress
+            ContractAdmin = DefaultAddress,
+            ZeroSmartAddress = Address.FromBase58(CAContractConstants.ZeroSmartAddress)
         });
         var result =
             await CaContractStub.AddVerifierServerEndPoints.SendWithExceptionAsync(
@@ -213,7 +218,8 @@ public partial class CAContractTests
     {
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
-            ContractAdmin = User1Address
+            ContractAdmin = User1Address,
+            ZeroSmartAddress = Address.FromBase58(CAContractConstants.ZeroSmartAddress)
         });
         var result = await CaContractStub.RemoveVerifierServerEndPoints.SendWithExceptionAsync(
             new RemoveVerifierServerEndPointsInput
@@ -228,7 +234,8 @@ public partial class CAContractTests
     {
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
-            ContractAdmin = DefaultAddress
+            ContractAdmin = DefaultAddress,
+            ZeroSmartAddress = Address.FromBase58(CAContractConstants.ZeroSmartAddress)
         });
         await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput()
         {
@@ -276,7 +283,8 @@ public partial class CAContractTests
     {
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
-            ContractAdmin = DefaultAddress
+            ContractAdmin = DefaultAddress,
+            ZeroSmartAddress = Address.FromBase58(CAContractConstants.ZeroSmartAddress)
         });
 
         var result =
@@ -312,7 +320,8 @@ public partial class CAContractTests
     {
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
-            ContractAdmin = DefaultAddress
+            ContractAdmin = DefaultAddress,
+            ZeroSmartAddress = Address.FromBase58(CAContractConstants.ZeroSmartAddress)
         });
 
         await CaContractStub.RemoveVerifierServer.SendAsync(new RemoveVerifierServerInput
@@ -361,7 +370,8 @@ public partial class CAContractTests
     {
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
-            ContractAdmin = User1Address
+            ContractAdmin = User1Address,
+            ZeroSmartAddress = Address.FromBase58(CAContractConstants.ZeroSmartAddress)
         });
         var result = await CaContractStub.RemoveVerifierServer.SendWithExceptionAsync(new RemoveVerifierServerInput
         {
@@ -385,7 +395,8 @@ public partial class CAContractTests
     {
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
-            ContractAdmin = DefaultAddress
+            ContractAdmin = DefaultAddress,
+            ZeroSmartAddress = Address.FromBase58(CAContractConstants.ZeroSmartAddress)
         });
         await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
         {

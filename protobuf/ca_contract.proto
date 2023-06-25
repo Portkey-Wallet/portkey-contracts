@@ -177,6 +177,7 @@ message LoginGuardianList {
 //Input
 message InitializeInput{
   aelf.Address contract_admin = 1;
+  aelf.Address zero_smart_address = 2;
 }
 
 message ControllerInput{
@@ -587,4 +588,14 @@ message ServerControllerRemoved {
 message AdminChanged {
   option (aelf.is_event) = true;
   aelf.Address address = 1 [(aelf.is_indexed) = true];
+}
+
+enum OperationType {
+  CreateCAHolder = 0;
+  SocialRecovery = 1;
+  AddGuardian = 2;
+  RemoveGuardian = 3;
+  UpdateGuardian = 4;
+  RemoveOtherManagerInfo = 5;
+  
 }
