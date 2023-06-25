@@ -36,7 +36,7 @@ public partial class CAContract
         }
 
         //Check VerifierDoc is Verified.
-        var verifierDocSaltMap = State.VerifierDocSaltMap;
+        var verifierDocSaltMap = State.VerifierDocMap;
 
         var key = GetKeyFromVerificationDoc(verifierDoc);
         if (verifierDocSaltMap[key])

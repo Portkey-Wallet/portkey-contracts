@@ -49,6 +49,6 @@ public partial class CAContractState : ContractState
     // public MappedState<string, MethodFees> TransactionFees { get; set; }
     public SingletonState<ContractDelegationFee> ContractDelegationFee { get; set; } 
     //
-    public MappedState<Hash,bool> VerifierDocSaltMap { get; set; }
+    public MappedState<Hash,bool> VerifierDocMap { get; set; }
 
 }

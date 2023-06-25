@@ -57,7 +57,7 @@ public partial class CAContract : CAContractContainer.CAContractBase
         //Check verifier signature.
         Assert(CheckVerifierSignatureAndData(input.GuardianApproved), "Guardian verification failed.");
         var keyHash = GetKeyFromVerificationDoc(input.GuardianApproved.VerificationInfo!.VerificationDoc.Split(","));
-        State.VerifierDocSaltMap.Set(keyHash, true);
+        State.VerifierDocMap.Set(keyHash, true);
 
         //Check operationType.
         var operationType = GetOperationFromVerificationDoc(input.GuardianApproved.VerificationInfo!.VerificationDoc)

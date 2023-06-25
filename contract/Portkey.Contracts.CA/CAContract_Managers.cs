@@ -41,7 +41,7 @@ public partial class CAContract
             var isApproved = CheckVerifierSignatureAndData(guardian);
             if (!isApproved) continue;
             var keyHash = GetKeyFromVerificationDoc(guardian.VerificationInfo!.VerificationDoc.Split(","));
-            State.VerifierDocSaltMap.Set(keyHash, true);
+            State.VerifierDocMap.Set(keyHash, true);
             var operationType = GetOperationFromVerificationDoc(guardian.VerificationInfo.VerificationDoc).ToLower();
             Assert(operationType == methodName, "invalid operation type");
             guardianApprovedAmount++;
@@ -134,7 +134,7 @@ public partial class CAContract
             var isApproved = CheckVerifierSignatureAndData(guardian);
             if (!isApproved) continue;
             var keyHash = GetKeyFromVerificationDoc(guardian.VerificationInfo.VerificationDoc.Split(","));
-            State.VerifierDocSaltMap.Set(keyHash, true);
+            State.VerifierDocMap.Set(keyHash, true);
             var operationType = GetOperationFromVerificationDoc(guardian.VerificationInfo.VerificationDoc).ToLower();
             var methodName = nameof(RemoveOtherManagerInfo).ToLower();
             Assert(operationType == methodName, $"Invalid operation type {operationType}");
