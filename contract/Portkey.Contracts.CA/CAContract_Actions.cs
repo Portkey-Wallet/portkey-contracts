@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using AElf;
 using AElf.Contracts.MultiToken;
@@ -60,13 +61,14 @@ public partial class CAContract : CAContractContainer.CAContractBase
         State.VerifierDocMap.Set(keyHash, true);
 
         //Check operationType.
-        var operationType = GetOperationFromVerificationDoc(input.GuardianApproved.VerificationInfo!.VerificationDoc)
-            .ToLower();
+        var operationType =
+            GetFromVerificationDoc(input.GuardianApproved.VerificationInfo!.VerificationDoc.Split(","), 5);
+        var operationTypeName = typeof(OperationType).GetEnumName(Convert.ToInt32(operationType))?.ToLower();
         var methodName = nameof(CreateCAHolder).ToLower();
-        Assert(operationType == methodName, "Invalid operation type.");
+        Assert(operationTypeName == methodName, "Invalid operation type.");
 
 
-        var salt = GetSaltFromVerificationDoc(input.GuardianApproved.VerificationInfo!.VerificationDoc);
+        var salt = GetFromVerificationDoc(input.GuardianApproved.VerificationInfo!.VerificationDoc.Split(","), 4);
         var guardian = new Guardian
         {
             IdentifierHash = input.GuardianApproved.IdentifierHash,

@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using AElf.CSharp.Core;
 using AElf.Sdk.CSharp;
@@ -31,9 +32,10 @@ public partial class CAContract
         Assert(CheckVerifierSignatureAndData(input.GuardianToAdd), "Guardian to add verification failed.");
         var key = GetKeyFromVerificationDoc(input.GuardianToAdd?.VerificationInfo.VerificationDoc.Split(","));
         State.VerifierDocMap.Set(key, true);
-        var operationType = GetOperationFromVerificationDoc(input.GuardianToAdd?.VerificationInfo.VerificationDoc).ToLower();
+        var operationType = GetFromVerificationDoc(input.GuardianToAdd?.VerificationInfo.VerificationDoc.Split(","), 5);
+        var operationName = typeof(OperationType).GetEnumName(Convert.ToInt32(operationType))?.ToLower();
         var methodName = nameof(AddGuardian).ToLower();
-        Assert(operationType == methodName, "Invalid operation type.");
+        Assert(operationName == methodName, "Invalid operation type.");
 
         var guardianApprovedAmount = 0;
         var guardianApprovedList = input.GuardiansApproved
@@ -48,8 +50,9 @@ public partial class CAContract
             if (!isApproved) continue;
             var keyHash = GetKeyFromVerificationDoc(guardian.VerificationInfo!.VerificationDoc.Split(","));
             State.VerifierDocMap.Set(keyHash, true);
-            var operationTypeStr = GetOperationFromVerificationDoc(guardian.VerificationInfo.VerificationDoc).ToLower();
-            Assert(operationTypeStr == methodName, "Invalid operation type.");
+            var operationTypeStr = GetFromVerificationDoc(guardian.VerificationInfo.VerificationDoc.Split(","), 5);
+            var operationTypeName = typeof(OperationType).GetEnumName(Convert.ToInt32(operationTypeStr))?.ToLower();
+            Assert(operationTypeName == methodName, "Invalid operation type.");
 
             guardianApprovedAmount++;
         }
@@ -63,7 +66,7 @@ public partial class CAContract
         var guardianAdded = new Guardian
         {
             IdentifierHash = input.GuardianToAdd!.IdentifierHash,
-            Salt = GetSaltFromVerificationDoc(input.GuardianToAdd.VerificationInfo.VerificationDoc),
+            Salt = GetFromVerificationDoc(input.GuardianToAdd.VerificationInfo.VerificationDoc.Split(","), 4),
             Type = input.GuardianToAdd.Type,
             VerifierId = input.GuardianToAdd.VerificationInfo.Id,
             IsLoginGuardian = false
@@ -130,8 +133,9 @@ public partial class CAContract
             var keyHash = GetKeyFromVerificationDoc(guardian.VerificationInfo.VerificationDoc.Split(","));
             State.VerifierDocMap.Set(keyHash, true);
             var operationType =
-                GetOperationFromVerificationDoc(guardian.VerificationInfo.VerificationDoc).ToLower();
-            Assert(operationType == methodName, "Invalid operation type.");
+                GetFromVerificationDoc(guardian.VerificationInfo.VerificationDoc.Split(","), 5);
+            var operationTypeName = typeof(OperationType).GetEnumName(Convert.ToInt32(operationType))?.ToLower();
+            Assert(operationTypeName == methodName, "Invalid operation type.");
             guardianApprovedAmount++;
         }
 
@@ -215,9 +219,10 @@ public partial class CAContract
             if (!isApproved) continue;
             var keyHash = GetKeyFromVerificationDoc(guardian.VerificationInfo.VerificationDoc.Split(","));
             State.VerifierDocMap.Set(keyHash, true);
-            var operationType = GetOperationFromVerificationDoc(guardian.VerificationInfo.VerificationDoc);
-            const string methodName = nameof(UpdateGuardian);
-            Assert(operationType == methodName, "Invalid operation type.");
+            var operationType = GetFromVerificationDoc(guardian.VerificationInfo.VerificationDoc.Split(","), 5);
+            var operationTypeName = typeof(OperationType).GetEnumName(Convert.ToInt32(operationType))?.ToLower();
+            var methodName = nameof(UpdateGuardian).ToLower();
+            Assert(operationTypeName == methodName, "Invalid operation type.");
             guardianApprovedAmount++;
         }
 

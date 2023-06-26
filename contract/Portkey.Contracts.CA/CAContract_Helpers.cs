@@ -74,16 +74,11 @@ public partial class CAContract
         return hash != null && !hash.Value.IsEmpty;
     }
 
-    private string GetSaltFromVerificationDoc(string verificationDoc)
+    private string GetFromVerificationDoc(string[] verificationDoc, int index)
     {
-        return verificationDoc.Split(",")[4];
+        return verificationDoc[index];
     }
 
-    private string GetOperationFromVerificationDoc(string verificationDoc)
-    {
-        var name = typeof(OperationType).GetEnumName(Convert.ToInt32(verificationDoc.Split(",")[5]));
-        return name;
-    }
 
     private Hash GetKeyFromVerificationDoc(string[] verificationDoc)
     {

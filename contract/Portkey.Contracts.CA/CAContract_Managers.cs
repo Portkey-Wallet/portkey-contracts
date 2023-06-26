@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using AElf.Contracts.MultiToken;
 using AElf.Sdk.CSharp;
@@ -42,8 +43,9 @@ public partial class CAContract
             if (!isApproved) continue;
             var keyHash = GetKeyFromVerificationDoc(guardian.VerificationInfo!.VerificationDoc.Split(","));
             State.VerifierDocMap.Set(keyHash, true);
-            var operationType = GetOperationFromVerificationDoc(guardian.VerificationInfo.VerificationDoc).ToLower();
-            Assert(operationType == methodName, "invalid operation type");
+            var operationType = GetFromVerificationDoc(guardian.VerificationInfo.VerificationDoc.Split(","),5);
+            var operationTypeName = typeof(OperationType).GetEnumName(Convert.ToInt32(operationType))?.ToLower();
+            Assert(operationTypeName == methodName, "invalid operation type");
             guardianApprovedAmount++;
         }
 
@@ -135,9 +137,10 @@ public partial class CAContract
             if (!isApproved) continue;
             var keyHash = GetKeyFromVerificationDoc(guardian.VerificationInfo.VerificationDoc.Split(","));
             State.VerifierDocMap.Set(keyHash, true);
-            var operationType = GetOperationFromVerificationDoc(guardian.VerificationInfo.VerificationDoc).ToLower();
+            var operationType = GetFromVerificationDoc(guardian.VerificationInfo.VerificationDoc.Split(","),5);
+            var operationTypeName = typeof(OperationType).GetEnumName(Convert.ToInt32(operationType))?.ToLower();
             var methodName = nameof(RemoveOtherManagerInfo).ToLower();
-            Assert(operationType == methodName, $"Invalid operation type {operationType}");
+            Assert(operationTypeName == methodName, $"Invalid operation type {operationType}");
             guardianApprovedAmount++;
         }
 
