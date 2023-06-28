@@ -298,9 +298,9 @@ public partial class CAContractTests
                 VerificationInfo = new VerificationInfo
                 {
                     Id = _verifierId1,
-                    Signature = signature1,
-                    VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{Salt}"
+                    Signature = signature,
+                    VerificationDoc = verificationDoc
+                        // $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{Salt},{operationType}"
                 }
             },
             GuardiansApproved = { guardianApprove }
