@@ -20,5 +20,4 @@ public static class CAContractConstants
 
     public const int ManagerMaxCount = 70;
     
-    public const string ZeroSmartAddress = "pykr77ft9UUKJZLVq15wCH8PinBSjVRQ12sD1Ayq92mKFsJ1i";
 }

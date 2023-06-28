@@ -25,6 +25,11 @@ public partial class CAContract
             return false;
         }
 
+        if (verifierDoc[5] == OperationType.Unknown.ToString("D"))
+        {
+            return false;
+        }
+
         //Check expired time 1h.
         var verificationTime = DateTime.SpecifyKind(Convert.ToDateTime(verifierDoc[2]), DateTimeKind.Utc);
         if (verificationTime.ToTimestamp().AddHours(1) <= Context.CurrentBlockTime ||
@@ -34,7 +39,7 @@ public partial class CAContract
         {
             return false;
         }
-
+        
         //Check VerifierDoc is Verified.
         var verifierDocSaltMap = State.VerifierDocMap;
 

@@ -17,7 +17,7 @@ public partial class CAContractTests : CAContractTestBase
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
             ContractAdmin = DefaultAddress,
-            ZeroSmartAddress = Address.FromBase58(CAContractConstants.ZeroSmartAddress)
+            ZeroSmartAddress = BasicContractZeroAddress
         });
         {
             await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
@@ -239,7 +239,7 @@ public partial class CAContractTests : CAContractTestBase
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
             ContractAdmin = DefaultAddress,
-            ZeroSmartAddress = Address.FromBase58(CAContractConstants.ZeroSmartAddress)
+            ZeroSmartAddress = BasicContractZeroAddress
         });
         var executionResult = await CaContractStub.CreateCAHolder.SendWithExceptionAsync(new CreateCAHolderInput
         {
@@ -259,7 +259,7 @@ public partial class CAContractTests : CAContractTestBase
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
             ContractAdmin = DefaultAddress,
-            ZeroSmartAddress = Address.FromBase58(CAContractConstants.ZeroSmartAddress)
+            ZeroSmartAddress = BasicContractZeroAddress
         });
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
@@ -294,7 +294,7 @@ public partial class CAContractTests : CAContractTestBase
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
             ContractAdmin = DefaultAddress,
-            ZeroSmartAddress = Address.FromBase58(CAContractConstants.ZeroSmartAddress)
+            ZeroSmartAddress = BasicContractZeroAddress
         });
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
@@ -466,7 +466,7 @@ public partial class CAContractTests : CAContractTestBase
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
             ContractAdmin = DefaultAddress,
-            ZeroSmartAddress = Address.FromBase58(CAContractConstants.ZeroSmartAddress)
+            ZeroSmartAddress = BasicContractZeroAddress
         });
 
         var result = await CaContractStub.Initialize.SendWithExceptionAsync(new InitializeInput

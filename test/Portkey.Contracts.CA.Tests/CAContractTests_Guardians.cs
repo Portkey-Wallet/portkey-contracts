@@ -61,7 +61,7 @@ public partial class CAContractTests
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
             ContractAdmin = DefaultAddress,
-            ZeroSmartAddress = Address.FromBase58(CAContractConstants.ZeroSmartAddress)
+            ZeroSmartAddress = BasicContractZeroAddress
         });
         {
             await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
@@ -147,7 +147,7 @@ public partial class CAContractTests
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
             ContractAdmin = DefaultAddress,
-            ZeroSmartAddress = Address.FromBase58(CAContractConstants.ZeroSmartAddress)
+            ZeroSmartAddress = BasicContractZeroAddress
         });
         {
             await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
@@ -264,16 +264,18 @@ public partial class CAContractTests
         return caHash;
     }
     
-     [Fact]
-    public async Task AddGuardianTest_failed_duplicate_verifiedDoc()
+    [Fact]
+     public async Task AddGuardianTest_failed_validateType()
     {
         var verificationTime = DateTime.UtcNow;
         var caHash = await CreateHolder();
+        var salt = Guid.NewGuid().ToString("N");
         var operationType = Convert.ToInt32(OperationType.AddGuardian).ToString();
-        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(1), _guardian, 0,Salt,operationType);
+        var removeOperationType = Convert.ToInt32(OperationType.RemoveGuardian).ToString();
+        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0,salt,operationType);
         var signature1 =
-            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime.AddSeconds(2), _guardian1, 0,Salt,operationType);
-        var verificationDoc = $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{Salt},{operationType}";
+            GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime.AddSeconds(5), _guardian1, 0,salt,operationType);
+        var verificationDoc = $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType}";
         var guardianApprove = new List<GuardianInfo>
         {
             new GuardianInfo
@@ -298,16 +300,95 @@ public partial class CAContractTests
                 VerificationInfo = new VerificationInfo
                 {
                     Id = _verifierId1,
-                    Signature = signature,
-                    VerificationDoc = verificationDoc
-                        // $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{Salt},{operationType}"
+                    Signature = signature1,
+                    VerificationDoc =
+                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(5)},{VerifierAddress1.ToBase58()},{salt},{removeOperationType}"
                 }
             },
+            
             GuardiansApproved = { guardianApprove }
         };
-        var executionResult = await CaContractStubManagerInfo1.AddGuardian.SendWithExceptionAsync(input);
-        executionResult.TransactionResult.Error.ShouldContain("Guardian to add verification failed.");
+        var result = await CaContractStubManagerInfo1.AddGuardian.SendWithExceptionAsync(input);
+        result.TransactionResult.Error.ShouldContain("Guardian to add verification failed.");
     }
+    
+    
+    
+    
+    
+    //  [Fact]
+    // public async Task AddGuardianTest_failed_duplicate_verifiedDoc()
+    // {
+    //     var verificationTime = DateTime.UtcNow;
+    //     var caHash = await CreateHolder();
+    //     var operationType = Convert.ToInt32(OperationType.AddGuardian).ToString();
+    //     var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddMinutes(1), _guardian, 0,Salt,operationType);
+    //     var signature1 =
+    //         GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime.AddMinutes(2), _guardian1, 0,Salt,operationType);
+    //     var verificationDoc = $"{0},{_guardian.ToHex()},{verificationTime.AddMinutes(1)},{VerifierAddress.ToBase58()},{Salt},{operationType}";
+    //     var guardianApprove = new List<GuardianInfo>
+    //     {
+    //         new GuardianInfo
+    //         {
+    //             Type = GuardianType.OfEmail,
+    //             IdentifierHash = _guardian,
+    //             VerificationInfo = new VerificationInfo
+    //             {
+    //                 Id = _verifierId,
+    //                 Signature = signature,
+    //                 VerificationDoc = verificationDoc
+    //             }
+    //         }
+    //     };
+    //     var input = new AddGuardianInput
+    //     {
+    //         CaHash = caHash,
+    //         GuardianToAdd = new GuardianInfo
+    //         {
+    //             Type = GuardianType.OfEmail,
+    //             IdentifierHash = _guardian1,
+    //             VerificationInfo = new VerificationInfo
+    //             {
+    //                 Id = _verifierId1,
+    //                 Signature = signature1,
+    //                 VerificationDoc = $"{0},{_guardian1.ToHex()},{verificationTime.AddMinutes(2)},{VerifierAddress1.ToBase58()},{Salt},{operationType}"
+    //             }
+    //         },
+    //         GuardiansApproved = { guardianApprove }
+    //     }; 
+    //     await CaContractStubManagerInfo1.AddGuardian.SendAsync(input);
+    //     
+    //     var removeOperationType = Convert.ToInt32(OperationType.RemoveGuardian).ToString();
+    //     var guardianApprove1 = new List<GuardianInfo>
+    //     {
+    //         new GuardianInfo
+    //         {
+    //             Type = GuardianType.OfEmail,
+    //             IdentifierHash = _guardian,
+    //             VerificationInfo = new VerificationInfo
+    //             {
+    //                 Id = _verifierId,
+    //                 Signature = signature1,
+    //                 VerificationDoc = $"{0},{_guardian1.ToHex()},{verificationTime.AddMinutes(2)},{VerifierAddress1.ToBase58()},{Salt},{removeOperationType}"
+    //             }
+    //         }
+    //     };
+    //     await CaContractStubManagerInfo1.RemoveGuardian.SendAsync(new RemoveGuardianInput
+    //     {
+    //         CaHash = caHash,
+    //         GuardianToRemove = new GuardianInfo
+    //         {
+    //             Type = GuardianType.OfEmail,
+    //             IdentifierHash = _guardian1,
+    //             VerificationInfo = new VerificationInfo
+    //             {
+    //                 Id = _verifierId1
+    //             }
+    //         },
+    //         GuardiansApproved = { guardianApprove1 }
+    //     });
+    //     
+    // }
 
 
     [Fact]

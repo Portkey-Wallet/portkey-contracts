@@ -14,13 +14,14 @@ public partial class CAContract : CAContractContainer.CAContractBase
     public override Empty Initialize(InitializeInput input)
     {
         Assert(!State.Initialized.Value, "Already initialized.");
-        var genesisContractAddress = Context.GetZeroSmartContractAddress();
-        Assert(input.ZeroSmartAddress == genesisContractAddress, "Invalid ZeroSmartAddress.");
+        State.ZeroContract.Value = Context.GetZeroSmartContractAddress();
+        Assert(input.ZeroSmartAddress == State.ZeroContract.Value, "Invalid ZeroSmartAddress.");
         State.Admin.Value = input.ContractAdmin ?? Context.Sender;
         State.CreatorControllers.Value = new ControllerList { Controllers = { input.ContractAdmin ?? Context.Sender } };
         State.ServerControllers.Value = new ControllerList { Controllers = { input.ContractAdmin ?? Context.Sender } };
         State.TokenContract.Value =
             Context.GetContractAddressByName(SmartContractConstants.TokenContractSystemName);
+       
         // State.MethodFeeController.Value = new AuthorityInfo
         // {
         //     OwnerAddress = Context.Sender
