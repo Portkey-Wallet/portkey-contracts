@@ -136,7 +136,7 @@ public partial class CAContract
             var keyHash = GetKeyFromVerificationDoc(docInfo);
             State.VerifierDocMap.Set(keyHash, true);
             var operationType = docInfo.OperationType;
-                var operationTypeName = typeof(OperationType).GetEnumName(Convert.ToInt32(operationType))?.ToLower();
+            var operationTypeName = typeof(OperationType).GetEnumName(Convert.ToInt32(operationType))?.ToLower();
             Assert(operationTypeName == methodName, "Invalid operation type.");
             guardianApprovedAmount++;
         }
