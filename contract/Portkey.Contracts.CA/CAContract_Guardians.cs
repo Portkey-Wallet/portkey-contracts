@@ -27,12 +27,13 @@ public partial class CAContract
         {
             return new Empty();
         }
-
+        
+        var verificationDoc = GetVerificationDoc(input.GuardianToAdd?.VerificationInfo.VerificationDoc);
         //Check the verifier signature and data of the guardian to be added.
         Assert(CheckVerifierSignatureAndData(input.GuardianToAdd), "Guardian to add verification failed.");
-        var key = GetKeyFromVerificationDoc(input.GuardianToAdd?.VerificationInfo.VerificationDoc.Split(","));
+        var key = GetKeyFromVerificationDoc(verificationDoc);
         State.VerifierDocMap.Set(key, true);
-        var operationType = GetFromVerificationDoc(input.GuardianToAdd?.VerificationInfo.VerificationDoc.Split(","), 5);
+        var operationType = verificationDoc.OperationType;
         var operationName = typeof(OperationType).GetEnumName(Convert.ToInt32(operationType))?.ToLower();
         var methodName = nameof(AddGuardian).ToLower();
         Assert(operationName == methodName, "Invalid operation type.");
@@ -48,9 +49,10 @@ public partial class CAContract
             //Check the verifier signature and data of the guardian to be approved.
             var isApproved = CheckVerifierSignatureAndData(guardian);
             if (!isApproved) continue;
-            var keyHash = GetKeyFromVerificationDoc(guardian.VerificationInfo!.VerificationDoc.Split(","));
+            var docInfo = GetVerificationDoc(guardian.VerificationInfo!.VerificationDoc);
+            var keyHash = GetKeyFromVerificationDoc(docInfo);
             State.VerifierDocMap.Set(keyHash, true);
-            var operationTypeStr = GetFromVerificationDoc(guardian.VerificationInfo.VerificationDoc.Split(","), 5);
+            var operationTypeStr = docInfo.OperationType;
             var operationTypeName = typeof(OperationType).GetEnumName(Convert.ToInt32(operationTypeStr))?.ToLower();
             Assert(operationTypeName == methodName, "Invalid operation type.");
 
@@ -66,7 +68,7 @@ public partial class CAContract
         var guardianAdded = new Guardian
         {
             IdentifierHash = input.GuardianToAdd!.IdentifierHash,
-            Salt = GetFromVerificationDoc(input.GuardianToAdd.VerificationInfo.VerificationDoc.Split(","), 4),
+            Salt = verificationDoc.Salt,
             Type = input.GuardianToAdd.Type,
             VerifierId = input.GuardianToAdd.VerificationInfo.Id,
             IsLoginGuardian = false
@@ -130,11 +132,11 @@ public partial class CAContract
             //Check the verifier signature and data of the guardian to be approved.
             var isApproved = CheckVerifierSignatureAndData(guardian);
             if (!isApproved) continue;
-            var keyHash = GetKeyFromVerificationDoc(guardian.VerificationInfo.VerificationDoc.Split(","));
+            var docInfo = GetVerificationDoc(guardian.VerificationInfo!.VerificationDoc);
+            var keyHash = GetKeyFromVerificationDoc(docInfo);
             State.VerifierDocMap.Set(keyHash, true);
-            var operationType =
-                GetFromVerificationDoc(guardian.VerificationInfo.VerificationDoc.Split(","), 5);
-            var operationTypeName = typeof(OperationType).GetEnumName(Convert.ToInt32(operationType))?.ToLower();
+            var operationType = docInfo.OperationType;
+                var operationTypeName = typeof(OperationType).GetEnumName(Convert.ToInt32(operationType))?.ToLower();
             Assert(operationTypeName == methodName, "Invalid operation type.");
             guardianApprovedAmount++;
         }
@@ -217,9 +219,10 @@ public partial class CAContract
             //Check the verifier signature and data of the guardian to be approved.
             var isApproved = CheckVerifierSignatureAndData(guardian);
             if (!isApproved) continue;
-            var keyHash = GetKeyFromVerificationDoc(guardian.VerificationInfo.VerificationDoc.Split(","));
+            var docInfo = GetVerificationDoc(guardian.VerificationInfo!.VerificationDoc);
+            var keyHash = GetKeyFromVerificationDoc(docInfo);
             State.VerifierDocMap.Set(keyHash, true);
-            var operationType = GetFromVerificationDoc(guardian.VerificationInfo.VerificationDoc.Split(","), 5);
+            var operationType = docInfo.OperationType;
             var operationTypeName = typeof(OperationType).GetEnumName(Convert.ToInt32(operationType))?.ToLower();
             var methodName = nameof(UpdateGuardian).ToLower();
             Assert(operationTypeName == methodName, "Invalid operation type.");

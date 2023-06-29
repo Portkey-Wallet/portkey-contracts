@@ -57,19 +57,19 @@ public partial class CAContract : CAContractContainer.CAContractBase
         holderInfo.CreatorAddress = Context.Sender;
         holderInfo.ManagerInfos.Add(input.ManagerInfo);
         //Check verifier signature.
+        var verificationDoc =
+            GetVerificationDoc(input.GuardianApproved.VerificationInfo!.VerificationDoc);
         Assert(CheckVerifierSignatureAndData(input.GuardianApproved), "Guardian verification failed.");
-        var keyHash = GetKeyFromVerificationDoc(input.GuardianApproved.VerificationInfo!.VerificationDoc.Split(","));
+        var keyHash = GetKeyFromVerificationDoc(verificationDoc);
         State.VerifierDocMap.Set(keyHash, true);
 
         //Check operationType.
-        var operationType =
-            GetFromVerificationDoc(input.GuardianApproved.VerificationInfo!.VerificationDoc.Split(","), 5);
-        var operationTypeName = typeof(OperationType).GetEnumName(Convert.ToInt32(operationType))?.ToLower();
+        var operationTypeName = typeof(OperationType).GetEnumName(Convert.ToInt32(verificationDoc.OperationType))?.ToLower();
         var methodName = nameof(CreateCAHolder).ToLower();
         Assert(operationTypeName == methodName, "Invalid operation type.");
 
 
-        var salt = GetFromVerificationDoc(input.GuardianApproved.VerificationInfo!.VerificationDoc.Split(","), 4);
+        var salt = verificationDoc.Salt;
         var guardian = new Guardian
         {
             IdentifierHash = input.GuardianApproved.IdentifierHash,

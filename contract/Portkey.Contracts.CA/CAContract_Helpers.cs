@@ -4,7 +4,6 @@ using AElf;
 using AElf.CSharp.Core.Extension;
 using AElf.Types;
 using Google.Protobuf.WellKnownTypes;
-using Enum = Google.Protobuf.WellKnownTypes.Enum;
 
 namespace Portkey.Contracts.CA;
 
@@ -24,18 +23,18 @@ public partial class CAContract
         {
             return false;
         }
-
-        if (verifierDoc[5] == OperationType.Unknown.ToString("D"))
+        var docInfo = GetVerificationDoc(verificationDoc);
+        if (docInfo.OperationType == "0")
         {
             return false;
         }
 
         //Check expired time 1h.
-        var verificationTime = DateTime.SpecifyKind(Convert.ToDateTime(verifierDoc[2]), DateTimeKind.Utc);
+        var verificationTime = DateTime.SpecifyKind(Convert.ToDateTime(docInfo.VerificationTime), DateTimeKind.Utc);
         if (verificationTime.ToTimestamp().AddHours(1) <= Context.CurrentBlockTime ||
-            !int.TryParse(verifierDoc[0], out var type) ||
+            !int.TryParse(docInfo.GuardianType, out var type) ||
             (int)guardianInfo.Type != type ||
-            guardianInfo.IdentifierHash != Hash.LoadFromHex(verifierDoc[1]))
+            guardianInfo.IdentifierHash != Hash.LoadFromHex(docInfo.GuardianHash))
         {
             return false;
         }
@@ -43,14 +42,14 @@ public partial class CAContract
         //Check VerifierDoc is Verified.
         var verifierDocSaltMap = State.VerifierDocMap;
 
-        var key = GetKeyFromVerificationDoc(verifierDoc);
+        var key = GetKeyFromVerificationDoc(docInfo);
         if (verifierDocSaltMap[key])
         {
             return false;
         }
 
         //Check verifier address and data.
-        var verifierAddress = Address.FromBase58(verifierDoc[3]);
+        var verifierAddress = Address.FromBase58(docInfo.VerifierAddress);
         var verificationInfo = guardianInfo.VerificationInfo;
         var verifierServer =
             State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(v => v.Id == verificationInfo.Id);
@@ -79,17 +78,26 @@ public partial class CAContract
         return hash != null && !hash.Value.IsEmpty;
     }
 
-    private string GetFromVerificationDoc(string[] verificationDoc, int index)
+
+    private VerificationDocInfo GetVerificationDoc(string doc)
     {
-        return verificationDoc[index];
+        var docs = doc.Split(",");
+        return new VerificationDocInfo
+        {
+            GuardianType = docs[0],
+            GuardianHash = docs[1],
+            VerificationTime = docs[2],
+            VerifierAddress = docs[3],
+            Salt = docs[4],
+            OperationType = docs[5]
+        };
     }
 
-
-    private Hash GetKeyFromVerificationDoc(string[] verificationDoc)
+    private Hash GetKeyFromVerificationDoc(VerificationDocInfo verificationDoc)
     {
-        return HashHelper.ConcatAndCompute(HashHelper.ComputeFrom(verificationDoc[2]),
-            HashHelper.ComputeFrom(verificationDoc[3]),
-            HashHelper.ComputeFrom(verificationDoc[1]));
+        return HashHelper.ConcatAndCompute(HashHelper.ComputeFrom(verificationDoc.VerificationTime),
+            HashHelper.ComputeFrom(verificationDoc.VerifierAddress),
+            HashHelper.ComputeFrom(verificationDoc.GuardianHash));
     }
 
 

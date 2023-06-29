@@ -590,6 +590,17 @@ message AdminChanged {
   aelf.Address address = 1 [(aelf.is_indexed) = true];
 }
 
+
+message VerificationDocInfo {
+  string guardian_type = 1;
+  string guardian_hash = 2;
+  string verification_time = 3;
+  string verifier_address = 4;
+  string salt = 5;
+  string operation_type = 6;
+
+}
+
 enum OperationType {
   Unknown = 0;
   CreateCAHolder = 1;
