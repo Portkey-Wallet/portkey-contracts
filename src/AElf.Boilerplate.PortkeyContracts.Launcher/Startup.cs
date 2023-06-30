@@ -9,7 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Modularity;
 
-namespace AElf.Boilerplate.ContractsContract.Launcher
+namespace AElf.Boilerplate.PortkeyContracts.Launcher
 {
     public class Startup
     {

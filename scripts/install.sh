@@ -26,13 +26,25 @@ elif [[ ${osn} == "linux" ]]; then
     # Unzip
     unzip protoc-3.11.4-linux-x86_64.zip -d protoc3
     
-    # Move protoc to /usr/local/bin/
-    sudo mv protoc3/bin/* /usr/local/bin/
-    
-    # Move protoc3/include to /usr/local/include/
-    sudo mv protoc3/include/* /usr/local/include/
-    
-    # Optional: change owner
-    sudo chown ${USER} /usr/local/bin/protoc
-    sudo chown -R ${USER} /usr/local/include/google
+    if [ $(whoami) = 'root' ]; then
+      # Move protoc to /usr/local/bin/
+      mv protoc3/bin/* /usr/local/bin/
+                
+      rm -rf /usr/local/include/google
+                
+      # Move protoc3/include to /usr/local/include/
+      mv protoc3/include/* /usr/local/include/
+    else
+      # Move protoc to /usr/local/bin/
+      sudo mv protoc3/bin/* /usr/local/bin/
+          
+      sudo rm -rf /usr/local/include/google
+          
+      # Move protoc3/include to /usr/local/include/
+      sudo mv protoc3/include/* /usr/local/include/
+          
+      # Optional: change owner
+      sudo chown ${USER} /usr/local/bin/protoc
+      sudo chown -R ${USER} /usr/local/include/google
+    fi
 fi

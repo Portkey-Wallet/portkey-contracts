@@ -28,6 +28,8 @@ if [[ ! -f ${plugin} ]]; then
         curl -OL https://github.com/AElfProject/contract-plugin/releases/download/${version}/${filename}
     fi
     
+    apt install -y unzip
+    
     # Unzip
     unzip -o ${filename} -d "${scriptdir}"
 fi

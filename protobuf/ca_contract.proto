@@ -10,14 +10,14 @@ import "aelf/options.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 import "authority_info.proto";
-import "acs1.proto";
+import "acs12.proto";
 
 
 option csharp_namespace = "Portkey.Contracts.CA";
 
 service CAContract {
-
-  option (aelf.base) = "acs1.proto";
+  
+  option (aelf.base) = "acs12.proto";
   
   option (aelf.csharp_state) = "Portkey.Contracts.CA.CAContractState";
 
@@ -91,6 +91,22 @@ service CAContract {
   rpc SetContractDelegationFee (SetContractDelegationFeeInput) returns (google.protobuf.Empty) {}
   
   rpc GetContractDelegationFee (google.protobuf.Empty) returns (GetContractDelegationFeeOutput) {}
+  
+  rpc AddCreatorController (ControllerInput) returns (google.protobuf.Empty) {}
+
+  rpc RemoveCreatorController (ControllerInput) returns (google.protobuf.Empty) {}
+  
+  rpc GetCreatorControllers (google.protobuf.Empty) returns (ControllerOutput) {option (aelf.is_view) = true;}
+
+  rpc AddServerController (ControllerInput) returns (google.protobuf.Empty) {}
+  
+  rpc RemoveServerController (ControllerInput) returns (google.protobuf.Empty) {}
+  
+  rpc GetServerControllers (google.protobuf.Empty) returns (ControllerOutput) {option (aelf.is_view) = true;}
+  
+  rpc ChangeAdmin (AdminInput) returns (google.protobuf.Empty) {}
+  
+  rpc GetAdmin (google.protobuf.Empty) returns (AdminOutput) {option (aelf.is_view) = true;}
 }
 
 //Data structure
@@ -161,6 +177,22 @@ message LoginGuardianList {
 //Input
 message InitializeInput{
   aelf.Address contract_admin = 1;
+}
+
+message ControllerInput{
+  aelf.Address address = 1;
+}
+
+message ControllerOutput{
+  repeated aelf.Address addresses = 1;
+}
+
+message AdminInput{
+  aelf.Address address = 1;
+}
+
+message AdminOutput{
+  aelf.Address address = 1;
 }
 
 message CreateCAHolderInput {
@@ -530,4 +562,29 @@ message CAHolderSynced {
   ManagerInfoList manager_infos_removed = 5 [(aelf.is_indexed) = true];
   LoginGuardianList login_guardians_added = 6 [(aelf.is_indexed) = true];
   LoginGuardianList login_guardians_unbound = 7 [(aelf.is_indexed) = true];
+}
+
+message CreatorControllerAdded {
+  option (aelf.is_event) = true;
+  aelf.Address address = 1 [(aelf.is_indexed) = true];
+}
+
+message CreatorControllerRemoved {
+  option (aelf.is_event) = true;
+  aelf.Address address = 1 [(aelf.is_indexed) = true];
+}
+
+message ServerControllerAdded {
+  option (aelf.is_event) = true;
+  aelf.Address address = 1 [(aelf.is_indexed) = true];
+}
+
+message ServerControllerRemoved {
+  option (aelf.is_event) = true;
+  aelf.Address address = 1 [(aelf.is_indexed) = true];
+}
+
+message AdminChanged {
+  option (aelf.is_event) = true;
+  aelf.Address address = 1 [(aelf.is_indexed) = true];
 }
