@@ -142,7 +142,7 @@ public partial class CAContract
             var operationType = docInfo.OperationType;
             var operationTypeName = typeof(OperationType).GetEnumName(Convert.ToInt32(operationType))?.ToLower();
             var methodName = nameof(RemoveOtherManagerInfo).ToLower();
-            Assert(operationTypeName == methodName, $"Invalid operation type {operationType}");
+            Assert(operationTypeName == methodName, "Invalid operation type.");
             guardianApprovedAmount++;
         }
 
