@@ -12,10 +12,10 @@ public partial class CAContractTests
 {
     private async Task Initiate()
     {
+        
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
             ContractAdmin = DefaultAddress,
-            ZeroSmartAddress = BasicContractZeroAddress
         });
     }
 

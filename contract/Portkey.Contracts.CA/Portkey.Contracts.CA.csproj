@@ -20,6 +20,12 @@
         </CommonMessage>
     </ItemGroup>
     <ItemGroup>
+        <ContractReference Include="..\..\protobuf\acs0.proto">
+            <Link>Protobuf\Proto\acs0.proto</Link>
+        </ContractReference>
+        <ContractReference Include="..\..\protobuf\acs1.proto">
+            <Link>Protobuf\Proto\acs1.proto</Link>
+        </ContractReference>
         <ContractReference Include="..\..\protobuf\acs7.proto">
             <Link>Protobuf\Proto\acs7.proto</Link>
         </ContractReference>
@@ -34,6 +40,9 @@
         </ContractReference>
         <ContractReference Include="..\..\protobuf\basic_contract_zero.proto">
             <Link>Protobuf\Proto\basic_contract_zero.proto</Link>
+        </ContractReference>
+        <ContractReference Include="..\..\protobuf\basic_contract_zero_impl.proto">
+            <Link>Protobuf\Proto\basic_contract_zero_impl.proto</Link>
         </ContractReference>
     </ItemGroup>
     

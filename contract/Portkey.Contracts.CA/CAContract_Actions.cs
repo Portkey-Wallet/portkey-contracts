@@ -14,14 +14,15 @@ public partial class CAContract : CAContractContainer.CAContractBase
     public override Empty Initialize(InitializeInput input)
     {
         Assert(!State.Initialized.Value, "Already initialized.");
-        State.ZeroContract.Value = Context.GetZeroSmartContractAddress();
-        Assert(input.ZeroSmartAddress == State.ZeroContract.Value, "Invalid ZeroSmartAddress.");
+        State.GenesisContract.Value = Context.GetZeroSmartContractAddress();
+        var author = State.GenesisContract.GetContractAuthor.Call(Context.Self);
+        Assert(author == Context.Sender, "No permission.");
         State.Admin.Value = input.ContractAdmin ?? Context.Sender;
         State.CreatorControllers.Value = new ControllerList { Controllers = { input.ContractAdmin ?? Context.Sender } };
         State.ServerControllers.Value = new ControllerList { Controllers = { input.ContractAdmin ?? Context.Sender } };
         State.TokenContract.Value =
             Context.GetContractAddressByName(SmartContractConstants.TokenContractSystemName);
-       
+
         // State.MethodFeeController.Value = new AuthorityInfo
         // {
         //     OwnerAddress = Context.Sender
@@ -64,7 +65,8 @@ public partial class CAContract : CAContractContainer.CAContractBase
         State.VerifierDocMap.Set(keyHash, true);
 
         //Check operationType.
-        var operationTypeName = typeof(OperationType).GetEnumName(Convert.ToInt32(verificationDoc.OperationType))?.ToLower();
+        var operationTypeName = typeof(OperationType).GetEnumName(Convert.ToInt32(verificationDoc.OperationType))
+            ?.ToLower();
         var methodName = nameof(CreateCAHolder).ToLower();
         Assert(operationTypeName == methodName, "Invalid operation type.");
 

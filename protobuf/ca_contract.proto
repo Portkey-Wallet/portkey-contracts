@@ -177,7 +177,6 @@ message LoginGuardianList {
 //Input
 message InitializeInput{
   aelf.Address contract_admin = 1;
-  aelf.Address zero_smart_address = 2;
 }
 
 message ControllerInput{

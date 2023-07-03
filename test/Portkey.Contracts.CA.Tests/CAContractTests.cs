@@ -17,7 +17,6 @@ public partial class CAContractTests : CAContractTestBase
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
             ContractAdmin = DefaultAddress,
-            ZeroSmartAddress = BasicContractZeroAddress
         });
         {
             await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
@@ -239,7 +238,6 @@ public partial class CAContractTests : CAContractTestBase
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
             ContractAdmin = DefaultAddress,
-            ZeroSmartAddress = BasicContractZeroAddress
         });
         var executionResult = await CaContractStub.CreateCAHolder.SendWithExceptionAsync(new CreateCAHolderInput
         {
@@ -259,7 +257,6 @@ public partial class CAContractTests : CAContractTestBase
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
             ContractAdmin = DefaultAddress,
-            ZeroSmartAddress = BasicContractZeroAddress
         });
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
@@ -294,7 +291,6 @@ public partial class CAContractTests : CAContractTestBase
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
             ContractAdmin = DefaultAddress,
-            ZeroSmartAddress = BasicContractZeroAddress
         });
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
@@ -466,9 +462,8 @@ public partial class CAContractTests : CAContractTestBase
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
             ContractAdmin = DefaultAddress,
-            ZeroSmartAddress = BasicContractZeroAddress
         });
-
+        
         var result = await CaContractStub.Initialize.SendWithExceptionAsync(new InitializeInput
         {
             ContractAdmin = DefaultAddress
@@ -479,13 +474,13 @@ public partial class CAContractTests : CAContractTestBase
     [Fact]
     public async Task Initialize_InvalidZeroSmartAddress()
     {
-        var result = await CaContractStub.Initialize.SendWithExceptionAsync(new InitializeInput());
+        var result = await CaContractStub.Initialize.SendAsync(new InitializeInput());
 
         // var result = await CaContractStub.Initialize.SendWithExceptionAsync(new InitializeInput
         // {
         //     ContractAdmin = DefaultAddress,
         //     ZeroSmartAddress = Address.FromBase58(CAContractConstants.ZeroSmartAddress)
         // });
-        result.TransactionResult.Error.ShouldContain("Invalid ZeroSmartAddress.");
+        result.TransactionResult.Error.ShouldBe("");
     }
 }

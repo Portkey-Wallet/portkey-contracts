@@ -1,3 +1,4 @@
+
 using System.Threading.Tasks;
 using Google.Protobuf.WellKnownTypes;
 using Shouldly;
@@ -15,7 +16,6 @@ public partial class CAContractTests
         await CaContractStub.Initialize.SendAsync(new InitializeInput()
         {
             ContractAdmin = DefaultAccount.Address,
-            ZeroSmartAddress = BasicContractZeroAddress
         });
         var output = await CaContractStub.GetCAServers.CallAsync(new Empty());
         output.CaServers.Count.ShouldBe(0);
@@ -64,7 +64,6 @@ public partial class CAContractTests
         await CaContractStub.Initialize.SendAsync(new InitializeInput()
         {
             ContractAdmin = DefaultAccount.Address,
-            ZeroSmartAddress = BasicContractZeroAddress
         });
         await CaContractStub.AddCAServer.SendAsync( new AddCAServerInput()
         {

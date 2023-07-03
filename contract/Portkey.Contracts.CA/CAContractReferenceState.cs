@@ -1,13 +1,12 @@
-using AElf.Contracts.Genesis;
 using AElf.Contracts.MultiToken;
-using Org.BouncyCastle.Asn1.X509;
+using AElf.Standards.ACS0;
 
 namespace Portkey.Contracts.CA;
 
 public partial class CAContractState
 {
     internal TokenContractContainer.TokenContractReferenceState TokenContract { get; set; }
-    internal BasicContractZeroContainer.BasicContractZeroReferenceState ZeroContract { get; set; }
+    internal ACS0Container.ACS0ReferenceState GenesisContract { get; set; }
     
     
 }
