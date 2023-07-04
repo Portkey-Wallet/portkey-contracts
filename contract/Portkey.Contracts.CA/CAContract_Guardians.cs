@@ -30,7 +30,6 @@ public partial class CAContract
         }
 
         var methodName = nameof(AddGuardian).ToLower();
-        // var verificationDoc = GetVerificationDoc(input.GuardianToAdd?.VerificationInfo.VerificationDoc);
         //Check the verifier signature and data of the guardian to be added.
         var guardianApprovedAmount = 0;
         var guardianApprovedList = input.GuardiansApproved
