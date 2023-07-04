@@ -58,14 +58,12 @@ public partial class CAContract : CAContractContainer.CAContractBase
         holderInfo.ManagerInfos.Add(input.ManagerInfo);
         //Check verifier signature.
         var methodName = nameof(CreateCAHolder).ToLower();
-        var verificationDoc =
-            GetVerificationDoc(input.GuardianApproved.VerificationInfo!.VerificationDoc);
         if (!CheckVerifierSignatureAndData(input.GuardianApproved, methodName))
         {
             return new Empty();
         }
 
-        var salt = verificationDoc.Salt;
+        var salt = GetSaltFromVerificationDoc(input.GuardianApproved.VerificationInfo.VerificationDoc);
         var guardian = new Guardian
         {
             IdentifierHash = input.GuardianApproved.IdentifierHash,
@@ -238,12 +236,11 @@ public partial class CAContract : CAContractContainer.CAContractBase
         };
     }
 
-    public override Empty UpdateSwitch(EnableOperationTypeInSignatureInput input)
+    public override Empty ChangeOperationTypeInSignatureEnabled(OperationTypeInSignatureEnabledInput input)
     {
         Assert(State.Admin.Value == Context.Sender, "No permission");
-        Assert(State.EnableOperationTypeInSignature.Value != input.EnableOperationTypeInSignature , "invalid input");
-
-        State.EnableOperationTypeInSignature.Value = input.EnableOperationTypeInSignature;
+        Assert(State.EnableOperationTypeInSignature.Value != input.OperationTypeInSignatureEnabled , "invalid input");
+        State.EnableOperationTypeInSignature.Value = input.OperationTypeInSignatureEnabled;
         return new Empty();
     }
 }

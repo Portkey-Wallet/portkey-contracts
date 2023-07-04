@@ -17,9 +17,9 @@ public partial class CAContractTests
         {
             ContractAdmin = DefaultAccount.Address,
         });
-        await CaContractStub.UpdateSwitch.SendAsync(new EnableOperationTypeInSignatureInput()
+        await CaContractStub.ChangeOperationTypeInSignatureEnabled.SendAsync(new OperationTypeInSignatureEnabledInput()
         {
-            EnableOperationTypeInSignature = true
+            OperationTypeInSignatureEnabled = true
         });
         var output = await CaContractStub.GetCAServers.CallAsync(new Empty());
         output.CaServers.Count.ShouldBe(0);
@@ -69,9 +69,9 @@ public partial class CAContractTests
         {
             ContractAdmin = DefaultAccount.Address,
         });
-        await CaContractStub.UpdateSwitch.SendAsync(new EnableOperationTypeInSignatureInput()
+        await CaContractStub.ChangeOperationTypeInSignatureEnabled.SendAsync(new OperationTypeInSignatureEnabledInput()
         {
-            EnableOperationTypeInSignature = true
+            OperationTypeInSignatureEnabled = true
         });
         await CaContractStub.AddCAServer.SendAsync( new AddCAServerInput()
         {

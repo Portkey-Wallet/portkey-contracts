@@ -30,7 +30,7 @@ public partial class CAContract
         }
 
         var methodName = nameof(AddGuardian).ToLower();
-        var verificationDoc = GetVerificationDoc(input.GuardianToAdd?.VerificationInfo.VerificationDoc);
+        // var verificationDoc = GetVerificationDoc(input.GuardianToAdd?.VerificationInfo.VerificationDoc);
         //Check the verifier signature and data of the guardian to be added.
         var guardianApprovedAmount = 0;
         var guardianApprovedList = input.GuardiansApproved
@@ -63,7 +63,7 @@ public partial class CAContract
         var guardianAdded = new Guardian
         {
             IdentifierHash = input.GuardianToAdd!.IdentifierHash,
-            Salt = verificationDoc.Salt,
+            Salt = GetSaltFromVerificationDoc(input.GuardianToAdd.VerificationInfo.VerificationDoc),
             Type = input.GuardianToAdd.Type,
             VerifierId = input.GuardianToAdd.VerificationInfo.Id,
             IsLoginGuardian = false

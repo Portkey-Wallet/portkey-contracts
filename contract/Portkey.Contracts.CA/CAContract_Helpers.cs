@@ -17,7 +17,7 @@ public partial class CAContract
             return CheckVerifierSignatureAndData(guardianInfo);
         }
 
-        //[type,guardianIdentifierHash,verificationTime,verifierAddress,salt]
+        //[type,guardianIdentifierHash,verificationTime,verifierAddress,salt,operationType]
         var verificationDoc = guardianInfo.VerificationInfo.VerificationDoc;
         if (verificationDoc == null || string.IsNullOrWhiteSpace(verificationDoc))
         {
@@ -27,7 +27,6 @@ public partial class CAContract
         var verifierDoc = verificationDoc.Split(",");
         var docInfo = GetVerificationDoc(verificationDoc);
         var key = GetKeyFromVerificationDoc(docInfo);
-
         if (verifierDoc.Length != 6)
         {
             return false;
@@ -67,8 +66,8 @@ public partial class CAContract
         var verifierAddressFromPublicKey = Address.FromPublicKey(publicKey);
 
 
-        if (!(verifierServer != null && verifierAddressFromPublicKey == verifierAddress &&
-              verifierServer.VerifierAddresses.Contains(verifierAddress)))
+        if (verifierServer == null || verifierAddressFromPublicKey != verifierAddress ||
+            !verifierServer.VerifierAddresses.Contains(verifierAddress))
         {
             return false;
         }
@@ -140,33 +139,17 @@ public partial class CAContract
     private VerificationDocInfo GetVerificationDoc(string doc)
     {
         var docs = doc.Split(",");
-        if (State.EnableOperationTypeInSignature.Value)
-        {
-            return new VerificationDocInfo
-            {
-                GuardianType = docs[0],
-                IdentifierHash = Hash.LoadFromHex(docs[1]),
-                VerificationTime = docs[2],
-                VerifierAddress = Address.FromBase58(docs[3]),
-                Salt = docs[4],
-                OperationType = docs[5]
-            };
-        }
-
-        return GetVerificationDoc(docs);
-    }
-
-    private VerificationDocInfo GetVerificationDoc(string[] docs)
-    {
         return new VerificationDocInfo
         {
             GuardianType = docs[0],
             IdentifierHash = Hash.LoadFromHex(docs[1]),
             VerificationTime = docs[2],
             VerifierAddress = Address.FromBase58(docs[3]),
-            Salt = docs[4]
+            Salt = docs[4],
+            OperationType = docs[5]
         };
     }
+
 
     private Hash GetKeyFromVerificationDoc(VerificationDocInfo verificationDoc)
     {
@@ -183,5 +166,10 @@ public partial class CAContract
         Assert(holderInfo!.GuardianList != null, $"No guardians found in this holder by caHash: {caHash}");
 
         return holderInfo;
+    }
+
+    private string GetSaltFromVerificationDoc(string verificationDoc)
+    {
+        return verificationDoc.Split(",")[4];
     }
 }
