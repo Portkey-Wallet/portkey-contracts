@@ -18,9 +18,9 @@ public partial class CAContractTests : CAContractTestBase
         {
             ContractAdmin = DefaultAddress,
         });
-        await CaContractStub.UpdateSwitch.SendAsync(new SwitchInput
+        await CaContractStub.UpdateSwitch.SendAsync(new EnableOperationTypeInSignatureInput()
         {
-            Switch = true
+            EnableOperationTypeInSignature = true
         });
         {
             await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
@@ -243,9 +243,9 @@ public partial class CAContractTests : CAContractTestBase
         {
             ContractAdmin = DefaultAddress,
         });
-        await CaContractStub.UpdateSwitch.SendAsync(new SwitchInput
+        await CaContractStub.UpdateSwitch.SendAsync(new EnableOperationTypeInSignatureInput()
         {
-            Switch = true
+            EnableOperationTypeInSignature = true
         });
         var executionResult = await CaContractStub.CreateCAHolder.SendWithExceptionAsync(new CreateCAHolderInput
         {
@@ -266,9 +266,9 @@ public partial class CAContractTests : CAContractTestBase
         {
             ContractAdmin = DefaultAddress,
         });
-        await CaContractStub.UpdateSwitch.SendAsync(new SwitchInput
+        await CaContractStub.UpdateSwitch.SendAsync(new EnableOperationTypeInSignatureInput()
         {
-            Switch = true
+            EnableOperationTypeInSignature = true
         });
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
@@ -304,9 +304,9 @@ public partial class CAContractTests : CAContractTestBase
         {
             ContractAdmin = DefaultAddress,
         });
-        await CaContractStub.UpdateSwitch.SendAsync(new SwitchInput
+        await CaContractStub.UpdateSwitch.SendAsync(new EnableOperationTypeInSignatureInput()
         {
-            Switch = true
+            EnableOperationTypeInSignature = true
         });
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
@@ -479,9 +479,9 @@ public partial class CAContractTests : CAContractTestBase
         {
             ContractAdmin = DefaultAddress,
         });
-        await CaContractStub.UpdateSwitch.SendAsync(new SwitchInput
+        await CaContractStub.UpdateSwitch.SendAsync(new EnableOperationTypeInSignatureInput()
         {
-            Switch = true
+            EnableOperationTypeInSignature = true
         });
         
         var result = await CaContractStub.Initialize.SendWithExceptionAsync(new InitializeInput

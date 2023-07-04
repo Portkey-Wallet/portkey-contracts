@@ -32,11 +32,6 @@ public partial class CAContract
         var methodName = nameof(AddGuardian).ToLower();
         var verificationDoc = GetVerificationDoc(input.GuardianToAdd?.VerificationInfo.VerificationDoc);
         //Check the verifier signature and data of the guardian to be added.
-        if (!CheckVerifierSignatureAndData(input.GuardianToAdd, methodName))
-        {
-            return new Empty();
-        }
-
         var guardianApprovedAmount = 0;
         var guardianApprovedList = input.GuardiansApproved
             .DistinctBy(g => $"{g.Type}{g.IdentifierHash}{g.VerificationInfo.Id}")
@@ -49,6 +44,10 @@ public partial class CAContract
             var isApproved = CheckVerifierSignatureAndData(guardian, methodName);
             if (!isApproved) continue;
             guardianApprovedAmount++;
+        }
+        if (!CheckVerifierSignatureAndData(input.GuardianToAdd, methodName))
+        {
+            return new Empty();
         }
 
         //Whether the approved guardians count is satisfied.
@@ -132,8 +131,12 @@ public partial class CAContract
         }
 
         //Whether the approved guardians count is satisfied.
-        IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count.Sub(1), guardianApprovedAmount,
+        var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count.Sub(1), guardianApprovedAmount,
             holderInfo.JudgementStrategy);
+        if (!isJudgementStrategySatisfied)
+        {
+            return new Empty();
+        }
 
         State.HolderInfoMap[input.CaHash].GuardianList?.Guardians.Remove(toRemoveGuardian);
 

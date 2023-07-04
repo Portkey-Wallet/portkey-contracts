@@ -108,7 +108,7 @@ service CAContract {
   
   rpc GetAdmin (google.protobuf.Empty) returns (AdminOutput) {option (aelf.is_view) = true;}
   
-  rpc UpdateSwitch (SwitchInput) returns (google.protobuf.Empty) {}
+  rpc UpdateSwitch (EnableOperationTypeInSignatureInput) returns (google.protobuf.Empty) {}
 }
 
 //Data structure
@@ -613,6 +613,6 @@ enum OperationType {
   
 }
 
-message SwitchInput {
-  bool switch = 1;
+message EnableOperationTypeInSignatureInput {
+  bool EnableOperationTypeInSignature = 1;
 }

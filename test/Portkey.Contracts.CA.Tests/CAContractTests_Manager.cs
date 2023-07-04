@@ -19,9 +19,9 @@ public partial class CAContractTests
         {
             ContractAdmin = DefaultAddress,
         });
-        await CaContractStub.UpdateSwitch.SendAsync(new SwitchInput
+        await CaContractStub.UpdateSwitch.SendAsync(new EnableOperationTypeInSignatureInput()
         {
-            Switch = true
+            EnableOperationTypeInSignature = true
         });
         {
             await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
@@ -1572,9 +1572,9 @@ public partial class CAContractTests
         {
             ContractAdmin = DefaultAddress,
         });
-        await CaContractStub.UpdateSwitch.SendAsync(new SwitchInput
+        await CaContractStub.UpdateSwitch.SendAsync(new EnableOperationTypeInSignatureInput()
         {
-            Switch = true
+            EnableOperationTypeInSignature = true
         });
         {
             await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput

@@ -238,12 +238,12 @@ public partial class CAContract : CAContractContainer.CAContractBase
         };
     }
 
-    public override Empty UpdateSwitch(SwitchInput input)
+    public override Empty UpdateSwitch(EnableOperationTypeInSignatureInput input)
     {
         Assert(State.Admin.Value == Context.Sender, "No permission");
-        Assert(State.Switch.Value != input.Switch , "invalid input");
+        Assert(State.EnableOperationTypeInSignature.Value != input.EnableOperationTypeInSignature , "invalid input");
 
-        State.Switch.Value = input.Switch;
+        State.EnableOperationTypeInSignature.Value = input.EnableOperationTypeInSignature;
         return new Empty();
     }
 }

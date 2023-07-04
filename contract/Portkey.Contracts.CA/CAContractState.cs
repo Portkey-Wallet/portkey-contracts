@@ -51,6 +51,6 @@ public partial class CAContractState : ContractState
     //
     public MappedState<Hash,bool> VerifierDocMap { get; set; }
     
-    public SingletonState<bool> Switch { get; set; }
+    public SingletonState<bool> EnableOperationTypeInSignature { get; set; }
 
 }
