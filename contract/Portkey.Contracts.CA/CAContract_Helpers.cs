@@ -12,7 +12,7 @@ public partial class CAContract
 {
     private bool CheckVerifierSignatureAndData(GuardianInfo guardianInfo, string methodName)
     {
-        if (!State.EnableOperationTypeInSignature.Value)
+        if (!State.OperationTypeInSignatureEnabled.Value)
         {
             return CheckVerifierSignatureAndData(guardianInfo);
         }
@@ -26,7 +26,6 @@ public partial class CAContract
 
         var verifierDoc = verificationDoc.Split(",");
         var docInfo = GetVerificationDoc(verificationDoc);
-        var key = GetKeyFromVerificationDoc(docInfo);
         if (verifierDoc.Length != 6)
         {
             return false;
@@ -36,7 +35,8 @@ public partial class CAContract
         {
             return false;
         }
-
+        
+        var key = HashHelper.ComputeFrom(guardianInfo.VerificationInfo.Signature.ToByteArray());
         if (State.VerifierDocMap[key])
         {
             return false;
@@ -72,6 +72,7 @@ public partial class CAContract
             return false;
         }
 
+        key = HashHelper.ComputeFrom(guardianInfo.VerificationInfo.Signature.ToByteArray());
         State.VerifierDocMap[key] = true;
         var operationTypeStr = docInfo.OperationType;
         var operationTypeName = typeof(OperationType).GetEnumName(Convert.ToInt32(operationTypeStr))?.ToLower();
@@ -148,14 +149,6 @@ public partial class CAContract
             Salt = docs[4],
             OperationType = docs[5]
         };
-    }
-
-
-    private Hash GetKeyFromVerificationDoc(VerificationDocInfo verificationDoc)
-    {
-        return HashHelper.ConcatAndCompute(HashHelper.ComputeFrom(verificationDoc.VerificationTime),
-            HashHelper.ComputeFrom(verificationDoc.VerifierAddress),
-            HashHelper.ComputeFrom(verificationDoc.IdentifierHash));
     }
 
 

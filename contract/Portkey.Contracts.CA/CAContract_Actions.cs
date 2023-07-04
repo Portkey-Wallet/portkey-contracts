@@ -239,8 +239,8 @@ public partial class CAContract : CAContractContainer.CAContractBase
     public override Empty ChangeOperationTypeInSignatureEnabled(OperationTypeInSignatureEnabledInput input)
     {
         Assert(State.Admin.Value == Context.Sender, "No permission");
-        Assert(State.EnableOperationTypeInSignature.Value != input.OperationTypeInSignatureEnabled , "invalid input");
-        State.EnableOperationTypeInSignature.Value = input.OperationTypeInSignatureEnabled;
+        Assert(State.OperationTypeInSignatureEnabled.Value != input.OperationTypeInSignatureEnabled , "invalid input");
+        State.OperationTypeInSignatureEnabled.Value = input.OperationTypeInSignatureEnabled;
         return new Empty();
     }
 }
