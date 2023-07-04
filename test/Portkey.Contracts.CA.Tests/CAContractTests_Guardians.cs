@@ -58,10 +58,16 @@ public partial class CAContractTests
     private async Task<Hash> CreateHolder()
     {
         var verificationTime = DateTime.UtcNow;
+       
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
             ContractAdmin = DefaultAddress,
         });
+        await CaContractStub.UpdateSwitch.SendAsync(new SwitchInput
+        {
+            Switch = true
+        });
+    
         {
             await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
             {
@@ -146,6 +152,10 @@ public partial class CAContractTests
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
             ContractAdmin = DefaultAddress,
+        });
+        await CaContractStub.UpdateSwitch.SendAsync(new SwitchInput
+        {
+            Switch = true
         });
         {
             await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
@@ -249,6 +259,7 @@ public partial class CAContractTests
             },
             GuardiansApproved = { guardianApprove }
         };
+        
         await CaContractStubManagerInfo1.AddGuardian.SendAsync(input);
         {
             var holderInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput
@@ -321,6 +332,10 @@ public partial class CAContractTests
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
             ContractAdmin = DefaultAddress,
+        });
+        await CaContractStub.UpdateSwitch.SendAsync(new SwitchInput
+        {
+            Switch = true
         });
         {
             await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput

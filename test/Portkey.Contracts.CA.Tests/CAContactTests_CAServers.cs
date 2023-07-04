@@ -17,6 +17,10 @@ public partial class CAContractTests
         {
             ContractAdmin = DefaultAccount.Address,
         });
+        await CaContractStub.UpdateSwitch.SendAsync(new SwitchInput
+        {
+            Switch = true
+        });
         var output = await CaContractStub.GetCAServers.CallAsync(new Empty());
         output.CaServers.Count.ShouldBe(0);
         //success
@@ -64,6 +68,10 @@ public partial class CAContractTests
         await CaContractStub.Initialize.SendAsync(new InitializeInput()
         {
             ContractAdmin = DefaultAccount.Address,
+        });
+        await CaContractStub.UpdateSwitch.SendAsync(new SwitchInput
+        {
+            Switch = true
         });
         await CaContractStub.AddCAServer.SendAsync( new AddCAServerInput()
         {

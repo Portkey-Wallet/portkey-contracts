@@ -22,7 +22,6 @@ public partial class CAContract : CAContractContainer.CAContractBase
         State.ServerControllers.Value = new ControllerList { Controllers = { input.ContractAdmin ?? Context.Sender } };
         State.TokenContract.Value =
             Context.GetContractAddressByName(SmartContractConstants.TokenContractSystemName);
-
         // State.MethodFeeController.Value = new AuthorityInfo
         // {
         //     OwnerAddress = Context.Sender
@@ -237,5 +236,14 @@ public partial class CAContract : CAContractContainer.CAContractBase
         {
             DelegationFee = State.ContractDelegationFee.Value
         };
+    }
+
+    public override Empty UpdateSwitch(SwitchInput input)
+    {
+        Assert(State.Admin.Value == Context.Sender, "No permission");
+        Assert(State.Switch.Value != input.Switch , "invalid input");
+
+        State.Switch.Value = input.Switch;
+        return new Empty();
     }
 }

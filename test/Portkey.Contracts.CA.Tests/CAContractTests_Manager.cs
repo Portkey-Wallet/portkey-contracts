@@ -19,6 +19,10 @@ public partial class CAContractTests
         {
             ContractAdmin = DefaultAddress,
         });
+        await CaContractStub.UpdateSwitch.SendAsync(new SwitchInput
+        {
+            Switch = true
+        });
         {
             await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
             {
@@ -264,7 +268,7 @@ public partial class CAContractTests
             }
         };
 
-        var result = await CaContractStub.SocialRecovery.SendAsync(new SocialRecoveryInput()
+        var result = await CaContractStub.SocialRecovery.SendWithExceptionAsync(new SocialRecoveryInput()
         {
             ManagerInfo = new ManagerInfo
             {
@@ -274,7 +278,7 @@ public partial class CAContractTests
             LoginGuardianIdentifierHash = _guardian,
             GuardiansApproved = { guardianApprove }
         });
-        result.TransactionResult.Error.ShouldContain("");
+        result.TransactionResult.Error.ShouldContain("Could not find any recognizable digits.");
 
         var guardianApprove1 = new List<GuardianInfo>
         {
@@ -1567,6 +1571,10 @@ public partial class CAContractTests
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
             ContractAdmin = DefaultAddress,
+        });
+        await CaContractStub.UpdateSwitch.SendAsync(new SwitchInput
+        {
+            Switch = true
         });
         {
             await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput

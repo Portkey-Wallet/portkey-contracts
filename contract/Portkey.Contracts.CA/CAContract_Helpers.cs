@@ -20,16 +20,33 @@ public partial class CAContract
         }
 
         var verifierDoc = verificationDoc.Split(",");
-        if (verifierDoc.Length != 6)
+        var docInfo = GetVerificationDoc(verificationDoc);
+        var key = GetKeyFromVerificationDoc(docInfo);
+        if (State.Switch.Value)
         {
-            return false;
+            if (verifierDoc.Length != 6)
+            {
+                return false;
+            }
+
+            if (docInfo.OperationType == "0")
+            {
+                return false;
+            }
+
+            if (State.VerifierDocMap[key])
+            {
+                return false;
+            }
+        }
+        else
+        {
+            if (verifierDoc.Length != 5)
+            {
+                return false;
+            }
         }
 
-        var docInfo = GetVerificationDoc(verificationDoc);
-        if (docInfo.OperationType == "0")
-        {
-            return false;
-        }
 
         //Check expired time 1h.
         var verificationTime = DateTime.SpecifyKind(Convert.ToDateTime(docInfo.VerificationTime), DateTimeKind.Utc);
@@ -37,13 +54,6 @@ public partial class CAContract
             !int.TryParse(docInfo.GuardianType, out var type) ||
             (int)guardianInfo.Type != type ||
             guardianInfo.IdentifierHash != docInfo.IdentifierHash)
-        {
-            return false;
-        }
-
-        //Check VerifierDoc is Verified.
-        var key = GetKeyFromVerificationDoc(docInfo);
-        if (State.VerifierDocMap[key])
         {
             return false;
         }
@@ -59,6 +69,11 @@ public partial class CAContract
         var publicKey = Context.RecoverPublicKey(verificationInfo.Signature.ToByteArray(),
             data.ToByteArray());
         var verifierAddressFromPublicKey = Address.FromPublicKey(publicKey);
+        if (!State.Switch.Value)
+        {
+            return verifierServer != null && verifierAddressFromPublicKey == verifierAddress &&
+                   verifierServer.VerifierAddresses.Contains(verifierAddress);
+        }
 
         if (!(verifierServer != null && verifierAddressFromPublicKey == verifierAddress &&
               verifierServer.VerifierAddresses.Contains(verifierAddress)))
@@ -90,15 +105,20 @@ public partial class CAContract
     private VerificationDocInfo GetVerificationDoc(string doc)
     {
         var docs = doc.Split(",");
-        return new VerificationDocInfo
+        var verificationDocInfo = new VerificationDocInfo
         {
             GuardianType = docs[0],
             IdentifierHash = Hash.LoadFromHex(docs[1]),
             VerificationTime = docs[2],
             VerifierAddress = Address.FromBase58(docs[3]),
             Salt = docs[4],
-            OperationType = docs[5]
         };
+        if (State.Switch.Value)
+        {
+            verificationDocInfo.OperationType = docs[5];
+        }
+
+        return verificationDocInfo;
     }
 
     private Hash GetKeyFromVerificationDoc(VerificationDocInfo verificationDoc)
@@ -117,6 +137,4 @@ public partial class CAContract
 
         return holderInfo;
     }
-    
-  
 }

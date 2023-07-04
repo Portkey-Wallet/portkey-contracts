@@ -107,6 +107,8 @@ service CAContract {
   rpc ChangeAdmin (AdminInput) returns (google.protobuf.Empty) {}
   
   rpc GetAdmin (google.protobuf.Empty) returns (AdminOutput) {option (aelf.is_view) = true;}
+  
+  rpc UpdateSwitch (SwitchInput) returns (google.protobuf.Empty) {}
 }
 
 //Data structure
@@ -609,4 +611,8 @@ enum OperationType {
   UpdateGuardian = 5;
   RemoveOtherManagerInfo = 6;
   
+}
+
+message SwitchInput {
+  bool switch = 1;
 }
