@@ -4,6 +4,7 @@ using AElf.CSharp.Core;
 using AElf.Sdk.CSharp;
 using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
+using Enum = System.Enum;
 
 namespace Portkey.Contracts.CA;
 
@@ -27,16 +28,14 @@ public partial class CAContract
         {
             return new Empty();
         }
-        
+
+        var methodName = nameof(AddGuardian).ToLower();
         var verificationDoc = GetVerificationDoc(input.GuardianToAdd?.VerificationInfo.VerificationDoc);
         //Check the verifier signature and data of the guardian to be added.
-        Assert(CheckVerifierSignatureAndData(input.GuardianToAdd), "Guardian to add verification failed.");
-        var key = GetKeyFromVerificationDoc(verificationDoc);
-        State.VerifierDocMap.Set(key, true);
-        var operationType = verificationDoc.OperationType;
-        var operationName = typeof(OperationType).GetEnumName(Convert.ToInt32(operationType))?.ToLower();
-        var methodName = nameof(AddGuardian).ToLower();
-        Assert(operationName == methodName, "Invalid operation type.");
+        if (!CheckVerifierSignatureAndData(input.GuardianToAdd, methodName))
+        {
+            return new Empty();
+        }
 
         var guardianApprovedAmount = 0;
         var guardianApprovedList = input.GuardiansApproved
@@ -47,22 +46,19 @@ public partial class CAContract
             //Whether the guardian exists in the holder info.
             if (!IsGuardianExist(input.CaHash, guardian)) continue;
             //Check the verifier signature and data of the guardian to be approved.
-            var isApproved = CheckVerifierSignatureAndData(guardian);
+            var isApproved = CheckVerifierSignatureAndData(guardian, methodName);
             if (!isApproved) continue;
-            var docInfo = GetVerificationDoc(guardian.VerificationInfo!.VerificationDoc);
-            var keyHash = GetKeyFromVerificationDoc(docInfo);
-            State.VerifierDocMap.Set(keyHash, true);
-            var operationTypeStr = docInfo.OperationType;
-            var operationTypeName = typeof(OperationType).GetEnumName(Convert.ToInt32(operationTypeStr))?.ToLower();
-            Assert(operationTypeName == methodName, "Invalid operation type.");
-
             guardianApprovedAmount++;
         }
 
         //Whether the approved guardians count is satisfied.
-        IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count, guardianApprovedAmount,
+        var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count,
+            guardianApprovedAmount,
             holderInfo.JudgementStrategy);
-
+        if (!isJudgementStrategySatisfied)
+        {
+            return new Empty();
+        }
         //var loginGuardians = GetLoginGuardians(holderInfo.GuardianList);
 
         var guardianAdded = new Guardian
@@ -130,14 +126,8 @@ public partial class CAContract
             //Whether the guardian exists in the holder info.
             if (!IsGuardianExist(input.CaHash, guardian)) continue;
             //Check the verifier signature and data of the guardian to be approved.
-            var isApproved = CheckVerifierSignatureAndData(guardian);
+            var isApproved = CheckVerifierSignatureAndData(guardian, methodName);
             if (!isApproved) continue;
-            var docInfo = GetVerificationDoc(guardian.VerificationInfo!.VerificationDoc);
-            var keyHash = GetKeyFromVerificationDoc(docInfo);
-            State.VerifierDocMap.Set(keyHash, true);
-            var operationType = docInfo.OperationType;
-            var operationTypeName = typeof(OperationType).GetEnumName(Convert.ToInt32(operationType))?.ToLower();
-            Assert(operationTypeName == methodName, "Invalid operation type.");
             guardianApprovedAmount++;
         }
 
@@ -207,6 +197,7 @@ public partial class CAContract
         var guardianApprovedList = input.GuardiansApproved
             .DistinctBy(g => $"{g.Type}{g.IdentifierHash}{g.VerificationInfo.Id}")
             .ToList();
+        var methodName = nameof(UpdateGuardian).ToLower();
         foreach (var guardian in guardianApprovedList)
         {
             Assert(
@@ -217,21 +208,19 @@ public partial class CAContract
             //Whether the guardian exists in the holder info.
             if (!IsGuardianExist(input.CaHash, guardian)) continue;
             //Check the verifier signature and data of the guardian to be approved.
-            var isApproved = CheckVerifierSignatureAndData(guardian);
+            var isApproved = CheckVerifierSignatureAndData(guardian, methodName);
             if (!isApproved) continue;
-            var docInfo = GetVerificationDoc(guardian.VerificationInfo!.VerificationDoc);
-            var keyHash = GetKeyFromVerificationDoc(docInfo);
-            State.VerifierDocMap.Set(keyHash, true);
-            var operationType = docInfo.OperationType;
-            var operationTypeName = typeof(OperationType).GetEnumName(Convert.ToInt32(operationType))?.ToLower();
-            var methodName = nameof(UpdateGuardian).ToLower();
-            Assert(operationTypeName == methodName, "Invalid operation type.");
             guardianApprovedAmount++;
         }
 
         //Whether the approved guardians count is satisfied.
-        IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count.Sub(1), guardianApprovedAmount,
+        var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count.Sub(1),
+            guardianApprovedAmount,
             holderInfo.JudgementStrategy);
+        if (!isJudgementStrategySatisfied)
+        {
+            return new Empty();
+        }
 
         existPreGuardian.VerifierId = input.GuardianToUpdateNew?.VerificationInfo.Id;
 

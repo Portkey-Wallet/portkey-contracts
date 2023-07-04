@@ -592,9 +592,9 @@ message AdminChanged {
 
 message VerificationDocInfo {
   string guardian_type = 1;
-  string guardian_hash = 2;
+  aelf.Hash identifier_Hash = 2;
   string verification_time = 3;
-  string verifier_address = 4;
+  aelf.Address verifier_address = 4;
   string salt = 5;
   string operation_type = 6;
 

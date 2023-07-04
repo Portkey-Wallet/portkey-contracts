@@ -58,18 +58,13 @@ public partial class CAContract : CAContractContainer.CAContractBase
         holderInfo.CreatorAddress = Context.Sender;
         holderInfo.ManagerInfos.Add(input.ManagerInfo);
         //Check verifier signature.
+        var methodName = nameof(CreateCAHolder).ToLower();
         var verificationDoc =
             GetVerificationDoc(input.GuardianApproved.VerificationInfo!.VerificationDoc);
-        Assert(CheckVerifierSignatureAndData(input.GuardianApproved), "Guardian verification failed.");
-        var keyHash = GetKeyFromVerificationDoc(verificationDoc);
-        State.VerifierDocMap.Set(keyHash, true);
-
-        //Check operationType.
-        var operationTypeName = typeof(OperationType).GetEnumName(Convert.ToInt32(verificationDoc.OperationType))
-            ?.ToLower();
-        var methodName = nameof(CreateCAHolder).ToLower();
-        Assert(operationTypeName == methodName, "Invalid operation type.");
-
+        if (!CheckVerifierSignatureAndData(input.GuardianApproved, methodName))
+        {
+            return new Empty();
+        }
 
         var salt = verificationDoc.Salt;
         var guardian = new Guardian
@@ -90,7 +85,12 @@ public partial class CAContract : CAContractContainer.CAContractBase
 
         // Where is the code for double check approved guardians?
         // Don't forget to assign GuardianApprovedCount
-        IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count, 1, holderInfo.JudgementStrategy);
+        var isJudgementStrategySatisfied =
+            IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count, 1, holderInfo.JudgementStrategy);
+        if (!isJudgementStrategySatisfied)
+        {
+            return new Empty();
+        }
 
         State.HolderInfoMap[holderId] = holderInfo;
         State.GuardianMap[guardianIdentifierHash] = holderId;
@@ -121,7 +121,7 @@ public partial class CAContract : CAContractContainer.CAContractBase
         return new Empty();
     }
 
-    private void IsJudgementStrategySatisfied(int guardianCount, int guardianApprovedCount, StrategyNode strategyNode)
+    private bool IsJudgementStrategySatisfied(int guardianCount, int guardianApprovedCount, StrategyNode strategyNode)
     {
         var context = new StrategyContext()
         {
@@ -133,10 +133,7 @@ public partial class CAContract : CAContractContainer.CAContractBase
         };
 
         var judgementStrategy = StrategyFactory.Create(strategyNode);
-        Assert((bool)judgementStrategy.Validate(context),
-            $"Not Satisfied criterion to create a CA Holder：" +
-            $"{CAContractConstants.GuardianCount}:{guardianCount}, " +
-            $"{CAContractConstants.GuardianApprovedCount}:{guardianApprovedCount}");
+        return (bool)judgementStrategy.Validate(context);
     }
 
     private void SetDelegator(Hash holderId, ManagerInfo managerInfo)

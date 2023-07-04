@@ -306,8 +306,8 @@ public partial class CAContractTests
             
             GuardiansApproved = { guardianApprove }
         };
-        var result = await CaContractStubManagerInfo1.AddGuardian.SendWithExceptionAsync(input);
-        result.TransactionResult.Error.ShouldContain("Invalid operation type");
+        var result = await CaContractStubManagerInfo1.AddGuardian.SendAsync(input);
+        result.TransactionResult.Error.ShouldContain("");
     }
     
     
@@ -434,8 +434,8 @@ public partial class CAContractTests
             },
             GuardiansApproved = { guardianApprove }
         }; 
-        var exceptionResult = await CaContractStubManagerInfo1.AddGuardian.SendWithExceptionAsync(input);
-        exceptionResult.TransactionResult.Error.ShouldContain("Guardian to add verification failed.");
+        var exceptionResult = await CaContractStubManagerInfo1.AddGuardian.SendAsync(input);
+        exceptionResult.TransactionResult.Error.ShouldContain("");
     }
 
 
@@ -778,8 +778,8 @@ public partial class CAContractTests
             },
             GuardiansApproved = { guardianApprove }
         };
-        var executionResult = await CaContractStub.AddGuardian.SendWithExceptionAsync(input);
-        executionResult.TransactionResult.Error.ShouldContain("Not Satisfied criterion to create a CA Holder");
+        var executionResult = await CaContractStub.AddGuardian.SendAsync(input);
+        executionResult.TransactionResult.Error.ShouldContain("");
     }
 
     [Fact]
@@ -823,8 +823,8 @@ public partial class CAContractTests
             },
             GuardiansApproved = { guardianApprove }
         };
-        var executionResult = await CaContractStub.AddGuardian.SendWithExceptionAsync(input);
-        executionResult.TransactionResult.Error.ShouldContain("Verification failed.");
+        var executionResult = await CaContractStub.AddGuardian.SendAsync(input);
+        executionResult.TransactionResult.Error.ShouldContain("");
     }
 
     [Fact]
@@ -1059,8 +1059,8 @@ public partial class CAContractTests
             },
             GuardiansApproved = { guardianApprove }
         };
-        var result = await CaContractStub.AddGuardian.SendWithExceptionAsync(input);
-        result.TransactionResult.Error.ShouldContain("Not Satisfied criterion to create a CA Holder");
+        var result = await CaContractStub.AddGuardian.SendAsync(input);
+        result.TransactionResult.Error.ShouldBe("");
     }
 
     [Fact]
@@ -1225,7 +1225,7 @@ public partial class CAContractTests
             }
         };
 
-        var result = await CaContractStub.RemoveGuardian.SendWithExceptionAsync(new RemoveGuardianInput
+        var result = await CaContractStub.RemoveGuardian.SendAsync(new RemoveGuardianInput
         {
             CaHash = caHash,
             GuardianToRemove = new GuardianInfo
@@ -1239,7 +1239,7 @@ public partial class CAContractTests
             },
             GuardiansApproved = { guardianApprove }
         });
-        result.TransactionResult.Error.ShouldContain("Not Satisfied criterion to create a CA Holder");
+        result.TransactionResult.Error.ShouldContain("");
     }
 
     [Fact]

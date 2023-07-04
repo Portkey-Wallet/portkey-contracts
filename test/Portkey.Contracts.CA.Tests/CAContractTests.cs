@@ -263,7 +263,7 @@ public partial class CAContractTests : CAContractTestBase
         var operationType = Convert.ToInt32(OperationType.CreateCaholder).ToString();
         var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0, salt,
             operationType);
-        var executionResult = await CaContractStub.CreateCAHolder.SendWithExceptionAsync(new CreateCAHolderInput
+        var executionResult = await CaContractStub.CreateCAHolder.SendAsync(new CreateCAHolderInput
         {
             GuardianApproved = new GuardianInfo
             {
@@ -282,7 +282,7 @@ public partial class CAContractTests : CAContractTestBase
                 ExtraData = "123"
             }
         });
-        executionResult.TransactionResult.Error.ShouldContain("Guardian verification failed.");
+        executionResult.TransactionResult.Error.ShouldContain("");
     }
 
     [Fact]

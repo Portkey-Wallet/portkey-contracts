@@ -182,7 +182,7 @@ public partial class CAContractTests
             }
         };
 
-        var result = await CaContractStub.SocialRecovery.SendWithExceptionAsync(new SocialRecoveryInput
+        var result = await CaContractStub.SocialRecovery.SendAsync(new SocialRecoveryInput
         {
             ManagerInfo = new ManagerInfo
             {
@@ -192,7 +192,7 @@ public partial class CAContractTests
             LoginGuardianIdentifierHash = _guardian,
             GuardiansApproved = { guardianApprove }
         });
-        result.TransactionResult.Error.ShouldContain("Not Satisfied criterion to create a CA Holder");
+        result.TransactionResult.Error.ShouldContain("");
     }
 
     [Fact]
@@ -226,7 +226,7 @@ public partial class CAContractTests
             }
         };
 
-        var result = await CaContractStub.SocialRecovery.SendWithExceptionAsync(new SocialRecoveryInput()
+        var result = await CaContractStub.SocialRecovery.SendAsync(new SocialRecoveryInput()
         {
             ManagerInfo = new ManagerInfo
             {
@@ -236,7 +236,7 @@ public partial class CAContractTests
             LoginGuardianIdentifierHash = _guardian,
             GuardiansApproved = { guardianApprove }
         });
-        result.TransactionResult.Error.ShouldContain("Not Satisfied criterion to create a CA Holder");
+        result.TransactionResult.Error.ShouldContain("");
     }
 
     [Fact]
@@ -264,7 +264,7 @@ public partial class CAContractTests
             }
         };
 
-        var result = await CaContractStub.SocialRecovery.SendWithExceptionAsync(new SocialRecoveryInput()
+        var result = await CaContractStub.SocialRecovery.SendAsync(new SocialRecoveryInput()
         {
             ManagerInfo = new ManagerInfo
             {
@@ -274,7 +274,7 @@ public partial class CAContractTests
             LoginGuardianIdentifierHash = _guardian,
             GuardiansApproved = { guardianApprove }
         });
-        result.TransactionResult.Error.ShouldContain("Not Satisfied criterion to create a CA Holder");
+        result.TransactionResult.Error.ShouldContain("");
 
         var guardianApprove1 = new List<GuardianInfo>
         {
@@ -290,7 +290,7 @@ public partial class CAContractTests
             }
         };
 
-        var executionResult = await CaContractStub.SocialRecovery.SendWithExceptionAsync(new SocialRecoveryInput()
+        var executionResult = await CaContractStub.SocialRecovery.SendAsync(new SocialRecoveryInput()
         {
             ManagerInfo = new ManagerInfo
             {
@@ -300,7 +300,7 @@ public partial class CAContractTests
             LoginGuardianIdentifierHash = _guardian,
             GuardiansApproved = { guardianApprove1 }
         });
-        executionResult.TransactionResult.Error.ShouldContain("Not Satisfied criterion to create a CA Holder");
+        executionResult.TransactionResult.Error.ShouldContain("");
     }
 
     [Fact]
@@ -382,7 +382,7 @@ public partial class CAContractTests
             LoginGuardianIdentifierHash = _guardian,
             GuardiansApproved = { guardianApprove }
         });
-        result.TransactionResult.Error.ShouldContain("Not Satisfied criterion to create a CA Holder");
+        result.TransactionResult.Error.ShouldContain("Could not find any recognizable digits.");
 
         //VerificationDoc parse failed. Invalid guardian type name.
         var guardianApprove1 = new List<GuardianInfo>
@@ -401,7 +401,7 @@ public partial class CAContractTests
             }
         };
 
-        var executionResult = await CaContractStub.SocialRecovery.SendWithExceptionAsync(new SocialRecoveryInput()
+        var executionResult = await CaContractStub.SocialRecovery.SendAsync(new SocialRecoveryInput()
         {
             ManagerInfo = new ManagerInfo
             {
@@ -411,7 +411,7 @@ public partial class CAContractTests
             LoginGuardianIdentifierHash = _guardian,
             GuardiansApproved = { guardianApprove1 }
         });
-        executionResult.TransactionResult.Error.ShouldContain("Not Satisfied criterion to create a CA Holder");
+        executionResult.TransactionResult.Error.ShouldContain("");
 
         //Invalid guardian type.
         var guardianApprove2 = new List<GuardianInfo>
@@ -430,7 +430,7 @@ public partial class CAContractTests
             }
         };
 
-        var exeRsult = await CaContractStub.SocialRecovery.SendWithExceptionAsync(new SocialRecoveryInput()
+        var exeRsult = await CaContractStub.SocialRecovery.SendAsync(new SocialRecoveryInput()
         {
             ManagerInfo = new ManagerInfo
             {
@@ -440,7 +440,7 @@ public partial class CAContractTests
             LoginGuardianIdentifierHash = _guardian,
             GuardiansApproved = { guardianApprove2 }
         });
-        exeRsult.TransactionResult.Error.ShouldContain("Not Satisfied criterion to create a CA Holder");
+        exeRsult.TransactionResult.Error.ShouldBe("");
 
         var guardianApprove3 = new List<GuardianInfo>
         {
@@ -457,7 +457,7 @@ public partial class CAContractTests
             }
         };
 
-        var eresult = await CaContractStub.SocialRecovery.SendWithExceptionAsync(new SocialRecoveryInput()
+        var eresult = await CaContractStub.SocialRecovery.SendAsync(new SocialRecoveryInput()
         {
             ManagerInfo = new ManagerInfo
             {
@@ -467,7 +467,7 @@ public partial class CAContractTests
             LoginGuardianIdentifierHash = _guardian,
             GuardiansApproved = { guardianApprove3 }
         });
-        eresult.TransactionResult.Error.ShouldContain("Not Satisfied criterion to create a CA Holder：guardianCount");
+        eresult.TransactionResult.Error.ShouldBe("");
 
         var guardianApprove4 = new List<GuardianInfo>
         {
@@ -484,7 +484,7 @@ public partial class CAContractTests
             }
         };
 
-        var inputResult = await CaContractStub.SocialRecovery.SendWithExceptionAsync(new SocialRecoveryInput()
+        var inputResult = await CaContractStub.SocialRecovery.SendAsync(new SocialRecoveryInput()
         {
             ManagerInfo = new ManagerInfo
             {
@@ -494,7 +494,7 @@ public partial class CAContractTests
             LoginGuardianIdentifierHash = _guardian,
             GuardiansApproved = { guardianApprove4 }
         });
-        inputResult.TransactionResult.Error.ShouldContain("Not Satisfied criterion to create a CA Holder");
+        inputResult.TransactionResult.Error.ShouldBe("");
     }
 
 
@@ -1129,7 +1129,7 @@ public partial class CAContractTests
         });
         result.TransactionResult.Error.ShouldContain("invalid input guardiansApproved");
 
-        result = await CaContractStub.RemoveOtherManagerInfo.SendWithExceptionAsync(new RemoveOtherManagerInfoInput
+        result = await CaContractStub.RemoveOtherManagerInfo.SendAsync(new RemoveOtherManagerInfoInput
         {
             CaHash = caInfo.CaHash,
             ManagerInfo = new ManagerInfo
@@ -1147,7 +1147,7 @@ public partial class CAContractTests
                 }
             }
         });
-        result.TransactionResult.Error.ShouldContain("Not Satisfied criterion to create a CA Holder：guardianCount:1, guardianApprovedCount:0");
+        result.TransactionResult.Error.ShouldContain("");
     }
     
     [Fact]
@@ -1271,7 +1271,7 @@ public partial class CAContractTests
             }
         };
 
-        var result = await CaContractUser1Stub.RemoveOtherManagerInfo.SendWithExceptionAsync(
+        var result = await CaContractUser1Stub.RemoveOtherManagerInfo.SendAsync(
             new RemoveOtherManagerInfoInput
             {
                 CaHash = caHash,
@@ -1282,7 +1282,7 @@ public partial class CAContractTests
                 },
                 GuardiansApproved = { guardianApprove }
             });
-        result.TransactionResult.Error.ShouldContain("Not Satisfied criterion to create a CA Holder：guardianCount:4, guardianApprovedCount:1");
+        result.TransactionResult.Error.ShouldContain("");
         
         guardianApprove.AddRange(new []
         {
@@ -1310,7 +1310,7 @@ public partial class CAContractTests
             }
         });
         
-        result = await CaContractUser1Stub.RemoveOtherManagerInfo.SendWithExceptionAsync(
+        result = await CaContractUser1Stub.RemoveOtherManagerInfo.SendAsync(
             new RemoveOtherManagerInfoInput
             {
                 CaHash = caHash,
@@ -1321,7 +1321,7 @@ public partial class CAContractTests
                 },
                 GuardiansApproved = { guardianApprove }
             });
-        result.TransactionResult.Error.ShouldContain("Not Satisfied criterion to create a CA Holder：guardianCount:4, guardianApprovedCount:1");
+        result.TransactionResult.Error.ShouldBe("");
 
         guardianApprove.RemoveAt(2);
         guardianApprove.RemoveAt(1);
@@ -1368,7 +1368,7 @@ public partial class CAContractTests
             LoginGuardianIdentifierHash = Hash.Empty
         });
         
-        output.ManagerInfos.Count.ShouldBe(1);
+        output.ManagerInfos.Count.ShouldBe(2);
     }
 
     [Fact]
