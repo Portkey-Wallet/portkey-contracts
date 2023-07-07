@@ -614,5 +614,5 @@ enum OperationType {
 }
 
 message OperationTypeInSignatureEnabledInput {
-  bool operation_type_inSignature_enabled = 1;
+  bool operation_type_in_signature_enabled = 1;
 }
