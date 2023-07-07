@@ -21,11 +21,6 @@ public partial class CAContract
         {
             return false;
         }
-        var verifierDoc = verificationDoc.Split(",");
-        if (verifierDoc.Length is not 5 or 6)
-        {
-            return false;
-        }
         return verificationDoc.Length switch
         {
             5 => CheckVerifierSignatureAndData(guardianInfo),
