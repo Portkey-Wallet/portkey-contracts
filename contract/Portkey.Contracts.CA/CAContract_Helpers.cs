@@ -21,7 +21,8 @@ public partial class CAContract
         {
             return false;
         }
-        return verificationDoc.Length switch
+        var verifierDoc = verificationDoc.Split(",");
+        return verifierDoc.Length switch
         {
             5 => CheckVerifierSignatureAndData(guardianInfo),
             6 => CheckVerifierSignatureAndData(guardianInfo, methodName),
