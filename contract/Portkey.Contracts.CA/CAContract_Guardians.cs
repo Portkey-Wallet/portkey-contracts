@@ -40,11 +40,11 @@ public partial class CAContract
             //Whether the guardian exists in the holder info.
             if (!IsGuardianExist(input.CaHash, guardian)) continue;
             //Check the verifier signature and data of the guardian to be approved.
-            var isApproved = CheckVerifierSignatureAndData(guardian, methodName);
+            var isApproved = CheckVerifierSignatureAndDataCompatible(guardian, methodName);
             if (!isApproved) continue;
             guardianApprovedAmount++;
         }
-        if (!CheckVerifierSignatureAndData(input.GuardianToAdd, methodName))
+        if (!CheckVerifierSignatureAndDataCompatible(input.GuardianToAdd, methodName))
         {
             return new Empty();
         }
@@ -124,7 +124,7 @@ public partial class CAContract
             //Whether the guardian exists in the holder info.
             if (!IsGuardianExist(input.CaHash, guardian)) continue;
             //Check the verifier signature and data of the guardian to be approved.
-            var isApproved = CheckVerifierSignatureAndData(guardian, methodName);
+            var isApproved = CheckVerifierSignatureAndDataCompatible(guardian, methodName);
             if (!isApproved) continue;
             guardianApprovedAmount++;
         }
@@ -210,7 +210,7 @@ public partial class CAContract
             //Whether the guardian exists in the holder info.
             if (!IsGuardianExist(input.CaHash, guardian)) continue;
             //Check the verifier signature and data of the guardian to be approved.
-            var isApproved = CheckVerifierSignatureAndData(guardian, methodName);
+            var isApproved = CheckVerifierSignatureAndDataCompatible(guardian, methodName);
             if (!isApproved) continue;
             guardianApprovedAmount++;
         }

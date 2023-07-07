@@ -1,5 +1,4 @@
 using System;
-using System.Globalization;
 using System.Linq;
 using AElf;
 using AElf.CSharp.Core.Extension;
@@ -10,13 +9,35 @@ namespace Portkey.Contracts.CA;
 
 public partial class CAContract
 {
+
+    private bool CheckVerifierSignatureAndDataCompatible(GuardianInfo guardianInfo, string methodName)
+    {
+        if (State.OperationTypeInSignatureEnabled.Value)
+        {
+            return CheckVerifierSignatureAndData(guardianInfo, methodName);
+        }
+        var verificationDoc = guardianInfo.VerificationInfo.VerificationDoc;
+        if (verificationDoc == null || string.IsNullOrWhiteSpace(verificationDoc))
+        {
+            return false;
+        }
+        var verifierDoc = verificationDoc.Split(",");
+        if (verifierDoc.Length is not 5 or 6)
+        {
+            return false;
+        }
+        return verificationDoc.Length switch
+        {
+            5 => CheckVerifierSignatureAndData(guardianInfo),
+            6 => CheckVerifierSignatureAndData(guardianInfo, methodName),
+            _ => false
+        };
+    }
+
+
+
     private bool CheckVerifierSignatureAndData(GuardianInfo guardianInfo, string methodName)
     {
-        if (!State.OperationTypeInSignatureEnabled.Value)
-        {
-            return CheckVerifierSignatureAndData(guardianInfo);
-        }
-
         //[type,guardianIdentifierHash,verificationTime,verifierAddress,salt,operationType]
         var verificationDoc = guardianInfo.VerificationInfo.VerificationDoc;
         if (verificationDoc == null || string.IsNullOrWhiteSpace(verificationDoc))

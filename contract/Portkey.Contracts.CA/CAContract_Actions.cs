@@ -58,7 +58,7 @@ public partial class CAContract : CAContractContainer.CAContractBase
         holderInfo.ManagerInfos.Add(input.ManagerInfo);
         //Check verifier signature.
         var methodName = nameof(CreateCAHolder).ToLower();
-        if (!CheckVerifierSignatureAndData(input.GuardianApproved, methodName))
+        if (!CheckVerifierSignatureAndDataCompatible(input.GuardianApproved, methodName))
         {
             return new Empty();
         }
