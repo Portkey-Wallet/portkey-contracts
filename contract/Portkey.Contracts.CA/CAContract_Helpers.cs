@@ -9,18 +9,19 @@ namespace Portkey.Contracts.CA;
 
 public partial class CAContract
 {
-
     private bool CheckVerifierSignatureAndDataCompatible(GuardianInfo guardianInfo, string methodName)
     {
         if (State.OperationTypeInSignatureEnabled.Value)
         {
             return CheckVerifierSignatureAndData(guardianInfo, methodName);
         }
+
         var verificationDoc = guardianInfo.VerificationInfo.VerificationDoc;
         if (verificationDoc == null || string.IsNullOrWhiteSpace(verificationDoc))
         {
             return false;
         }
+
         var verifierDoc = verificationDoc.Split(",");
         return verifierDoc.Length switch
         {
@@ -29,7 +30,6 @@ public partial class CAContract
             _ => false
         };
     }
-
 
 
     private bool CheckVerifierSignatureAndData(GuardianInfo guardianInfo, string methodName)
@@ -42,17 +42,19 @@ public partial class CAContract
         }
 
         var verifierDoc = verificationDoc.Split(",");
-        var docInfo = GetVerificationDoc(verificationDoc);
+
         if (verifierDoc.Length != 6)
         {
             return false;
         }
 
+        var docInfo = GetVerificationDoc(verificationDoc);
+
         if (docInfo.OperationType == "0")
         {
             return false;
         }
-        
+
         var key = HashHelper.ComputeFrom(guardianInfo.VerificationInfo.Signature.ToByteArray());
         if (State.VerifierDocMap[key])
         {
