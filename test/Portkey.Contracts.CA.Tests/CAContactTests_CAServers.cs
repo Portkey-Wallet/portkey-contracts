@@ -1,3 +1,4 @@
+
 using System.Threading.Tasks;
 using Google.Protobuf.WellKnownTypes;
 using Shouldly;
@@ -14,7 +15,11 @@ public partial class CAContractTests
         //set admin
         await CaContractStub.Initialize.SendAsync(new InitializeInput()
         {
-            ContractAdmin = DefaultAccount.Address
+            ContractAdmin = DefaultAccount.Address,
+        });
+        await CaContractStub.ChangeOperationTypeInSignatureEnabled.SendAsync(new OperationTypeInSignatureEnabledInput()
+        {
+            OperationTypeInSignatureEnabled = true
         });
         var output = await CaContractStub.GetCAServers.CallAsync(new Empty());
         output.CaServers.Count.ShouldBe(0);
@@ -62,7 +67,11 @@ public partial class CAContractTests
         //set admin
         await CaContractStub.Initialize.SendAsync(new InitializeInput()
         {
-            ContractAdmin = DefaultAccount.Address
+            ContractAdmin = DefaultAccount.Address,
+        });
+        await CaContractStub.ChangeOperationTypeInSignatureEnabled.SendAsync(new OperationTypeInSignatureEnabledInput()
+        {
+            OperationTypeInSignatureEnabled = true
         });
         await CaContractStub.AddCAServer.SendAsync( new AddCAServerInput()
         {

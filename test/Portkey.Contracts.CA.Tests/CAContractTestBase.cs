@@ -1,9 +1,16 @@
+using System.IO;
 using AElf;
 using AElf.Boilerplate.TestBase;
 using AElf.Boilerplate.TestBase.SmartContractNameProviders;
+using AElf.Contracts.Genesis;
 using AElf.Contracts.MultiToken;
 using AElf.Cryptography.ECDSA;
+using AElf.Kernel;
+using AElf.Standards.ACS0;
 using AElf.Types;
+using Google.Protobuf;
+using Org.BouncyCastle.Asn1.X509;
+using Volo.Abp.Threading;
 
 namespace Portkey.Contracts.CA;
 
@@ -15,6 +22,9 @@ public class CAContractTestBase : DAppContractTestBase<CAContractTestModule>
     
     internal CAContractContainer.CAContractStub CaContractUser1Stub { get; set; }
     internal TokenContractContainer.TokenContractStub TokenContractStub { get; set; }
+    
+    internal ACS0Container.ACS0Stub ZeroContractStub { get; set; }
+    
     
     protected ECKeyPair DefaultKeyPair => Accounts[0].KeyPair;
     protected Address DefaultAddress => Accounts[0].Address;
@@ -37,14 +47,23 @@ public class CAContractTestBase : DAppContractTestBase<CAContractTestModule>
     
     protected Address CaContractAddress { get; set; }
 
-    public CAContractTestBase()
+    protected CAContractTestBase()
     {
-        CaContractAddress = GetAddress(CASmartContractAddressNameProvider.StringName);
+        TokenContractStub = GetTokenContractTester(DefaultKeyPair);
+        ZeroContractStub = GetContractZeroTester(DefaultKeyPair);
+        var result = AsyncHelper.RunSync(async () =>await ZeroContractStub.DeploySmartContract.SendAsync(new ContractDeploymentInput
+        {   
+            Category = KernelConstants.CodeCoverageRunnerCategory,
+            Code = ByteString.CopyFrom(
+                File.ReadAllBytes(typeof(CAContract).Assembly.Location))
+        }));
+
+        CaContractAddress = Address.Parser.ParseFrom(result.TransactionResult.ReturnValue);
         CaContractStub = GetCaContractTester(DefaultKeyPair);
         CaContractStubManagerInfo1 = GetCaContractTester(User1KeyPair);
         CaContractUser1Stub = GetCaContractTester(User1KeyPair);
         //ParliamentContractStub = GetParliamentContractTester(DefaultKeyPair);
-        TokenContractStub = GetTokenContractTester(DefaultKeyPair);
+        
     }
 
     
@@ -63,6 +82,13 @@ public class CAContractTestBase : DAppContractTestBase<CAContractTestModule>
         ECKeyPair keyPair)
     {
         return GetTester<TokenContractContainer.TokenContractStub>(TokenContractAddress,
+            keyPair);
+    }
+    
+    internal ACS0Container.ACS0Stub GetContractZeroTester(
+        ECKeyPair keyPair)
+    {
+        return GetTester<ACS0Container.ACS0Stub>(BasicContractZeroAddress,
             keyPair);
     }
     
