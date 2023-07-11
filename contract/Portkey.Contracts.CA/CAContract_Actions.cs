@@ -248,7 +248,7 @@ public partial class CAContract : CAContractContainer.CAContractBase
         Assert(State.Admin.Value == Context.Sender, "No permission");
         foreach (var setCaContractAddressInput in input.SetCAContractAddress)
         {
-            State.CAContractAddresses[setCaContractAddressInput.ChainId] = setCaContractAddressInput.Address;
+            State.CrossChainTransactionMap[setCaContractAddressInput.ChainId] = setCaContractAddressInput.Address;
         }
 
         return new Empty();

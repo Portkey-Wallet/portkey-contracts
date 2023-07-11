@@ -65,11 +65,10 @@ public partial class CAContract
 
     public override Empty SyncHolderInfo(SyncHolderInfoInput input)
     {
-        // var originalTransaction = MethodNameVerify(input.VerificationTransactionInfo,
-        //     nameof(ValidateCAHolderInfoWithManagerInfosExists));
+        var originalTransaction = Transaction.Parser.ParseFrom(input.VerificationTransactionInfo.TransactionBytes);
+        AssertCrossChainTransaction(originalTransaction,
+            nameof(ValidateCAHolderInfoWithManagerInfosExists), input.VerificationTransactionInfo.FromChainId);
 
-        var originalTransaction = AssertCrossChainTransaction(input.VerificationTransactionInfo,nameof(ValidateCAHolderInfoWithManagerInfosExists));
-        
         var originalTransactionId = originalTransaction.GetHash();
 
         TransactionVerify(originalTransactionId, input.VerificationTransactionInfo.ParentChainHeight,
@@ -132,18 +131,13 @@ public partial class CAContract
     }
 
 
-    private Transaction AssertCrossChainTransaction(VerificationTransactionInfo info,
-        string validMethodName)
+    private void AssertCrossChainTransaction(Transaction originalTransaction,
+        string validMethodName, int fromChainId)
     {
-        var originalTransaction = Transaction.Parser.ParseFrom(info.TransactionBytes);
         var validateResult = originalTransaction.MethodName == validMethodName
-                             && originalTransaction.To == State.CAContractAddresses[info.FromChainId];
+                             && originalTransaction.To == State.CrossChainTransactionMap[fromChainId];
         Assert(validateResult, "Invalid transaction.");
-        return originalTransaction;
-
     }
-    
-
 
 
     private RepeatedField<Hash> SyncLoginGuardianAdded(Hash caHash, RepeatedField<Hash> loginGuardians)

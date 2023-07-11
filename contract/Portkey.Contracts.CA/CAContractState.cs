@@ -54,5 +54,5 @@ public partial class CAContractState : ContractState
 
     public SingletonState<bool> OperationTypeInSignatureEnabled { get; set; }
 
-    public MappedState<int, Address> CAContractAddresses { get; set; }
+    public MappedState<int, Address> CrossChainTransactionMap { get; set; }
 }
