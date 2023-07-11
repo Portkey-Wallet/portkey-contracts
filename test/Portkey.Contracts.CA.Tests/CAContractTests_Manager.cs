@@ -268,7 +268,7 @@ public partial class CAContractTests
             }
         };
 
-        var result = await CaContractStub.SocialRecovery.SendWithExceptionAsync(new SocialRecoveryInput()
+        var result = await CaContractStub.SocialRecovery.SendAsync(new SocialRecoveryInput()
         {
             ManagerInfo = new ManagerInfo
             {
@@ -278,7 +278,7 @@ public partial class CAContractTests
             LoginGuardianIdentifierHash = _guardian,
             GuardiansApproved = { guardianApprove }
         });
-        result.TransactionResult.Error.ShouldContain("Could not find any recognizable digits.");
+        result.TransactionResult.Error.ShouldBe("");
 
         var guardianApprove1 = new List<GuardianInfo>
         {
