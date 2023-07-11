@@ -202,7 +202,7 @@ public partial class CAContract : CAContractContainer.CAContractBase
             }
         });
     }
-    
+
     private void RemoveContractDelegator(ManagerInfo managerInfo)
     {
         State.TokenContract.RemoveTransactionFeeDelegator.Send(new RemoveTransactionFeeDelegatorInput
@@ -246,7 +246,11 @@ public partial class CAContract : CAContractContainer.CAContractBase
     public override Empty SetCAContractAddresses(SetCAContractAddressesInput input)
     {
         Assert(State.Admin.Value == Context.Sender, "No permission");
-        State.CAContractAddresses[Context.ChainId] = input.Address;
+        foreach (var setCaContractAddressInput in input.SetCAContractAddressInput)
+        {
+            State.CAContractAddresses[setCaContractAddressInput.ChainId] = setCaContractAddressInput.Address;
+        }
+
         return new Empty();
     }
 }

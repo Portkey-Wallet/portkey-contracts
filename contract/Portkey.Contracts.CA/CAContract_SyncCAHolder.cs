@@ -67,8 +67,8 @@ public partial class CAContract
     {
         var originalTransaction = MethodNameVerify(input.VerificationTransactionInfo,
             nameof(ValidateCAHolderInfoWithManagerInfosExists));
-        AssertCAContractAddress(originalTransaction);
-
+        AssertCAContractAddress(originalTransaction,input.VerificationTransactionInfo.FromChainId);
+        
         var originalTransactionId = originalTransaction.GetHash();
 
         TransactionVerify(originalTransactionId, input.VerificationTransactionInfo.ParentChainHeight,
@@ -130,9 +130,9 @@ public partial class CAContract
         return new Empty();
     }
 
-    private void AssertCAContractAddress(Transaction originalTransaction)
+    private void AssertCAContractAddress(Transaction originalTransaction,int fromChainId)
     {
-        Assert(originalTransaction.To == Context.Self, "Cross chain transaction should be sent to CAContract.");
+        Assert(originalTransaction.To == State.CAContractAddresses[fromChainId], "Cross chain transaction should be sent to CAContract.");
     }
 
 
