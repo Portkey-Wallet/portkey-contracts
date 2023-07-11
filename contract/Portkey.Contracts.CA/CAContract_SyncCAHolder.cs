@@ -135,7 +135,7 @@ public partial class CAContract
         string validMethodName, int fromChainId)
     {
         var validateResult = originalTransaction.MethodName == validMethodName
-                             && originalTransaction.To == State.CrossChainTransactionMap[fromChainId];
+                             && originalTransaction.To == State.CAContractAddresses[fromChainId];
         Assert(validateResult, "Invalid transaction.");
     }
 

@@ -110,7 +110,7 @@ service CAContract {
 
   rpc ChangeOperationTypeInSignatureEnabled (OperationTypeInSignatureEnabledInput) returns (google.protobuf.Empty) {}
 
-  rpc SetCAContractAddresses (SetCAContractAddressesInput) returns (google.protobuf.Empty) {}
+  rpc SetCAContractAddresses (CAContractAddressesInput) returns (google.protobuf.Empty) {}
 
 }
 
@@ -612,11 +612,11 @@ enum OperationType {
 
 }
 
-message SetCAContractAddressesInput {
-  repeated SetCAContractAddress setCAContractAddress = 1;
+message CAContractAddressesInput {
+  repeated CAContractAddress CAContractAddresses = 1;
 }
 
-message SetCAContractAddress {
+message CAContractAddress {
    aelf.Address address = 1;
    int32 chain_id = 2;
 }

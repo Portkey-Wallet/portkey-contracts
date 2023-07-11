@@ -1,4 +1,3 @@
-using System;
 using AElf.Sdk.CSharp.State;
 using AElf.Types;
 
@@ -54,5 +53,5 @@ public partial class CAContractState : ContractState
 
     public SingletonState<bool> OperationTypeInSignatureEnabled { get; set; }
 
-    public MappedState<int, Address> CrossChainTransactionMap { get; set; }
+    public MappedState<int, Address> CAContractAddresses { get; set; }
 }

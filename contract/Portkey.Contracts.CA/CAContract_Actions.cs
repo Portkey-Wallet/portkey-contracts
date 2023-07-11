@@ -243,12 +243,12 @@ public partial class CAContract : CAContractContainer.CAContractBase
         return new Empty();
     }
 
-    public override Empty SetCAContractAddresses(SetCAContractAddressesInput input)
+    public override Empty SetCAContractAddresses(CAContractAddressesInput input)
     {
         Assert(State.Admin.Value == Context.Sender, "No permission");
-        foreach (var setCaContractAddressInput in input.SetCAContractAddress)
+        foreach (var caContractAddress in input.CAContractAddresses)
         {
-            State.CrossChainTransactionMap[setCaContractAddressInput.ChainId] = setCaContractAddressInput.Address;
+            State.CAContractAddresses[caContractAddress.ChainId] = caContractAddress.Address;
         }
 
         return new Empty();
