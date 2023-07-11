@@ -246,7 +246,7 @@ public partial class CAContract : CAContractContainer.CAContractBase
     public override Empty SetCAContractAddresses(SetCAContractAddressesInput input)
     {
         Assert(State.Admin.Value == Context.Sender, "No permission");
-        foreach (var setCaContractAddressInput in input.SetCAContractAddressInput)
+        foreach (var setCaContractAddressInput in input.SetCAContractAddress)
         {
             State.CAContractAddresses[setCaContractAddressInput.ChainId] = setCaContractAddressInput.Address;
         }

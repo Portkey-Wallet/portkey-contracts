@@ -613,10 +613,10 @@ enum OperationType {
 }
 
 message SetCAContractAddressesInput {
-  repeated SetCAContractAddressInput setCAContractAddressInput = 1;
+  repeated SetCAContractAddress setCAContractAddress = 1;
 }
 
-message SetCAContractAddressInput {
+message SetCAContractAddress {
    aelf.Address address = 1;
    int32 chain_id = 2;
 }
