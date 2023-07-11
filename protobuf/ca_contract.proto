@@ -109,6 +109,8 @@ service CAContract {
   rpc GetAdmin (google.protobuf.Empty) returns (AdminOutput) {option (aelf.is_view) = true;}
 
   rpc ChangeOperationTypeInSignatureEnabled (OperationTypeInSignatureEnabledInput) returns (google.protobuf.Empty) {}
+
+  rpc SetCAContractAddresses (SetCAContractAddressesInput) returns (google.protobuf.Empty) {}
 }
 
 //Data structure
@@ -605,4 +607,8 @@ enum OperationType {
 
 message OperationTypeInSignatureEnabledInput {
   bool operation_type_in_signature_enabled = 1;
+}
+
+message SetCAContractAddressesInput {
+  aelf.Address address = 1;
 }

@@ -37,7 +37,7 @@ public partial class CAContract
 
         Assert(loginGuardians.Count == loginGuardianIdentifierHashList.Count,
             "The amount of LoginGuardianInput not equals to HolderInfo's LoginGuardians");
-        
+
         foreach (var loginGuardian in loginGuardianIdentifierHashList)
         {
             Assert(loginGuardians.Contains(loginGuardian)
@@ -67,6 +67,8 @@ public partial class CAContract
     {
         var originalTransaction = MethodNameVerify(input.VerificationTransactionInfo,
             nameof(ValidateCAHolderInfoWithManagerInfosExists));
+        AssertCAContractAddress(originalTransaction);
+
         var originalTransactionId = originalTransaction.GetHash();
 
         TransactionVerify(originalTransactionId, input.VerificationTransactionInfo.ParentChainHeight,
@@ -127,6 +129,12 @@ public partial class CAContract
 
         return new Empty();
     }
+
+    private void AssertCAContractAddress(Transaction originalTransaction)
+    {
+        Assert(originalTransaction.To == Context.Self, "Cross chain transaction should be sent to CAContract.");
+    }
+
 
     private RepeatedField<Hash> SyncLoginGuardianAdded(Hash caHash, RepeatedField<Hash> loginGuardians)
     {
@@ -200,6 +208,7 @@ public partial class CAContract
 
         return originalTransaction;
     }
+
 
     private void TransactionVerify(Hash transactionId, long parentChainHeight, int chainId, MerklePath merklePath)
     {
