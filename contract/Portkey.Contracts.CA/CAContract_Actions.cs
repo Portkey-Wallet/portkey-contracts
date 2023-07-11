@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using AElf;
 using AElf.Contracts.MultiToken;
@@ -203,7 +202,7 @@ public partial class CAContract : CAContractContainer.CAContractBase
             }
         });
     }
-
+    
     private void RemoveContractDelegator(ManagerInfo managerInfo)
     {
         State.TokenContract.RemoveTransactionFeeDelegator.Send(new RemoveTransactionFeeDelegatorInput
