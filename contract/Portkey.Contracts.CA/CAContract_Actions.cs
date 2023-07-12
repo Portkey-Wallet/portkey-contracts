@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using AElf;
 using AElf.Contracts.MultiToken;
@@ -239,8 +238,19 @@ public partial class CAContract : CAContractContainer.CAContractBase
     public override Empty ChangeOperationTypeInSignatureEnabled(OperationTypeInSignatureEnabledInput input)
     {
         Assert(State.Admin.Value == Context.Sender, "No permission");
-        Assert(State.OperationTypeInSignatureEnabled.Value != input.OperationTypeInSignatureEnabled , "invalid input");
+        Assert(State.OperationTypeInSignatureEnabled.Value != input.OperationTypeInSignatureEnabled, "invalid input");
         State.OperationTypeInSignatureEnabled.Value = input.OperationTypeInSignatureEnabled;
+        return new Empty();
+    }
+
+    public override Empty SetCAContractAddresses(SetCAContractAddressesInput input)
+    {
+        Assert(State.Admin.Value == Context.Sender, "No permission");
+        foreach (var caContractAddress in input.CaContractAddresses)
+        {
+            State.CAContractAddresses[caContractAddress.ChainId] = caContractAddress.Address;
+        }
+
         return new Empty();
     }
 }
