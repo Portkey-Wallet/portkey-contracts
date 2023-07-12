@@ -613,7 +613,7 @@ enum OperationType {
 }
 
 message SetCAContractAddressesInput {
-  repeated CAContractAddress CAContractAddresses = 1;
+  repeated CAContractAddress ca_contract_addresses = 1;
 }
 
 message CAContractAddress {
