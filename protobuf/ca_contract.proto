@@ -16,9 +16,9 @@ import "acs12.proto";
 option csharp_namespace = "Portkey.Contracts.CA";
 
 service CAContract {
-
+  
   option (aelf.base) = "acs12.proto";
-
+  
   option (aelf.csharp_state) = "Portkey.Contracts.CA.CAContractState";
 
   rpc Initialize(InitializeInput) returns (google.protobuf.Empty){}
@@ -57,9 +57,9 @@ service CAContract {
 
   // If the managerInfo is already removed, return true
   rpc RemoveManagerInfo (RemoveManagerInfoInput) returns (google.protobuf.Empty) {}
-
+  
   rpc RemoveOtherManagerInfo (RemoveOtherManagerInfoInput) returns (google.protobuf.Empty) {}
-
+  
   rpc UpdateManagerInfos (UpdateManagerInfosInput) returns (google.protobuf.Empty) {}
 
   // If End Points already exists, return true
@@ -87,28 +87,31 @@ service CAContract {
   rpc SyncHolderInfo (SyncHolderInfoInput) returns (google.protobuf.Empty) {}
 
   rpc ValidateStrategy (ValidateStrategyInput) returns (ValidateStrategyOutput) {option (aelf.is_view) = true;}
-
+  
   rpc SetContractDelegationFee (SetContractDelegationFeeInput) returns (google.protobuf.Empty) {}
-
+  
   rpc GetContractDelegationFee (google.protobuf.Empty) returns (GetContractDelegationFeeOutput) {}
-
+  
   rpc AddCreatorController (ControllerInput) returns (google.protobuf.Empty) {}
 
   rpc RemoveCreatorController (ControllerInput) returns (google.protobuf.Empty) {}
-
+  
   rpc GetCreatorControllers (google.protobuf.Empty) returns (ControllerOutput) {option (aelf.is_view) = true;}
 
   rpc AddServerController (ControllerInput) returns (google.protobuf.Empty) {}
-
+  
   rpc RemoveServerController (ControllerInput) returns (google.protobuf.Empty) {}
-
+  
   rpc GetServerControllers (google.protobuf.Empty) returns (ControllerOutput) {option (aelf.is_view) = true;}
-
+  
   rpc ChangeAdmin (AdminInput) returns (google.protobuf.Empty) {}
-
+  
   rpc GetAdmin (google.protobuf.Empty) returns (AdminOutput) {option (aelf.is_view) = true;}
 
   rpc ChangeOperationTypeInSignatureEnabled (OperationTypeInSignatureEnabledInput) returns (google.protobuf.Empty) {}
+
+  rpc SetCAContractAddresses (SetCAContractAddressesInput) returns (google.protobuf.Empty) {}
+
 }
 
 //Data structure
@@ -592,6 +595,12 @@ message AdminChanged {
 }
 
 
+
+message OperationTypeInSignatureEnabledInput {
+  bool operation_type_in_signature_enabled = 1;
+}
+
+
 enum OperationType {
   Unknown = 0;
   CreateCAHolder = 1;
@@ -603,6 +612,11 @@ enum OperationType {
 
 }
 
-message OperationTypeInSignatureEnabledInput {
-  bool operation_type_in_signature_enabled = 1;
+message SetCAContractAddressesInput {
+  repeated CAContractAddress ca_contract_addresses = 1;
+}
+
+message CAContractAddress {
+   aelf.Address address = 1;
+   int32 chain_id = 2;
 }

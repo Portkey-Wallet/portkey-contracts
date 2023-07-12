@@ -1,4 +1,5 @@
 
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Google.Protobuf.WellKnownTypes;
 using Shouldly;
@@ -21,6 +22,21 @@ public partial class CAContractTests
         {
             OperationTypeInSignatureEnabled = true
         });
+        
+        var caContractAddresses = new List<CAContractAddress>
+        {
+            new CAContractAddress()
+            {
+                Address = CaContractAddress,
+                ChainId = 123456
+            }
+        };
+        var input = new SetCAContractAddressesInput
+        {
+            CaContractAddresses = {caContractAddresses}
+        };
+        await CaContractStub.SetCAContractAddresses.SendAsync(input);
+  
         var output = await CaContractStub.GetCAServers.CallAsync(new Empty());
         output.CaServers.Count.ShouldBe(0);
         //success
