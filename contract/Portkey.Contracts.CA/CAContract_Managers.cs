@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using AElf.Contracts.MultiToken;
 using AElf.Sdk.CSharp;
@@ -32,20 +33,23 @@ public partial class CAContract
         var guardianApprovedList = input.GuardiansApproved
             .DistinctBy(g => $"{g.Type}{g.IdentifierHash}{g.VerificationInfo.Id}")
             .ToList();
+        var methodName = nameof(SocialRecovery).ToLower();
         foreach (var guardian in guardianApprovedList)
         {
             //Whether the guardian exists in the holder info.
             if (!IsGuardianExist(caHash, guardian)) continue;
             //Check the verifier signature and data of the guardian to be approved.
-            var isApproved = CheckVerifierSignatureAndData(guardian);
-            if (isApproved)
-            {
-                guardianApprovedAmount++;
-            }
+            var isApproved = CheckVerifierSignatureAndDataCompatible(guardian, methodName);
+            if (!isApproved) continue;
+            guardianApprovedAmount++;
         }
 
-        IsJudgementStrategySatisfied(guardians.Count, guardianApprovedAmount,
+        var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(guardians.Count, guardianApprovedAmount,
             holderInfo.JudgementStrategy);
+        if (!isJudgementStrategySatisfied)
+        {
+            return new Empty();
+        }
 
         // ManagerInfo exists
         var managerInfo = FindManagerInfo(holderInfo.ManagerInfos, input.ManagerInfo.Address);
@@ -123,23 +127,21 @@ public partial class CAContract
         var guardianApprovedList = input.GuardiansApproved!
             .DistinctBy(g => $"{g.Type}{g.IdentifierHash}{g.VerificationInfo.Id}")
             .ToList();
+        var methodName = nameof(RemoveOtherManagerInfo).ToLower();
         foreach (var guardian in guardianApprovedList)
         {
             //Whether the guardian exists in the holder info.
             if (!IsGuardianExist(input.CaHash, guardian)) continue;
             //Check the verifier signature and data of the guardian to be approved.
-            var isApproved = CheckVerifierSignatureAndData(guardian);
-            if (isApproved)
-            {
-                guardianApprovedAmount++;
-            }
+            var isApproved = CheckVerifierSignatureAndDataCompatible(guardian, methodName);
+            if (!isApproved) continue;
+            guardianApprovedAmount++;
         }
 
         //Whether the approved guardians count is satisfied.
-        IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count, guardianApprovedAmount,
+        var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count, guardianApprovedAmount,
             holderInfo.JudgementStrategy);
-        
-        return RemoveManager(input.CaHash, input.ManagerInfo.Address);
+        return !isJudgementStrategySatisfied ? new Empty() : RemoveManager(input.CaHash, input.ManagerInfo.Address);
     }
 
     private Empty RemoveManager(Hash caHash, Address address)
@@ -172,7 +174,7 @@ public partial class CAContract
     {
         Assert(input != null, "invalid input");
         CheckManagerInfosInput(input!.CaHash, input.ManagerInfos);
-        
+
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
 
         var managerInfosToUpdate = input.ManagerInfos.Distinct().ToList();
@@ -188,7 +190,7 @@ public partial class CAContract
             }
 
             managerToUpdate.ExtraData = manager.ExtraData;
-            
+
             Context.Fire(new ManagerInfoUpdated
             {
                 CaHash = input.CaHash,
@@ -209,7 +211,7 @@ public partial class CAContract
         Assert(!string.IsNullOrWhiteSpace(managerInfo!.ExtraData) && managerInfo.Address != null,
             "invalid input managerInfo");
     }
-    
+
     private void CheckManagerInfosInput(Hash hash, RepeatedField<ManagerInfo> managerInfos)
     {
         Assert(hash != null, "invalid input CaHash");

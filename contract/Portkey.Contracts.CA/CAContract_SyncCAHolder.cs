@@ -37,7 +37,7 @@ public partial class CAContract
 
         Assert(loginGuardians.Count == loginGuardianIdentifierHashList.Count,
             "The amount of LoginGuardianInput not equals to HolderInfo's LoginGuardians");
-        
+
         foreach (var loginGuardian in loginGuardianIdentifierHashList)
         {
             Assert(loginGuardians.Contains(loginGuardian)
@@ -65,8 +65,10 @@ public partial class CAContract
 
     public override Empty SyncHolderInfo(SyncHolderInfoInput input)
     {
-        var originalTransaction = MethodNameVerify(input.VerificationTransactionInfo,
-            nameof(ValidateCAHolderInfoWithManagerInfosExists));
+        var originalTransaction = Transaction.Parser.ParseFrom(input.VerificationTransactionInfo.TransactionBytes);
+        AssertCrossChainTransaction(originalTransaction,
+            nameof(ValidateCAHolderInfoWithManagerInfosExists), input.VerificationTransactionInfo.FromChainId);
+
         var originalTransactionId = originalTransaction.GetHash();
 
         TransactionVerify(originalTransactionId, input.VerificationTransactionInfo.ParentChainHeight,
@@ -127,6 +129,16 @@ public partial class CAContract
 
         return new Empty();
     }
+
+
+    private void AssertCrossChainTransaction(Transaction originalTransaction,
+        string validMethodName, int fromChainId)
+    {
+        var validateResult = originalTransaction.MethodName == validMethodName
+                             && originalTransaction.To == State.CAContractAddresses[fromChainId];
+        Assert(validateResult, "Invalid transaction.");
+    }
+
 
     private RepeatedField<Hash> SyncLoginGuardianAdded(Hash caHash, RepeatedField<Hash> loginGuardians)
     {
@@ -200,6 +212,7 @@ public partial class CAContract
 
         return originalTransaction;
     }
+
 
     private void TransactionVerify(Hash transactionId, long parentChainHeight, int chainId, MerklePath merklePath)
     {

@@ -1,8 +1,10 @@
+using System;
 using System.Linq;
 using AElf.CSharp.Core;
 using AElf.Sdk.CSharp;
 using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
+using Enum = System.Enum;
 
 namespace Portkey.Contracts.CA;
 
@@ -27,9 +29,8 @@ public partial class CAContract
             return new Empty();
         }
 
+        var methodName = nameof(AddGuardian).ToLower();
         //Check the verifier signature and data of the guardian to be added.
-        Assert(CheckVerifierSignatureAndData(input.GuardianToAdd), "Guardian to add verification failed.");
-
         var guardianApprovedAmount = 0;
         var guardianApprovedList = input.GuardiansApproved
             .DistinctBy(g => $"{g.Type}{g.IdentifierHash}{g.VerificationInfo.Id}")
@@ -39,17 +40,23 @@ public partial class CAContract
             //Whether the guardian exists in the holder info.
             if (!IsGuardianExist(input.CaHash, guardian)) continue;
             //Check the verifier signature and data of the guardian to be approved.
-            var isApproved = CheckVerifierSignatureAndData(guardian);
-            if (isApproved)
-            {
-                guardianApprovedAmount++;
-            }
+            var isApproved = CheckVerifierSignatureAndDataCompatible(guardian, methodName);
+            if (!isApproved) continue;
+            guardianApprovedAmount++;
+        }
+        if (!CheckVerifierSignatureAndDataCompatible(input.GuardianToAdd, methodName))
+        {
+            return new Empty();
         }
 
         //Whether the approved guardians count is satisfied.
-        IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count, guardianApprovedAmount,
+        var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count,
+            guardianApprovedAmount,
             holderInfo.JudgementStrategy);
-
+        if (!isJudgementStrategySatisfied)
+        {
+            return new Empty();
+        }
         //var loginGuardians = GetLoginGuardians(holderInfo.GuardianList);
 
         var guardianAdded = new Guardian
@@ -82,9 +89,9 @@ public partial class CAContract
         //Select satisfied guardian to remove.
         //Filter: guardian.type && guardian.&& && VerifierId
         var toRemoveGuardian = holderInfo.GuardianList.Guardians.FirstOrDefault(g =>
-                g.Type == input.GuardianToRemove.Type &&
-                g.IdentifierHash == input.GuardianToRemove.IdentifierHash &&
-                g.VerifierId == input.GuardianToRemove.VerificationInfo.Id);
+            g.Type == input.GuardianToRemove.Type &&
+            g.IdentifierHash == input.GuardianToRemove.IdentifierHash &&
+            g.VerifierId == input.GuardianToRemove.VerificationInfo.Id);
 
         if (toRemoveGuardian == null)
         {
@@ -106,6 +113,7 @@ public partial class CAContract
         var guardianApprovedList = input.GuardiansApproved
             .DistinctBy(g => $"{g.Type}{g.IdentifierHash}{g.VerificationInfo.Id}")
             .ToList();
+        var methodName = nameof(RemoveGuardian).ToLower();
         foreach (var guardian in guardianApprovedList)
         {
             Assert(
@@ -116,16 +124,18 @@ public partial class CAContract
             //Whether the guardian exists in the holder info.
             if (!IsGuardianExist(input.CaHash, guardian)) continue;
             //Check the verifier signature and data of the guardian to be approved.
-            var isApproved = CheckVerifierSignatureAndData(guardian);
-            if (isApproved)
-            {
-                guardianApprovedAmount++;
-            }
+            var isApproved = CheckVerifierSignatureAndDataCompatible(guardian, methodName);
+            if (!isApproved) continue;
+            guardianApprovedAmount++;
         }
 
         //Whether the approved guardians count is satisfied.
-        IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count.Sub(1), guardianApprovedAmount,
+        var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count.Sub(1), guardianApprovedAmount,
             holderInfo.JudgementStrategy);
+        if (!isJudgementStrategySatisfied)
+        {
+            return new Empty();
+        }
 
         State.HolderInfoMap[input.CaHash].GuardianList?.Guardians.Remove(toRemoveGuardian);
 
@@ -162,7 +172,6 @@ public partial class CAContract
             "Inconsistent guardian.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
-
         //Whether the guardian to be updated in the holder info.
         //Filter: guardian.type && guardian.IdentifierHash && VerifierId
         var existPreGuardian = holderInfo.GuardianList.Guardians.FirstOrDefault(g =>
@@ -190,6 +199,7 @@ public partial class CAContract
         var guardianApprovedList = input.GuardiansApproved
             .DistinctBy(g => $"{g.Type}{g.IdentifierHash}{g.VerificationInfo.Id}")
             .ToList();
+        var methodName = nameof(UpdateGuardian).ToLower();
         foreach (var guardian in guardianApprovedList)
         {
             Assert(
@@ -200,16 +210,19 @@ public partial class CAContract
             //Whether the guardian exists in the holder info.
             if (!IsGuardianExist(input.CaHash, guardian)) continue;
             //Check the verifier signature and data of the guardian to be approved.
-            var isApproved = CheckVerifierSignatureAndData(guardian);
-            if (isApproved)
-            {
-                guardianApprovedAmount++;
-            }
+            var isApproved = CheckVerifierSignatureAndDataCompatible(guardian, methodName);
+            if (!isApproved) continue;
+            guardianApprovedAmount++;
         }
 
         //Whether the approved guardians count is satisfied.
-        IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count.Sub(1), guardianApprovedAmount,
+        var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count.Sub(1),
+            guardianApprovedAmount,
             holderInfo.JudgementStrategy);
+        if (!isJudgementStrategySatisfied)
+        {
+            return new Empty();
+        }
 
         existPreGuardian.VerifierId = input.GuardianToUpdateNew?.VerificationInfo.Id;
 

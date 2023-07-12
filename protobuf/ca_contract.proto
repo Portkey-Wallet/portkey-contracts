@@ -107,6 +107,11 @@ service CAContract {
   rpc ChangeAdmin (AdminInput) returns (google.protobuf.Empty) {}
   
   rpc GetAdmin (google.protobuf.Empty) returns (AdminOutput) {option (aelf.is_view) = true;}
+
+  rpc ChangeOperationTypeInSignatureEnabled (OperationTypeInSignatureEnabledInput) returns (google.protobuf.Empty) {}
+
+  rpc SetCAContractAddresses (SetCAContractAddressesInput) returns (google.protobuf.Empty) {}
+
 }
 
 //Data structure
@@ -587,4 +592,31 @@ message ServerControllerRemoved {
 message AdminChanged {
   option (aelf.is_event) = true;
   aelf.Address address = 1 [(aelf.is_indexed) = true];
+}
+
+
+
+message OperationTypeInSignatureEnabledInput {
+  bool operation_type_in_signature_enabled = 1;
+}
+
+
+enum OperationType {
+  Unknown = 0;
+  CreateCAHolder = 1;
+  SocialRecovery = 2;
+  AddGuardian = 3;
+  RemoveGuardian = 4;
+  UpdateGuardian = 5;
+  RemoveOtherManagerInfo = 6;
+
+}
+
+message SetCAContractAddressesInput {
+  repeated CAContractAddress ca_contract_addresses = 1;
+}
+
+message CAContractAddress {
+   aelf.Address address = 1;
+   int32 chain_id = 2;
 }

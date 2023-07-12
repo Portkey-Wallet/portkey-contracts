@@ -19,4 +19,5 @@ public static class CAContractConstants
     public const long DefaultContractDelegationFee = 100_00000000;
 
     public const int ManagerMaxCount = 70;
+    
 }

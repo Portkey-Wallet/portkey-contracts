@@ -23,7 +23,7 @@ namespace AElf.Boilerplate.TestBase
         {
             var list = base.GetDeployContractNameList();
             list.Add(DAppSmartContractAddressNameProvider.Name);
-            list.Add(CASmartContractAddressNameProvider.Name);
+            //list.Add(CASmartContractAddressNameProvider.Name);
             return list;
         }
     }

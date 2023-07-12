@@ -13,6 +13,9 @@ public partial class CAContract : CAContractContainer.CAContractBase
     public override Empty Initialize(InitializeInput input)
     {
         Assert(!State.Initialized.Value, "Already initialized.");
+        State.GenesisContract.Value = Context.GetZeroSmartContractAddress();
+        var author = State.GenesisContract.GetContractAuthor.Call(Context.Self);
+        Assert(author == Context.Sender, "No permission.");
         State.Admin.Value = input.ContractAdmin ?? Context.Sender;
         State.CreatorControllers.Value = new ControllerList { Controllers = { input.ContractAdmin ?? Context.Sender } };
         State.ServerControllers.Value = new ControllerList { Controllers = { input.ContractAdmin ?? Context.Sender } };
@@ -50,17 +53,20 @@ public partial class CAContract : CAContractContainer.CAContractBase
 
         var holderInfo = new HolderInfo();
         holderId = HashHelper.ConcatAndCompute(Context.TransactionId, Context.PreviousBlockHash);
-
         holderInfo.CreatorAddress = Context.Sender;
         holderInfo.ManagerInfos.Add(input.ManagerInfo);
-
         //Check verifier signature.
-        Assert(CheckVerifierSignatureAndData(input.GuardianApproved), "Guardian verification failed.");
+        var methodName = nameof(CreateCAHolder).ToLower();
+        if (!CheckVerifierSignatureAndDataCompatible(input.GuardianApproved, methodName))
+        {
+            return new Empty();
+        }
 
+        var salt = GetSaltFromVerificationDoc(input.GuardianApproved.VerificationInfo.VerificationDoc);
         var guardian = new Guardian
         {
             IdentifierHash = input.GuardianApproved.IdentifierHash,
-            Salt = GetSaltFromVerificationDoc(input.GuardianApproved.VerificationInfo!.VerificationDoc),
+            Salt = salt,
             Type = input.GuardianApproved.Type,
             VerifierId = input.GuardianApproved.VerificationInfo.Id,
             IsLoginGuardian = true
@@ -75,7 +81,12 @@ public partial class CAContract : CAContractContainer.CAContractBase
 
         // Where is the code for double check approved guardians?
         // Don't forget to assign GuardianApprovedCount
-        IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count, 1, holderInfo.JudgementStrategy);
+        var isJudgementStrategySatisfied =
+            IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count, 1, holderInfo.JudgementStrategy);
+        if (!isJudgementStrategySatisfied)
+        {
+            return new Empty();
+        }
 
         State.HolderInfoMap[holderId] = holderInfo;
         State.GuardianMap[guardianIdentifierHash] = holderId;
@@ -106,7 +117,7 @@ public partial class CAContract : CAContractContainer.CAContractBase
         return new Empty();
     }
 
-    private void IsJudgementStrategySatisfied(int guardianCount, int guardianApprovedCount, StrategyNode strategyNode)
+    private bool IsJudgementStrategySatisfied(int guardianCount, int guardianApprovedCount, StrategyNode strategyNode)
     {
         var context = new StrategyContext()
         {
@@ -118,10 +129,7 @@ public partial class CAContract : CAContractContainer.CAContractBase
         };
 
         var judgementStrategy = StrategyFactory.Create(strategyNode);
-        Assert((bool)judgementStrategy.Validate(context),
-            $"Not Satisfied criterion to create a CA Holder：" +
-            $"{CAContractConstants.GuardianCount}:{guardianCount}, " +
-            $"{CAContractConstants.GuardianApprovedCount}:{guardianApprovedCount}");
+        return (bool)judgementStrategy.Validate(context);
     }
 
     private void SetDelegator(Hash holderId, ManagerInfo managerInfo)
@@ -194,7 +202,7 @@ public partial class CAContract : CAContractContainer.CAContractBase
             }
         });
     }
-    
+
     private void RemoveContractDelegator(ManagerInfo managerInfo)
     {
         State.TokenContract.RemoveTransactionFeeDelegator.Send(new RemoveTransactionFeeDelegatorInput
@@ -225,5 +233,24 @@ public partial class CAContract : CAContractContainer.CAContractBase
         {
             DelegationFee = State.ContractDelegationFee.Value
         };
+    }
+
+    public override Empty ChangeOperationTypeInSignatureEnabled(OperationTypeInSignatureEnabledInput input)
+    {
+        Assert(State.Admin.Value == Context.Sender, "No permission");
+        Assert(State.OperationTypeInSignatureEnabled.Value != input.OperationTypeInSignatureEnabled, "invalid input");
+        State.OperationTypeInSignatureEnabled.Value = input.OperationTypeInSignatureEnabled;
+        return new Empty();
+    }
+
+    public override Empty SetCAContractAddresses(SetCAContractAddressesInput input)
+    {
+        Assert(State.Admin.Value == Context.Sender, "No permission");
+        foreach (var caContractAddress in input.CaContractAddresses)
+        {
+            State.CAContractAddresses[caContractAddress.ChainId] = caContractAddress.Address;
+        }
+
+        return new Empty();
     }
 }
