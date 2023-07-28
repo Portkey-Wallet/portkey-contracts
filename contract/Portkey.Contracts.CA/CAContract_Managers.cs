@@ -139,7 +139,8 @@ public partial class CAContract
         }
 
         //Whether the approved guardians count is satisfied.
-        var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count, guardianApprovedAmount,
+        var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count,
+            guardianApprovedAmount,
             holderInfo.JudgementStrategy);
         return !isJudgementStrategySatisfied ? new Empty() : RemoveManager(input.CaHash, input.ManagerInfo.Address);
     }
@@ -231,6 +232,7 @@ public partial class CAContract
         Assert(input.ContractAddress != null && !string.IsNullOrWhiteSpace(input.MethodName),
             "Invalid input.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
+        IsManagerForwardTransfer(input.CaHash, input.MethodName, input.Args);
         Context.SendVirtualInline(input.CaHash, input.ContractAddress, input.MethodName, input.Args);
         return new Empty();
     }
@@ -240,6 +242,7 @@ public partial class CAContract
         Assert(input.CaHash != null, "CA hash is null.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
         Assert(input.To != null && !string.IsNullOrWhiteSpace(input.Symbol), "Invalid input.");
+        CheckDappManagerTransferLimit(input.CaHash, input.Symbol, input.Amount);
         Context.SendVirtualInline(input.CaHash, State.TokenContract.Value,
             nameof(State.TokenContract.Transfer),
             new TransferInput
@@ -258,6 +261,7 @@ public partial class CAContract
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
         Assert(input.From != null && input.To != null && !string.IsNullOrWhiteSpace(input.Symbol),
             "Invalid input.");
+        CheckDappManagerTransferLimit(input.CaHash, input.Symbol, input.Amount);
         Context.SendVirtualInline(input.CaHash, State.TokenContract.Value,
             nameof(State.TokenContract.TransferFrom),
             new TransferFromInput
@@ -280,5 +284,32 @@ public partial class CAContract
     private ManagerInfo FindManagerInfo(RepeatedField<ManagerInfo> managerInfos, Address address)
     {
         return managerInfos.FirstOrDefault(s => s.Address == address);
+    }
+
+    private void IsManagerForwardTransfer(Hash caHash, string methodName, ByteString args)
+    {
+        if (methodName.Contains("Transfer"))
+        {
+            switch (methodName)
+            {
+                case nameof(State.TokenContract.TransferFrom):
+                    var transferFromInput = TransferFromInput.Parser.ParseFrom(args);
+                    CheckDappManagerTransferLimit(caHash, transferFromInput.Symbol, transferFromInput.Amount);
+                    break;
+                case nameof(State.TokenContract.Transfer):
+                    var transferInput = TransferInput.Parser.ParseFrom(args);
+                    CheckDappManagerTransferLimit(caHash, transferInput.Symbol, transferInput.Amount);
+                    break;
+            }
+        }
+    }
+
+    private void CheckDappManagerTransferLimit(Hash caHash, string symbol, long amount)
+    {
+        Assert(State.TransferDappLimit[caHash][Context.Sender] != null, "Dapp transfer limit does not setting.");
+        Assert(State.TransferDappLimit[caHash][Context.Sender][symbol] > 0,
+            "This Symbol {symbol} transfers are restricted in this Dapp.");
+        Assert(State.TransferDappLimit[caHash][Context.Sender][symbol] > amount,
+            "Dapp transfer limit exceeded.");
     }
 }

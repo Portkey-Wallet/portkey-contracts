@@ -54,4 +54,6 @@ public partial class CAContractState : ContractState
     public SingletonState<bool> OperationTypeInSignatureEnabled { get; set; }
 
     public MappedState<int, Address> CAContractAddresses { get; set; }
+
+    public MappedState<Hash, Address, string, long> TransferDappLimit { get; set; }
 }
