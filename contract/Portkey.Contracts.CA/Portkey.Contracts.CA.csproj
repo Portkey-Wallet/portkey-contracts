@@ -52,4 +52,10 @@
             <Link>Protobuf\Proto\ca_contract.proto</Link>
         </ContractCode>
     </ItemGroup>
+
+    <ItemGroup>
+      <ContractBase Include="..\..\protobuf\ca_contract_impl.proto">
+        <Link>Protobuf\Proto\ca_contract_impl.proto</Link>
+      </ContractBase>
+    </ItemGroup>
 </Project>

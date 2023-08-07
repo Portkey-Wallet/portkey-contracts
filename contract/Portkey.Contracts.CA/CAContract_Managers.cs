@@ -232,7 +232,8 @@ public partial class CAContract
         Assert(input.ContractAddress != null && !string.IsNullOrWhiteSpace(input.MethodName),
             "Invalid input.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
-        IsManagerForwardTransfer(input.CaHash, input.MethodName, input.Args);
+        CheckForwardCallContractMethodPermission(Context.Sender, input.MethodName);
+        CheckDailyTransferredLimit(input.CaHash, input.MethodName, input.ContractAddress, input.Args);
         Context.SendVirtualInline(input.CaHash, input.ContractAddress, input.MethodName, input.Args);
         return new Empty();
     }
@@ -242,7 +243,7 @@ public partial class CAContract
         Assert(input.CaHash != null, "CA hash is null.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
         Assert(input.To != null && !string.IsNullOrWhiteSpace(input.Symbol), "Invalid input.");
-        CheckDappManagerTransferLimit(input.CaHash, input.Symbol, input.Amount);
+        IsExceededDailyTransferredLimit(input.CaHash, input.Symbol, input.Amount);
         Context.SendVirtualInline(input.CaHash, State.TokenContract.Value,
             nameof(State.TokenContract.Transfer),
             new TransferInput
@@ -261,7 +262,6 @@ public partial class CAContract
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
         Assert(input.From != null && input.To != null && !string.IsNullOrWhiteSpace(input.Symbol),
             "Invalid input.");
-        CheckDappManagerTransferLimit(input.CaHash, input.Symbol, input.Amount);
         Context.SendVirtualInline(input.CaHash, State.TokenContract.Value,
             nameof(State.TokenContract.TransferFrom),
             new TransferFromInput
@@ -286,30 +286,28 @@ public partial class CAContract
         return managerInfos.FirstOrDefault(s => s.Address == address);
     }
 
-    private void IsManagerForwardTransfer(Hash caHash, string methodName, ByteString args)
+    private void CheckForwardCallContractMethodPermission(Address address, string method)
     {
-        if (methodName.Contains("Transfer"))
+        Assert(method != nameof(State.TokenContract.Approve), "No permission.");
+        Assert(!State.ForbiddenForwardCallContractMethod[address][method], $"Does not have permission for {method}.");
+    }
+
+    private void CheckDailyTransferredLimit(Hash caHash, string methodName, Address address, ByteString args)
+    {
+        if (methodName == nameof(State.TokenContract.Transfer) && address == State.TokenContract.Value)
         {
-            switch (methodName)
-            {
-                case nameof(State.TokenContract.TransferFrom):
-                    var transferFromInput = TransferFromInput.Parser.ParseFrom(args);
-                    CheckDappManagerTransferLimit(caHash, transferFromInput.Symbol, transferFromInput.Amount);
-                    break;
-                case nameof(State.TokenContract.Transfer):
-                    var transferInput = TransferInput.Parser.ParseFrom(args);
-                    CheckDappManagerTransferLimit(caHash, transferInput.Symbol, transferInput.Amount);
-                    break;
-            }
+            var transferInput = TransferInput.Parser.ParseFrom(args);
+            IsExceededDailyTransferredLimit(caHash, transferInput.Symbol, transferInput.Amount);
         }
     }
 
-    private void CheckDappManagerTransferLimit(Hash caHash, string symbol, long amount)
+    private void IsExceededDailyTransferredLimit(Hash caHash, string symbol, long amount)
     {
-        Assert(State.TransferDappLimit[caHash][Context.Sender] != null, "Dapp transfer limit does not setting.");
-        Assert(State.TransferDappLimit[caHash][Context.Sender][symbol] > 0,
-            "This Symbol {symbol} transfers are restricted in this Dapp.");
-        Assert(State.TransferDappLimit[caHash][Context.Sender][symbol] > amount,
-            "Dapp transfer limit exceeded.");
+        Assert(amount < State.CATransferLimit[caHash][symbol].SingleLimit, "");
+        Assert(amount < State.CATransferLimit[caHash][symbol].DayLimit - (IsOverDay(
+            State.DailyTransferredAmount[caHash][symbol].UpdateTime,
+            GetCurrentBlockTimeString(Context.CurrentBlockTime))
+            ? 0
+            : State.DailyTransferredAmount[caHash][symbol].DailyTransfered), "");
     }
 }

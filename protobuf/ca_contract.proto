@@ -11,13 +11,14 @@ import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 import "authority_info.proto";
 import "acs12.proto";
-
+import "ca_contract_impl.proto";
 
 option csharp_namespace = "Portkey.Contracts.CA";
 
 service CAContract {
   
   option (aelf.base) = "acs12.proto";
+  option (aelf.base) = "ca_contract_impl.proto";
   
   option (aelf.csharp_state) = "Portkey.Contracts.CA.CAContractState";
 
@@ -111,7 +112,19 @@ service CAContract {
   rpc ChangeOperationTypeInSignatureEnabled (OperationTypeInSignatureEnabledInput) returns (google.protobuf.Empty) {}
 
   rpc SetCAContractAddresses (SetCAContractAddressesInput) returns (google.protobuf.Empty) {}
-
+  
+  // approve
+  rpc ManagerApprove(ManagerApproveInput) returns (google.protobuf.Empty) {}
+      
+  rpc ManagerUnApprove(ManagerUnApproveInput) returns (google.protobuf.Empty){}
+    
+  rpc SetCATransferLimit(SetCATransferLimitInput) returns (google.protobuf.Empty) {}  
+  
+  rpc GetCATransferLimit(caimpl.GetCATransferLimitInput) returns (caimpl.GetCATransferLimitOutput) {option (aelf.is_view) = true;}
+      
+  rpc SetDefaultTokenTransferLimit(caimpl.SetDefaultTokenTransferLimitInput) returns (google.protobuf.Empty) {}    
+        
+  rpc SetMangerForwardCallMethod(caimpl.SetSetMangerForwardCallMethodInput) returns (google.protobuf.Empty) {}  
 }
 
 //Data structure
@@ -609,7 +622,9 @@ enum OperationType {
   RemoveGuardian = 4;
   UpdateGuardian = 5;
   RemoveOtherManagerInfo = 6;
-
+  MODIFY_TRANSFER_LIMIT = 7;
+  APPROVE_DAPP = 8;
+  MODIFY_STRATEGY = 9;
 }
 
 message SetCAContractAddressesInput {
@@ -619,4 +634,58 @@ message SetCAContractAddressesInput {
 message CAContractAddress {
    aelf.Address address = 1;
    int32 chain_id = 2;
+}
+
+// approve
+message ManagerApproveInput {
+    aelf.Hash ca_hash = 1;
+    aelf.Address spender = 2;
+    repeated GuardianInfo guardians_approved = 3;
+    ManagerInfo manager_info = 4;
+    StrategyNode judgement_strategy = 5;
+    string symbol = 6;
+    int64 amount = 7;
+}
+message ManagerApproved{
+    option (aelf.is_event) = true;
+    aelf.Hash ca_hash = 1 [(aelf.is_indexed) = true];
+    aelf.Address spender = 2 [(aelf.is_indexed) = true];
+    ManagerInfo manager_info = 3 [(aelf.is_indexed) = true];
+    StrategyNode judgement_strategy = 4 [(aelf.is_indexed) = true];
+    string symbol = 5 [(aelf.is_indexed) = true];
+    int64 amount = 6 [(aelf.is_indexed) = true];
+}
+message ManagerUnApproveInput {
+    aelf.Hash ca_hash = 1;
+    aelf.Address spender = 2;
+    repeated GuardianInfo guardians_approved = 3;
+    ManagerInfo manager_info = 4;
+    StrategyNode judgement_strategy = 5;
+    string symbol = 6;
+}
+message ManagerUnApproved{
+    option (aelf.is_event) = true;
+    aelf.Hash ca_hash = 1 [(aelf.is_indexed) = true];
+    aelf.Address spender = 2 [(aelf.is_indexed) = true];
+    ManagerInfo manager_info = 3 [(aelf.is_indexed) = true];
+    StrategyNode judgement_strategy = 4 [(aelf.is_indexed) = true];
+    string symbol = 5 [(aelf.is_indexed) = true];
+}
+message SetCATransferLimitInput {
+    aelf.Hash ca_hash = 1;
+    string symbol = 2;
+    repeated GuardianInfo guardians_approved = 3;
+    ManagerInfo manager_info = 4;
+    StrategyNode judgement_strategy = 5;
+    int64 single_limit = 6;
+    int64 daily_limit = 7;
+}
+message CATransferLimitChanged{
+    option (aelf.is_event) = true;
+    aelf.Hash ca_hash = 1 [(aelf.is_indexed) = true];
+    ManagerInfo manager_info = 2 [(aelf.is_indexed) = true];
+    StrategyNode judgement_strategy = 3 [(aelf.is_indexed) = true];
+    string symbol = 4 [(aelf.is_indexed) = true];
+    int64 single_limit = 5 [(aelf.is_indexed) = true];
+    int64 daily_limit = 6 [(aelf.is_indexed) = true];
 }

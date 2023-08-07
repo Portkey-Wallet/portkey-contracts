@@ -193,4 +193,19 @@ public partial class CAContract
     {
         return verificationDoc.Split(",")[4];
     }
+
+    private static bool IsValidSymbolChar(char character)
+    {
+        return (character >= 'A' && character <= 'Z') || (character >= '0' && character <= '9');
+    }
+
+    private static bool IsOverDay(string lastDayTime, string nowDayTime)
+    {
+        return DateTime.Parse(lastDayTime) < DateTime.Parse(nowDayTime);
+    }
+
+    private static string GetCurrentBlockTimeString(Timestamp currentBlockTime)
+    {
+        return currentBlockTime.ToDateTime().ToString("yyyy-MM-dd");
+    }
 }

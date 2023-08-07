@@ -19,5 +19,8 @@ public static class CAContractConstants
     public const long DefaultContractDelegationFee = 100_00000000;
 
     public const int ManagerMaxCount = 70;
-    
+
+    public const long SingleTransferLimitDefaultAmount = 500;
+    public const long DailyTransferLimitDefaultAmount = 2000;
+
 }
