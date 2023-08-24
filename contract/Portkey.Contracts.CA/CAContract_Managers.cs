@@ -33,7 +33,7 @@ public partial class CAContract
         var guardianApprovedList = input.GuardiansApproved
             .DistinctBy(g => $"{g.Type}{g.IdentifierHash}{g.VerificationInfo.Id}")
             .ToList();
-        var methodName = nameof(SocialRecovery).ToLower();
+        var methodName = nameof(OperationType.SocialRecovery).ToLower();
         foreach (var guardian in guardianApprovedList)
         {
             //Whether the guardian exists in the holder info.
@@ -44,8 +44,11 @@ public partial class CAContract
             guardianApprovedAmount++;
         }
 
+        var holderJudgementStrategy = State.OperationStrategy[caHash][OperationType.SocialRecovery] ??
+                                      holderInfo.JudgementStrategy;
+
         var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(guardians.Count, guardianApprovedAmount,
-            holderInfo.JudgementStrategy);
+            holderJudgementStrategy);
         if (!isJudgementStrategySatisfied)
         {
             return new Empty();
@@ -127,7 +130,7 @@ public partial class CAContract
         var guardianApprovedList = input.GuardiansApproved!
             .DistinctBy(g => $"{g.Type}{g.IdentifierHash}{g.VerificationInfo.Id}")
             .ToList();
-        var methodName = nameof(RemoveOtherManagerInfo).ToLower();
+        var methodName = nameof(OperationType.RemoveDevice).ToLower();
         foreach (var guardian in guardianApprovedList)
         {
             //Whether the guardian exists in the holder info.
@@ -138,9 +141,12 @@ public partial class CAContract
             guardianApprovedAmount++;
         }
 
+        var holderJudgementStrategy = State.OperationStrategy[input.CaHash][OperationType.RemoveDevice] ??
+                                      holderInfo.JudgementStrategy;
+
         //Whether the approved guardians count is satisfied.
         var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count,
-            guardianApprovedAmount, holderInfo.JudgementStrategy);
+            guardianApprovedAmount, holderJudgementStrategy);
         return !isJudgementStrategySatisfied ? new Empty() : RemoveManager(input.CaHash, input.ManagerInfo.Address);
     }
 
@@ -238,6 +244,7 @@ public partial class CAContract
             var transferInput = TransferInput.Parser.ParseFrom(input.Args);
             UpdateDailyTransferredLimit(input.CaHash, transferInput.Symbol, transferInput.Amount);
         }
+
         Context.SendVirtualInline(input.CaHash, input.ContractAddress, input.MethodName, input.Args);
         return new Empty();
     }

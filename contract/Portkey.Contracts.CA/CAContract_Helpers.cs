@@ -155,6 +155,12 @@ public partial class CAContract
         return hash != null && !hash.Value.IsEmpty;
     }
 
+    private void ValidateOperationType(OperationType type)
+    {
+        Assert(!string.IsNullOrWhiteSpace(typeof(OperationType).GetEnumName(Convert.ToInt32(type))),
+            $"The OperationType: {type} does not exist");
+    }
+
     private class VerificationDocInfo
     {
         public string GuardianType { get; set; }

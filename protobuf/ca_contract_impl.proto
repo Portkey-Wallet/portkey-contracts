@@ -62,4 +62,3 @@ message TransferredAmount {
     int64 daily_transfered = 1;
     string update_time = 2;
 }
-

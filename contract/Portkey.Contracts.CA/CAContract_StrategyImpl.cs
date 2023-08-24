@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using AElf.Sdk.CSharp;
 using Google.Protobuf;
+using Google.Protobuf.WellKnownTypes;
 
 namespace Portkey.Contracts.CA;
 
@@ -209,5 +211,32 @@ public partial class CAContract
         output.StrategyOutput = strategyNode;
 
         return output;
+    }
+
+    public override Empty SetOperationStrategy(SetOperationStrategyInput input)
+    {
+        Assert(input != null, "input cannot be null!");
+        Assert(IsValidHash(input.CaHash), "invalid input CaHash");
+        ValidateOperationType(input.OperationType);
+        Assert(input.JudgementStrategy != null, "invalid input JudgementStrategy");
+        State.OperationStrategy[input.CaHash][input.OperationType] = input.JudgementStrategy;
+        Context.Fire(new OperationStrategyChanged
+        {
+            CaHash = input.CaHash,
+            OperationType = input.OperationType,
+            JudgementStrategy = input.JudgementStrategy
+        });
+        return new Empty();
+    }
+
+    public override GetOperationStrategyOutput GetOperationStrategy(GetOperationStrategyInput input)
+    {
+        Assert(input != null, "input cannot be null!");
+        Assert(IsValidHash(input.CaHash), "invalid input CaHash");
+        ValidateOperationType(input.OperationType);
+        return new GetOperationStrategyOutput
+        {
+            JudgementStrategy = State.OperationStrategy[input.CaHash][input.OperationType] ?? Strategy.DefaultStrategy()
+        };
     }
 }

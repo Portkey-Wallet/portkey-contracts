@@ -94,7 +94,9 @@ public partial class CAContract
             guardianApprovedAmount++;
         }
 
-        Assert(IsJudgementStrategySatisfied(guardians.Count, guardianApprovedAmount, holderInfo.JudgementStrategy),
+        var holderJudgementStrategy =
+            State.OperationStrategy[caHash][OperationType.Approve] ?? holderInfo.JudgementStrategy;
+        Assert(IsJudgementStrategySatisfied(guardians.Count, guardianApprovedAmount, holderJudgementStrategy),
             "JudgementStrategy validate failed");
     }
 

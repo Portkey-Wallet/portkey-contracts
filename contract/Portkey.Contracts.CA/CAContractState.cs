@@ -60,4 +60,6 @@ public partial class CAContractState : ContractState
     public MappedState<Hash, string, TransferredAmount> DailyTransferredAmount { get; set; }
     public MappedState<string, long> DefaultTokenTransferLimit { get; set; }
     public MappedState<Address, string, bool> ForbiddenForwardCallContractMethod { get; set; }
+
+    public MappedState<Hash, OperationType, StrategyNode> OperationStrategy { get; set; }
 }

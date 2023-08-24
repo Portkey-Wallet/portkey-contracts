@@ -317,8 +317,8 @@ public async Task SetLoginGuardian_RegisterByOthers()
         var verificationTime = DateTime.UtcNow;
         var caHash = await CreateCAHolder_AndGetCaHash_Helper();
         var salt = Guid.NewGuid().ToString("N");
-        var operationType = Convert.ToInt32(OperationType.UpdateGuardian).ToString();
-        var addOperationType = Convert.ToInt32(OperationType.AddGuardian).ToString();
+        var operationType = Convert.ToInt32(OperationType.ModifyGuardian).ToString();
+        var addOperationType = Convert.ToInt32(OperationType.ModifyGuardian).ToString();
         
         var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(40), _guardian, 0,salt,addOperationType);
         var signature1 =
@@ -775,7 +775,7 @@ public async Task SetLoginGuardian_RegisterByOthers()
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N"); 
         var salt1 = Guid.NewGuid().ToString("N");
-        var operationType = Convert.ToInt32(OperationType.AddGuardian).ToString();
+        var operationType = Convert.ToInt32(OperationType.ModifyGuardian).ToString();
         var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0,salt,operationType);
         var signature1 =
             GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime, _guardian1, 0,salt1,operationType);
@@ -825,7 +825,7 @@ public async Task SetLoginGuardian_RegisterByOthers()
     {
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
-        var operationType = Convert.ToInt32(OperationType.AddGuardian).ToString();
+        var operationType = Convert.ToInt32(OperationType.ModifyGuardian).ToString();
         var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(1), _guardian, 0,salt,operationType);
         var signature1 =
             GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime.AddSeconds(2), _guardian1, 0,salt,operationType);

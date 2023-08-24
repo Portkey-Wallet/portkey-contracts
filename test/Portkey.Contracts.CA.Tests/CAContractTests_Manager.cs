@@ -1064,7 +1064,7 @@ public partial class CAContractTests
         await CreateHolder();
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
-        var operationType = Convert.ToInt32(OperationType.RemoveOtherManagerInfo).ToString();
+        var operationType = Convert.ToInt32(OperationType.RemoveDevice).ToString();
         var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0, salt,
             operationType);
         var caInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput()
@@ -1180,7 +1180,7 @@ public partial class CAContractTests
         await CreateHolder();
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
-        var operationType = Convert.ToInt32(OperationType.RemoveOtherManagerInfo).ToString();
+        var operationType = Convert.ToInt32(OperationType.RemoveDevice).ToString();
         var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0, salt,
             operationType);
         var caInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput()
@@ -1275,7 +1275,7 @@ public partial class CAContractTests
 
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
-        var removeOperationType = Convert.ToInt32(OperationType.RemoveOtherManagerInfo).ToString();
+        var removeOperationType = Convert.ToInt32(OperationType.RemoveDevice).ToString();
         var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(50), _guardian,
             0, salt, removeOperationType);
         var signature1 =
@@ -1641,7 +1641,7 @@ public partial class CAContractTests
             Amount = 10000
         });
     }
-    
+
     [Fact]
     public async Task ManagerApprove_ErrorOperationTypeTest()
     {
@@ -1652,28 +1652,29 @@ public partial class CAContractTests
         var approveOpType = Convert.ToInt32(OperationType.ModifyTransferLimit).ToString();
         var approveSign = GenerateSignature(VerifierKeyPair, VerifierAddress, approveVerifyTime, _guardian, 0, salt,
             approveOpType);
-        var executionResult = await CaContractStubManagerInfo1.ManagerApprove.SendWithExceptionAsync(new ManagerApproveInput()
-        {
-            CaHash = _transferLimitTestCaHash,
-            Spender = User2Address,
-            GuardiansApproved =
+        var executionResult = await CaContractStubManagerInfo1.ManagerApprove.SendWithExceptionAsync(
+            new ManagerApproveInput()
             {
-                new GuardianInfo
+                CaHash = _transferLimitTestCaHash,
+                Spender = User2Address,
+                GuardiansApproved =
                 {
-                    IdentifierHash = _guardian,
-                    Type = GuardianType.OfEmail,
-                    VerificationInfo = new VerificationInfo
+                    new GuardianInfo
                     {
-                        Id = _verifierServers[0].Id,
-                        Signature = approveSign,
-                        VerificationDoc =
-                            $"{0},{_guardian.ToHex()},{approveVerifyTime},{VerifierAddress.ToBase58()},{salt},{approveOpType}"
+                        IdentifierHash = _guardian,
+                        Type = GuardianType.OfEmail,
+                        VerificationInfo = new VerificationInfo
+                        {
+                            Id = _verifierServers[0].Id,
+                            Signature = approveSign,
+                            VerificationDoc =
+                                $"{0},{_guardian.ToHex()},{approveVerifyTime},{VerifierAddress.ToBase58()},{salt},{approveOpType}"
+                        }
                     }
-                }
-            },
-            Symbol = "ELF",
-            Amount = 10000
-        });
+                },
+                Symbol = "ELF",
+                Amount = 10000
+            });
         executionResult.TransactionResult.Error.ShouldContain("JudgementStrategy validate failed");
     }
 
@@ -1709,7 +1710,7 @@ public partial class CAContractTests
             Symbol = "ELF"
         });
     }
-    
+
     [Fact]
     public async Task ManagerUnApprove_ErrorOperationTypeTest()
     {
@@ -1720,27 +1721,28 @@ public partial class CAContractTests
         var unapproveOpType = Convert.ToInt32(OperationType.ModifyTransferLimit).ToString();
         var unapproveSign = GenerateSignature(VerifierKeyPair, VerifierAddress, unapproveVerifyTime, _guardian, 0, salt,
             unapproveOpType);
-        var executionResult = await CaContractStubManagerInfo1.ManagerUnApprove.SendWithExceptionAsync(new ManagerUnApproveInput()
-        {
-            CaHash = _transferLimitTestCaHash,
-            Spender = User2Address,
-            GuardiansApproved =
+        var executionResult = await CaContractStubManagerInfo1.ManagerUnApprove.SendWithExceptionAsync(
+            new ManagerUnApproveInput()
             {
-                new GuardianInfo
+                CaHash = _transferLimitTestCaHash,
+                Spender = User2Address,
+                GuardiansApproved =
                 {
-                    IdentifierHash = _guardian,
-                    Type = GuardianType.OfEmail,
-                    VerificationInfo = new VerificationInfo
+                    new GuardianInfo
                     {
-                        Id = _verifierServers[0].Id,
-                        Signature = unapproveSign,
-                        VerificationDoc =
-                            $"{0},{_guardian.ToHex()},{unapproveVerifyTime},{VerifierAddress.ToBase58()},{salt},{unapproveOpType}"
+                        IdentifierHash = _guardian,
+                        Type = GuardianType.OfEmail,
+                        VerificationInfo = new VerificationInfo
+                        {
+                            Id = _verifierServers[0].Id,
+                            Signature = unapproveSign,
+                            VerificationDoc =
+                                $"{0},{_guardian.ToHex()},{unapproveVerifyTime},{VerifierAddress.ToBase58()},{salt},{unapproveOpType}"
+                        }
                     }
-                }
-            },
-            Symbol = "ELF"
-        });
+                },
+                Symbol = "ELF"
+            });
         executionResult.TransactionResult.Error.ShouldContain("JudgementStrategy validate failed");
     }
 

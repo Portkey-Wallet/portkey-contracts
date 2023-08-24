@@ -1,10 +1,8 @@
-using System;
 using System.Linq;
 using AElf.CSharp.Core;
 using AElf.Sdk.CSharp;
 using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
-using Enum = System.Enum;
 
 namespace Portkey.Contracts.CA;
 
@@ -29,7 +27,7 @@ public partial class CAContract
             return new Empty();
         }
 
-        var methodName = nameof(AddGuardian).ToLower();
+        var methodName = nameof(OperationType.ModifyGuardian).ToLower();
         //Check the verifier signature and data of the guardian to be added.
         var guardianApprovedAmount = 0;
         var guardianApprovedList = input.GuardiansApproved
@@ -44,15 +42,17 @@ public partial class CAContract
             if (!isApproved) continue;
             guardianApprovedAmount++;
         }
+
         if (!CheckVerifierSignatureAndDataCompatible(input.GuardianToAdd, methodName))
         {
             return new Empty();
         }
 
+        var holderJudgementStrategy = State.OperationStrategy[input.CaHash][OperationType.ModifyGuardian] ??
+                                      holderInfo.JudgementStrategy;
         //Whether the approved guardians count is satisfied.
         var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count,
-            guardianApprovedAmount,
-            holderInfo.JudgementStrategy);
+            guardianApprovedAmount, holderJudgementStrategy);
         if (!isJudgementStrategySatisfied)
         {
             return new Empty();
@@ -113,7 +113,7 @@ public partial class CAContract
         var guardianApprovedList = input.GuardiansApproved
             .DistinctBy(g => $"{g.Type}{g.IdentifierHash}{g.VerificationInfo.Id}")
             .ToList();
-        var methodName = nameof(RemoveGuardian).ToLower();
+        var methodName = nameof(OperationType.ModifyGuardian).ToLower();
         foreach (var guardian in guardianApprovedList)
         {
             Assert(
@@ -129,9 +129,12 @@ public partial class CAContract
             guardianApprovedAmount++;
         }
 
+        var holderJudgementStrategy = State.OperationStrategy[input.CaHash][OperationType.ModifyGuardian] ??
+                                      holderInfo.JudgementStrategy;
+
         //Whether the approved guardians count is satisfied.
-        var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count.Sub(1), guardianApprovedAmount,
-            holderInfo.JudgementStrategy);
+        var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count.Sub(1),
+            guardianApprovedAmount, holderJudgementStrategy);
         if (!isJudgementStrategySatisfied)
         {
             return new Empty();
@@ -199,7 +202,7 @@ public partial class CAContract
         var guardianApprovedList = input.GuardiansApproved
             .DistinctBy(g => $"{g.Type}{g.IdentifierHash}{g.VerificationInfo.Id}")
             .ToList();
-        var methodName = nameof(UpdateGuardian).ToLower();
+        var methodName = nameof(OperationType.ModifyGuardian).ToLower();
         foreach (var guardian in guardianApprovedList)
         {
             Assert(
@@ -215,10 +218,12 @@ public partial class CAContract
             guardianApprovedAmount++;
         }
 
+        var holderJudgementStrategy = State.OperationStrategy[input.CaHash][OperationType.ModifyGuardian] ??
+                                      holderInfo.JudgementStrategy;
+
         //Whether the approved guardians count is satisfied.
         var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count.Sub(1),
-            guardianApprovedAmount,
-            holderInfo.JudgementStrategy);
+            guardianApprovedAmount, holderJudgementStrategy);
         if (!isJudgementStrategySatisfied)
         {
             return new Empty();
