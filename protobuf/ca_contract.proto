@@ -111,7 +111,6 @@ service CAContract {
   rpc ChangeOperationTypeInSignatureEnabled (OperationTypeInSignatureEnabledInput) returns (google.protobuf.Empty) {}
 
   rpc SetCAContractAddresses (SetCAContractAddressesInput) returns (google.protobuf.Empty) {}
-
 }
 
 //Data structure
