@@ -140,8 +140,7 @@ public partial class CAContract
 
         //Whether the approved guardians count is satisfied.
         var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count,
-            guardianApprovedAmount,
-            holderInfo.JudgementStrategy);
+            guardianApprovedAmount, holderInfo.JudgementStrategy);
         return !isJudgementStrategySatisfied ? new Empty() : RemoveManager(input.CaHash, input.ManagerInfo.Address);
     }
 
@@ -233,14 +232,12 @@ public partial class CAContract
             "Invalid input.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
         CheckForwardCallContractMethodPermission(Context.Sender, input.MethodName);
-
         if (input.MethodName == nameof(State.TokenContract.Transfer) &&
             input.ContractAddress == State.TokenContract.Value)
         {
             var transferInput = TransferInput.Parser.ParseFrom(input.Args);
             UpdateDailyTransferredLimit(input.CaHash, transferInput.Symbol, transferInput.Amount);
         }
-
         Context.SendVirtualInline(input.CaHash, input.ContractAddress, input.MethodName, input.Args);
         return new Empty();
     }
@@ -285,7 +282,6 @@ public partial class CAContract
     {
         Assert(input != null, "invalid input");
         TransferGuardianApprovedCheck(input.CaHash, input.GuardiansApproved, nameof(OperationType.Approve).ToLower());
-
         Context.SendVirtualInline(input.CaHash, State.TokenContract.Value,
             nameof(State.TokenContract.Approve),
             new ApproveInput
@@ -294,7 +290,6 @@ public partial class CAContract
                 Amount = input.Amount,
                 Symbol = input.Symbol,
             }.ToByteString());
-
         return new Empty();
     }
 
@@ -302,7 +297,6 @@ public partial class CAContract
     {
         Assert(input != null, "invalid input");
         TransferGuardianApprovedCheck(input.CaHash, input.GuardiansApproved, nameof(OperationType.Approve).ToLower());
-
         Context.SendVirtualInline(input.CaHash, State.TokenContract.Value,
             nameof(State.TokenContract.UnApprove),
             new UnApproveInput
@@ -312,8 +306,6 @@ public partial class CAContract
                 Amount = Int64.MaxValue,
                 Symbol = input.Symbol,
             }.ToByteString());
-
-
         return new Empty();
     }
 
@@ -322,8 +314,7 @@ public partial class CAContract
         Assert(input != null && input.Address != null, "Invalid input");
         Assert(Context.Sender == State.Admin.Value, "No permission.");
         Assert(!string.IsNullOrWhiteSpace(input.MethodName), "MethodName cannot be empty");
-        State.ForbiddenForwardCallContractMethod[input.Address][input.MethodName] = input.Forbidden;
-
+        State.ForbiddenForwardCallContractMethod[input.Address][input.MethodName.ToLower()] = input.Forbidden;
         Context.Fire(new ForbiddenForwardCallContractMethodChanged()
         {
             MethodName = input.MethodName,
@@ -347,6 +338,7 @@ public partial class CAContract
     private void CheckForwardCallContractMethodPermission(Address address, string method)
     {
         Assert(method != nameof(State.TokenContract.Approve), "No permission.");
-        Assert(!State.ForbiddenForwardCallContractMethod[address][method], $"Does not have permission for {method}.");
+        Assert(!State.ForbiddenForwardCallContractMethod[address][method.ToLower()],
+            $"Does not have permission for {method}.");
     }
 }

@@ -18,14 +18,12 @@ public partial class CAContract
         Assert(!string.IsNullOrEmpty(input.Symbol) && input.Symbol.All(IsValidSymbolChar), "Invalid symbol.");
         TransferGuardianApprovedCheck(input.CaHash, input.GuardiansApproved,
             nameof(OperationType.ModifyTransferLimit).ToLower());
-        // State.TransferLimit[input.CaHash][input.Symbol] =
         UpdateAccountTransferLimit(input.CaHash, input.Symbol, input.SingleLimit, input.DailyLimit);
         State.DailyTransferredAmount[input.CaHash][input.Symbol] = new TransferredAmount()
         {
             UpdateTime = GetCurrentBlockTimeString(Context.CurrentBlockTime),
             DailyTransfered = 0
         };
-
         Context.Fire(new TransferLimitChanged()
         {
             CaHash = input.CaHash,
@@ -33,7 +31,6 @@ public partial class CAContract
             SingleLimit = input.SingleLimit,
             DailyLimit = input.DailyLimit
         });
-
         return new Empty();
     }
 
@@ -44,7 +41,6 @@ public partial class CAContract
         Assert(State.TransferLimit[input.CaHash] != null, $"TransferLimit is null.CA hash:{input.CaHash}.");
         Assert(State.TransferLimit[input.CaHash][input.Symbol] != null,
             $"This symbol {input.Symbol} has not set transferLimit");
-
         return new GetTransferLimitOutput()
         {
             SingleLimit = State.TransferLimit[input.CaHash][input.Symbol].SingleLimit,
@@ -85,7 +81,6 @@ public partial class CAContract
     {
         Assert(IsValidHash(caHash), "invalid input CaHash");
         Assert(guardiansApproved.Count > 0, "invalid input Guardians Approved");
-
         var holderInfo = GetHolderInfoByCaHash(caHash);
         var guardians = holderInfo.GuardianList!.Guardians;
         var guardianApprovedAmount = 0;
@@ -125,7 +120,6 @@ public partial class CAContract
                                 new TransferredAmount() { DailyTransfered = 0 };
         Assert(amount <= transferLimit.SingleLimit,
             $"The transfer amount {amount} has exceeded the single transfer limit {transferLimit.SingleLimit}");
-
         var blockTime = GetCurrentBlockTimeString(Context.CurrentBlockTime);
         var transferBalance = transferLimit.DayLimit - (IsOverDay(transferredAmount.UpdateTime, blockTime)
             ? 0
@@ -150,7 +144,6 @@ public partial class CAContract
             : State.TokenDefaultTransferLimit.Value > 0
                 ? State.TokenDefaultTransferLimit.Value
                 : CAContractConstants.TokenDefaultTransferLimitAmount;
-
         if (State.TransferLimit[caHash] == null || State.TransferLimit[caHash][symbol] == null)
         {
             State.TransferLimit[caHash][symbol] = new TransferLimit()
