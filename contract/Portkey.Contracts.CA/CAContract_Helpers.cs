@@ -201,7 +201,7 @@ public partial class CAContract
 
     private static bool IsOverDay(string lastDayTime, string nowDayTime)
     {
-        return DateTime.Parse(lastDayTime) < DateTime.Parse(nowDayTime);
+        return string.IsNullOrEmpty(lastDayTime) || DateTime.Parse(lastDayTime) < DateTime.Parse(nowDayTime);
     }
 
     private static string GetCurrentBlockTimeString(Timestamp currentBlockTime)

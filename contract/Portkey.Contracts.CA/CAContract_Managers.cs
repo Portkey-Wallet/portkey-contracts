@@ -233,7 +233,14 @@ public partial class CAContract
             "Invalid input.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
         CheckForwardCallContractMethodPermission(Context.Sender, input.MethodName);
-        CheckDailyTransferredLimit(input.CaHash, input.MethodName, input.ContractAddress, input.Args);
+
+        if (input.MethodName == nameof(State.TokenContract.Transfer) &&
+            input.ContractAddress == State.TokenContract.Value)
+        {
+            var transferInput = TransferInput.Parser.ParseFrom(input.Args);
+            UpdateDailyTransferredLimit(input.CaHash, transferInput.Symbol, transferInput.Amount);
+        }
+
         Context.SendVirtualInline(input.CaHash, input.ContractAddress, input.MethodName, input.Args);
         return new Empty();
     }
@@ -243,9 +250,8 @@ public partial class CAContract
         Assert(input.CaHash != null, "CA hash is null.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
         Assert(input.To != null && !string.IsNullOrWhiteSpace(input.Symbol), "Invalid input.");
-        IsExceededDailyTransferredLimit(input.CaHash, input.Symbol, input.Amount);
-        Context.SendVirtualInline(input.CaHash, State.TokenContract.Value,
-            nameof(State.TokenContract.Transfer),
+        UpdateDailyTransferredLimit(input.CaHash, input.Symbol, input.Amount);
+        Context.SendVirtualInline(input.CaHash, State.TokenContract.Value, nameof(State.TokenContract.Transfer),
             new TransferInput
             {
                 To = input.To,
@@ -275,6 +281,58 @@ public partial class CAContract
         return new Empty();
     }
 
+    public override Empty ManagerApprove(ManagerApproveInput input)
+    {
+        Assert(input != null, "invalid input");
+        TransferGuardianApprovedCheck(input.CaHash, input.GuardiansApproved, nameof(OperationType.Approve).ToLower());
+
+        Context.SendVirtualInline(input.CaHash, State.TokenContract.Value,
+            nameof(State.TokenContract.Approve),
+            new ApproveInput
+            {
+                Spender = input.Spender,
+                Amount = input.Amount,
+                Symbol = input.Symbol,
+            }.ToByteString());
+
+        return new Empty();
+    }
+
+    public override Empty ManagerUnApprove(ManagerUnApproveInput input)
+    {
+        Assert(input != null, "invalid input");
+        TransferGuardianApprovedCheck(input.CaHash, input.GuardiansApproved, nameof(OperationType.Approve).ToLower());
+
+        Context.SendVirtualInline(input.CaHash, State.TokenContract.Value,
+            nameof(State.TokenContract.UnApprove),
+            new UnApproveInput
+            {
+                Spender = input.Spender,
+                // The token contract will unapprove the maximum value which lower than Int64.MaxValue
+                Amount = Int64.MaxValue,
+                Symbol = input.Symbol,
+            }.ToByteString());
+
+
+        return new Empty();
+    }
+
+    public override Empty SetForbiddenForwardCallContractMethod(SetForbiddenForwardCallContractMethodInput input)
+    {
+        Assert(input != null && input.Address != null, "Invalid input");
+        Assert(Context.Sender == State.Admin.Value, "No permission.");
+        Assert(!string.IsNullOrWhiteSpace(input.MethodName), "MethodName cannot be empty");
+        State.ForbiddenForwardCallContractMethod[input.Address][input.MethodName] = input.Forbidden;
+
+        Context.Fire(new ForbiddenForwardCallContractMethodChanged()
+        {
+            MethodName = input.MethodName,
+            Address = input.Address,
+            Forbidden = input.Forbidden
+        });
+        return new Empty();
+    }
+
     private void CheckManagerInfoPermission(Hash caHash, Address address)
     {
         Assert(State.HolderInfoMap[caHash] != null, $"CA holder is null.CA hash:{caHash}");
@@ -290,24 +348,5 @@ public partial class CAContract
     {
         Assert(method != nameof(State.TokenContract.Approve), "No permission.");
         Assert(!State.ForbiddenForwardCallContractMethod[address][method], $"Does not have permission for {method}.");
-    }
-
-    private void CheckDailyTransferredLimit(Hash caHash, string methodName, Address address, ByteString args)
-    {
-        if (methodName == nameof(State.TokenContract.Transfer) && address == State.TokenContract.Value)
-        {
-            var transferInput = TransferInput.Parser.ParseFrom(args);
-            IsExceededDailyTransferredLimit(caHash, transferInput.Symbol, transferInput.Amount);
-        }
-    }
-
-    private void IsExceededDailyTransferredLimit(Hash caHash, string symbol, long amount)
-    {
-        Assert(amount < State.CATransferLimit[caHash][symbol].SingleLimit, "");
-        Assert(amount < State.CATransferLimit[caHash][symbol].DayLimit - (IsOverDay(
-            State.DailyTransferredAmount[caHash][symbol].UpdateTime,
-            GetCurrentBlockTimeString(Context.CurrentBlockTime))
-            ? 0
-            : State.DailyTransferredAmount[caHash][symbol].DailyTransfered), "");
     }
 }

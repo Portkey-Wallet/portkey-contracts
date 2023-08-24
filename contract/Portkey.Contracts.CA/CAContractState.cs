@@ -55,8 +55,9 @@ public partial class CAContractState : ContractState
 
     public MappedState<int, Address> CAContractAddresses { get; set; }
 
-    public MappedState<Hash, string, TransferLimit> CATransferLimit;
-    public MappedState<Hash, string, TransferredAmount> DailyTransferredAmount;
-    public MappedState<string, long> DefaultTokenTransferLimit;
-    public MappedState<Address, string, bool> ForbiddenForwardCallContractMethod;
+    public SingletonState<long> TokenDefaultTransferLimit { get; set; }
+    public MappedState<Hash, string, TransferLimit> TransferLimit { get; set; }
+    public MappedState<Hash, string, TransferredAmount> DailyTransferredAmount { get; set; }
+    public MappedState<string, long> DefaultTokenTransferLimit { get; set; }
+    public MappedState<Address, string, bool> ForbiddenForwardCallContractMethod { get; set; }
 }
