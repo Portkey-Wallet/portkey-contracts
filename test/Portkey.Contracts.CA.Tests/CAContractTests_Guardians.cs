@@ -228,7 +228,7 @@ public partial class CAContractTests
         var verificationTime = DateTime.UtcNow;
         var caHash = await CreateHolder();
         var salt = Guid.NewGuid().ToString("N");
-        var operationType = Convert.ToInt32(OperationType.ModifyGuardian).ToString();
+        var operationType = Convert.ToInt32(OperationType.AddGuardian).ToString();
         var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0, salt,
             operationType);
         var signature1 =
@@ -287,8 +287,8 @@ public partial class CAContractTests
         var verificationTime = DateTime.UtcNow;
         var caHash = await CreateHolder();
         var salt = Guid.NewGuid().ToString("N");
-        var operationType = Convert.ToInt32(OperationType.ModifyGuardian).ToString();
-        var removeOperationType = Convert.ToInt32(OperationType.ModifyGuardian).ToString();
+        var operationType = Convert.ToInt32(OperationType.AddGuardian).ToString();
+        var removeOperationType = Convert.ToInt32(OperationType.RemoveGuardian).ToString();
         var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0, salt,
             removeOperationType);
         var signature1 =
@@ -424,7 +424,7 @@ public partial class CAContractTests
 
         var caHash = holderInfo.CaHash;
 
-        var addGuardianOperationType = Convert.ToInt32(OperationType.ModifyGuardian).ToString();
+        var addGuardianOperationType = Convert.ToInt32(OperationType.AddGuardian).ToString();
         var signature1 = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddMinutes(1), _guardian,
             0, Salt, addGuardianOperationType);
         var signature2 =
@@ -475,7 +475,7 @@ public partial class CAContractTests
         var salt = Guid.NewGuid().ToString("N");
         var salt1 = Guid.NewGuid().ToString("N");
         var salt2 = Guid.NewGuid().ToString("N");
-        var operationType = Convert.ToInt32(OperationType.ModifyGuardian).ToString();
+        var operationType = Convert.ToInt32(OperationType.AddGuardian).ToString();
         var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(1), _guardian,
             0, salt, operationType);
         var signature1 =
@@ -548,7 +548,7 @@ public partial class CAContractTests
         var caHash = await AddGuardian();
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
-        var operationType = Convert.ToInt32(OperationType.ModifyGuardian).ToString();
+        var operationType = Convert.ToInt32(OperationType.AddGuardian).ToString();
         var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(100), _guardian,
             0, salt, operationType);
         var signature1 =
@@ -636,7 +636,7 @@ public partial class CAContractTests
         var caHash = await AddGuardianTest_RepeatedGuardianIdentifierHash_DifferentVerifier();
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
-        var operationType = Convert.ToInt32(OperationType.ModifyGuardian).ToString();
+        var operationType = Convert.ToInt32(OperationType.AddGuardian).ToString();
         var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(11), _guardian,
             0, salt, operationType);
         var signature1 =
@@ -789,7 +789,7 @@ public partial class CAContractTests
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
         var salt1 = Guid.NewGuid().ToString("N");
-        var operationType = Convert.ToInt32(OperationType.ModifyGuardian).ToString();
+        var operationType = Convert.ToInt32(OperationType.AddGuardian).ToString();
         var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian1, 0, salt,
             operationType);
         var signature1 =
@@ -838,7 +838,7 @@ public partial class CAContractTests
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
         var salt1 = Guid.NewGuid().ToString("N");
-        var operationType = Convert.ToInt32(OperationType.ModifyGuardian).ToString();
+        var operationType = Convert.ToInt32(OperationType.AddGuardian).ToString();
         var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian1, 0, salt,
             operationType);
         var signature1 =
@@ -887,7 +887,7 @@ public partial class CAContractTests
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
         var salt1 = Guid.NewGuid().ToString("N");
-        var operationType = Convert.ToInt32(OperationType.ModifyGuardian).ToString();
+        var operationType = Convert.ToInt32(OperationType.AddGuardian).ToString();
         var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian1, 0, salt,
             operationType);
         var signature1 =
@@ -953,7 +953,7 @@ public partial class CAContractTests
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
         var salt1 = Guid.NewGuid().ToString("N");
-        var operationType = Convert.ToInt32(OperationType.ModifyGuardian).ToString();
+        var operationType = Convert.ToInt32(OperationType.AddGuardian).ToString();
         var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian1, 0, salt,
             operationType);
         var signature1 =
@@ -1004,7 +1004,7 @@ public partial class CAContractTests
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
         var salt1 = Guid.NewGuid().ToString("N");
-        var operationType = Convert.ToInt32(OperationType.ModifyGuardian).ToString();
+        var operationType = Convert.ToInt32(OperationType.AddGuardian).ToString();
         var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian1, 0, salt,
             operationType);
         var signature1 =
@@ -1085,7 +1085,7 @@ public partial class CAContractTests
         var verificationTime = DateTime.UtcNow;
         var caHash = await CreateHolder();
         var salt = Guid.NewGuid().ToString("N");
-        var operationType = Convert.ToInt32(OperationType.ModifyGuardian).ToString();
+        var operationType = Convert.ToInt32(OperationType.AddGuardian).ToString();
         var signature1 =
             GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime.AddSeconds(1), _guardian1, 0, salt,
                 operationType);
@@ -1131,7 +1131,7 @@ public partial class CAContractTests
         var caHash = await AddGuardianTest();
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
-        var operationType = Convert.ToInt32(OperationType.ModifyGuardian).ToString();
+        var operationType = Convert.ToInt32(OperationType.RemoveGuardian).ToString();
         var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(6), _guardian,
             0, salt, operationType);
         {
@@ -1142,7 +1142,7 @@ public partial class CAContractTests
             holderInfo.GuardianList.Guardians.Count.ShouldBe(2);
             holderInfo.GuardianList.Guardians.Last().IdentifierHash.ShouldBe(_guardian1);
         }
-        var removeOperationType = Convert.ToInt32(OperationType.ModifyGuardian).ToString();
+        var removeOperationType = Convert.ToInt32(OperationType.RemoveGuardian).ToString();
         var guardianApprove1 = new List<GuardianInfo>
         {
             new GuardianInfo
@@ -1189,7 +1189,7 @@ public partial class CAContractTests
         var caHash = await AddGuardianTest_RepeatedGuardianIdentifierHash_DifferentVerifier();
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
-        var operationType = Convert.ToInt32(OperationType.ModifyGuardian).ToString();
+        var operationType = Convert.ToInt32(OperationType.RemoveGuardian).ToString();
         var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(30), _guardian,
             0, salt, operationType);
         var signature2 =
@@ -1272,7 +1272,7 @@ public partial class CAContractTests
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
         var salt1 = Guid.NewGuid().ToString("N");
-        var operationType = Convert.ToInt32(OperationType.ModifyGuardian).ToString();
+        var operationType = Convert.ToInt32(OperationType.RemoveGuardian).ToString();
         var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0, salt,
             operationType);
         var signature1 =
@@ -1317,7 +1317,7 @@ public partial class CAContractTests
         var caHash = await RemoveGuardianTest();
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
-        var operationType = Convert.ToInt32(OperationType.ModifyGuardian).ToString();
+        var operationType = Convert.ToInt32(OperationType.RemoveGuardian).ToString();
         var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(6), _guardian1,
             0, salt, operationType);
         var signature1 =
@@ -1379,7 +1379,7 @@ public partial class CAContractTests
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
         var salt1 = Guid.NewGuid().ToString("N");
-        var operationType = Convert.ToInt32(OperationType.ModifyGuardian).ToString();
+        var operationType = Convert.ToInt32(OperationType.RemoveGuardian).ToString();
         var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian1, 0, salt,
             operationType);
         var signature1 =
@@ -1431,7 +1431,7 @@ public partial class CAContractTests
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
         var salt1 = Guid.NewGuid().ToString("N");
-        var operationType = Convert.ToInt32(OperationType.ModifyGuardian).ToString();
+        var operationType = Convert.ToInt32(OperationType.RemoveGuardian).ToString();
         var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian1, 0, salt,
             operationType);
         var signature1 =
@@ -1506,8 +1506,8 @@ public partial class CAContractTests
         var caHash = await AddGuardianTest_RepeatedGuardianIdentifierHash_DifferentVerifier();
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
-        var removeOperationType = Convert.ToInt32(OperationType.ModifyGuardian).ToString();
-        var addOperationType = Convert.ToInt32(OperationType.ModifyGuardian).ToString();
+        var removeOperationType = Convert.ToInt32(OperationType.RemoveGuardian).ToString();
+        var addOperationType = Convert.ToInt32(OperationType.AddGuardian).ToString();
         var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(6), _guardian,
             0, salt, removeOperationType);
         var signature1 =
@@ -1757,7 +1757,7 @@ public partial class CAContractTests
         var caHash = await AddGuardianTest();
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
-        var operationType = Convert.ToInt32(OperationType.ModifyGuardian).ToString();
+        var operationType = Convert.ToInt32(OperationType.UpdateGuardian).ToString();
         var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(6), _guardian,
             0, salt, operationType);
         var guardianApprove = new List<GuardianInfo>
@@ -1815,7 +1815,7 @@ public partial class CAContractTests
         var caHash = await AddGuardianTest();
         var verificationTime = DateTime.UtcNow.AddMinutes(2);
         var salt = Guid.NewGuid().ToString("N");
-        var operationType = Convert.ToInt32(OperationType.ModifyGuardian).ToString();
+        var operationType = Convert.ToInt32(OperationType.AddGuardian).ToString();
         var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0, salt,
             operationType);
         var signature1 = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(15),
@@ -1886,7 +1886,7 @@ public partial class CAContractTests
                 VerifierId = _verifierId
             }
         });
-        var updateOperationType = Convert.ToInt32(OperationType.ModifyGuardian).ToString();
+        var updateOperationType = Convert.ToInt32(OperationType.UpdateGuardian).ToString();
         var signature3 = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(60), _guardian,
             0, salt, updateOperationType);
         var signature4 = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(70),
@@ -1972,8 +1972,8 @@ public partial class CAContractTests
         var caHash = await AddGuardianTest();
         var verificationTime = DateTime.UtcNow.AddMinutes(2);
         var salt = Guid.NewGuid().ToString("N");
-        var updateOperationType = Convert.ToInt32(OperationType.ModifyGuardian).ToString();
-        var addOperationType = Convert.ToInt32(OperationType.ModifyGuardian).ToString();
+        var updateOperationType = Convert.ToInt32(OperationType.UpdateGuardian).ToString();
+        var addOperationType = Convert.ToInt32(OperationType.AddGuardian).ToString();
         var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0, salt,
             addOperationType);
         var signature1 = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(1), _guardian1,
@@ -2124,7 +2124,7 @@ public partial class CAContractTests
         var salt = Guid.NewGuid().ToString("N");
         var salt1 = Guid.NewGuid().ToString("N");
         var salt2 = Guid.NewGuid().ToString("N");
-        var operationType = Convert.ToInt32(OperationType.ModifyGuardian).ToString();
+        var operationType = Convert.ToInt32(OperationType.UpdateGuardian).ToString();
         var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0, salt,
             operationType);
         var signature1 =
@@ -2217,7 +2217,7 @@ public partial class CAContractTests
         var salt = Guid.NewGuid().ToString("N");
         var salt1 = Guid.NewGuid().ToString("N");
         var salt2 = Guid.NewGuid().ToString("N");
-        var operationType = Convert.ToInt32(OperationType.ModifyGuardian).ToString();
+        var operationType = Convert.ToInt32(OperationType.UpdateGuardian).ToString();
         var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0, salt,
             operationType);
         var signature1 =
@@ -2402,7 +2402,7 @@ public partial class CAContractTests
         var salt = Guid.NewGuid().ToString("N");
         var salt1 = Guid.NewGuid().ToString("N");
         var salt2 = Guid.NewGuid().ToString("N");
-        var operationType = Convert.ToInt32(OperationType.ModifyGuardian).ToString();
+        var operationType = Convert.ToInt32(OperationType.UpdateGuardian).ToString();
         var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0, salt,
             operationType);
         var signature1 =
@@ -2583,7 +2583,7 @@ public partial class CAContractTests
         var verificationTime = DateTime.UtcNow;
         var caHash = await CreateHolder_ChangeOperationTypeInSignatureEnabled();
         var salt = Guid.NewGuid().ToString("N");
-        var operationType = Convert.ToInt32(OperationType.ModifyGuardian).ToString();
+        var operationType = Convert.ToInt32(OperationType.AddGuardian).ToString();
         var signature = GenerateSignature_Old(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0, salt);
         var signature1 =
             GenerateSignature_Old(VerifierKeyPair1, VerifierAddress1, verificationTime.AddSeconds(5), _guardian1, 0,
@@ -2641,7 +2641,7 @@ public partial class CAContractTests
         var verificationTime = DateTime.UtcNow;
         var caHash = await CreateHolder_ChangeOperationTypeInSignatureEnabled();
         var salt = Guid.NewGuid().ToString("N");
-        var operationType = Convert.ToInt32(OperationType.ModifyGuardian).ToString();
+        var operationType = Convert.ToInt32(OperationType.AddGuardian).ToString();
         var signature = GenerateSignature_Old(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0, salt);
         var signature1 =
             GenerateSignature_Old(VerifierKeyPair1, VerifierAddress1, verificationTime.AddSeconds(5), _guardian1, 0,
@@ -2698,7 +2698,7 @@ public partial class CAContractTests
         var verificationTime = DateTime.UtcNow;
         var caHash = await CreateHolder_ChangeOperationTypeInSignatureEnabled();
         var salt = Guid.NewGuid().ToString("N");
-        var operationType = Convert.ToInt32(OperationType.ModifyGuardian).ToString();
+        var operationType = Convert.ToInt32(OperationType.AddGuardian).ToString();
         var signature = GenerateSignature_Old(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0, salt);
         var signature1 =
             GenerateSignature_Old(VerifierKeyPair1, VerifierAddress1, verificationTime.AddSeconds(5), _guardian1, 0,

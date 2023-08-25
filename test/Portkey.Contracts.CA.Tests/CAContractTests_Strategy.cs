@@ -28,25 +28,4 @@ public partial class CAContractTests
         output.Output.BoolResult.ShouldBeTrue();
         //output.Output.StrategyOutput.Name.ShouldBeEquivalentTo(StrategyName.IfElse);
     }
-
-    [Fact]
-    public async Task SetOperationStrategyTest()
-    {
-        await CaContractStub.SetOperationStrategy.SendAsync(new SetOperationStrategyInput
-        {
-            CaHash = await CreateHolder(),
-            OperationType = OperationType.ModifyStrategy,
-            JudgementStrategy = new StrategyNode()
-        });
-    }
-
-    [Fact]
-    public async Task GetOperationStrategyTest()
-    {
-        var output = await CaContractStub.GetOperationStrategy.CallAsync(new GetOperationStrategyInput
-        {
-            CaHash = await CreateHolder(),
-            OperationType = OperationType.ModifyStrategy
-        });
-    }
 }

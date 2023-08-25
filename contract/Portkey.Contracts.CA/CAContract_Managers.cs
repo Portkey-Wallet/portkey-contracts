@@ -130,7 +130,7 @@ public partial class CAContract
         var guardianApprovedList = input.GuardiansApproved!
             .DistinctBy(g => $"{g.Type}{g.IdentifierHash}{g.VerificationInfo.Id}")
             .ToList();
-        var methodName = nameof(OperationType.RemoveDevice).ToLower();
+        var methodName = nameof(OperationType.RemoveOtherManagerInfo).ToLower();
         foreach (var guardian in guardianApprovedList)
         {
             //Whether the guardian exists in the holder info.
@@ -141,7 +141,7 @@ public partial class CAContract
             guardianApprovedAmount++;
         }
 
-        var holderJudgementStrategy = State.OperationStrategy[input.CaHash][OperationType.RemoveDevice] ??
+        var holderJudgementStrategy = State.OperationStrategy[input.CaHash][OperationType.RemoveOtherManagerInfo] ??
                                       holderInfo.JudgementStrategy;
 
         //Whether the approved guardians count is satisfied.

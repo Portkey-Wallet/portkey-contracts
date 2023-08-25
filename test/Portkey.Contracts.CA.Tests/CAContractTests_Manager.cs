@@ -1064,7 +1064,7 @@ public partial class CAContractTests
         await CreateHolder();
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
-        var operationType = Convert.ToInt32(OperationType.RemoveDevice).ToString();
+        var operationType = Convert.ToInt32(OperationType.RemoveOtherManagerInfo).ToString();
         var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0, salt,
             operationType);
         var caInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput()
@@ -1180,7 +1180,7 @@ public partial class CAContractTests
         await CreateHolder();
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
-        var operationType = Convert.ToInt32(OperationType.RemoveDevice).ToString();
+        var operationType = Convert.ToInt32(OperationType.RemoveOtherManagerInfo).ToString();
         var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0, salt,
             operationType);
         var caInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput()
@@ -1275,7 +1275,7 @@ public partial class CAContractTests
 
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
-        var removeOperationType = Convert.ToInt32(OperationType.RemoveDevice).ToString();
+        var removeOperationType = Convert.ToInt32(OperationType.RemoveOtherManagerInfo).ToString();
         var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(50), _guardian,
             0, salt, removeOperationType);
         var signature1 =
