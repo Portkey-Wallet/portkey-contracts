@@ -297,6 +297,14 @@ public partial class CAContract
                 Amount = input.Amount,
                 Symbol = input.Symbol,
             }.ToByteString());
+        Context.Fire(new ManagerApproved()
+        {
+            CaHash = input.CaHash,
+            Spender = input.Spender,
+            Amount = input.Amount,
+            Symbol = input.Symbol,
+            External = input.External
+        });
         return new Empty();
     }
 
