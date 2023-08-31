@@ -1,10 +1,6 @@
-using System;
 using System.Linq;
-using AElf.Contracts.MultiToken;
 using AElf.Sdk.CSharp;
-using AElf.Sdk.CSharp.State;
 using AElf.Types;
-using Google.Protobuf;
 using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
 
@@ -18,7 +14,13 @@ public partial class CAContract
         Assert(!string.IsNullOrEmpty(input.Symbol) && input.Symbol.All(IsValidSymbolChar), "Invalid symbol.");
         TransferGuardianApprovedCheck(input.CaHash, input.GuardiansApproved,
             nameof(OperationType.ModifyTransferLimit).ToLower());
-        UpdateAccountTransferLimit(input.CaHash, input.Symbol, input.SingleLimit, input.DailyLimit);
+        if (input.SingleLimit <= 0 || input.DailyLimit <= 0)
+            Assert(input.SingleLimit == -1 && input.DailyLimit == -1, "Invalid transfer limit");
+        State.TransferLimit[input.CaHash][input.Symbol] = new TransferLimit()
+        {
+            DayLimit = input.DailyLimit,
+            SingleLimit = input.SingleLimit
+        };
         State.DailyTransferredAmount[input.CaHash][input.Symbol] = new TransferredAmount()
         {
             UpdateTime = GetCurrentBlockTimeString(Context.CurrentBlockTime),
@@ -100,23 +102,12 @@ public partial class CAContract
             "JudgementStrategy validate failed");
     }
 
-    private void UpdateAccountTransferLimit(Hash caHash, string symbol, long singleLimit, long dailyLimit)
-    {
-        var accountTransferLimit = GetAccountTransferLimit(caHash, symbol);
-        State.TransferLimit[caHash][symbol] = new TransferLimit()
-        {
-            DayLimit = dailyLimit > 0
-                ? dailyLimit
-                : accountTransferLimit.DayLimit,
-            SingleLimit = singleLimit > 0
-                ? singleLimit
-                : accountTransferLimit.SingleLimit
-        };
-    }
-
     private void UpdateDailyTransferredLimit(Hash caHash, string symbol, long amount)
     {
         Assert(amount > 0, "Invalid amount.");
+        // When transferlimit is -1, no limit calculation is performed.
+        if (State.TransferLimit[caHash]?[symbol]?.DayLimit == -1) return;
+
         var transferLimit = GetAccountTransferLimit(caHash, symbol);
         var transferredAmount = State.DailyTransferredAmount[caHash][symbol] ??
                                 new TransferredAmount() { DailyTransfered = 0 };

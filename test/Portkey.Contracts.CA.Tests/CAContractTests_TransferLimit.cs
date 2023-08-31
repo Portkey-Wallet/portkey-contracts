@@ -98,6 +98,41 @@ public partial class CAContractTests
     }
 
     [Fact]
+    public async Task SetTransferLimit_NoLimitTest()
+    {
+        await InitTransferLimitTest();
+
+        var setLimitVerifyTime = DateTime.UtcNow;
+        var salt = Guid.NewGuid().ToString("N");
+        var setLimitOpType = Convert.ToInt32(OperationType.ModifyTransferLimit).ToString();
+        var setLimitSign = GenerateSignature(VerifierKeyPair, VerifierAddress, setLimitVerifyTime, _guardian, 0, salt,
+            setLimitOpType);
+        await CaContractStub.SetTransferLimit.SendAsync(new SetTransferLimitInput()
+        {
+            CaHash = _transferLimitTestCaHash,
+            GuardiansApproved =
+            {
+                new GuardianInfo
+                {
+                    IdentifierHash = _guardian,
+                    Type = GuardianType.OfEmail,
+                    VerificationInfo = new VerificationInfo
+                    {
+                        Id = _verifierServers[0].Id,
+                        Signature = setLimitSign,
+                        VerificationDoc =
+                            $"{0},{_guardian.ToHex()},{setLimitVerifyTime},{VerifierAddress.ToBase58()},{salt},{setLimitOpType}"
+                    }
+                }
+            },
+            Symbol = "ELF",
+            SingleLimit = -1,
+            DailyLimit = -1
+        });
+    }
+
+
+    [Fact]
     public async Task SetTransferLimit_ErrorOperationTypeTest()
     {
         await InitTransferLimitTest();
