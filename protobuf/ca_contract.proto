@@ -127,6 +127,8 @@ service CAContract {
   rpc GetDefaultTokenTransferLimit(caimpl.GetDefaultTokenTransferLimitInput) returns (caimpl.GetDefaultTokenTransferLimitOutput) {option (aelf.is_view) = true;}   
         
   rpc SetForbiddenForwardCallContractMethod(caimpl.SetForbiddenForwardCallContractMethodInput) returns (google.protobuf.Empty) {}  
+
+  rpc ChangeManagerApproveForbiddenEnabled (caimpl.ManagerApproveForbiddenEnabledInput) returns (google.protobuf.Empty) {}
 }
 
 //Data structure

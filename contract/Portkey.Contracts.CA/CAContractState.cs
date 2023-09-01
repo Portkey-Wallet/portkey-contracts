@@ -62,4 +62,6 @@ public partial class CAContractState : ContractState
     public MappedState<Address, string, bool> ForbiddenForwardCallContractMethod { get; set; }
 
     public MappedState<Hash, OperationType, StrategyNode> OperationStrategy { get; set; }
+    public SingletonState<bool> ManagerApproveForbiddenEnabled { get; set; }
+
 }

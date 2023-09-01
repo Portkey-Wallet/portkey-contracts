@@ -352,6 +352,7 @@ public partial class CAContract
 
     private void CheckForwardCallContractMethodPermission(Address address, string method)
     {
+        if (!State.ManagerApproveForbiddenEnabled.Value) return;
         Assert(method != nameof(State.TokenContract.Approve), "No permission.");
         Assert(!State.ForbiddenForwardCallContractMethod[address][method.ToLower()],
             $"Does not have permission for {method}.");

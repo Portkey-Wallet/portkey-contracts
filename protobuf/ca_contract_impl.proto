@@ -66,3 +66,7 @@ message TransferredAmount {
 message External {
     map<string, string> value = 1;
 }
+
+message ManagerApproveForbiddenEnabledInput {
+  bool manager_approve_forbidden_enabled = 1;
+}
