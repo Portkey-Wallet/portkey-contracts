@@ -40,7 +40,7 @@ public partial class CAContract
     {
         Assert(IsValidHash(input!.CaHash), "invalid input caHash.");
         Assert(!string.IsNullOrEmpty(input.Symbol) && input.Symbol.All(IsValidSymbolChar), "Invalid symbol.");
-        
+
         // When the user does not set transferLimit, use the default value of symbol
         var transferLimit = GetAccountTransferLimit(input.CaHash, input.Symbol);
         return new GetTransferLimitOutput
@@ -116,14 +116,14 @@ public partial class CAContract
         Assert(amount <= transferLimit.SingleLimit,
             $"The transfer amount {amount} has exceeded the single transfer limit {transferLimit.SingleLimit}");
         var blockTime = GetCurrentBlockTimeString(Context.CurrentBlockTime);
-        var transferBalance = transferLimit.DayLimit - (IsOverDay(transferredAmount.UpdateTime, blockTime)
+        var transferred = IsOverDay(transferredAmount.UpdateTime, blockTime)
             ? 0
-            : transferredAmount.DailyTransfered);
-        Assert(amount <= transferBalance,
-            $"The transfer amount {amount} has exceeded the daily transfer balance {transferBalance}.");
-        State.DailyTransferredAmount[caHash][symbol] = new TransferredAmount()
+            : transferredAmount.DailyTransfered;
+        Assert(amount <= transferLimit.DayLimit - transferred,
+            $"The transfer amount {amount} has exceeded the daily transfer balance.");
+        State.DailyTransferredAmount[caHash][symbol] = new TransferredAmount
         {
-            DailyTransfered = transferBalance - amount,
+            DailyTransfered = transferred + amount,
             UpdateTime = IsOverDay(transferredAmount.UpdateTime, blockTime)
                 ? blockTime
                 : transferredAmount.UpdateTime
