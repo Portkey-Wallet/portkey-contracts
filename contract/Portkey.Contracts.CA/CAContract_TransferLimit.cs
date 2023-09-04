@@ -40,17 +40,19 @@ public partial class CAContract
     {
         Assert(IsValidHash(input!.CaHash), "invalid input caHash.");
         Assert(!string.IsNullOrEmpty(input.Symbol) && input.Symbol.All(IsValidSymbolChar), "Invalid symbol.");
-        Assert(State.TransferLimit[input.CaHash] != null, $"TransferLimit is null.CA hash:{input.CaHash}.");
-        Assert(State.TransferLimit[input.CaHash][input.Symbol] != null,
-            $"This symbol {input.Symbol} has not set transferLimit");
-        return new GetTransferLimitOutput()
+        
+        // When the user does not set transferLimit, use the default value of symbol
+        var transferLimit = GetAccountTransferLimit(input.CaHash, input.Symbol);
+        return new GetTransferLimitOutput
         {
-            SingleLimit = State.TransferLimit[input.CaHash][input.Symbol].SingleLimit,
-            DailyLimit = State.TransferLimit[input.CaHash][input.Symbol].DayLimit,
-            DailyTransferredAmount = IsOverDay(State.DailyTransferredAmount[input.CaHash][input.Symbol].UpdateTime,
-                GetCurrentBlockTimeString(Context.CurrentBlockTime))
-                ? 0
-                : State.DailyTransferredAmount[input.CaHash][input.Symbol].DailyTransfered
+            SingleLimit = transferLimit.SingleLimit,
+            DailyLimit = transferLimit.DayLimit,
+            DailyTransferredAmount = State.DailyTransferredAmount[input.CaHash] != null &&
+                                     State.DailyTransferredAmount[input.CaHash][input.Symbol] != null && !IsOverDay(
+                                         State.DailyTransferredAmount[input.CaHash][input.Symbol].UpdateTime,
+                                         GetCurrentBlockTimeString(Context.CurrentBlockTime))
+                ? State.DailyTransferredAmount[input.CaHash][input.Symbol].DailyTransfered
+                : 0
         };
     }
 
