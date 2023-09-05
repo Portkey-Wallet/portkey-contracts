@@ -29,7 +29,7 @@ public partial class CAContractTests
         var setLimitOpType = Convert.ToInt32(OperationType.ModifyTransferLimit).ToString();
         var setLimitSign = GenerateSignature(VerifierKeyPair, VerifierAddress, setLimitVerifyTime, _guardian, 0, salt,
             setLimitOpType);
-        await CaContractStub.SetTransferLimit.SendAsync(new SetTransferLimitInput()
+        await CaContractStubManagerInfo1.SetTransferLimit.SendAsync(new SetTransferLimitInput
         {
             CaHash = _transferLimitTestCaHash,
             GuardiansApproved =
@@ -63,7 +63,7 @@ public partial class CAContractTests
         var setLimitOpType = Convert.ToInt32(OperationType.ModifyTransferLimit).ToString();
         var setLimitSign = GenerateSignature(VerifierKeyPair, VerifierAddress, setLimitVerifyTime, _guardian, 0, salt,
             setLimitOpType);
-        await CaContractStub.SetTransferLimit.SendAsync(new SetTransferLimitInput()
+        await CaContractStubManagerInfo1.SetTransferLimit.SendAsync(new SetTransferLimitInput
         {
             CaHash = _transferLimitTestCaHash,
             GuardiansApproved =
@@ -107,7 +107,7 @@ public partial class CAContractTests
         var setLimitOpType = Convert.ToInt32(OperationType.ModifyTransferLimit).ToString();
         var setLimitSign = GenerateSignature(VerifierKeyPair, VerifierAddress, setLimitVerifyTime, _guardian, 0, salt,
             setLimitOpType);
-        await CaContractStub.SetTransferLimit.SendAsync(new SetTransferLimitInput()
+        await CaContractStubManagerInfo1.SetTransferLimit.SendAsync(new SetTransferLimitInput
         {
             CaHash = _transferLimitTestCaHash,
             GuardiansApproved =

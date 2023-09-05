@@ -1618,7 +1618,7 @@ public partial class CAContractTests
         var approveOpType = Convert.ToInt32(OperationType.Approve).ToString();
         var approveSign = GenerateSignature(VerifierKeyPair, VerifierAddress, approveVerifyTime, _guardian, 0, salt,
             approveOpType);
-        await CaContractStub.ManagerApprove.SendAsync(new ManagerApproveInput()
+        await CaContractStubManagerInfo1.ManagerApprove.SendAsync(new ManagerApproveInput
         {
             CaHash = _transferLimitTestCaHash,
             Spender = User2Address,
@@ -1653,7 +1653,7 @@ public partial class CAContractTests
         var approveSign = GenerateSignature(VerifierKeyPair, VerifierAddress, approveVerifyTime, _guardian, 0, salt,
             approveOpType);
         var executionResult = await CaContractStubManagerInfo1.ManagerApprove.SendWithExceptionAsync(
-            new ManagerApproveInput()
+            new ManagerApproveInput
             {
                 CaHash = _transferLimitTestCaHash,
                 Spender = User2Address,
@@ -1688,7 +1688,7 @@ public partial class CAContractTests
         var unapproveOpType = Convert.ToInt32(OperationType.Approve).ToString();
         var unapproveSign = GenerateSignature(VerifierKeyPair, VerifierAddress, unapproveVerifyTime, _guardian, 0, salt,
             unapproveOpType);
-        await CaContractStub.ManagerUnApprove.SendAsync(new ManagerUnApproveInput()
+        await CaContractStubManagerInfo1.ManagerUnApprove.SendAsync(new ManagerUnApproveInput
         {
             CaHash = _transferLimitTestCaHash,
             Spender = User2Address,

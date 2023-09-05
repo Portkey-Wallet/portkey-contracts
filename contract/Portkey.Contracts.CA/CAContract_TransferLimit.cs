@@ -12,6 +12,8 @@ public partial class CAContract
     {
         Assert(input != null, "invalid input");
         Assert(!string.IsNullOrEmpty(input.Symbol) && input.Symbol.All(IsValidSymbolChar), "Invalid symbol.");
+        Assert(State.HolderInfoMap[input.CaHash] != null, $"CA holder is null.CA hash:{input.CaHash}");
+        Assert(State.HolderInfoMap[input.CaHash].ManagerInfos.Any(m => m.Address == Context.Sender), "No permission.");
         TransferGuardianApprovedCheck(input.CaHash, input.GuardiansApproved,
             nameof(OperationType.ModifyTransferLimit).ToLower());
         if (input.SingleLimit <= 0 || input.DailyLimit <= 0)

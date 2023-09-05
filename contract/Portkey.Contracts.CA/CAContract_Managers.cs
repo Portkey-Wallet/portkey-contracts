@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using AElf;
 using AElf.Contracts.MultiToken;
 using AElf.Sdk.CSharp;
 using AElf.Types;
@@ -288,6 +289,8 @@ public partial class CAContract
     public override Empty ManagerApprove(ManagerApproveInput input)
     {
         Assert(input != null, "invalid input");
+        Assert(input.CaHash != null, "CA hash is null.");
+        CheckManagerInfoPermission(input.CaHash, Context.Sender);
         TransferGuardianApprovedCheck(input.CaHash, input.GuardiansApproved, nameof(OperationType.Approve).ToLower());
         Context.SendVirtualInline(input.CaHash, State.TokenContract.Value,
             nameof(State.TokenContract.Approve),
