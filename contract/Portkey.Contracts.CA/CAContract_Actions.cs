@@ -1,8 +1,11 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using AElf;
 using AElf.Contracts.MultiToken;
 using AElf.Sdk.CSharp;
 using AElf.Types;
+using Google.Protobuf;
 using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
 
@@ -76,6 +79,7 @@ public partial class CAContract : CAContractContainer.CAContractBase
         {
             Guardians = { guardian }
         };
+        FillGuardiansMerkleTreeRoot(holderInfo);
 
         holderInfo.JudgementStrategy = input.JudgementStrategy ?? Strategy.DefaultStrategy();
 
@@ -115,6 +119,25 @@ public partial class CAContract : CAContractContainer.CAContractBase
         });
 
         return new Empty();
+    }
+
+    private void FillGuardiansMerkleTreeRoot(HolderInfo holderInfo)
+    {
+        var nodes = new List<Hash>();
+        foreach (var guardian in holderInfo.GuardianList.Guardians)
+        {
+            var guardianNode = new GuardianMerkleTreeNode()
+            {
+                Type = guardian.Type,
+                IdentifierHash = guardian.IdentifierHash,
+                VerifierId = guardian.VerifierId
+            };
+            var guardianHashString = HashHelper.ComputeFrom(guardianNode).ToHex();
+            var hash = Hash.LoadFromByteArray(ByteArrayHelper.HexStringToByteArray(guardianHashString));
+            nodes.Add(hash);
+        }
+        var tree = BinaryMerkleTree.FromLeafNodes(nodes);
+        holderInfo.GuardiansMerkleTreeRoot = tree.Root.ToHex();
     }
 
     private bool IsJudgementStrategySatisfied(int guardianCount, int guardianApprovedCount, StrategyNode strategyNode)

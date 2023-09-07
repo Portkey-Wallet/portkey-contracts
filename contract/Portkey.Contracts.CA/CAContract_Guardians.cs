@@ -1,6 +1,8 @@
 using System.Linq;
+using AElf;
 using AElf.CSharp.Core;
 using AElf.Sdk.CSharp;
+using AElf.Types;
 using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
 
@@ -68,7 +70,7 @@ public partial class CAContract
             IsLoginGuardian = false
         };
         State.HolderInfoMap[input.CaHash].GuardianList?.Guardians.Add(guardianAdded);
-
+        FillGuardiansMerkleTreeRoot(State.HolderInfoMap[input.CaHash]);
 
         Context.Fire(new GuardianAdded
         {
@@ -141,6 +143,7 @@ public partial class CAContract
         }
 
         State.HolderInfoMap[input.CaHash].GuardianList?.Guardians.Remove(toRemoveGuardian);
+        FillGuardiansMerkleTreeRoot(State.HolderInfoMap[input.CaHash]);
 
         if (State.LoginGuardianMap[toRemoveGuardian.IdentifierHash][toRemoveGuardian.VerifierId] != null)
         {
@@ -236,6 +239,7 @@ public partial class CAContract
             State.LoginGuardianMap[preGuardian.IdentifierHash].Remove(preGuardian.VerifierId);
             State.LoginGuardianMap[existPreGuardian.IdentifierHash][existPreGuardian.VerifierId] = input.CaHash;
         }
+        FillGuardiansMerkleTreeRoot(State.HolderInfoMap[input.CaHash]);
 
         Context.Fire(new GuardianUpdated
         {

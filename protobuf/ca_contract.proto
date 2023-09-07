@@ -137,6 +137,7 @@ message HolderInfo {
   repeated ManagerInfo manager_infos = 2;
   GuardianList guardian_list = 3;
   StrategyNode judgement_strategy = 4;
+  string guardians_merkle_tree_root = 5;
 }
 
 message ManagerInfo {
@@ -227,6 +228,12 @@ message GuardianInfo {
   GuardianType type = 1;
   aelf.Hash identifier_hash = 2;
   VerificationInfo verification_info = 3;
+}
+
+message GuardianMerkleTreeNode {
+  GuardianType type = 1;
+  aelf.Hash identifier_hash = 2;
+  aelf.Hash verifier_id = 3;
 }
 
 message VerificationInfo {

@@ -1,5 +1,6 @@
 using AElf.Sdk.CSharp.State;
 using AElf.Types;
+using Google.Protobuf.Collections;
 
 namespace Portkey.Contracts.CA;
 

@@ -9,7 +9,7 @@ namespace Portkey.Contracts.CA;
 
 public partial class CAContract
 {
-    private bool CheckVerifierSignatureAndDataCompatible(GuardianInfo guardianInfo, string methodName)
+    private bool CheckVerifierSignatureAndDataCompatible(GuardianInfo guardianInfo, string methodName, Hash caHash = null)
     {
         if (State.OperationTypeInSignatureEnabled.Value)
         {
@@ -27,12 +27,13 @@ public partial class CAContract
         {
             5 => CheckVerifierSignatureAndData(guardianInfo),
             6 => CheckVerifierSignatureAndData(guardianInfo, methodName),
+            7 => CheckVerifierSignatureAndData(guardianInfo, methodName),
             _ => false
         };
     }
 
 
-    private bool CheckVerifierSignatureAndData(GuardianInfo guardianInfo, string methodName)
+    private bool CheckVerifierSignatureAndData(GuardianInfo guardianInfo, string methodName, Hash caHash = null)
     {
         //[type,guardianIdentifierHash,verificationTime,verifierAddress,salt,operationType]
         var verificationDoc = guardianInfo.VerificationInfo.VerificationDoc;
@@ -43,7 +44,7 @@ public partial class CAContract
 
         var verifierDoc = verificationDoc.Split(",");
 
-        if (verifierDoc.Length != 6)
+        if (verifierDoc.Length != 6 && verificationDoc.Length != 7)
         {
             return false;
         }
@@ -95,7 +96,21 @@ public partial class CAContract
         State.VerifierDocMap[key] = true;
         var operationTypeStr = docInfo.OperationType;
         var operationTypeName = typeof(OperationType).GetEnumName(Convert.ToInt32(operationTypeStr))?.ToLower();
-        return operationTypeName == methodName;
+        if (operationTypeName != methodName)
+        {
+            return false;
+        }
+
+        if (verifierDoc.Length == 6)
+        {
+            return true;
+        }
+        if (nameof(OperationType.Approve).ToLower() != methodName && nameof(OperationType.ModifyTransferLimit).ToLower() != methodName)
+        {
+            return true;
+        }
+
+        return CheckGuardiansMerkleTreeNode(caHash, guardianInfo);
     }
 
 
@@ -147,7 +162,44 @@ public partial class CAContract
             g => g.IdentifierHash == guardianInfo.IdentifierHash && g.Type == guardianInfo.Type &&
                  g.VerifierId == guardianInfo.VerificationInfo.Id
         );
-        return satisfiedGuardians != null;
+        if (satisfiedGuardians != null)
+        {
+            return true;
+        }
+
+        return CheckGuardiansMerkleTreeNode(caHash, guardianInfo);
+    }
+
+    private bool CheckGuardiansMerkleTreeNode(Hash caHash, GuardianInfo guardianInfo)
+    {
+        if (caHash == null)
+        {
+            return false;
+        }
+
+        var doc = guardianInfo.VerificationInfo.VerificationDoc.Split(",");
+        if (doc.Length != 7)
+        {
+            return false;
+        }
+
+        var treeRoot = State.HolderInfoMap[caHash].GuardiansMerkleTreeRoot;
+        if (String.IsNullOrWhiteSpace(treeRoot))
+        {
+            return false;
+        }
+
+        var merklePath = MerklePath.Parser.ParseFrom(ByteStringHelper.FromHexString(doc[6]));
+        var merkleTreeNode = new GuardianMerkleTreeNode
+        {
+            Type = guardianInfo.Type,
+            IdentifierHash = guardianInfo.IdentifierHash,
+            VerifierId = guardianInfo.VerificationInfo.Id
+        };
+        var guardianHashString = HashHelper.ComputeFrom(merkleTreeNode).ToHex();
+        var hash = Hash.LoadFromByteArray(ByteArrayHelper.HexStringToByteArray(guardianHashString));
+        var root = merklePath.ComputeRootWithLeafNode(hash);
+        return root.ToHex() == treeRoot;
     }
 
     private bool IsValidHash(Hash hash)
