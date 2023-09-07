@@ -1600,7 +1600,7 @@ public partial class CAContractTests
             ContractAdmin = DefaultAddress,
         });
         await CaContractStub.SetForbiddenForwardCallContractMethod.SendAsync(
-            new SetForbiddenForwardCallContractMethodInput()
+            new SetForbiddenForwardCallContractMethodInput
             {
                 MethodName = "TestForbiddenForwardCallContractMethod",
                 Address = DefaultAddress,

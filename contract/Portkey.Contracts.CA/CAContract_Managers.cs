@@ -290,6 +290,7 @@ public partial class CAContract
     {
         Assert(input != null, "invalid input");
         Assert(input.CaHash != null, "CA hash is null.");
+        Assert(input.Spender != null && !input.Spender.Value.IsNullOrEmpty(), "Invalid input address.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
         TransferGuardianApprovedCheck(input.CaHash, input.GuardiansApproved, nameof(OperationType.Approve).ToLower());
         Context.SendVirtualInline(input.CaHash, State.TokenContract.Value,

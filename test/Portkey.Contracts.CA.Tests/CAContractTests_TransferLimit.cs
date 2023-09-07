@@ -144,7 +144,7 @@ public partial class CAContractTests
                 salt,
                 setLimitOpType);
             var executionResult = await CaContractStubManagerInfo1.SetTransferLimit.SendWithExceptionAsync(
-                new SetTransferLimitInput()
+                new SetTransferLimitInput
                 {
                     CaHash = _transferLimitTestCaHash,
                     GuardiansApproved =
@@ -190,7 +190,7 @@ public partial class CAContractTests
     {
         await InitTransferLimitTest();
 
-        await CaContractStub.SetDefaultTokenTransferLimit.SendAsync(new SetDefaultTokenTransferLimitInput()
+        await CaContractStub.SetDefaultTokenTransferLimit.SendAsync(new SetDefaultTokenTransferLimitInput
         {
             Symbol = "ELF",
             DefaultLimit = _defaultTokenTransferLimit
