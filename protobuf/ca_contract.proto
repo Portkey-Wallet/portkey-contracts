@@ -443,6 +443,7 @@ message ValidateCAHolderInfoWithManagerInfosExistsInput {
   repeated ManagerInfo manager_infos = 2;
   repeated aelf.Hash login_guardians = 3;
   repeated aelf.Hash not_login_guardians = 4;
+  string guardians_merkle_tree_root = 5;
 }
 
 message VerificationTransactionInfo {
