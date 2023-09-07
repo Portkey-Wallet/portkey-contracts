@@ -23,7 +23,8 @@ public partial class CAContractTests
             {
                 CaHash = getHolderInfo.CaHash,
                 ManagerInfos = { getHolderInfo.ManagerInfos },
-                LoginGuardians = { getHolderInfo.GuardianList.Guardians.Select(g => g.IdentifierHash) }
+                LoginGuardians = { getHolderInfo.GuardianList.Guardians.Select(g => g.IdentifierHash) },
+                GuardiansMerkleTreeRoot = getHolderInfo.GuardiansMerkleTreeRoot
             });
     }
 
@@ -75,7 +76,8 @@ public partial class CAContractTests
         var param = new ValidateCAHolderInfoWithManagerInfosExistsInput
         {
             CaHash = getHolderInfo.CaHash,
-            LoginGuardians = { loginList }
+            LoginGuardians = { loginList },
+            GuardiansMerkleTreeRoot = getHolderInfo.GuardiansMerkleTreeRoot
         };
 
         var result = await CaContractStub.ValidateCAHolderInfoWithManagerInfosExists.SendWithExceptionAsync(param);
@@ -85,7 +87,8 @@ public partial class CAContractTests
         param = new ValidateCAHolderInfoWithManagerInfosExistsInput
         {
             CaHash = getHolderInfo.CaHash,
-            LoginGuardians = { Hash.Empty }
+            LoginGuardians = { Hash.Empty },
+            GuardiansMerkleTreeRoot = getHolderInfo.GuardiansMerkleTreeRoot
         };
         result = await CaContractStub.ValidateCAHolderInfoWithManagerInfosExists.SendWithExceptionAsync(param);
         result.TransactionResult.Error.ShouldContain(
