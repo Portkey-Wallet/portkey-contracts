@@ -292,7 +292,8 @@ public partial class CAContract
         Assert(input.CaHash != null, "CA hash is null.");
         Assert(input.Spender != null && !input.Spender.Value.IsNullOrEmpty(), "Invalid input address.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
-        TransferGuardianApprovedCheck(input.CaHash, input.GuardiansApproved, nameof(OperationType.Approve).ToLower());
+        TransferGuardianApprovedCheck(input.CaHash, input.GuardiansApproved, OperationType.Approve,
+            nameof(OperationType.Approve).ToLower());
         Context.SendVirtualInline(input.CaHash, State.TokenContract.Value,
             nameof(State.TokenContract.Approve),
             new ApproveInput
@@ -315,7 +316,8 @@ public partial class CAContract
     public override Empty ManagerUnApprove(ManagerUnApproveInput input)
     {
         Assert(input != null, "invalid input");
-        TransferGuardianApprovedCheck(input.CaHash, input.GuardiansApproved, nameof(OperationType.Approve).ToLower());
+        TransferGuardianApprovedCheck(input.CaHash, input.GuardiansApproved, OperationType.Approve,
+            nameof(OperationType.Approve).ToLower());
         Context.SendVirtualInline(input.CaHash, State.TokenContract.Value,
             nameof(State.TokenContract.UnApprove),
             new UnApproveInput
