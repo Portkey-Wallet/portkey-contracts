@@ -257,7 +257,8 @@ public partial class CAContract : CAContractContainer.CAContractBase
     public override Empty ChangeManagerApproveForbiddenEnabled(ManagerApproveForbiddenEnabledInput input)
     {
         Assert(State.Admin.Value == Context.Sender, "No permission");
-        Assert(State.ManagerApproveForbiddenEnabled.Value != input.ManagerApproveForbiddenEnabled, "invalid input");
+        Assert(State.ManagerApproveForbiddenEnabled.Value != input.ManagerApproveForbiddenEnabled,
+            $"Already set {State.ManagerApproveForbiddenEnabled.Value}, no need to repeat settings");
         State.ManagerApproveForbiddenEnabled.Value = input.ManagerApproveForbiddenEnabled;
         return new Empty();
     }

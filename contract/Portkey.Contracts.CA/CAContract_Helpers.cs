@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using AElf;
+using AElf.Contracts.MultiToken;
 using AElf.CSharp.Core.Extension;
 using AElf.Types;
 using Google.Protobuf.WellKnownTypes;
@@ -213,5 +214,13 @@ public partial class CAContract
     private static string GetCurrentBlockTimeString(Timestamp currentBlockTime)
     {
         return currentBlockTime.ToDateTime().ToString("yyyy-MM-dd");
+    }
+    
+    private TokenInfo GetTokenInfo(string symbol)
+    {
+        return State.TokenContract.GetTokenInfo.Call(new GetTokenInfoInput
+        {
+            Symbol = symbol
+        });
     }
 }
