@@ -23,6 +23,7 @@ public partial class CAContractState : ContractState
     /// multiple Login Guardian to one HolderInfo Hash
     /// </summary>
     public MappedState<Hash, Hash> GuardianMap { get; set; }
+    public MappedState<Hash, Hash> VerifierIdMap { get; set; }
 
     /// <summary>
     /// HolderInfo Hash -> HolderInfo

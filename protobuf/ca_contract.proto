@@ -113,6 +113,8 @@ service CAContract {
 
   rpc SetCAContractAddresses (SetCAContractAddressesInput) returns (google.protobuf.Empty) {}
   
+  rpc AddVerifierIdMapper (AddVerifierIdMapperInput) returns (google.protobuf.Empty) {}
+  
   // approve
   rpc ManagerApprove(ManagerApproveInput) returns (google.protobuf.Empty) {}
       
@@ -217,6 +219,16 @@ message AdminInput{
 message AdminOutput{
   aelf.Address address = 1;
 }
+
+message AddVerifierIdMapperInput {
+    repeated VerifierIdMapperInfo mappers = 1;
+}
+
+message VerifierIdMapperInfo {
+   aelf.Hash from_id = 1;
+   aelf.Hash to_id = 2;
+}
+
 
 message CreateCAHolderInput {
   GuardianInfo guardian_approved = 1;

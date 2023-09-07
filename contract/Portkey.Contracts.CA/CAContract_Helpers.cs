@@ -10,7 +10,7 @@ namespace Portkey.Contracts.CA;
 
 public partial class CAContract
 {
-    private bool CheckVerifierSignatureAndDataCompatible(GuardianInfo guardianInfo, string methodName, Hash caHash = null)
+    private bool CheckVerifierSignatureAndDataCompatible(GuardianInfo guardianInfo, string methodName)
     {
         if (State.OperationTypeInSignatureEnabled.Value)
         {
@@ -34,7 +34,7 @@ public partial class CAContract
     }
 
 
-    private bool CheckVerifierSignatureAndData(GuardianInfo guardianInfo, string methodName, Hash caHash = null)
+    private bool CheckVerifierSignatureAndData(GuardianInfo guardianInfo, string methodName)
     {
         //[type,guardianIdentifierHash,verificationTime,verifierAddress,salt,operationType]
         var verificationDoc = guardianInfo.VerificationInfo.VerificationDoc;
@@ -77,8 +77,15 @@ public partial class CAContract
         //Check verifier address and data.
         var verifierAddress = docInfo.VerifierAddress;
         var verificationInfo = guardianInfo.VerificationInfo;
+        var needMapperVerifierId = verifierDoc.Length == 7 && (nameof(OperationType.Approve).ToLower() == methodName ||
+                                    nameof(OperationType.ModifyTransferLimit).ToLower() == methodName);
+        var verifierId = needMapperVerifierId ? State.VerifierIdMap[verificationInfo.Id] : verificationInfo.Id;
+        if (verifierId == null)
+        {
+            return false;
+        }
         var verifierServer =
-            State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(v => v.Id == verificationInfo.Id);
+            State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(v => v.Id == verifierId);
 
         //Recovery verifier address.
         var data = HashHelper.ComputeFrom(verificationInfo.VerificationDoc);
@@ -97,21 +104,7 @@ public partial class CAContract
         State.VerifierDocMap[key] = true;
         var operationTypeStr = docInfo.OperationType;
         var operationTypeName = typeof(OperationType).GetEnumName(Convert.ToInt32(operationTypeStr))?.ToLower();
-        if (operationTypeName != methodName)
-        {
-            return false;
-        }
-
-        if (verifierDoc.Length == 6)
-        {
-            return true;
-        }
-        if (nameof(OperationType.Approve).ToLower() != methodName && nameof(OperationType.ModifyTransferLimit).ToLower() != methodName)
-        {
-            return true;
-        }
-
-        return CheckGuardiansMerkleTreeNode(caHash, guardianInfo);
+        return operationTypeName == methodName;
     }
 
 
@@ -159,32 +152,27 @@ public partial class CAContract
 
     private bool IsGuardianExist(Hash caHash, GuardianInfo guardianInfo)
     {
-        var satisfiedGuardians = State.HolderInfoMap[caHash].GuardianList.Guardians.FirstOrDefault(
-            g => g.IdentifierHash == guardianInfo.IdentifierHash && g.Type == guardianInfo.Type &&
-                 g.VerifierId == guardianInfo.VerificationInfo.Id
-        );
-        if (satisfiedGuardians != null)
+        var holderInfo = State.HolderInfoMap[caHash];
+        if (holderInfo.GuardianList != null && holderInfo.GuardianList.Guardians != null)
         {
-            return true;
+            var satisfiedGuardians = State.HolderInfoMap[caHash].GuardianList.Guardians.FirstOrDefault(
+                g => g.IdentifierHash == guardianInfo.IdentifierHash && g.Type == guardianInfo.Type &&
+                     g.VerifierId == guardianInfo.VerificationInfo.Id
+            );
+            return satisfiedGuardians != null;
         }
-
-        return CheckGuardiansMerkleTreeNode(caHash, guardianInfo);
+        return CheckGuardiansMerkleTreeNode(holderInfo, guardianInfo);
     }
 
-    private bool CheckGuardiansMerkleTreeNode(Hash caHash, GuardianInfo guardianInfo)
+    private bool CheckGuardiansMerkleTreeNode(HolderInfo holderInfo, GuardianInfo guardianInfo)
     {
-        if (caHash == null)
-        {
-            return false;
-        }
-
         var doc = guardianInfo.VerificationInfo.VerificationDoc.Split(",");
         if (doc.Length != 7)
         {
             return false;
         }
 
-        var treeRoot = State.HolderInfoMap[caHash].GuardiansMerkleTreeRoot;
+        var treeRoot = holderInfo.GuardiansMerkleTreeRoot;
         if (String.IsNullOrWhiteSpace(treeRoot))
         {
             return false;
