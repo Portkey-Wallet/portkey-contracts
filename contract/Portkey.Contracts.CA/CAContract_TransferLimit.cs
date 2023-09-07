@@ -11,10 +11,10 @@ public partial class CAContract
     public override Empty SetTransferLimit(SetTransferLimitInput input)
     {
         Assert(input != null, "invalid input");
-        Assert(!string.IsNullOrEmpty(input.Symbol) && input.Symbol.All(IsValidSymbolChar), "Invalid symbol.");
+        Assert(!string.IsNullOrEmpty(input.Symbol), "Invalid symbol.");
         Assert(State.HolderInfoMap[input.CaHash] != null, $"CA holder is null.CA hash:{input.CaHash}");
         Assert(State.HolderInfoMap[input.CaHash].ManagerInfos.Any(m => m.Address == Context.Sender), "No permission.");
-        TransferGuardianApprovedCheck(input.CaHash, input.GuardiansApproved,
+        TransferGuardianApprovedCheck(input.CaHash, input.GuardiansApproved, OperationType.ModifyTransferLimit,
             nameof(OperationType.ModifyTransferLimit).ToLower());
         if (input.SingleLimit <= 0 || input.DailyLimit <= 0)
             Assert(input.SingleLimit == -1 && input.DailyLimit == -1, "Invalid transfer limit");
@@ -42,7 +42,7 @@ public partial class CAContract
     public override GetTransferLimitOutput GetTransferLimit(GetTransferLimitInput input)
     {
         Assert(IsValidHash(input!.CaHash), "invalid input caHash.");
-        Assert(!string.IsNullOrEmpty(input.Symbol) && input.Symbol.All(IsValidSymbolChar), "Invalid symbol.");
+        Assert(!string.IsNullOrEmpty(input.Symbol), "Invalid symbol.");
 
         // When the user does not set transferLimit, use the default value of symbol
         var transferLimit = GetAccountTransferLimit(input.CaHash, input.Symbol);
@@ -85,7 +85,7 @@ public partial class CAContract
     }
 
     private void TransferGuardianApprovedCheck(Hash caHash, RepeatedField<GuardianInfo> guardiansApproved,
-        string methodName)
+        OperationType operationType, string methodName)
     {
         Assert(IsValidHash(caHash), "invalid input CaHash");
         Assert(guardiansApproved.Count > 0, "invalid input Guardians Approved");
@@ -102,8 +102,7 @@ public partial class CAContract
             guardianApprovedAmount++;
         }
 
-        var holderJudgementStrategy =
-            State.OperationStrategy[caHash][OperationType.Approve] ?? holderInfo.JudgementStrategy;
+        var holderJudgementStrategy = State.OperationStrategy[caHash][operationType] ?? holderInfo.JudgementStrategy;
         Assert(IsJudgementStrategySatisfied(guardians.Count, guardianApprovedAmount, holderJudgementStrategy),
             "JudgementStrategy validate failed");
     }
