@@ -360,6 +360,7 @@ public partial class CAContract
     {
         if (!State.ManagerApproveForbiddenEnabled.Value) return;
         Assert(method != nameof(State.TokenContract.Approve), "No permission.");
+        if (State.ForbiddenForwardCallContractMethod[address] == null) return;
         Assert(!State.ForbiddenForwardCallContractMethod[address][method.ToLower()],
             $"Does not have permission for {method}.");
     }
