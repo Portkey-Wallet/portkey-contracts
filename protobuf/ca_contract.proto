@@ -372,6 +372,7 @@ message GetHolderInfoOutput{
   aelf.Address ca_address = 2;
   GuardianList guardian_list = 3;
   repeated ManagerInfo manager_infos = 4;
+  string guardians_merkle_tree_root = 5;
 }
 
 message SocialRecoveryInput {
@@ -485,6 +486,7 @@ message GuardianAdded{
   aelf.Hash ca_hash = 1[(aelf.is_indexed) = true];
   aelf.Address ca_address = 2;
   Guardian guardian_added = 3;
+  string guardians_merkle_tree_root = 4;
 }
 
 //Guardian removed
@@ -493,6 +495,7 @@ message GuardianRemoved{
   aelf.Hash ca_hash = 1[(aelf.is_indexed) = true];
   aelf.Address ca_address = 2;
   Guardian guardian_removed = 3;
+  string guardians_merkle_tree_root = 4;
 }
 
 //Guardian updated
@@ -502,6 +505,7 @@ message GuardianUpdated{
   aelf.Address ca_address = 2;
   Guardian guardian_updated_pre = 3;
   Guardian guardian_updated_new = 4;
+  string guardians_merkle_tree_root = 5;
 }
 
 // LoginGuardian added

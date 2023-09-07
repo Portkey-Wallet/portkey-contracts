@@ -76,7 +76,8 @@ public partial class CAContract
         {
             CaHash = input.CaHash,
             CaAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash),
-            GuardianAdded_ = guardianAdded
+            GuardianAdded_ = guardianAdded,
+            GuardiansMerkleTreeRoot = holderInfo.GuardiansMerkleTreeRoot
         });
         return new Empty();
     }
@@ -154,7 +155,8 @@ public partial class CAContract
         {
             CaHash = input.CaHash,
             CaAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash),
-            GuardianRemoved_ = toRemoveGuardian
+            GuardianRemoved_ = toRemoveGuardian,
+            GuardiansMerkleTreeRoot = holderInfo.GuardiansMerkleTreeRoot
         });
 
         return new Empty();
@@ -239,6 +241,7 @@ public partial class CAContract
             State.LoginGuardianMap[preGuardian.IdentifierHash].Remove(preGuardian.VerifierId);
             State.LoginGuardianMap[existPreGuardian.IdentifierHash][existPreGuardian.VerifierId] = input.CaHash;
         }
+
         FillGuardiansMerkleTreeRoot(State.HolderInfoMap[input.CaHash]);
 
         Context.Fire(new GuardianUpdated
@@ -246,7 +249,8 @@ public partial class CAContract
             CaHash = input.CaHash,
             CaAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash),
             GuardianUpdatedPre = preGuardian,
-            GuardianUpdatedNew = existPreGuardian
+            GuardianUpdatedNew = existPreGuardian,
+            GuardiansMerkleTreeRoot = holderInfo.GuardiansMerkleTreeRoot
         });
 
         return new Empty();
