@@ -18,11 +18,18 @@ public partial class CAContract
         Assert(input.ManagerInfos != null, "input.ManagerInfos is null");
 
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
+
         if (string.IsNullOrWhiteSpace(holderInfo.GuardiansMerkleTreeRoot))
         {
             FillGuardiansMerkleTreeRoot(holderInfo);
         }
-        Assert(holderInfo.GuardiansMerkleTreeRoot == input.GuardiansMerkleTreeRoot, "Invalid GuardiansMerkleTreeRoot");
+
+        if (!String.IsNullOrWhiteSpace(input.GuardiansMerkleTreeRoot))
+        {
+            Assert(holderInfo.GuardiansMerkleTreeRoot == input.GuardiansMerkleTreeRoot,
+                "Invalid GuardiansMerkleTreeRoot");
+        }
+        
         ValidateLoginGuardian(input.CaHash, holderInfo, input.LoginGuardians);
 
         ValidateManager(holderInfo, input.ManagerInfos);
