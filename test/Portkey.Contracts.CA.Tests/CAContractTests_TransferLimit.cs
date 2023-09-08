@@ -54,6 +54,46 @@ public partial class CAContractTests
     }
 
     [Fact]
+    public async Task SetTransferLimit_Test()
+    {
+        await InitTransferLimitTest();
+
+        var setLimitVerifyTime = DateTime.UtcNow;
+        var salt = Guid.NewGuid().ToString("N");
+        var setLimitOpType = Convert.ToInt32(OperationType.ModifyTransferLimit).ToString();
+        var holderInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput
+        {
+            CaHash = _transferLimitTestCaHash
+        });
+        var setLimitSign = GenerateSignature(VerifierKeyPair, VerifierAddress, setLimitVerifyTime, _guardian, 0, salt,
+            setLimitOpType, holderInfo.GuardiansMerkleTreeRoot);
+
+
+        await CaContractStubManagerInfo1.SetTransferLimit.SendAsync(new SetTransferLimitInput
+        {
+            CaHash = _transferLimitTestCaHash,
+            GuardiansApproved =
+            {
+                new GuardianInfo
+                {
+                    IdentifierHash = _guardian,
+                    Type = GuardianType.OfEmail,
+                    VerificationInfo = new VerificationInfo
+                    {
+                        Id = _verifierServers[0].Id,
+                        Signature = setLimitSign,
+                        VerificationDoc =
+                            $"{0},{_guardian.ToHex()},{setLimitVerifyTime},{VerifierAddress.ToBase58()},{salt},{setLimitOpType},{holderInfo.GuardiansMerkleTreeRoot}"
+                    }
+                }
+            },
+            Symbol = "ELF",
+            SingleLimit = _elfDefaultSingleLimit,
+            DailyLimit = _elfDefaultDailyLimit
+        });
+    }
+
+    [Fact]
     public async Task SetAnotherTokenTransferLimitTest()
     {
         await InitTransferLimitTest();
@@ -262,6 +302,31 @@ public partial class CAContractTests
         _verifierId = _verifierServers[0].Id;
         _verifierId1 = _verifierServers[1].Id;
         _verifierId2 = _verifierServers[2].Id;
+
+        await CaContractStub.AddVerifierIdMapper.SendAsync(new AddVerifierIdMapperInput()
+        {
+            Mappers =
+            {
+                new VerifierIdMapperInfo[]
+                {
+                    new()
+                    {
+                        FromId = _verifierServers[0].Id,
+                        ToId = _verifierServers[0].Id
+                    },
+                    new()
+                    {
+                        FromId = _verifierServers[1].Id,
+                        ToId = _verifierServers[1].Id
+                    },
+                    new()
+                    {
+                        FromId = _verifierServers[2].Id,
+                        ToId = _verifierServers[2].Id
+                    }
+                }
+            }
+        });
     }
 
     private async Task InitTestTransferLimitCaHolder()

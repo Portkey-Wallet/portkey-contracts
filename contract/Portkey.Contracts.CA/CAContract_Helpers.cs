@@ -85,6 +85,7 @@ public partial class CAContract
         {
             return false;
         }
+
         var verifierServer =
             State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(v => v.Id == verifierId);
 
@@ -175,8 +176,8 @@ public partial class CAContract
         }
 
         var treeRoot = holderInfo.GuardiansMerkleTreeRoot;
-        Assert(!String.IsNullOrWhiteSpace(treeRoot), "HolderInfo guardiansMerkleTreeRoot is null");
-        if (String.IsNullOrWhiteSpace(treeRoot))
+        Assert(!string.IsNullOrWhiteSpace(treeRoot), "HolderInfo guardiansMerkleTreeRoot is null");
+        if (string.IsNullOrWhiteSpace(treeRoot))
         {
             return false;
         }
@@ -198,12 +199,6 @@ public partial class CAContract
     private bool IsValidHash(Hash hash)
     {
         return hash != null && !hash.Value.IsEmpty;
-    }
-
-    private void ValidateOperationType(OperationType type)
-    {
-        Assert(!string.IsNullOrWhiteSpace(typeof(OperationType).GetEnumName(Convert.ToInt32(type))),
-            $"The OperationType: {type} does not exist");
     }
 
     private class VerificationDocInfo
@@ -259,7 +254,7 @@ public partial class CAContract
     {
         return currentBlockTime.ToDateTime().ToString("yyyy-MM-dd");
     }
-    
+
     private TokenInfo GetTokenInfo(string symbol)
     {
         return State.TokenContract.GetTokenInfo.Call(new GetTokenInfoInput

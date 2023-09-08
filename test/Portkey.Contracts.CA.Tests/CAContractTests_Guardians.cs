@@ -42,15 +42,17 @@ public partial class CAContractTests
     }
 
     private ByteString GenerateSignature(ECKeyPair verifier, Address verifierAddress,
-        DateTime verificationTime, Hash guardianType, int type, string salt, string operationType)
+        DateTime verificationTime, Hash guardianType, int type, string salt, string operationType,
+        string merkleTree = "")
     {
         if (string.IsNullOrWhiteSpace(salt))
         {
             salt = Salt;
         }
 
-        var data =
-            $"{type},{guardianType.ToHex()},{verificationTime},{verifierAddress.ToBase58()},{salt},{operationType}";
+        var data = !string.IsNullOrWhiteSpace(merkleTree)
+            ? $"{type},{guardianType.ToHex()},{verificationTime},{verifierAddress.ToBase58()},{salt},{operationType},{merkleTree}"
+            : $"{type},{guardianType.ToHex()},{verificationTime},{verifierAddress.ToBase58()},{salt},{operationType}";
         var dataHash = HashHelper.ComputeFrom(data);
         var signature = CryptoHelper.SignWithPrivateKey(verifier.PrivateKey, dataHash.ToByteArray());
         return ByteStringHelper.FromHexString(signature.ToHex());
@@ -2690,8 +2692,8 @@ public partial class CAContractTests
         }
         return caHash;
     }
-    
-    
+
+
     [Fact]
     public async Task<Hash> AddGuardian_Test_Invalidate_VerifierDocLength()
     {
@@ -2749,7 +2751,7 @@ public partial class CAContractTests
         }
         return caHash;
     }
-    
+
     [Fact]
     public async Task<Hash> AddGuardian_Test_Invalidate_OperationType()
     {
@@ -2757,10 +2759,11 @@ public partial class CAContractTests
         var caHash = await CreateHolder();
         var salt = Guid.NewGuid().ToString("N");
         var operationType = Convert.ToInt32(OperationType.Unknown).ToString();
-        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0, salt,operationType);
+        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0, salt,
+            operationType);
         var signature1 =
             GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime.AddSeconds(5), _guardian1, 0,
-                salt,operationType);
+                salt, operationType);
         var verificationDoc =
             $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType}";
         var guardianApprove = new List<GuardianInfo>
@@ -2807,8 +2810,8 @@ public partial class CAContractTests
         }
         return caHash;
     }
-    
-    
+
+
     [Fact]
     public async Task<Hash> AddGuardian_Test_VerifierDoc_IsNull()
     {
@@ -2865,5 +2868,4 @@ public partial class CAContractTests
         }
         return caHash;
     }
-    
 }
