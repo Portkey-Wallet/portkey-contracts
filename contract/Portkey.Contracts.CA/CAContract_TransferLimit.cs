@@ -91,8 +91,8 @@ public partial class CAContract
     {
         Assert(IsValidHash(caHash), "invalid input CaHash");
         Assert(guardiansApproved.Count > 0, "invalid input Guardians Approved");
-        var holderInfo = GetHolderInfoByCaHash(caHash);
-        var guardians = holderInfo.GuardianList!.Guardians;
+        var holderInfo = State.HolderInfoMap[caHash];
+        Assert(State.HolderInfoMap[caHash] != null, $"CA holder is null.CA hash:{caHash}");
         var guardianApprovedAmount = 0;
         var guardianApprovedList = guardiansApproved
             .DistinctBy(g => $"{g.Type}{g.IdentifierHash}{g.VerificationInfo.Id}").ToList();
@@ -105,7 +105,9 @@ public partial class CAContract
         }
 
         var holderJudgementStrategy = State.OperationStrategy[caHash][operationType] ?? holderInfo.JudgementStrategy;
-        Assert(IsJudgementStrategySatisfied(guardians.Count, guardianApprovedAmount, holderJudgementStrategy),
+        Assert(IsJudgementStrategySatisfied(holderInfo.GuardianList != null
+                ? holderInfo.GuardianList!.Guardians.Count
+                : 0, guardianApprovedAmount, holderJudgementStrategy),
             "JudgementStrategy validate failed");
     }
 

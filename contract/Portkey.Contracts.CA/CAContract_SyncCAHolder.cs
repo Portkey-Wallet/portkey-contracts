@@ -24,7 +24,7 @@ public partial class CAContract
             FillGuardiansMerkleTreeRoot(holderInfo);
         }
 
-        if (!String.IsNullOrWhiteSpace(input.GuardiansMerkleTreeRoot))
+        if (!string.IsNullOrWhiteSpace(input.GuardiansMerkleTreeRoot))
         {
             Assert(holderInfo.GuardiansMerkleTreeRoot == input.GuardiansMerkleTreeRoot,
                 "Invalid GuardiansMerkleTreeRoot");
