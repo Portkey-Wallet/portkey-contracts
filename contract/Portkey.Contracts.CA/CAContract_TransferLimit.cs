@@ -12,10 +12,9 @@ public partial class CAContract
     {
         Assert(input != null, "invalid input");
         Assert(!string.IsNullOrEmpty(input.Symbol), "Invalid symbol.");
-        Assert(State.HolderInfoMap[input.CaHash] != null, $"CA holder is null.CA hash:{input.CaHash}");
-        Assert(State.HolderInfoMap[input.CaHash].ManagerInfos.Any(m => m.Address == Context.Sender), "No permission.");
-        TransferGuardianApprovedCheck(input.CaHash, input.GuardiansApproved, OperationType.ModifyTransferLimit,
+        GuardianApprovedCheck(input.CaHash, input.GuardiansApproved, OperationType.ModifyTransferLimit,
             nameof(OperationType.ModifyTransferLimit).ToLower());
+        CheckManagerInfoPermission(input.CaHash, Context.Sender);
         if (input.SingleLimit <= 0 || input.DailyLimit <= 0)
             Assert(input.SingleLimit == -1 && input.DailyLimit == -1, "Invalid transfer limit");
         Assert(GetTokenInfo(input.Symbol) != null && GetTokenInfo(input.Symbol).Symbol == input.Symbol,
@@ -86,7 +85,7 @@ public partial class CAContract
         };
     }
 
-    private void TransferGuardianApprovedCheck(Hash caHash, RepeatedField<GuardianInfo> guardiansApproved,
+    private void GuardianApprovedCheck(Hash caHash, RepeatedField<GuardianInfo> guardiansApproved,
         OperationType operationType, string methodName)
     {
         Assert(IsValidHash(caHash), "invalid input CaHash");
