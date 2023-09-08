@@ -1643,6 +1643,46 @@ public partial class CAContractTests
     }
 
     [Fact]
+    public async Task ManagerApproveWithGuardiansMerkleTreeRootTest()
+    {
+        await InitTransferLimitTest();
+
+        var approveVerifyTime = DateTime.UtcNow;
+        var salt = Guid.NewGuid().ToString("N");
+        var approveOpType = Convert.ToInt32(OperationType.Approve).ToString();
+        var approveSign = GenerateSignature(VerifierKeyPair, VerifierAddress, approveVerifyTime, _guardian, 0, salt,
+            approveOpType);
+
+        var output = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput
+        {
+            CaHash = _transferLimitTestCaHash,
+        });
+
+        await CaContractStubManagerInfo1.ManagerApprove.SendAsync(new ManagerApproveInput
+        {
+            CaHash = _transferLimitTestCaHash,
+            Spender = User2Address,
+            GuardiansApproved =
+            {
+                new GuardianInfo
+                {
+                    IdentifierHash = _guardian,
+                    Type = GuardianType.OfEmail,
+                    VerificationInfo = new VerificationInfo
+                    {
+                        Id = _verifierServers[0].Id,
+                        Signature = approveSign,
+                        VerificationDoc =
+                            $"{0},{_guardian.ToHex()},{approveVerifyTime},{VerifierAddress.ToBase58()},{salt},{approveOpType},{output.GuardiansMerkleTreeRoot}"
+                    }
+                }
+            },
+            Symbol = "ELF",
+            Amount = 10000
+        });
+    }
+
+    [Fact]
     public async Task ManagerApprove_ErrorOperationTypeTest()
     {
         await InitTransferLimitTest();
@@ -1675,6 +1715,42 @@ public partial class CAContractTests
                 Symbol = "ELF",
                 Amount = 10000
             });
+        executionResult.TransactionResult.Error.ShouldContain("JudgementStrategy validate failed");
+    }
+
+    [Fact]
+    public async Task ManagerApprove_WithErrorGuardiansMerkleTreeRootTest()
+    {
+        await InitTransferLimitTest();
+
+        var approveVerifyTime = DateTime.UtcNow;
+        var salt = Guid.NewGuid().ToString("N");
+        var approveOpType = Convert.ToInt32(OperationType.Approve).ToString();
+        var approveSign = GenerateSignature(VerifierKeyPair, VerifierAddress, approveVerifyTime, _guardian, 0, salt,
+            approveOpType);
+
+        var executionResult = await CaContractStubManagerInfo1.ManagerApprove.SendWithExceptionAsync(new ManagerApproveInput
+        {
+            CaHash = _transferLimitTestCaHash,
+            Spender = User2Address,
+            GuardiansApproved =
+            {
+                new GuardianInfo
+                {
+                    IdentifierHash = _guardian,
+                    Type = GuardianType.OfEmail,
+                    VerificationInfo = new VerificationInfo
+                    {
+                        Id = _verifierServers[0].Id,
+                        Signature = approveSign,
+                        VerificationDoc =
+                            $"{0},{_guardian.ToHex()},{approveVerifyTime},{VerifierAddress.ToBase58()},{salt},{approveOpType},{""}"
+                    }
+                }
+            },
+            Symbol = "ELF",
+            Amount = 10000
+        });
         executionResult.TransactionResult.Error.ShouldContain("JudgementStrategy validate failed");
     }
 

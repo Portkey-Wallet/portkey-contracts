@@ -18,7 +18,7 @@ public partial class CAContract
         Assert(input.ManagerInfos != null, "input.ManagerInfos is null");
 
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
-        if (String.IsNullOrWhiteSpace(holderInfo.GuardiansMerkleTreeRoot))
+        if (string.IsNullOrWhiteSpace(holderInfo.GuardiansMerkleTreeRoot))
         {
             FillGuardiansMerkleTreeRoot(holderInfo);
         }
