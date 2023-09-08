@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using AElf.Sdk.CSharp;
 using AElf.Standards.ACS7;
@@ -17,6 +18,10 @@ public partial class CAContract
         Assert(input.ManagerInfos != null, "input.ManagerInfos is null");
 
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
+        if (String.IsNullOrWhiteSpace(holderInfo.GuardiansMerkleTreeRoot))
+        {
+            FillGuardiansMerkleTreeRoot(holderInfo);
+        }
         Assert(holderInfo.GuardiansMerkleTreeRoot == input.GuardiansMerkleTreeRoot, "Invalid GuardiansMerkleTreeRoot");
         ValidateLoginGuardian(input.CaHash, holderInfo, input.LoginGuardians);
 
