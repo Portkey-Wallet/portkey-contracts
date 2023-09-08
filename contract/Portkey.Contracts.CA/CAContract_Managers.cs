@@ -313,30 +313,13 @@ public partial class CAContract
         return new Empty();
     }
 
-    public override Empty ManagerUnApprove(ManagerUnApproveInput input)
-    {
-        Assert(input != null, "invalid input");
-        TransferGuardianApprovedCheck(input.CaHash, input.GuardiansApproved, OperationType.Approve,
-            nameof(OperationType.Approve).ToLower());
-        Context.SendVirtualInline(input.CaHash, State.TokenContract.Value,
-            nameof(State.TokenContract.UnApprove),
-            new UnApproveInput
-            {
-                Spender = input.Spender,
-                // The token contract will unapprove the maximum value which lower than Int64.MaxValue
-                Amount = Int64.MaxValue,
-                Symbol = input.Symbol,
-            }.ToByteString());
-        return new Empty();
-    }
-
     public override Empty SetForbiddenForwardCallContractMethod(SetForbiddenForwardCallContractMethodInput input)
     {
         Assert(input != null && input.Address != null, "Invalid input");
         Assert(Context.Sender == State.Admin.Value, "No permission.");
         Assert(!string.IsNullOrWhiteSpace(input.MethodName), "MethodName cannot be empty");
         State.ForbiddenForwardCallContractMethod[input.Address][input.MethodName.ToLower()] = input.Forbidden;
-        Context.Fire(new ForbiddenForwardCallContractMethodChanged()
+        Context.Fire(new ForbiddenForwardCallContractMethodChanged
         {
             MethodName = input.MethodName,
             Address = input.Address,

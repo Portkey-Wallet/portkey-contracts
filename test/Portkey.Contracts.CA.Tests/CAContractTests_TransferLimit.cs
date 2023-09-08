@@ -81,7 +81,7 @@ public partial class CAContractTests
                     }
                 }
             },
-            Symbol = "USDC",
+            Symbol = "CPU",
             SingleLimit = _elfDefaultSingleLimit,
             DailyLimit = _elfDefaultDailyLimit
         });
@@ -89,7 +89,7 @@ public partial class CAContractTests
         var transferLimitResult = await CaContractStub.GetTransferLimit.CallAsync(new GetTransferLimitInput()
         {
             CaHash = _transferLimitTestCaHash,
-            Symbol = "USDC",
+            Symbol = "CPU",
         });
 
         transferLimitResult.SingleLimit.ShouldBe(_elfDefaultSingleLimit);
