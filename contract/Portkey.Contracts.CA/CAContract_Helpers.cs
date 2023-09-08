@@ -45,7 +45,7 @@ public partial class CAContract
 
         var verifierDoc = verificationDoc.Split(",");
 
-        if (verifierDoc.Length != 6 && verificationDoc.Length != 7)
+        if (verifierDoc.Length != 6 && verifierDoc.Length != 7)
         {
             return false;
         }
