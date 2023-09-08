@@ -80,6 +80,7 @@ public partial class CAContract
         var needMapperVerifierId = verifierDoc.Length == 7 && (nameof(OperationType.Approve).ToLower() == methodName ||
                                     nameof(OperationType.ModifyTransferLimit).ToLower() == methodName);
         var verifierId = needMapperVerifierId ? State.VerifierIdMap[verificationInfo.Id] : verificationInfo.Id;
+        Assert(verifierId != null, "verifierId not existed");
         if (verifierId == null)
         {
             return false;
@@ -167,12 +168,14 @@ public partial class CAContract
     private bool CheckGuardiansMerkleTreeNode(HolderInfo holderInfo, GuardianInfo guardianInfo)
     {
         var doc = guardianInfo.VerificationInfo.VerificationDoc.Split(",");
+        Assert(doc.Length == 7, "invalid doc length");
         if (doc.Length != 7)
         {
             return false;
         }
 
         var treeRoot = holderInfo.GuardiansMerkleTreeRoot;
+        Assert(!String.IsNullOrWhiteSpace(treeRoot), "HolderInfo guardiansMerkleTreeRoot is null");
         if (String.IsNullOrWhiteSpace(treeRoot))
         {
             return false;
@@ -188,6 +191,7 @@ public partial class CAContract
         var guardianHashString = HashHelper.ComputeFrom(merkleTreeNode).ToHex();
         var hash = Hash.LoadFromByteArray(ByteArrayHelper.HexStringToByteArray(guardianHashString));
         var root = merklePath.ComputeRootWithLeafNode(hash);
+        Assert(root.ToHex() == treeRoot, "Check guardiansMerkleTreeRoot fail");
         return root.ToHex() == treeRoot;
     }
 
