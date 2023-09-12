@@ -19,17 +19,6 @@ public partial class CAContract
 
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
 
-        if (string.IsNullOrWhiteSpace(holderInfo.GuardiansMerkleTreeRoot))
-        {
-            FillGuardiansMerkleTreeRoot(holderInfo);
-        }
-
-        if (!string.IsNullOrWhiteSpace(input.GuardiansMerkleTreeRoot))
-        {
-            Assert(holderInfo.GuardiansMerkleTreeRoot == input.GuardiansMerkleTreeRoot,
-                "Invalid GuardiansMerkleTreeRoot");
-        }
-        
         ValidateLoginGuardian(input.CaHash, holderInfo, input.LoginGuardians);
 
         ValidateManager(holderInfo, input.ManagerInfos);
@@ -113,11 +102,6 @@ public partial class CAContract
         var loginGuardiansAdded = SyncLoginGuardianAdded(transactionInput.CaHash, transactionInput.LoginGuardians);
         var loginGuardiansUnbound =
             SyncLoginGuardianUnbound(transactionInput.CaHash, transactionInput.NotLoginGuardians);
-
-        if (!string.IsNullOrWhiteSpace(transactionInput.GuardiansMerkleTreeRoot))
-        {
-            holderInfo.GuardiansMerkleTreeRoot = transactionInput.GuardiansMerkleTreeRoot;
-        }
 
         State.HolderInfoMap[holderId] = holderInfo;
 

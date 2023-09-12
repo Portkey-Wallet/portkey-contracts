@@ -28,7 +28,6 @@ public partial class CAContract
         {
             5 => CheckVerifierSignatureAndData(guardianInfo),
             6 => CheckVerifierSignatureAndData(guardianInfo, methodName),
-            7 => CheckVerifierSignatureAndData(guardianInfo, methodName),
             _ => false
         };
     }
@@ -45,7 +44,7 @@ public partial class CAContract
 
         var verifierDoc = verificationDoc.Split(",");
 
-        if (verifierDoc.Length != 6 && verifierDoc.Length != 7)
+        if (verifierDoc.Length != 6)
         {
             return false;
         }
@@ -77,17 +76,8 @@ public partial class CAContract
         //Check verifier address and data.
         var verifierAddress = docInfo.VerifierAddress;
         var verificationInfo = guardianInfo.VerificationInfo;
-        var needMapperVerifierId = verifierDoc.Length == 7 && (nameof(OperationType.Approve).ToLower() == methodName ||
-                                    nameof(OperationType.ModifyTransferLimit).ToLower() == methodName);
-        var verifierId = needMapperVerifierId ? State.VerifierIdMap[verificationInfo.Id] : verificationInfo.Id;
-        Assert(verifierId != null, "verifierId not existed");
-        if (verifierId == null)
-        {
-            return false;
-        }
-
-        var verifierServer =
-            State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(v => v.Id == verifierId);
+        var verifierServer = 
+            State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(v => v.Id == verificationInfo.Id);
 
         //Recovery verifier address.
         var data = HashHelper.ComputeFrom(verificationInfo.VerificationDoc);
@@ -154,51 +144,22 @@ public partial class CAContract
 
     private bool IsGuardianExist(Hash caHash, GuardianInfo guardianInfo)
     {
-        var holderInfo = State.HolderInfoMap[caHash];
-        if (holderInfo.GuardianList != null && holderInfo.GuardianList.Guardians != null)
-        {
-            var satisfiedGuardians = State.HolderInfoMap[caHash].GuardianList.Guardians.FirstOrDefault(
-                g => g.IdentifierHash == guardianInfo.IdentifierHash && g.Type == guardianInfo.Type &&
-                     g.VerifierId == guardianInfo.VerificationInfo.Id
-            );
-            return satisfiedGuardians != null;
-        }
-        return CheckGuardiansMerkleTreeNode(holderInfo, guardianInfo);
-    }
-
-    private bool CheckGuardiansMerkleTreeNode(HolderInfo holderInfo, GuardianInfo guardianInfo)
-    {
-        var doc = guardianInfo.VerificationInfo.VerificationDoc.Split(",");
-        Assert(doc.Length == 7, "invalid doc length");
-        if (doc.Length != 7)
-        {
-            return false;
-        }
-
-        var treeRoot = holderInfo.GuardiansMerkleTreeRoot;
-        Assert(!string.IsNullOrWhiteSpace(treeRoot), "HolderInfo guardiansMerkleTreeRoot is null");
-        if (string.IsNullOrWhiteSpace(treeRoot))
-        {
-            return false;
-        }
-
-        var merklePath = MerklePath.Parser.ParseFrom(ByteStringHelper.FromHexString(doc[6]));
-        var merkleTreeNode = new GuardianMerkleTreeNode
-        {
-            Type = guardianInfo.Type,
-            IdentifierHash = guardianInfo.IdentifierHash,
-            VerifierId = guardianInfo.VerificationInfo.Id
-        };
-        var guardianHashString = HashHelper.ComputeFrom(merkleTreeNode).ToHex();
-        var hash = Hash.LoadFromByteArray(ByteArrayHelper.HexStringToByteArray(guardianHashString));
-        var root = merklePath.ComputeRootWithLeafNode(hash);
-        Assert(root.ToHex() == treeRoot, "Check guardiansMerkleTreeRoot fail");
-        return root.ToHex() == treeRoot;
+        var satisfiedGuardians = State.HolderInfoMap[caHash].GuardianList.Guardians.FirstOrDefault(
+            g => g.IdentifierHash == guardianInfo.IdentifierHash && g.Type == guardianInfo.Type &&
+                 g.VerifierId == guardianInfo.VerificationInfo.Id
+        );
+        return satisfiedGuardians != null;
     }
 
     private bool IsValidHash(Hash hash)
     {
         return hash != null && !hash.Value.IsEmpty;
+    }
+
+    private void ValidateOperationType(OperationType type)
+    {
+        Assert(!string.IsNullOrWhiteSpace(typeof(OperationType).GetEnumName(Convert.ToInt32(type))),
+            $"The OperationType: {type} does not exist");
     }
 
     private class VerificationDocInfo
@@ -254,7 +215,7 @@ public partial class CAContract
     {
         return currentBlockTime.ToDateTime().ToString("yyyy-MM-dd");
     }
-
+    
     private TokenInfo GetTokenInfo(string symbol)
     {
         return State.TokenContract.GetTokenInfo.Call(new GetTokenInfoInput

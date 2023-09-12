@@ -70,14 +70,12 @@ public partial class CAContract
             IsLoginGuardian = false
         };
         State.HolderInfoMap[input.CaHash].GuardianList?.Guardians.Add(guardianAdded);
-        FillGuardiansMerkleTreeRoot(State.HolderInfoMap[input.CaHash]);
 
         Context.Fire(new GuardianAdded
         {
             CaHash = input.CaHash,
             CaAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash),
             GuardianAdded_ = guardianAdded,
-            GuardiansMerkleTreeRoot = holderInfo.GuardiansMerkleTreeRoot
         });
         return new Empty();
     }
@@ -144,7 +142,6 @@ public partial class CAContract
         }
 
         State.HolderInfoMap[input.CaHash].GuardianList?.Guardians.Remove(toRemoveGuardian);
-        FillGuardiansMerkleTreeRoot(State.HolderInfoMap[input.CaHash]);
 
         if (State.LoginGuardianMap[toRemoveGuardian.IdentifierHash][toRemoveGuardian.VerifierId] != null)
         {
@@ -155,8 +152,7 @@ public partial class CAContract
         {
             CaHash = input.CaHash,
             CaAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash),
-            GuardianRemoved_ = toRemoveGuardian,
-            GuardiansMerkleTreeRoot = holderInfo.GuardiansMerkleTreeRoot
+            GuardianRemoved_ = toRemoveGuardian
         });
 
         return new Empty();
@@ -242,15 +238,13 @@ public partial class CAContract
             State.LoginGuardianMap[existPreGuardian.IdentifierHash][existPreGuardian.VerifierId] = input.CaHash;
         }
 
-        FillGuardiansMerkleTreeRoot(State.HolderInfoMap[input.CaHash]);
 
         Context.Fire(new GuardianUpdated
         {
             CaHash = input.CaHash,
             CaAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash),
             GuardianUpdatedPre = preGuardian,
-            GuardianUpdatedNew = existPreGuardian,
-            GuardiansMerkleTreeRoot = holderInfo.GuardiansMerkleTreeRoot
+            GuardianUpdatedNew = existPreGuardian
         });
 
         return new Empty();

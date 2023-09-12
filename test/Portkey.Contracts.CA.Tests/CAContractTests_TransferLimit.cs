@@ -66,7 +66,7 @@ public partial class CAContractTests
             CaHash = _transferLimitTestCaHash
         });
         var setLimitSign = GenerateSignature(VerifierKeyPair, VerifierAddress, setLimitVerifyTime, _guardian, 0, salt,
-            setLimitOpType, holderInfo.GuardiansMerkleTreeRoot);
+            setLimitOpType);
 
 
         await CaContractStubManagerInfo1.SetTransferLimit.SendAsync(new SetTransferLimitInput
@@ -83,7 +83,7 @@ public partial class CAContractTests
                         Id = _verifierServers[0].Id,
                         Signature = setLimitSign,
                         VerificationDoc =
-                            $"{0},{_guardian.ToHex()},{setLimitVerifyTime},{VerifierAddress.ToBase58()},{salt},{setLimitOpType},{holderInfo.GuardiansMerkleTreeRoot}"
+                            $"{0},{_guardian.ToHex()},{setLimitVerifyTime},{VerifierAddress.ToBase58()},{salt},{setLimitOpType}"
                     }
                 }
             },

@@ -137,7 +137,7 @@ message HolderInfo {
   repeated ManagerInfo manager_infos = 2;
   GuardianList guardian_list = 3;
   StrategyNode judgement_strategy = 4;
-  string guardians_merkle_tree_root = 5;
+  int32 create_chain_id = 5;
 }
 
 message ManagerInfo {
@@ -239,13 +239,6 @@ message GuardianInfo {
   aelf.Hash identifier_hash = 2;
   VerificationInfo verification_info = 3;
 }
-
-message GuardianMerkleTreeNode {
-  GuardianType type = 1;
-  aelf.Hash identifier_hash = 2;
-  aelf.Hash verifier_id = 3;
-}
-
 message VerificationInfo {
   aelf.Hash id = 1;
   bytes signature = 2;
@@ -370,7 +363,7 @@ message GetHolderInfoOutput{
   aelf.Address ca_address = 2;
   GuardianList guardian_list = 3;
   repeated ManagerInfo manager_infos = 4;
-  string guardians_merkle_tree_root = 5;
+  int32 create_chain_id = 5;
 }
 
 message SocialRecoveryInput {
@@ -442,7 +435,8 @@ message ValidateCAHolderInfoWithManagerInfosExistsInput {
   repeated ManagerInfo manager_infos = 2;
   repeated aelf.Hash login_guardians = 3;
   repeated aelf.Hash not_login_guardians = 4;
-  string guardians_merkle_tree_root = 5;
+  GuardianList guardian_list = 5;
+  int32 create_chain_id = 6;
 }
 
 message VerificationTransactionInfo {
@@ -484,7 +478,6 @@ message GuardianAdded{
   aelf.Hash ca_hash = 1[(aelf.is_indexed) = true];
   aelf.Address ca_address = 2;
   Guardian guardian_added = 3;
-  string guardians_merkle_tree_root = 4;
 }
 
 //Guardian removed
@@ -493,7 +486,6 @@ message GuardianRemoved{
   aelf.Hash ca_hash = 1[(aelf.is_indexed) = true];
   aelf.Address ca_address = 2;
   Guardian guardian_removed = 3;
-  string guardians_merkle_tree_root = 4;
 }
 
 //Guardian updated
@@ -503,7 +495,6 @@ message GuardianUpdated{
   aelf.Address ca_address = 2;
   Guardian guardian_updated_pre = 3;
   Guardian guardian_updated_new = 4;
-  string guardians_merkle_tree_root = 5;
 }
 
 // LoginGuardian added

@@ -23,8 +23,7 @@ public partial class CAContractTests
             {
                 CaHash = getHolderInfo.CaHash,
                 ManagerInfos = { getHolderInfo.ManagerInfos },
-                LoginGuardians = { getHolderInfo.GuardianList.Guardians.Select(g => g.IdentifierHash) },
-                GuardiansMerkleTreeRoot = getHolderInfo.GuardiansMerkleTreeRoot
+                LoginGuardians = { getHolderInfo.GuardianList.Guardians.Select(g => g.IdentifierHash) }
             });
     }
 
@@ -76,8 +75,7 @@ public partial class CAContractTests
         var param = new ValidateCAHolderInfoWithManagerInfosExistsInput
         {
             CaHash = getHolderInfo.CaHash,
-            LoginGuardians = { loginList },
-            GuardiansMerkleTreeRoot = getHolderInfo.GuardiansMerkleTreeRoot
+            LoginGuardians = { loginList }
         };
 
         var result = await CaContractStub.ValidateCAHolderInfoWithManagerInfosExists.SendWithExceptionAsync(param);
@@ -87,8 +85,7 @@ public partial class CAContractTests
         param = new ValidateCAHolderInfoWithManagerInfosExistsInput
         {
             CaHash = getHolderInfo.CaHash,
-            LoginGuardians = { Hash.Empty },
-            GuardiansMerkleTreeRoot = getHolderInfo.GuardiansMerkleTreeRoot
+            LoginGuardians = { Hash.Empty }
         };
         result = await CaContractStub.ValidateCAHolderInfoWithManagerInfosExists.SendWithExceptionAsync(param);
         result.TransactionResult.Error.ShouldContain(
@@ -119,8 +116,7 @@ public partial class CAContractTests
         {
             CaHash = getHolderInfo.CaHash,
             LoginGuardians = { getHolderInfo.GuardianList.Guardians.Select(g => g.IdentifierHash) },
-            ManagerInfos = { managerList },
-            GuardiansMerkleTreeRoot = getHolderInfo.GuardiansMerkleTreeRoot
+            ManagerInfos = { managerList }
         };
 
         var result = await CaContractStub.ValidateCAHolderInfoWithManagerInfosExists.SendWithExceptionAsync(param);
@@ -136,8 +132,7 @@ public partial class CAContractTests
         {
             CaHash = getHolderInfo.CaHash,
             LoginGuardians = { getHolderInfo.GuardianList.Guardians.Select(g => g.IdentifierHash) },
-            ManagerInfos = { managerList },
-            GuardiansMerkleTreeRoot = getHolderInfo.GuardiansMerkleTreeRoot
+            ManagerInfos = { managerList }
         };
 
         result = await CaContractStub.ValidateCAHolderInfoWithManagerInfosExists.SendWithExceptionAsync(param);

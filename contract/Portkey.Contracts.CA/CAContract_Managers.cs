@@ -65,7 +65,6 @@ public partial class CAContract
         SetDelegator(caHash, input.ManagerInfo);
 
         SetContractDelegator(input.ManagerInfo);
-        FillGuardiansMerkleTreeRoot(State.HolderInfoMap[caHash]);
         Context.Fire(new ManagerInfoSocialRecovered()
         {
             CaHash = caHash,
