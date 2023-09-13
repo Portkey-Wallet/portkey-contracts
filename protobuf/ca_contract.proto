@@ -604,6 +604,8 @@ message CAHolderSynced {
   ManagerInfoList manager_infos_removed = 5 [(aelf.is_indexed) = true];
   LoginGuardianList login_guardians_added = 6 [(aelf.is_indexed) = true];
   LoginGuardianList login_guardians_unbound = 7 [(aelf.is_indexed) = true];
+  GuardianList guardians_added = 8 [(aelf.is_indexed) = true];
+  GuardianList guardians_removed = 9 [(aelf.is_indexed) = true];
 }
 
 message CreatorControllerAdded {

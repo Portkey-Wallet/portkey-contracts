@@ -23,6 +23,14 @@ public partial class CAContract
         output.CaAddress = Context.ConvertVirtualAddressToContractAddress(output.CaHash);
         output.GuardianList = holderInfo.GuardianList ?? new GuardianList();
         output.CreateChainId = holderInfo.CreateChainId;
+        foreach (var guardian in output.GuardianList.Guardians)
+        {
+            var verifierMapperId = State.VerifierIdMap[guardian.VerifierId];
+            if (IsValidHash(verifierMapperId))
+            {
+                guardian.VerifierId = verifierMapperId;
+            }
+        }
 
         return output;
     }

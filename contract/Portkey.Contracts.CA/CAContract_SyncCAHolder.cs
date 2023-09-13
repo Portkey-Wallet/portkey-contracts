@@ -121,6 +121,18 @@ public partial class CAContract
         var loginGuardiansUnbound =
             SyncLoginGuardianUnbound(transactionInput.CaHash, transactionInput.NotLoginGuardians);
 
+        var guardiansAdded = GuardiansExcept(transactionInput.GuardianList.Guardians, holderInfo.GuardianList.Guardians);
+        var guardiansRemoved = GuardiansExcept(holderInfo.GuardianList.Guardians, transactionInput.GuardianList.Guardians);
+        foreach (var guardian in guardiansAdded)
+        {
+            holderInfo.GuardianList.Guardians.Add(guardian);
+        }
+
+        foreach (var guardian in guardiansRemoved)
+        {
+            holderInfo.GuardianList.Guardians.Remove(guardian);
+        }
+
         State.HolderInfoMap[holderId] = holderInfo;
 
         Context.Fire(new CAHolderSynced
@@ -143,6 +155,14 @@ public partial class CAContract
             LoginGuardiansUnbound = new LoginGuardianList
             {
                 LoginGuardians = { loginGuardiansUnbound }
+            },
+            GuardiansAdded = new GuardianList
+            {
+                Guardians = { guardiansAdded }
+            },
+            GuardiansRemoved = new GuardianList
+            {
+                Guardians = { guardiansRemoved }
             }
         });
 
@@ -218,6 +238,32 @@ public partial class CAContract
             if (!theSame)
             {
                 resultSet.Add(managerInfo1);
+            }
+        }
+
+        return resultSet;
+    }
+    
+    private RepeatedField<Guardian> GuardiansExcept(RepeatedField<Guardian> set1,
+        RepeatedField<Guardian> set2)
+    {
+        RepeatedField<Guardian> resultSet = new RepeatedField<Guardian>();
+
+        foreach (var guardian1 in set1)
+        {
+            bool theSame = false;
+            foreach (var guardian2 in set2)
+            {
+                if (guardian1.VerifierId == guardian2.VerifierId && guardian1.IdentifierHash == guardian2.IdentifierHash)
+                {
+                    theSame = true;
+                    break;
+                }
+            }
+
+            if (!theSame)
+            {
+                resultSet.Add(guardian1);
             }
         }
 
