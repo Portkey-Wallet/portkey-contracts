@@ -47,19 +47,6 @@ public partial class CAContract
         return new Empty();
     }
 
-    public override Empty AddVerifierIdMapper(AddVerifierIdMapperInput input)
-    {
-        Assert(State.Admin.Value == Context.Sender, "No permission");
-        Assert(input.Mappers.Count > 0, "Invalid input");
-        foreach (var mapper in input.Mappers)
-        {
-            var verifierServer = State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(o => o.Id == mapper.ToId);
-            Assert(verifierServer != null, "Destination verifierServer not existed");
-            State.VerifierIdMap[mapper.FromId] = mapper.ToId;
-        }
-        return new Empty();
-    }
-
     public override ControllerOutput GetCreatorControllers(Empty input)
     {
         return new ControllerOutput

@@ -79,6 +79,8 @@ service CAContract {
   rpc GetHolderInfo(GetHolderInfoInput) returns (GetHolderInfoOutput) {option (aelf.is_view) = true;}
 
   rpc GetVerifierServers (google.protobuf.Empty) returns (GetVerifierServersOutput) {option (aelf.is_view) = true;}
+  
+  rpc GetVerifierIdMapper (aelf.Hash) returns (GetVerifierIdMapperOutput) {option (aelf.is_view) = true;}
 
   rpc GetCAServers (google.protobuf.Empty) returns (GetCAServersOutput) {option (aelf.is_view) = true;}
 
@@ -399,6 +401,7 @@ message AddVerifierServerEndPointsInput {
   // Add all, ignore if has duplicates
   repeated string end_points = 3;
   repeated aelf.Address verifier_address_list = 4;
+  aelf.Hash verifier_id = 5;
 }
 
 message RemoveVerifierServerInput {
@@ -424,6 +427,10 @@ message RemoveCAServerInput {
 
 message GetVerifierServersOutput {
   repeated VerifierServer verifier_servers = 1;
+}
+
+message GetVerifierIdMapperOutput {
+  VerifierIdMapperInfo mapper = 1;
 }
 
 message GetCAServersOutput {

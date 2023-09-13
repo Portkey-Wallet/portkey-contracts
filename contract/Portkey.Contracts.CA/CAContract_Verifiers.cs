@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using AElf;
 using AElf.Sdk.CSharp;
+using AElf.Types;
 using Google.Protobuf.WellKnownTypes;
 
 namespace Portkey.Contracts.CA;
@@ -24,16 +25,16 @@ public partial class CAContract
 
         var serverId = HashHelper.ConcatAndCompute(Context.TransactionId,
             HashHelper.ComputeFrom(Context.Self));
-
+        var validVerifierId = IsValidHash(input.VerifierId);
         var verifierServerList = State.VerifiersServerList.Value;
         var server = verifierServerList.VerifierServers
-            .FirstOrDefault(server => server.Name == input.Name);
+            .FirstOrDefault(server => server.Name == input.Name && (!validVerifierId || server.Id == input.VerifierId));
 
         if (server == null)
         {
             State.VerifiersServerList.Value.VerifierServers.Add(new VerifierServer
             {
-                Id = serverId,
+                Id = validVerifierId ? input.VerifierId : serverId,
                 Name = input.Name,
                 ImageUrl = input.ImageUrl,
                 EndPoints = { input.EndPoints },
@@ -161,5 +162,31 @@ public partial class CAContract
         }
 
         return output;
+    }
+    
+    public override Empty AddVerifierIdMapper(AddVerifierIdMapperInput input)
+    {
+        Assert(State.Admin.Value == Context.Sender, "No permission");
+        Assert(input.Mappers.Count > 0, "Invalid input");
+        foreach (var mapper in input.Mappers)
+        {
+            var verifierServer = State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(o => o.Id == mapper.ToId);
+            Assert(verifierServer != null, "Destination verifierServer not existed");
+            State.VerifierIdMap[mapper.FromId] = mapper.ToId;
+        }
+        return new Empty();
+    }
+
+    public override GetVerifierIdMapperOutput GetVerifierIdMapper(Hash input)
+    {
+        var toId = State.VerifierIdMap[input];
+        return new GetVerifierIdMapperOutput
+        {
+            Mapper = new VerifierIdMapperInfo()
+            {
+                FromId = input,
+                ToId = toId
+            }
+        };
     }
 }

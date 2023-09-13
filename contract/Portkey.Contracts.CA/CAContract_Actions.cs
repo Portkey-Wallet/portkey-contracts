@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using AElf;
 using AElf.Contracts.MultiToken;
 using AElf.Sdk.CSharp;
@@ -54,6 +55,7 @@ public partial class CAContract : CAContractContainer.CAContractBase
         var holderInfo = new HolderInfo();
         holderId = HashHelper.ConcatAndCompute(Context.TransactionId, Context.PreviousBlockHash);
         holderInfo.CreatorAddress = Context.Sender;
+        holderInfo.CreateChainId = Context.ChainId;
         holderInfo.ManagerInfos.Add(input.ManagerInfo);
         //Check verifier signature.
         var methodName = nameof(CreateCAHolder).ToLower();
@@ -116,6 +118,22 @@ public partial class CAContract : CAContractContainer.CAContractBase
 
         return new Empty();
     }
+
+    private void FillCreateChainId(HolderInfo holderInfo)
+    {
+        if (holderInfo.CreateChainId > 0)
+            return;
+        if (holderInfo.GuardianList.Guardians.Count > 0)
+        {
+            holderInfo.CreateChainId = Context.ChainId;
+        }
+    }
+
+    private void AssertOnCreateChain(HolderInfo holderInfo)
+    {
+        Assert(holderInfo.CreateChainId != 0  && holderInfo.CreateChainId == Context.ChainId, "Not on registered chain");
+    }
+
     private bool IsJudgementStrategySatisfied(int guardianCount, int guardianApprovedCount, StrategyNode strategyNode)
     {
         var context = new StrategyContext()

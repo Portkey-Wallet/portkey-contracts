@@ -28,6 +28,7 @@ public partial class CAContract
         {
             5 => CheckVerifierSignatureAndData(guardianInfo),
             6 => CheckVerifierSignatureAndData(guardianInfo, methodName),
+            7 => CheckVerifierSignatureAndData(guardianInfo, methodName),
             _ => false
         };
     }
@@ -44,7 +45,7 @@ public partial class CAContract
 
         var verifierDoc = verificationDoc.Split(",");
 
-        if (verifierDoc.Length != 6)
+        if (verifierDoc.Length != 6 && verifierDoc.Length != 7)
         {
             return false;
         }
@@ -78,6 +79,15 @@ public partial class CAContract
         var verificationInfo = guardianInfo.VerificationInfo;
         var verifierServer = 
             State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(v => v.Id == verificationInfo.Id);
+        if (verifierServer == null)
+        {
+            var verifierId = State.VerifierIdMap[verificationInfo.Id];
+            if (IsValidHash(verifierId))
+            {
+                verifierServer = 
+                    State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(v => v.Id == verifierId);
+            }
+        }
 
         //Recovery verifier address.
         var data = HashHelper.ComputeFrom(verificationInfo.VerificationDoc);
@@ -96,7 +106,16 @@ public partial class CAContract
         State.VerifierDocMap[key] = true;
         var operationTypeStr = docInfo.OperationType;
         var operationTypeName = typeof(OperationType).GetEnumName(Convert.ToInt32(operationTypeStr))?.ToLower();
-        return operationTypeName == methodName;
+        if (operationTypeName != methodName)
+        {
+            return false;
+        }
+
+        if (methodName == nameof(OperationType.Approve).ToLower() && verifierDoc.Length == 7)
+        {
+            return ChainHelper.ConvertBase58ToChainId(verifierDoc[6]) == Context.ChainId;
+        }
+        return true;
     }
 
 
@@ -148,6 +167,21 @@ public partial class CAContract
             g => g.IdentifierHash == guardianInfo.IdentifierHash && g.Type == guardianInfo.Type &&
                  g.VerifierId == guardianInfo.VerificationInfo.Id
         );
+        if (satisfiedGuardians != null)
+        {
+            return true;
+        }
+        
+        if (!IsValidHash(guardianInfo.VerificationInfo.Id))
+        {
+            return false;
+        }
+
+        var verifierId = State.VerifierIdMap[guardianInfo.VerificationInfo.Id];
+        satisfiedGuardians = State.HolderInfoMap[caHash].GuardianList.Guardians.FirstOrDefault(
+            g => g.IdentifierHash == guardianInfo.IdentifierHash && g.Type == guardianInfo.Type &&
+                 g.VerifierId == verifierId
+                 );
         return satisfiedGuardians != null;
     }
 

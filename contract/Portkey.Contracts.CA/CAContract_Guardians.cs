@@ -17,7 +17,7 @@ public partial class CAContract
             "Invalid input.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
-
+        AssertOnCreateChain(holderInfo);
         //Whether the guardian to be added has already in the holder info.
         //Filter: guardian.type && guardian.IdentifierHash && VerifierId
         var toAddGuardian = holderInfo.GuardianList.Guardians.FirstOrDefault(g =>
@@ -70,7 +70,7 @@ public partial class CAContract
             IsLoginGuardian = false
         };
         State.HolderInfoMap[input.CaHash].GuardianList?.Guardians.Add(guardianAdded);
-
+        FillCreateChainId(State.HolderInfoMap[input.CaHash]);
         Context.Fire(new GuardianAdded
         {
             CaHash = input.CaHash,
@@ -87,6 +87,7 @@ public partial class CAContract
             "Invalid input.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
+        AssertOnCreateChain(holderInfo);
         //Select satisfied guardian to remove.
         //Filter: guardian.type && guardian.&& && VerifierId
         var toRemoveGuardian = holderInfo.GuardianList.Guardians.FirstOrDefault(g =>
@@ -142,6 +143,7 @@ public partial class CAContract
         }
 
         State.HolderInfoMap[input.CaHash].GuardianList?.Guardians.Remove(toRemoveGuardian);
+        FillCreateChainId(State.HolderInfoMap[input.CaHash]);
 
         if (State.LoginGuardianMap[toRemoveGuardian.IdentifierHash][toRemoveGuardian.VerifierId] != null)
         {
@@ -176,6 +178,7 @@ public partial class CAContract
             "Inconsistent guardian.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
+        AssertOnCreateChain(holderInfo);
         //Whether the guardian to be updated in the holder info.
         //Filter: guardian.type && guardian.IdentifierHash && VerifierId
         var existPreGuardian = holderInfo.GuardianList.Guardians.FirstOrDefault(g =>
@@ -237,6 +240,7 @@ public partial class CAContract
             State.LoginGuardianMap[preGuardian.IdentifierHash].Remove(preGuardian.VerifierId);
             State.LoginGuardianMap[existPreGuardian.IdentifierHash][existPreGuardian.VerifierId] = input.CaHash;
         }
+        FillCreateChainId(State.HolderInfoMap[input.CaHash]);
 
 
         Context.Fire(new GuardianUpdated

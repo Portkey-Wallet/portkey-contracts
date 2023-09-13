@@ -26,6 +26,7 @@ public partial class CAContract
         Assert(caHash != null, "CA Holder does not exist.");
 
         var holderInfo = GetHolderInfoByCaHash(caHash);
+        AssertOnCreateChain(holderInfo);
         var guardians = holderInfo.GuardianList!.Guardians;
 
         Assert(input.GuardiansApproved.Count > 0, "invalid input Guardians Approved");
@@ -62,6 +63,7 @@ public partial class CAContract
             "The amount of ManagerInfos out of limit");
 
         State.HolderInfoMap[caHash].ManagerInfos.Add(input.ManagerInfo);
+        FillCreateChainId(State.HolderInfoMap[caHash]);
         SetDelegator(caHash, input.ManagerInfo);
 
         SetContractDelegator(input.ManagerInfo);
@@ -83,7 +85,7 @@ public partial class CAContract
         //Assert(Context.Sender.Equals(input.ManagerInfo.Address), "No permission to add");
 
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
-
+        AssertOnCreateChain(holderInfo);
         // ManagerInfo exists
         var managerInfo = FindManagerInfo(holderInfo.ManagerInfos, input.ManagerInfo.Address);
         Assert(managerInfo == null, $"ManagerInfo address exists");
@@ -91,6 +93,7 @@ public partial class CAContract
             "The amount of ManagerInfos out of limit");
 
         holderInfo.ManagerInfos.Add(input.ManagerInfo);
+        FillCreateChainId(holderInfo);
         SetDelegator(input.CaHash, input.ManagerInfo);
 
         SetContractDelegator(input.ManagerInfo);
@@ -153,6 +156,7 @@ public partial class CAContract
     private Empty RemoveManager(Hash caHash, Address address)
     {
         var holderInfo = GetHolderInfoByCaHash(caHash);
+        AssertOnCreateChain(holderInfo);
 
         // Manager does not exist
         var managerInfo = FindManagerInfo(holderInfo.ManagerInfos, address);
@@ -164,6 +168,7 @@ public partial class CAContract
         holderInfo.ManagerInfos.Remove(managerInfo);
         RemoveDelegator(caHash, managerInfo);
         RemoveContractDelegator(managerInfo);
+        FillCreateChainId(holderInfo);
 
         Context.Fire(new ManagerInfoRemoved
         {
@@ -182,6 +187,7 @@ public partial class CAContract
         CheckManagerInfosInput(input!.CaHash, input.ManagerInfos);
 
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
+        AssertOnCreateChain(holderInfo);
 
         var managerInfosToUpdate = input.ManagerInfos.Distinct().ToList();
 
@@ -205,6 +211,8 @@ public partial class CAContract
                 ExtraData = managerToUpdate.ExtraData
             });
         }
+        
+        FillCreateChainId(holderInfo);
 
         return new Empty();
     }

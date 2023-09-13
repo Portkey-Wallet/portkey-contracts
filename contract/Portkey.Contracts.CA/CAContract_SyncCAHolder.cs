@@ -23,7 +23,24 @@ public partial class CAContract
 
         ValidateManager(holderInfo, input.ManagerInfos);
 
+        Assert(input.CreateChainId == Context.ChainId, "input.CreateChainId is not current ChainId");
+        FillCreateChainId(holderInfo);
+        Assert(input.CreateChainId == holderInfo.CreateChainId, "input.CreateChainId is not HolderInfo's CreateChainId");
+        ValidateGuardianList(holderInfo.GuardianList, input.GuardianList);
         return new Empty();
+    }
+
+    private void ValidateGuardianList(GuardianList holdInfoGuardianList, GuardianList inputGuardianList)
+    {
+        Assert(inputGuardianList != null, "input.GuardianList is null");
+        foreach (var guardianInfo in inputGuardianList.Guardians)
+        {
+            var searchGuardian = holdInfoGuardianList.Guardians.FirstOrDefault(
+                g => g.IdentifierHash == guardianInfo.IdentifierHash && g.Type == guardianInfo.Type &&
+                     g.VerifierId == guardianInfo.VerifierId
+            );
+            Assert(searchGuardian != null, $"Guardian:{guardianInfo.VerifierId} is not in HolderInfo's GuardianList");
+        }
     }
 
     private void ValidateLoginGuardian(Hash caHash, HolderInfo holderInfo,
@@ -79,6 +96,7 @@ public partial class CAContract
 
         var holderId = transactionInput.CaHash;
         var holderInfo = State.HolderInfoMap[holderId] ?? new HolderInfo { CreatorAddress = Context.Sender };
+        holderInfo.CreateChainId = transactionInput.CreateChainId;
 
         var managerInfosToAdd = ManagerInfosExcept(transactionInput.ManagerInfos, holderInfo.ManagerInfos);
         var managerInfosToRemove = ManagerInfosExcept(holderInfo.ManagerInfos, transactionInput.ManagerInfos);
