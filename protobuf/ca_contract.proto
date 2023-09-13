@@ -606,6 +606,7 @@ message CAHolderSynced {
   LoginGuardianList login_guardians_unbound = 7 [(aelf.is_indexed) = true];
   GuardianList guardians_added = 8 [(aelf.is_indexed) = true];
   GuardianList guardians_removed = 9 [(aelf.is_indexed) = true];
+  GuardianList guardians_update = 10 [(aelf.is_indexed) = true];
 }
 
 message CreatorControllerAdded {

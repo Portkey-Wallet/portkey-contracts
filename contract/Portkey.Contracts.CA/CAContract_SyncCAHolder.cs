@@ -133,6 +133,21 @@ public partial class CAContract
             holderInfo.GuardianList.Guardians.Remove(guardian);
         }
 
+        var guardiansUpdate = new RepeatedField<Guardian>();
+        foreach (var guardianInput in transactionInput.GuardianList.Guardians)
+        {
+            var guardian = holderInfo.GuardianList.Guardians.FirstOrDefault(o => 
+                o.IdentifierHash == guardianInput.IdentifierHash && o.VerifierId != guardianInput.VerifierId);
+            if (guardian != null)
+            {
+                guardiansUpdate.Add(guardianInput);
+                guardian.VerifierId = guardianInput.VerifierId;
+                guardian.IsLoginGuardian = guardianInput.IsLoginGuardian;
+                guardian.Type = guardianInput.Type;
+                guardian.Salt = guardianInput.Salt;
+            }
+        }
+
         State.HolderInfoMap[holderId] = holderInfo;
 
         Context.Fire(new CAHolderSynced
@@ -163,6 +178,10 @@ public partial class CAContract
             GuardiansRemoved = new GuardianList
             {
                 Guardians = { guardiansRemoved }
+            },
+            GuardiansUpdate = new GuardianList
+            {
+                Guardians = { guardiansUpdate }
             }
         });
 
@@ -254,7 +273,7 @@ public partial class CAContract
             bool theSame = false;
             foreach (var guardian2 in set2)
             {
-                if (guardian1.VerifierId == guardian2.VerifierId && guardian1.IdentifierHash == guardian2.IdentifierHash)
+                if (guardian1.IdentifierHash == guardian2.IdentifierHash)
                 {
                     theSame = true;
                     break;
