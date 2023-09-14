@@ -121,6 +121,14 @@ public partial class CAContract
         var loginGuardiansUnbound =
             SyncLoginGuardianUnbound(transactionInput.CaHash, transactionInput.NotLoginGuardians);
 
+        if (holderInfo.GuardianList == null)
+        {
+            holderInfo.GuardianList = new GuardianList
+            {
+                Guardians = { }
+            };
+        }
+
         var guardiansAdded = GuardiansExcept(transactionInput.GuardianList.Guardians, holderInfo.GuardianList.Guardians);
         var guardiansRemoved = GuardiansExcept(holderInfo.GuardianList.Guardians, transactionInput.GuardianList.Guardians);
         foreach (var guardian in guardiansAdded)
