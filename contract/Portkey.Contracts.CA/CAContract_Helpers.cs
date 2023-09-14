@@ -111,9 +111,12 @@ public partial class CAContract
             return false;
         }
 
-        if (methodName == nameof(OperationType.Approve).ToLower() && verifierDoc.Length == 7)
+        if (verifierDoc.Length == 7)
         {
-            return ChainHelper.ConvertBase58ToChainId(verifierDoc[6]) == Context.ChainId;
+            if (methodName != nameof(OperationType.Approve).ToLower() && methodName != nameof(OperationType.ModifyTransferLimit).ToLower())
+            {
+                return int.Parse(verifierDoc[6]) == Context.ChainId;
+            }
         }
         return true;
     }
@@ -167,21 +170,6 @@ public partial class CAContract
             g => g.IdentifierHash == guardianInfo.IdentifierHash && g.Type == guardianInfo.Type &&
                  g.VerifierId == guardianInfo.VerificationInfo.Id
         );
-        if (satisfiedGuardians != null)
-        {
-            return true;
-        }
-        
-        if (!IsValidHash(guardianInfo.VerificationInfo.Id))
-        {
-            return false;
-        }
-
-        var verifierId = State.VerifierIdMap[guardianInfo.VerificationInfo.Id];
-        satisfiedGuardians = State.HolderInfoMap[caHash].GuardianList.Guardians.FirstOrDefault(
-            g => g.IdentifierHash == guardianInfo.IdentifierHash && g.Type == guardianInfo.Type &&
-                 g.VerifierId == verifierId
-                 );
         return satisfiedGuardians != null;
     }
 
