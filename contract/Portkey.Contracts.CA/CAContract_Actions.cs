@@ -131,7 +131,7 @@ public partial class CAContract : CAContractContainer.CAContractBase
 
     private void AssertOnCreateChain(HolderInfo holderInfo)
     {
-        Assert(holderInfo.CreateChainId != 0  && holderInfo.CreateChainId == Context.ChainId, "Not on registered chain");
+        Assert(holderInfo.CreateChainId == 0 || holderInfo.CreateChainId == Context.ChainId, "Not on registered chain");
     }
 
     private bool IsJudgementStrategySatisfied(int guardianCount, int guardianApprovedCount, StrategyNode strategyNode)
