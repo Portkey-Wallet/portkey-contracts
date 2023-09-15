@@ -36,6 +36,8 @@ public partial class CAContract
 
     private bool CheckVerifierSignatureAndData(GuardianInfo guardianInfo, string methodName)
     {
+        Context.LogDebug(() =>
+            $"begin CheckVerifierSignatureAndData: guardianInfo-verifierId = {guardianInfo.VerificationInfo.Id},method== {methodName}, time=={Context.CurrentBlockTime}");
         //[type,guardianIdentifierHash,verificationTime,verifierAddress,salt,operationType]
         var verificationDoc = guardianInfo.VerificationInfo.VerificationDoc;
         if (verificationDoc == null || string.IsNullOrWhiteSpace(verificationDoc))
@@ -74,21 +76,16 @@ public partial class CAContract
             return false;
         }
 
+        Context.LogDebug(() =>
+            $"before Check verifier address and data: guardianInfo-verifierId = {guardianInfo.VerificationInfo.Id},method== {methodName}, time=={Context.CurrentBlockTime}");
         //Check verifier address and data.
         var verifierAddress = docInfo.VerifierAddress;
         var verificationInfo = guardianInfo.VerificationInfo;
         var verifierServer = 
             State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(v => v.Id == verificationInfo.Id);
-        if (verifierServer == null)
-        {
-            var verifierId = State.VerifierIdMap[verificationInfo.Id];
-            if (IsValidHash(verifierId))
-            {
-                verifierServer = 
-                    State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(v => v.Id == verifierId);
-            }
-        }
 
+        Context.LogDebug(() =>
+            $"before Recovery verifier address: guardianInfo-verifierId = {guardianInfo.VerificationInfo.Id},method== {methodName}, time=={Context.CurrentBlockTime}");
         //Recovery verifier address.
         var data = HashHelper.ComputeFrom(verificationInfo.VerificationDoc);
         var publicKey = Context.RecoverPublicKey(verificationInfo.Signature.ToByteArray(),
@@ -111,6 +108,8 @@ public partial class CAContract
             return false;
         }
 
+        Context.LogDebug(() =>
+            $"before chainId check: guardianInfo-verifierId = {guardianInfo.VerificationInfo.Id},method== {methodName}, time=={Context.CurrentBlockTime}");
         if (verifierDoc.Length == 7)
         {
             if (methodName != nameof(OperationType.Approve).ToLower() && methodName != nameof(OperationType.ModifyTransferLimit).ToLower())
@@ -118,6 +117,8 @@ public partial class CAContract
                 return int.Parse(verifierDoc[6]) == Context.ChainId;
             }
         }
+        Context.LogDebug(() =>
+            $"after checkSignature: guardianInfo-verifierId = {guardianInfo.VerificationInfo.Id},method== {methodName}, time=={Context.CurrentBlockTime}");
         return true;
     }
 

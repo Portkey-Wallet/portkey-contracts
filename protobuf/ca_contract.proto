@@ -112,6 +112,8 @@ service CAContract {
   rpc GetAdmin (google.protobuf.Empty) returns (AdminOutput) {option (aelf.is_view) = true;}
 
   rpc ChangeOperationTypeInSignatureEnabled (OperationTypeInSignatureEnabledInput) returns (google.protobuf.Empty) {}
+  
+  rpc GetOperationTypeInSignatureEnabled (google.protobuf.Empty) returns (OperationTypeInSignatureEnabledOutput) {}
 
   rpc SetCAContractAddresses (SetCAContractAddressesInput) returns (google.protobuf.Empty) {}
   
@@ -635,6 +637,10 @@ message AdminChanged {
 }
 
 message OperationTypeInSignatureEnabledInput {
+  bool operation_type_in_signature_enabled = 1;
+}
+
+message OperationTypeInSignatureEnabledOutput {
   bool operation_type_in_signature_enabled = 1;
 }
 

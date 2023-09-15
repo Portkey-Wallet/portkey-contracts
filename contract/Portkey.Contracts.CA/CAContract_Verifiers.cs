@@ -72,7 +72,7 @@ public partial class CAContract
         {
             VerifierServer = new VerifierServer
             {
-                Id = serverId,
+                Id = validVerifierId ? input.VerifierId : serverId,
                 Name = input.Name,
                 ImageUrl = input.ImageUrl,
                 EndPoints = { input.EndPoints },

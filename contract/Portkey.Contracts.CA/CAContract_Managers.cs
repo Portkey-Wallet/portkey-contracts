@@ -298,9 +298,15 @@ public partial class CAContract
         Assert(input != null, "invalid input");
         Assert(input.CaHash != null, "CA hash is null.");
         Assert(input.Spender != null && !input.Spender.Value.IsNullOrEmpty(), "Invalid input address.");
+        Context.LogDebug(() =>
+            $"before CheckManagerInfoPermission: caHash == {input.CaHash}, symbol == {input.Symbol},time=={Context.CurrentBlockTime}");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
+        Context.LogDebug(() =>
+            $"after CheckManagerInfoPermission: caHash == {input.CaHash}, symbol == {input.Symbol}, time=={Context.CurrentBlockTime}");
         GuardianApprovedCheck(input.CaHash, input.GuardiansApproved, OperationType.Approve,
             nameof(OperationType.Approve).ToLower());
+        Context.LogDebug(() =>
+            $"after GuardianApprovedCheck: caHash == {input.CaHash}, symbol == {input.Symbol}, time=={Context.CurrentBlockTime}");
         Context.SendVirtualInline(input.CaHash, State.TokenContract.Value,
             nameof(State.TokenContract.Approve),
             new ApproveInput
@@ -309,6 +315,8 @@ public partial class CAContract
                 Amount = input.Amount,
                 Symbol = input.Symbol,
             }.ToByteString());
+        Context.LogDebug(() =>
+            $"after Context.SendVirtualInline: caHash == {input.CaHash}, symbol == {input.Symbol}, time=={Context.CurrentBlockTime}");
         Context.Fire(new ManagerApproved()
         {
             CaHash = input.CaHash,

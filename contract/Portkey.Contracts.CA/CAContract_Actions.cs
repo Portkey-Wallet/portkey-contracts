@@ -123,7 +123,7 @@ public partial class CAContract : CAContractContainer.CAContractBase
     {
         if (holderInfo.CreateChainId > 0)
             return;
-        if (holderInfo.GuardianList.Guardians.Count > 0)
+        if (holderInfo.GuardianList?.Guardians?.Count > 0)
         {
             holderInfo.CreateChainId = Context.ChainId;
         }
@@ -261,6 +261,14 @@ public partial class CAContract : CAContractContainer.CAContractBase
         Assert(State.OperationTypeInSignatureEnabled.Value != input.OperationTypeInSignatureEnabled, "invalid input");
         State.OperationTypeInSignatureEnabled.Value = input.OperationTypeInSignatureEnabled;
         return new Empty();
+    }
+
+    public override OperationTypeInSignatureEnabledOutput GetOperationTypeInSignatureEnabled(Empty input)
+    {
+        return new OperationTypeInSignatureEnabledOutput
+        {
+            OperationTypeInSignatureEnabled = State.OperationTypeInSignatureEnabled.Value
+        };
     }
 
     public override Empty SetCAContractAddresses(SetCAContractAddressesInput input)
