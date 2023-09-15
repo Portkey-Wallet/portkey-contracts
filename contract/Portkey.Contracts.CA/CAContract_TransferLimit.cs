@@ -92,29 +92,20 @@ public partial class CAContract
         Assert(guardiansApproved.Count > 0, "invalid input Guardians Approved");
         var holderInfo = State.HolderInfoMap[caHash];
         Assert(State.HolderInfoMap[caHash] != null, $"CA holder is null.CA hash:{caHash}");
-        Context.LogDebug(() =>
-            $"before holderInfo.CreateChainId: caHash == {caHash}, time=={Context.CurrentBlockTime}");
         Assert(holderInfo.CreateChainId != 0 && holderInfo.GuardianList?.Guardians?.Count > 0, "Processing one the chain...");
         var guardianApprovedAmount = 0;
         var guardianApprovedList = guardiansApproved
             .DistinctBy(g => $"{g.Type}{g.IdentifierHash}{g.VerificationInfo.Id}").ToList();
-        Context.LogDebug(() =>
-            $"before guardianApprovedList: caHash == {caHash}, time=={Context.CurrentBlockTime}");
         foreach (var guardian in guardianApprovedList)
         {
-            Context.LogDebug(() =>
-                $"before IsGuardianExist: caHash == {caHash}, time=={Context.CurrentBlockTime}");
             if (!IsGuardianExist(caHash, guardian)) continue;
-            Context.LogDebug(() =>
-                $"before CheckVerifierSignatureAndDataCompatible: caHash == {caHash}, verifierId=={guardian.VerificationInfo.Id},method== {methodName}, time=={Context.CurrentBlockTime}");
             var isApproved = CheckVerifierSignatureAndDataCompatible(guardian, methodName);
             if (!isApproved) continue;
             guardianApprovedAmount++;
         }
 
-        Context.LogDebug(() =>
-            $"after guardianApprovedList: caHash == {caHash}, approvedAmount = {guardianApprovedAmount}, time=={Context.CurrentBlockTime}");
         var holderJudgementStrategy = State.OperationStrategy[caHash][operationType] ?? holderInfo.JudgementStrategy;
+        Assert(holderJudgementStrategy != null, "holderJudgementStrategy is null");
         Assert(IsJudgementStrategySatisfied(holderInfo.GuardianList != null
                 ? holderInfo.GuardianList!.Guardians.Count
                 : 0, guardianApprovedAmount, holderJudgementStrategy),
