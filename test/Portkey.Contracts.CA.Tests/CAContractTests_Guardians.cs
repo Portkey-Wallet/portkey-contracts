@@ -2580,64 +2580,6 @@ public partial class CAContractTests
     }
 
     [Fact]
-    public async Task<Hash> AddGuardian_Test_Old()
-    {
-        var verificationTime = DateTime.UtcNow;
-        var caHash = await CreateHolder_ChangeOperationTypeInSignatureEnabled();
-        var salt = Guid.NewGuid().ToString("N");
-        var operationType = Convert.ToInt32(OperationType.AddGuardian).ToString();
-        var signature = GenerateSignature_Old(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0, salt);
-        var signature1 =
-            GenerateSignature_Old(VerifierKeyPair1, VerifierAddress1, verificationTime.AddSeconds(5), _guardian1, 0,
-                salt);
-        var verificationDoc =
-            $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt}";
-        var guardianApprove = new List<GuardianInfo>
-        {
-            new GuardianInfo
-            {
-                Type = GuardianType.OfEmail,
-                IdentifierHash = _guardian,
-                VerificationInfo = new VerificationInfo
-                {
-                    Id = _verifierId,
-                    Signature = signature,
-                    VerificationDoc = verificationDoc
-                }
-            }
-        };
-        var input = new AddGuardianInput
-        {
-            CaHash = caHash,
-            GuardianToAdd = new GuardianInfo
-            {
-                Type = GuardianType.OfEmail,
-                IdentifierHash = _guardian1,
-                VerificationInfo = new VerificationInfo
-                {
-                    Id = _verifierId1,
-                    Signature = signature1,
-                    VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(5)},{VerifierAddress1.ToBase58()},{salt}"
-                }
-            },
-            GuardiansApproved = { guardianApprove }
-        };
-
-        await CaContractStubManagerInfo1.AddGuardian.SendAsync(input);
-        {
-            var holderInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput
-            {
-                CaHash = caHash
-            });
-            holderInfo.GuardianList.Guardians.Count.ShouldBe(2);
-            holderInfo.GuardianList.Guardians.Last().IdentifierHash.ShouldBe(_guardian1);
-            GetLoginGuardianCount(holderInfo.GuardianList).ShouldBe(1);
-        }
-        return caHash;
-    }
-
-    [Fact]
     public async Task<Hash> AddGuardian_Test_NoVerifierDoc()
     {
         var verificationTime = DateTime.UtcNow;
