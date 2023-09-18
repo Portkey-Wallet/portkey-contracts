@@ -177,7 +177,7 @@ public partial class CAContract
 
     private static string GetCurrentBlockTimeString(Timestamp currentBlockTime)
     {
-        return currentBlockTime.ToDateTime().ToString("yyyy-MM-dd");
+        return currentBlockTime.ToDateTime().ToString("yyyyMMdd");
     }
     
     private TokenInfo GetTokenInfo(string symbol)
