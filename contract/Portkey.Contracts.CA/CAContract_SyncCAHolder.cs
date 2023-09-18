@@ -39,6 +39,13 @@ public partial class CAContract
                 g => g.IdentifierHash == guardianInfo.IdentifierHash && g.Type == guardianInfo.Type &&
                      g.VerifierId == guardianInfo.VerifierId
             );
+            if (searchGuardian != null)
+            {
+                continue;
+            }
+            searchGuardian = holdInfoGuardianList.Guardians.FirstOrDefault(
+                g => g.IdentifierHash == guardianInfo.IdentifierHash && g.Type == guardianInfo.Type &&
+                     IsValidHash(State.VerifierIdMap[g.VerifierId]) && State.VerifierIdMap[g.VerifierId] == guardianInfo.VerifierId);
             Assert(searchGuardian != null, $"Guardian:{guardianInfo.VerifierId} is not in HolderInfo's GuardianList");
         }
     }
@@ -271,17 +278,17 @@ public partial class CAContract
         return resultSet;
     }
     
-    private RepeatedField<Guardian> GuardiansExcept(RepeatedField<Guardian> set1,
-        RepeatedField<Guardian> set2)
+    private RepeatedField<Guardian> GuardiansExcept(RepeatedField<Guardian> src,
+        RepeatedField<Guardian> destination)
     {
         RepeatedField<Guardian> resultSet = new RepeatedField<Guardian>();
 
-        foreach (var guardian1 in set1)
+        foreach (var srcGuardian in src)
         {
             bool theSame = false;
-            foreach (var guardian2 in set2)
+            foreach (var desGuardian in destination)
             {
-                if (guardian1.IdentifierHash == guardian2.IdentifierHash)
+                if (srcGuardian.IdentifierHash == desGuardian.IdentifierHash)
                 {
                     theSame = true;
                     break;
@@ -290,7 +297,7 @@ public partial class CAContract
 
             if (!theSame)
             {
-                resultSet.Add(guardian1);
+                resultSet.Add(srcGuardian);
             }
         }
 
