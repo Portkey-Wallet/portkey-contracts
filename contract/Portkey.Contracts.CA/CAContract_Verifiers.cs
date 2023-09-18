@@ -160,16 +160,6 @@ public partial class CAContract
         {
             output.VerifierServers.Add(verifierServerList.VerifierServers);
         }
-
-        foreach (var verifierServer in output.VerifierServers)
-        {
-            var verifierMapperId = State.VerifierIdMap[verifierServer.Id];
-            if (IsValidHash(verifierMapperId))
-            {
-                verifierServer.Id = verifierMapperId;
-            }
-        }
-
         return output;
     }
     

@@ -69,8 +69,10 @@ public partial class CAContract
         //Check verifier address and data.
         var verifierAddress = docInfo.VerifierAddress;
         var verificationInfo = guardianInfo.VerificationInfo;
+        var verifierIdMapper = State.VerifierIdMap[verificationInfo.Id];
         var verifierServer = 
-            State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(v => v.Id == verificationInfo.Id);
+            State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(v => v.Id == 
+                (IsValidHash(verifierIdMapper) ? verifierIdMapper : verificationInfo.Id));
 
         //Recovery verifier address.
         var data = HashHelper.ComputeFrom(verificationInfo.VerificationDoc);
@@ -110,14 +112,7 @@ public partial class CAContract
             g => g.IdentifierHash == guardianInfo.IdentifierHash && g.Type == guardianInfo.Type &&
                  g.VerifierId == guardianInfo.VerificationInfo.Id
         );
-        if (satisfiedGuardians != null)
-        {
-            return true;
-        }
-        satisfiedGuardians = State.HolderInfoMap[caHash].GuardianList.Guardians.FirstOrDefault(
-            g => g.IdentifierHash == guardianInfo.IdentifierHash && g.Type == guardianInfo.Type &&
-                    IsValidHash(State.VerifierIdMap[g.VerifierId]) && State.VerifierIdMap[g.VerifierId] == guardianInfo.VerificationInfo.Id);
-       return satisfiedGuardians != null;
+        return satisfiedGuardians != null;
     }
 
     private bool IsValidHash(Hash hash)

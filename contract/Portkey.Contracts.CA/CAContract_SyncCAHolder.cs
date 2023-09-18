@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using AElf.Sdk.CSharp;
 using AElf.Standards.ACS7;
@@ -39,13 +38,6 @@ public partial class CAContract
                 g => g.IdentifierHash == guardianInfo.IdentifierHash && g.Type == guardianInfo.Type &&
                      g.VerifierId == guardianInfo.VerifierId
             );
-            if (searchGuardian != null)
-            {
-                continue;
-            }
-            searchGuardian = holdInfoGuardianList.Guardians.FirstOrDefault(
-                g => g.IdentifierHash == guardianInfo.IdentifierHash && g.Type == guardianInfo.Type &&
-                     IsValidHash(State.VerifierIdMap[g.VerifierId]) && State.VerifierIdMap[g.VerifierId] == guardianInfo.VerifierId);
             Assert(searchGuardian != null, $"Guardian:{guardianInfo.VerifierId} is not in HolderInfo's GuardianList");
         }
     }
