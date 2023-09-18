@@ -50,11 +50,9 @@ public partial class CAContract
             return new Empty();
         }
 
-        var holderJudgementStrategy = State.OperationStrategy[input.CaHash][OperationType.AddGuardian] ??
-                                      holderInfo.JudgementStrategy;
         //Whether the approved guardians count is satisfied.
         var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count,
-            guardianApprovedAmount, holderJudgementStrategy);
+            guardianApprovedAmount, holderInfo.JudgementStrategy);
         if (!isJudgementStrategySatisfied)
         {
             return new Empty();
@@ -131,12 +129,9 @@ public partial class CAContract
             guardianApprovedAmount++;
         }
 
-        var holderJudgementStrategy = State.OperationStrategy[input.CaHash][OperationType.AddGuardian] ??
-                                      holderInfo.JudgementStrategy;
-
         //Whether the approved guardians count is satisfied.
         var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count.Sub(1),
-            guardianApprovedAmount, holderJudgementStrategy);
+            guardianApprovedAmount, holderInfo.JudgementStrategy);
         if (!isJudgementStrategySatisfied)
         {
             return new Empty();
@@ -222,12 +217,9 @@ public partial class CAContract
             guardianApprovedAmount++;
         }
 
-        var holderJudgementStrategy = State.OperationStrategy[input.CaHash][OperationType.UpdateGuardian] ??
-                                      holderInfo.JudgementStrategy;
-
         //Whether the approved guardians count is satisfied.
         var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count.Sub(1),
-            guardianApprovedAmount, holderJudgementStrategy);
+            guardianApprovedAmount, holderInfo.JudgementStrategy);
         if (!isJudgementStrategySatisfied)
         {
             return new Empty();
@@ -240,6 +232,7 @@ public partial class CAContract
             State.LoginGuardianMap[preGuardian.IdentifierHash].Remove(preGuardian.VerifierId);
             State.LoginGuardianMap[existPreGuardian.IdentifierHash][existPreGuardian.VerifierId] = input.CaHash;
         }
+
         FillCreateChainId(State.HolderInfoMap[input.CaHash]);
 
 

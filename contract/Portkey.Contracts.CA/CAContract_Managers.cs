@@ -46,11 +46,8 @@ public partial class CAContract
             guardianApprovedAmount++;
         }
 
-        var holderJudgementStrategy = State.OperationStrategy[caHash][OperationType.SocialRecovery] ??
-                                      holderInfo.JudgementStrategy;
-
         var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(guardians.Count, guardianApprovedAmount,
-            holderJudgementStrategy);
+            holderInfo.JudgementStrategy);
         if (!isJudgementStrategySatisfied)
         {
             return new Empty();
@@ -144,12 +141,9 @@ public partial class CAContract
             guardianApprovedAmount++;
         }
 
-        var holderJudgementStrategy = State.OperationStrategy[input.CaHash][OperationType.RemoveOtherManagerInfo] ??
-                                      holderInfo.JudgementStrategy;
-
         //Whether the approved guardians count is satisfied.
         var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count,
-            guardianApprovedAmount, holderJudgementStrategy);
+            guardianApprovedAmount, holderInfo.JudgementStrategy);
         return !isJudgementStrategySatisfied ? new Empty() : RemoveManager(input.CaHash, input.ManagerInfo.Address);
     }
 
@@ -211,7 +205,7 @@ public partial class CAContract
                 ExtraData = managerToUpdate.ExtraData
             });
         }
-        
+
         FillCreateChainId(holderInfo);
 
         return new Empty();

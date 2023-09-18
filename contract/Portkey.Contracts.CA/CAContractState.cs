@@ -23,6 +23,7 @@ public partial class CAContractState : ContractState
     /// multiple Login Guardian to one HolderInfo Hash
     /// </summary>
     public MappedState<Hash, Hash> GuardianMap { get; set; }
+
     public MappedState<Hash, Hash> VerifierIdMap { get; set; }
 
     /// <summary>
@@ -62,8 +63,5 @@ public partial class CAContractState : ContractState
     public MappedState<Hash, string, TransferredAmount> DailyTransferredAmount { get; set; }
     public MappedState<string, long> DefaultTokenTransferLimit { get; set; }
     public MappedState<Address, string, bool> ForbiddenForwardCallContractMethod { get; set; }
-
-    public MappedState<Hash, OperationType, StrategyNode> OperationStrategy { get; set; }
     public SingletonState<bool> ManagerApproveForbiddenEnabled { get; set; }
-
 }
