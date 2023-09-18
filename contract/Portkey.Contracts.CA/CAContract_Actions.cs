@@ -282,7 +282,7 @@ public partial class CAContract : CAContractContainer.CAContractBase
         return new Empty();
     }
 
-    public override Empty ChangeManagerApproveForbiddenEnabled(ManagerApproveForbiddenEnabledInput input)
+    public override Empty SetManagerApproveForbiddenEnabled(ManagerApproveForbiddenEnabledInput input)
     {
         Assert(State.Admin.Value == Context.Sender, "No permission");
         Assert(State.ManagerApproveForbiddenEnabled.Value != input.ManagerApproveForbiddenEnabled,

@@ -92,7 +92,8 @@ public partial class CAContract
         Assert(guardiansApproved.Count > 0, "invalid input Guardians Approved");
         var holderInfo = State.HolderInfoMap[caHash];
         Assert(State.HolderInfoMap[caHash] != null, $"CA holder is null.CA hash:{caHash}");
-        Assert(holderInfo.CreateChainId != 0 && holderInfo.GuardianList?.Guardians?.Count > 0, "Processing one the chain...");
+        Assert(holderInfo.CreateChainId != 0 && holderInfo.GuardianList?.Guardians?.Count > 0,
+            "Processing one the chain...");
         var guardianApprovedAmount = 0;
         var guardianApprovedList = guardiansApproved
             .DistinctBy(g => $"{g.Type}{g.IdentifierHash}{g.VerificationInfo.Id}").ToList();
@@ -104,12 +105,7 @@ public partial class CAContract
             guardianApprovedAmount++;
         }
 
-        var holderJudgementStrategy = State.OperationStrategy[caHash][operationType] ?? holderInfo.JudgementStrategy;
-        Assert(holderJudgementStrategy != null, "holderJudgementStrategy is null");
-        Assert(IsJudgementStrategySatisfied(holderInfo.GuardianList != null
-                ? holderInfo.GuardianList!.Guardians.Count
-                : 0, guardianApprovedAmount, holderJudgementStrategy),
-            "JudgementStrategy validate failed");
+        Assert(holderInfo.GuardianList != null, "JudgementStrategy validate failed");
     }
 
     private void UpdateDailyTransferredLimit(Hash caHash, string symbol, long amount)

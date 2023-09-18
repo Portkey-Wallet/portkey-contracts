@@ -70,3 +70,10 @@ message External {
 message ManagerApproveForbiddenEnabledInput {
   bool manager_approve_forbidden_enabled = 1;
 }
+message TransferLimitChanged{
+    option (aelf.is_event) = true;
+    aelf.Hash ca_hash = 1 [(aelf.is_indexed) = true];
+    string symbol = 2 [(aelf.is_indexed) = true];
+    int64 single_limit = 3 [(aelf.is_indexed) = true];
+    int64 daily_limit = 4 [(aelf.is_indexed) = true];
+}

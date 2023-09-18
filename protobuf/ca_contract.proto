@@ -132,7 +132,7 @@ service CAContract {
         
   rpc SetForbiddenForwardCallContractMethod(caimpl.SetForbiddenForwardCallContractMethodInput) returns (google.protobuf.Empty) {}  
 
-  rpc ChangeManagerApproveForbiddenEnabled (caimpl.ManagerApproveForbiddenEnabledInput) returns (google.protobuf.Empty) {}
+  rpc SetManagerApproveForbiddenEnabled (caimpl.ManagerApproveForbiddenEnabledInput) returns (google.protobuf.Empty) {}
 }
 
 //Data structure
@@ -368,6 +368,7 @@ message GetHolderInfoOutput{
   GuardianList guardian_list = 3;
   repeated ManagerInfo manager_infos = 4;
   int32 create_chain_id = 5;
+  StrategyNode judgement_strategy = 6;
 }
 
 message SocialRecoveryInput {
@@ -596,7 +597,6 @@ message CAServerRemoved {
   option (aelf.is_event) = true;
   CAServer ca_server_removed = 1;
 }
-
 message CAHolderSynced {
   option (aelf.is_event) = true;
   aelf.Address creator = 1 [(aelf.is_indexed) = true];
@@ -610,40 +610,32 @@ message CAHolderSynced {
   GuardianList guardians_removed = 9 [(aelf.is_indexed) = true];
   GuardianList guardians_update = 10 [(aelf.is_indexed) = true];
 }
-
 message CreatorControllerAdded {
   option (aelf.is_event) = true;
   aelf.Address address = 1 [(aelf.is_indexed) = true];
 }
-
 message CreatorControllerRemoved {
   option (aelf.is_event) = true;
   aelf.Address address = 1 [(aelf.is_indexed) = true];
 }
-
 message ServerControllerAdded {
   option (aelf.is_event) = true;
   aelf.Address address = 1 [(aelf.is_indexed) = true];
 }
-
 message ServerControllerRemoved {
   option (aelf.is_event) = true;
   aelf.Address address = 1 [(aelf.is_indexed) = true];
 }
-
 message AdminChanged {
   option (aelf.is_event) = true;
   aelf.Address address = 1 [(aelf.is_indexed) = true];
 }
-
 message OperationTypeInSignatureEnabledInput {
   bool operation_type_in_signature_enabled = 1;
 }
-
 message OperationTypeInSignatureEnabledOutput {
   bool operation_type_in_signature_enabled = 1;
 }
-
 enum OperationType {
   Unknown = 0;
   CreateCAHolder = 1;
@@ -656,17 +648,13 @@ enum OperationType {
   Approve = 8;
   ModifyTransferLimit = 9;
 }
-
 message SetCAContractAddressesInput {
   repeated CAContractAddress ca_contract_addresses = 1;
 }
-
 message CAContractAddress {
    aelf.Address address = 1;
    int32 chain_id = 2;
 }
-
-// approve
 message ManagerApproveInput {
     aelf.Hash ca_hash = 1;
     aelf.Address spender = 2;
@@ -675,7 +663,6 @@ message ManagerApproveInput {
     int64 amount = 5;
     caimpl.External external = 6;
 }
-
 message ManagerApproved {
     option (aelf.is_event) = true;
     aelf.Hash ca_hash = 1;
@@ -684,18 +671,10 @@ message ManagerApproved {
     int64 amount = 4;
     caimpl.External external = 5;
 }
-
 message SetTransferLimitInput {
     aelf.Hash ca_hash = 1;
     string symbol = 2;
     repeated GuardianInfo guardians_approved = 3;
     int64 single_limit = 4;
     int64 daily_limit = 5;
-}
-message TransferLimitChanged{
-    option (aelf.is_event) = true;
-    aelf.Hash ca_hash = 1 [(aelf.is_indexed) = true];
-    string symbol = 2 [(aelf.is_indexed) = true];
-    int64 single_limit = 3 [(aelf.is_indexed) = true];
-    int64 daily_limit = 4 [(aelf.is_indexed) = true];
 }
