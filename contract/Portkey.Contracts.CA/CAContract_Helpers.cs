@@ -22,15 +22,7 @@ public partial class CAContract
         {
             return false;
         }
-
-        var verifierDoc = verificationDoc.Split(",");
-        return verifierDoc.Length switch
-        {
-            5 => CheckVerifierSignatureAndData(guardianInfo),
-            6 => CheckVerifierSignatureAndData(guardianInfo, methodName),
-            7 => CheckVerifierSignatureAndData(guardianInfo, methodName),
-            _ => false
-        };
+        return CheckVerifierSignatureAndData(guardianInfo, methodName);
     }
 
 
@@ -111,49 +103,6 @@ public partial class CAContract
         }
         return true;
     }
-
-
-    private bool CheckVerifierSignatureAndData(GuardianInfo guardianInfo)
-    {
-        //[type,guardianIdentifierHash,verificationTime,verifierAddress,salt]
-        var verificationDoc = guardianInfo.VerificationInfo.VerificationDoc;
-        if (verificationDoc == null || string.IsNullOrWhiteSpace(verificationDoc))
-        {
-            return false;
-        }
-
-        var verifierDoc = verificationDoc.Split(",");
-        if (verifierDoc.Length != 5)
-        {
-            return false;
-        }
-
-        //Check expired time 1h.
-        var verificationTime = DateTime.SpecifyKind(Convert.ToDateTime(verifierDoc[2]), DateTimeKind.Utc);
-        if (verificationTime.ToTimestamp().AddHours(1) <= Context.CurrentBlockTime ||
-            !int.TryParse(verifierDoc[0], out var type) ||
-            (int)guardianInfo.Type != type ||
-            guardianInfo.IdentifierHash != Hash.LoadFromHex(verifierDoc[1]))
-        {
-            return false;
-        }
-
-        //Check verifier address and data.
-        var verifierAddress = Address.FromBase58(verifierDoc[3]);
-        var verificationInfo = guardianInfo.VerificationInfo;
-        var verifierServer =
-            State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(v => v.Id == verificationInfo.Id);
-
-        //Recovery verifier address.
-        var data = HashHelper.ComputeFrom(verificationInfo.VerificationDoc);
-        var publicKey = Context.RecoverPublicKey(verificationInfo.Signature.ToByteArray(),
-            data.ToByteArray());
-        var verifierAddressFromPublicKey = Address.FromPublicKey(publicKey);
-
-        return verifierServer != null && verifierAddressFromPublicKey == verifierAddress &&
-               verifierServer.VerifierAddresses.Contains(verifierAddress);
-    }
-
 
     private bool IsGuardianExist(Hash caHash, GuardianInfo guardianInfo)
     {
