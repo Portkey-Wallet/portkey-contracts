@@ -68,7 +68,7 @@ public partial class CAContract
             IsLoginGuardian = false
         };
         State.HolderInfoMap[input.CaHash].GuardianList?.Guardians.Add(guardianAdded);
-        FillCreateChainId(State.HolderInfoMap[input.CaHash]);
+        FillCreateChainId(input.CaHash);
         Context.Fire(new GuardianAdded
         {
             CaHash = input.CaHash,
@@ -138,7 +138,7 @@ public partial class CAContract
         }
 
         State.HolderInfoMap[input.CaHash].GuardianList?.Guardians.Remove(toRemoveGuardian);
-        FillCreateChainId(State.HolderInfoMap[input.CaHash]);
+        FillCreateChainId(input.CaHash);
 
         if (State.LoginGuardianMap[toRemoveGuardian.IdentifierHash][toRemoveGuardian.VerifierId] != null)
         {
@@ -232,9 +232,7 @@ public partial class CAContract
             State.LoginGuardianMap[preGuardian.IdentifierHash].Remove(preGuardian.VerifierId);
             State.LoginGuardianMap[existPreGuardian.IdentifierHash][existPreGuardian.VerifierId] = input.CaHash;
         }
-
-        FillCreateChainId(State.HolderInfoMap[input.CaHash]);
-
+        FillCreateChainId(input.CaHash);
 
         Context.Fire(new GuardianUpdated
         {

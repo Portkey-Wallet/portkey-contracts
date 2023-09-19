@@ -23,7 +23,7 @@ public partial class CAContract
         ValidateManager(holderInfo, input.ManagerInfos);
 
         Assert(input.CreateChainId == Context.ChainId, "input.CreateChainId is not current ChainId");
-        FillCreateChainId(holderInfo);
+        FillCreateChainId(input.CaHash);
         Assert(input.CreateChainId == holderInfo.CreateChainId, "input.CreateChainId is not HolderInfo's CreateChainId");
         ValidateGuardianList(holderInfo.GuardianList, input.GuardianList);
         return new Empty();

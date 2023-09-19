@@ -50,7 +50,7 @@ public partial class CAContract
 
         State.GuardianMap[loginGuardian.IdentifierHash] = input.CaHash;
         
-        FillCreateChainId(State.HolderInfoMap[input.CaHash]);
+        FillCreateChainId(input.CaHash);
 
         Context.Fire(new LoginGuardianAdded
         {
@@ -121,7 +121,7 @@ public partial class CAContract
             });
         }
         
-        FillCreateChainId(State.HolderInfoMap[input.CaHash]);
+        FillCreateChainId(input.CaHash);
 
         return new Empty();
     }

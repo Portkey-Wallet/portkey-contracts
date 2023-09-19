@@ -60,7 +60,7 @@ public partial class CAContract
             "The amount of ManagerInfos out of limit");
 
         State.HolderInfoMap[caHash].ManagerInfos.Add(input.ManagerInfo);
-        FillCreateChainId(State.HolderInfoMap[caHash]);
+        FillCreateChainId(caHash);
         SetDelegator(caHash, input.ManagerInfo);
 
         SetContractDelegator(input.ManagerInfo);
@@ -90,7 +90,7 @@ public partial class CAContract
             "The amount of ManagerInfos out of limit");
 
         holderInfo.ManagerInfos.Add(input.ManagerInfo);
-        FillCreateChainId(holderInfo);
+        FillCreateChainId(input.CaHash);
         SetDelegator(input.CaHash, input.ManagerInfo);
 
         SetContractDelegator(input.ManagerInfo);
@@ -162,7 +162,7 @@ public partial class CAContract
         holderInfo.ManagerInfos.Remove(managerInfo);
         RemoveDelegator(caHash, managerInfo);
         RemoveContractDelegator(managerInfo);
-        FillCreateChainId(holderInfo);
+        FillCreateChainId(caHash);
 
         Context.Fire(new ManagerInfoRemoved
         {
@@ -206,7 +206,7 @@ public partial class CAContract
             });
         }
 
-        FillCreateChainId(holderInfo);
+        FillCreateChainId(input.CaHash);
 
         return new Empty();
     }
