@@ -23,7 +23,6 @@ public partial class CAContract
         output.CaAddress = Context.ConvertVirtualAddressToContractAddress(output.CaHash);
         output.GuardianList = holderInfo.GuardianList ?? new GuardianList();
         output.CreateChainId = holderInfo.CreateChainId;
-        output.JudgementStrategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
         return output;
     }
 }

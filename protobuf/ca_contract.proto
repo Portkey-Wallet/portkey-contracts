@@ -368,7 +368,6 @@ message GetHolderInfoOutput{
   GuardianList guardian_list = 3;
   repeated ManagerInfo manager_infos = 4;
   int32 create_chain_id = 5;
-  StrategyNode judgement_strategy = 6;
 }
 
 message SocialRecoveryInput {
