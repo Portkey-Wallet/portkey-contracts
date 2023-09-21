@@ -54,8 +54,6 @@ public partial class CAContractState : ContractState
     //
     public MappedState<Hash, bool> VerifierDocMap { get; set; }
 
-    public SingletonState<bool> OperationTypeInSignatureEnabled { get; set; }
-
     public MappedState<int, Address> CAContractAddresses { get; set; }
 
     public SingletonState<long> TokenDefaultTransferLimit { get; set; }

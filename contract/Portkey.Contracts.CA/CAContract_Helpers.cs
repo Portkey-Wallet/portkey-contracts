@@ -12,11 +12,6 @@ public partial class CAContract
 {
     private bool CheckVerifierSignatureAndDataCompatible(GuardianInfo guardianInfo, string methodName)
     {
-        if (State.OperationTypeInSignatureEnabled.Value)
-        {
-            return CheckVerifierSignatureAndData(guardianInfo, methodName);
-        }
-
         var verificationDoc = guardianInfo.VerificationInfo.VerificationDoc;
         if (verificationDoc == null || string.IsNullOrWhiteSpace(verificationDoc))
         {
