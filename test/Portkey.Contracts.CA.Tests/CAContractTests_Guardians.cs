@@ -66,11 +66,6 @@ public partial class CAContractTests
         {
             ContractAdmin = DefaultAddress,
         });
-        await CaContractStub.ChangeOperationTypeInSignatureEnabled.SendAsync(new OperationTypeInSignatureEnabledInput()
-        {
-            OperationTypeInSignatureEnabled = true
-        });
-
         {
             await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
             {
@@ -158,10 +153,7 @@ public partial class CAContractTests
         {
             ContractAdmin = DefaultAddress,
         });
-        await CaContractStub.ChangeOperationTypeInSignatureEnabled.SendAsync(new OperationTypeInSignatureEnabledInput()
-        {
-            OperationTypeInSignatureEnabled = true
-        });
+
         {
             await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
             {
@@ -343,10 +335,7 @@ public partial class CAContractTests
         {
             ContractAdmin = DefaultAddress,
         });
-        await CaContractStub.ChangeOperationTypeInSignatureEnabled.SendAsync(new OperationTypeInSignatureEnabledInput()
-        {
-            OperationTypeInSignatureEnabled = true
-        });
+
         {
             await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
             {
@@ -2475,14 +2464,7 @@ public partial class CAContractTests
         {
             ContractAdmin = DefaultAddress,
         });
-        await CaContractStub.ChangeOperationTypeInSignatureEnabled.SendAsync(new OperationTypeInSignatureEnabledInput()
-        {
-            OperationTypeInSignatureEnabled = true
-        });
-        await CaContractStub.ChangeOperationTypeInSignatureEnabled.SendAsync(new OperationTypeInSignatureEnabledInput()
-        {
-            OperationTypeInSignatureEnabled = false
-        });
+
 
         {
             await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput

@@ -259,10 +259,7 @@ public partial class CAContractTests
         {
             ContractAdmin = DefaultAddress,
         });
-        await CaContractStub.ChangeOperationTypeInSignatureEnabled.SendAsync(new OperationTypeInSignatureEnabledInput()
-        {
-            OperationTypeInSignatureEnabled = true
-        });
+
 
         await InitTestVerifierServer();
         await InitTestTransferLimitCaHolder();
