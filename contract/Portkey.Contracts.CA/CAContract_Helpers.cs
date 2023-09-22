@@ -64,10 +64,10 @@ public partial class CAContract
         //Check verifier address and data.
         var verifierAddress = docInfo.VerifierAddress;
         var verificationInfo = guardianInfo.VerificationInfo;
-        var verifierIdMapper = State.VerifierIdMap[verificationInfo.Id];
-        var verifierServer = 
-            State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(v => v.Id == 
-                (IsValidHash(verifierIdMapper) ? verifierIdMapper : verificationInfo.Id));
+        var currentVerifierId = State.RemovedToCurrentVerifierIdMap[verificationInfo.Id];
+        var verifierServer = IsValidHash(currentVerifierId)
+            ? State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(v => v.Id == currentVerifierId)
+            : State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(v => v.Id == verificationInfo.Id);
 
         //Recovery verifier address.
         var data = HashHelper.ComputeFrom(verificationInfo.VerificationDoc);

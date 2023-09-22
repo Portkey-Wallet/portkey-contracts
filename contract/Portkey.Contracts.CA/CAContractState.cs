@@ -24,7 +24,10 @@ public partial class CAContractState : ContractState
     /// </summary>
     public MappedState<Hash, Hash> GuardianMap { get; set; }
 
-    public MappedState<Hash, Hash> VerifierIdMap { get; set; }
+    /// <summary>
+    /// removedId -> currentId
+    /// </summary>
+    public MappedState<Hash, Hash> RemovedToCurrentVerifierIdMap { get; set; }
 
     /// <summary>
     /// HolderInfo Hash -> HolderInfo

@@ -23,18 +23,19 @@ public partial class CAContract
 
         State.VerifiersServerList.Value ??= new VerifierServerList();
 
-        var serverId = HashHelper.ConcatAndCompute(Context.TransactionId,
-            HashHelper.ComputeFrom(Context.Self));
-        var validVerifierId = IsValidHash(input.VerifierId);
+        var isSpecifyVerifierId = IsValidHash(input.VerifierId);
         var verifierServerList = State.VerifiersServerList.Value;
-        var server = verifierServerList.VerifierServers
-            .FirstOrDefault(server => server.Name == input.Name && (!validVerifierId || server.Id == input.VerifierId));
+        var server = isSpecifyVerifierId
+            ? verifierServerList.VerifierServers.FirstOrDefault(o => o.Name == input.Name && o.Id == input.VerifierId)
+            : verifierServerList.VerifierServers.FirstOrDefault(o => o.Name == input.Name);
 
+        var serverId = isSpecifyVerifierId ? input.VerifierId : HashHelper.ConcatAndCompute(Context.TransactionId,
+            HashHelper.ComputeFrom(Context.Self));
         if (server == null)
         {
             State.VerifiersServerList.Value.VerifierServers.Add(new VerifierServer
             {
-                Id = validVerifierId ? input.VerifierId : serverId,
+                Id = serverId,
                 Name = input.Name,
                 ImageUrl = input.ImageUrl,
                 EndPoints = { input.EndPoints },
@@ -72,7 +73,7 @@ public partial class CAContract
         {
             VerifierServer = new VerifierServer
             {
-                Id = validVerifierId ? input.VerifierId : serverId,
+                Id = serverId,
                 Name = input.Name,
                 ImageUrl = input.ImageUrl,
                 EndPoints = { input.EndPoints },
@@ -163,28 +164,28 @@ public partial class CAContract
         return output;
     }
     
-    public override Empty AddVerifierIdMapper(AddVerifierIdMapperInput input)
+    public override Empty AddRemovedToCurrentVerifierIdMapper(AddRemovedToCurrentVerifierIdMapperInput input)
     {
         Assert(State.Admin.Value == Context.Sender, "No permission");
         Assert(input.Mappers.Count > 0, "Invalid input");
         foreach (var mapper in input.Mappers)
         {
-            var verifierServer = State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(o => o.Id == mapper.ToId);
+            var verifierServer = State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(o => o.Id == mapper.CurrentId);
             Assert(verifierServer != null, "Destination verifierServer not existed");
-            State.VerifierIdMap[mapper.FromId] = mapper.ToId;
+            State.RemovedToCurrentVerifierIdMap[mapper.RemovedId] = mapper.CurrentId;
         }
         return new Empty();
     }
 
-    public override GetVerifierIdMapperOutput GetVerifierIdMapper(Hash input)
+    public override GetRemovedToCurrentVerifierIdMapperOutput GetRemovedToCurrentVerifierIdMapper(Hash input)
     {
-        var toId = State.VerifierIdMap[input];
-        return new GetVerifierIdMapperOutput
+        var toId = State.RemovedToCurrentVerifierIdMap[input];
+        return new GetRemovedToCurrentVerifierIdMapperOutput
         {
-            Mapper = new VerifierIdMapperInfo()
+            Mapper = new RemovedToCurrentVerifierIdMapperInfo()
             {
-                FromId = input,
-                ToId = toId
+                RemovedId = input,
+                CurrentId = toId
             }
         };
     }

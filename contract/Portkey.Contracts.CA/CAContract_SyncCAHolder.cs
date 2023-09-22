@@ -17,28 +17,31 @@ public partial class CAContract
         Assert(input.ManagerInfos != null, "input.ManagerInfos is null");
 
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
-
         ValidateLoginGuardian(input.CaHash, holderInfo, input.LoginGuardians);
 
         ValidateManager(holderInfo, input.ManagerInfos);
-
-        Assert(input.CreateChainId == Context.ChainId, "input.CreateChainId is not current ChainId");
-        FillCreateChainId(input.CaHash);
-        Assert(input.CreateChainId == holderInfo.CreateChainId, "input.CreateChainId is not HolderInfo's CreateChainId");
+        AssertCreateChain(holderInfo);
+        if (holderInfo.CreateChainId == 0)
+        {
+            holderInfo.CreateChainId = Context.ChainId;
+        }
+        Assert(holderInfo.CreateChainId == input.CreateChainId, "Invalid input createChainId.");
+        Assert(input.GuardianList?.Guardians?.Count > 0, "Input guardianList is empty.");
+        Assert(holderInfo.GuardianList.Guardians.Count == input.GuardianList.Guardians.Count, 
+            "The amount of input.GuardianList not equals to HolderInfo's GuardianList");
         ValidateGuardianList(holderInfo.GuardianList, input.GuardianList);
         return new Empty();
     }
 
-    private void ValidateGuardianList(GuardianList holdInfoGuardianList, GuardianList inputGuardianList)
+    private void ValidateGuardianList(GuardianList desGuardianList, GuardianList srcGuardianList)
     {
-        Assert(inputGuardianList != null, "input.GuardianList is null");
-        foreach (var guardianInfo in inputGuardianList.Guardians)
+        foreach (var guardianInfo in desGuardianList.Guardians)
         {
-            var searchGuardian = holdInfoGuardianList.Guardians.FirstOrDefault(
+            var searchGuardian = srcGuardianList.Guardians.FirstOrDefault(
                 g => g.IdentifierHash == guardianInfo.IdentifierHash && g.Type == guardianInfo.Type &&
                      g.VerifierId == guardianInfo.VerifierId
             );
-            Assert(searchGuardian != null, $"Guardian:{guardianInfo.VerifierId} is not in HolderInfo's GuardianList");
+            Assert(searchGuardian != null, $"Guardian:{guardianInfo.VerifierId} is not in input GuardianList");
         }
     }
 
@@ -139,7 +142,7 @@ public partial class CAContract
         {
             holderInfo.GuardianList.Guardians.Remove(guardian);
         }
-
+        
         var guardiansUpdate = new RepeatedField<Guardian>();
         foreach (var guardianInput in transactionInput.GuardianList.Guardians)
         {

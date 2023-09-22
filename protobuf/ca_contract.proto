@@ -80,7 +80,7 @@ service CAContract {
 
   rpc GetVerifierServers (google.protobuf.Empty) returns (GetVerifierServersOutput) {option (aelf.is_view) = true;}
   
-  rpc GetVerifierIdMapper (aelf.Hash) returns (GetVerifierIdMapperOutput) {option (aelf.is_view) = true;}
+  rpc GetRemovedToCurrentVerifierIdMapper (aelf.Hash) returns (GetRemovedToCurrentVerifierIdMapperOutput) {option (aelf.is_view) = true;}
 
   rpc GetCAServers (google.protobuf.Empty) returns (GetCAServersOutput) {option (aelf.is_view) = true;}
 
@@ -113,7 +113,7 @@ service CAContract {
 
   rpc SetCAContractAddresses (SetCAContractAddressesInput) returns (google.protobuf.Empty) {}
   
-  rpc AddVerifierIdMapper (AddVerifierIdMapperInput) returns (google.protobuf.Empty) {}
+  rpc AddRemovedToCurrentVerifierIdMapper (AddRemovedToCurrentVerifierIdMapperInput) returns (google.protobuf.Empty) {}
   
   // approve
   rpc ManagerApprove(ManagerApproveInput) returns (google.protobuf.Empty) {}
@@ -218,13 +218,13 @@ message AdminOutput{
   aelf.Address address = 1;
 }
 
-message AddVerifierIdMapperInput {
-    repeated VerifierIdMapperInfo mappers = 1;
+message AddRemovedToCurrentVerifierIdMapperInput {
+    repeated RemovedToCurrentVerifierIdMapperInfo mappers = 1;
 }
 
-message VerifierIdMapperInfo {
-   aelf.Hash from_id = 1;
-   aelf.Hash to_id = 2;
+message RemovedToCurrentVerifierIdMapperInfo {
+   aelf.Hash removed_id = 1;
+   aelf.Hash current_id = 2;
 }
 
 
@@ -427,8 +427,8 @@ message GetVerifierServersOutput {
   repeated VerifierServer verifier_servers = 1;
 }
 
-message GetVerifierIdMapperOutput {
-  VerifierIdMapperInfo mapper = 1;
+message GetRemovedToCurrentVerifierIdMapperOutput {
+  RemovedToCurrentVerifierIdMapperInfo mapper = 1;
 }
 
 message GetCAServersOutput {

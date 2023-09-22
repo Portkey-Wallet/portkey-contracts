@@ -118,23 +118,12 @@ public partial class CAContract : CAContractContainer.CAContractBase
 
         return new Empty();
     }
-
-    private void FillCreateChainId(Hash caHash)
+    
+    private void AssertCreateChain(HolderInfo holderInfo)
     {
-        var holderInfo = State.HolderInfoMap[caHash];
-        if (holderInfo == null || holderInfo.CreateChainId > 0)
-            return;
-        if (holderInfo.GuardianList != null && holderInfo.GuardianList.Guardians != null &&
-            holderInfo.GuardianList.Guardians.Count > 0)
-        {
-            holderInfo.CreateChainId = Context.ChainId;
-        }
-    }
-
-    private void AssertOnCreateChain(HolderInfo holderInfo)
-    {
-        if (holderInfo.CreateChainId != 0 && holderInfo.GuardianList != null &&
-            holderInfo.GuardianList.Guardians != null && holderInfo.GuardianList.Guardians.Count > 0)
+        Assert(holderInfo.GuardianList != null && holderInfo.GuardianList.Guardians != null && 
+               holderInfo.GuardianList.Guardians.Count > 0, "Not on registered chain");
+        if (holderInfo.CreateChainId > 0)
         {
             Assert(holderInfo.CreateChainId == Context.ChainId, "Not on registered chain");
         }

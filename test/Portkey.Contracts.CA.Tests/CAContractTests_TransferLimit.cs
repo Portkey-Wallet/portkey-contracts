@@ -300,26 +300,26 @@ public partial class CAContractTests
         _verifierId1 = _verifierServers[1].Id;
         _verifierId2 = _verifierServers[2].Id;
 
-        await CaContractStub.AddVerifierIdMapper.SendAsync(new AddVerifierIdMapperInput()
+        await CaContractStub.AddRemovedToCurrentVerifierIdMapper.SendAsync(new AddRemovedToCurrentVerifierIdMapperInput()
         {
             Mappers =
             {
-                new VerifierIdMapperInfo[]
+                new RemovedToCurrentVerifierIdMapperInfo[]
                 {
                     new()
                     {
-                        FromId = _verifierServers[0].Id,
-                        ToId = _verifierServers[0].Id
+                        RemovedId = _verifierServers[0].Id,
+                        CurrentId = _verifierServers[0].Id
                     },
                     new()
                     {
-                        FromId = _verifierServers[1].Id,
-                        ToId = _verifierServers[1].Id
+                        RemovedId = _verifierServers[1].Id,
+                        CurrentId = _verifierServers[1].Id
                     },
                     new()
                     {
-                        FromId = _verifierServers[2].Id,
-                        ToId = _verifierServers[2].Id
+                        RemovedId = _verifierServers[2].Id,
+                        CurrentId = _verifierServers[2].Id
                     }
                 }
             }
