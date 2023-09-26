@@ -126,7 +126,7 @@ public partial class CAContractTests
             DailyLimit = _elfDefaultDailyLimit
         });
 
-        var transferLimitResult = await CaContractStub.GetTransferLimit.CallAsync(new GetTransferLimitInput()
+        var transferLimitResult = await CaContractStub.GetTransferLimit.CallAsync(new GetTransferLimitInput
         {
             CaHash = _transferLimitTestCaHash,
             Symbol = "CPU",
@@ -141,7 +141,6 @@ public partial class CAContractTests
     public async Task SetTransferLimit_NoLimitTest()
     {
         await InitTransferLimitTest();
-
         var setLimitVerifyTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
         var setLimitOpType = Convert.ToInt32(OperationType.ModifyTransferLimit).ToString();
@@ -176,38 +175,35 @@ public partial class CAContractTests
     public async Task SetTransferLimit_ErrorOperationTypeTest()
     {
         await InitTransferLimitTest();
-        {
-            var setLimitVerifyTime = DateTime.UtcNow;
-            var salt = Guid.NewGuid().ToString("N");
-            var setLimitOpType = Convert.ToInt32(OperationType.Approve).ToString();
-            var setLimitSign = GenerateSignature(VerifierKeyPair, VerifierAddress, setLimitVerifyTime, _guardian, 0,
-                salt,
-                setLimitOpType);
-            var executionResult = await CaContractStubManagerInfo1.SetTransferLimit.SendAsync(
-                new SetTransferLimitInput
+        var setLimitVerifyTime = DateTime.UtcNow;
+        var salt = Guid.NewGuid().ToString("N");
+        var setLimitOpType = Convert.ToInt32(OperationType.Approve).ToString();
+        var setLimitSign = GenerateSignature(VerifierKeyPair, VerifierAddress, setLimitVerifyTime, _guardian, 0,
+            salt, setLimitOpType);
+        var executionResult = await CaContractStubManagerInfo1.SetTransferLimit.SendWithExceptionAsync(
+            new SetTransferLimitInput
+            {
+                CaHash = _transferLimitTestCaHash,
+                GuardiansApproved =
                 {
-                    CaHash = _transferLimitTestCaHash,
-                    GuardiansApproved =
+                    new GuardianInfo
                     {
-                        new GuardianInfo
+                        IdentifierHash = _guardian,
+                        Type = GuardianType.OfEmail,
+                        VerificationInfo = new VerificationInfo
                         {
-                            IdentifierHash = _guardian,
-                            Type = GuardianType.OfEmail,
-                            VerificationInfo = new VerificationInfo
-                            {
-                                Id = _verifierServers[0].Id,
-                                Signature = setLimitSign,
-                                VerificationDoc =
-                                    $"{0},{_guardian.ToHex()},{setLimitVerifyTime},{VerifierAddress.ToBase58()},{salt},{setLimitOpType}"
-                            }
+                            Id = _verifierServers[0].Id,
+                            Signature = setLimitSign,
+                            VerificationDoc =
+                                $"{0},{_guardian.ToHex()},{setLimitVerifyTime},{VerifierAddress.ToBase58()},{salt},{setLimitOpType}"
                         }
-                    },
-                    Symbol = "ELF",
-                    SingleLimit = _elfDefaultSingleLimit,
-                    DailyLimit = _elfDefaultDailyLimit
-                });
-            //executionResult.TransactionResult.Error.ShouldContain("JudgementStrategy validate failed");
-        }
+                    }
+                },
+                Symbol = "ELF",
+                SingleLimit = _elfDefaultSingleLimit,
+                DailyLimit = _elfDefaultDailyLimit
+            });
+        executionResult.TransactionResult.Error.ShouldContain("JudgementStrategy validate failed");
     }
 
     [Fact]

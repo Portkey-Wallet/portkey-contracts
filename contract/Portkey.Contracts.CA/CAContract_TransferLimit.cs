@@ -24,9 +24,9 @@ public partial class CAContract
             DayLimit = input.DailyLimit,
             SingleLimit = input.SingleLimit
         };
-        State.DailyTransferredAmount[input.CaHash][input.Symbol] = new TransferredAmount()
+        State.DailyTransferredAmount[input.CaHash][input.Symbol] = new TransferredAmount
         {
-            UpdateTime = GetCurrentBlockTimeString(Context.CurrentBlockTime),
+            UpdateTime = Context.CurrentBlockTime,
             DailyTransfered = 0
         };
         Context.Fire(new TransferLimitChanged()
@@ -50,37 +50,38 @@ public partial class CAContract
         {
             SingleLimit = transferLimit.SingleLimit,
             DailyLimit = transferLimit.DayLimit,
-            DailyTransferredAmount = State.DailyTransferredAmount[input.CaHash] != null &&
-                                     State.DailyTransferredAmount[input.CaHash][input.Symbol] != null && !IsOverDay(
-                                         State.DailyTransferredAmount[input.CaHash][input.Symbol].UpdateTime,
-                                         GetCurrentBlockTimeString(Context.CurrentBlockTime))
-                ? State.DailyTransferredAmount[input.CaHash][input.Symbol].DailyTransfered
-                : 0
+            DailyTransferredAmount =
+                State.DailyTransferredAmount[input.CaHash]?[input.Symbol] != null && !IsOverDay(
+                    State.DailyTransferredAmount[input.CaHash][input.Symbol].UpdateTime, Context.CurrentBlockTime)
+                    ? State.DailyTransferredAmount[input.CaHash][input.Symbol].DailyTransfered
+                    : 0
         };
     }
 
     public override Empty SetDefaultTokenTransferLimit(SetDefaultTokenTransferLimitInput input)
     {
         Assert(Context.Sender == State.Admin.Value, "No permission.");
-        Assert(!string.IsNullOrEmpty(input.Symbol) && input.Symbol.All(IsValidSymbolChar), "Invalid symbol.");
+        Assert(!string.IsNullOrEmpty(input.Symbol), "Invalid symbol.");
         Assert(GetTokenInfo(input.Symbol) != null && GetTokenInfo(input.Symbol).Symbol == input.Symbol,
             $"Not exist symbol {input.Symbol}");
         Assert(input.DefaultLimit > 0, "DefaultLimit cannot be less than 0.");
-        State.DefaultTokenTransferLimit[input.Symbol] = input.DefaultLimit;
+        State.TokenDefaultTransferLimit[input.Symbol] = input.DefaultLimit;
         return new Empty();
     }
 
     public override GetDefaultTokenTransferLimitOutput GetDefaultTokenTransferLimit(
         GetDefaultTokenTransferLimitInput input)
     {
-        Assert(!string.IsNullOrEmpty(input.Symbol) && input.Symbol.All(IsValidSymbolChar), "Invalid symbol.");
-        return new GetDefaultTokenTransferLimitOutput()
+        Assert(!string.IsNullOrEmpty(input.Symbol), "Invalid symbol.");
+        Assert(GetTokenInfo(input.Symbol) != null && GetTokenInfo(input.Symbol).Symbol == input.Symbol,
+            $"Not exist symbol {input.Symbol}");
+        return new GetDefaultTokenTransferLimitOutput
         {
             Symbol = input.Symbol,
-            DefaultLimit = State.DefaultTokenTransferLimit[input.Symbol] > 0
-                ? State.DefaultTokenTransferLimit[input.Symbol]
-                : State.TokenDefaultTransferLimit.Value > 0
-                    ? State.TokenDefaultTransferLimit.Value
+            DefaultLimit = State.TokenDefaultTransferLimit[input.Symbol] > 0
+                ? State.TokenDefaultTransferLimit[input.Symbol]
+                : State.TokenInitialTransferLimit.Value > 0
+                    ? State.TokenInitialTransferLimit.Value
                     : CAContractConstants.TokenDefaultTransferLimitAmount
         };
     }
@@ -105,10 +106,14 @@ public partial class CAContract
             guardianApprovedAmount++;
         }
 
-        Assert(holderInfo.GuardianList != null, "JudgementStrategy validate failed");
+        var holderJudgementStrategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
+        Assert(IsJudgementStrategySatisfied(holderInfo.GuardianList != null
+                ? holderInfo.GuardianList!.Guardians.Count
+                : 0, guardianApprovedAmount, holderJudgementStrategy),
+            "JudgementStrategy validate failed");
     }
 
-    private void UpdateDailyTransferredLimit(Hash caHash, string symbol, long amount)
+    private void UpdateDailyTransferredAmount(Hash caHash, string symbol, long amount)
     {
         Assert(amount > 0, "Invalid amount.");
         // When transferlimit is -1, no limit calculation is performed.
@@ -119,8 +124,7 @@ public partial class CAContract
                                 new TransferredAmount() { DailyTransfered = 0 };
         Assert(amount <= transferLimit.SingleLimit,
             $"The transfer amount {amount} has exceeded the single transfer limit {transferLimit.SingleLimit}");
-        var blockTime = GetCurrentBlockTimeString(Context.CurrentBlockTime);
-        var transferred = IsOverDay(transferredAmount.UpdateTime, blockTime)
+        var transferred = IsOverDay(transferredAmount.UpdateTime, Context.CurrentBlockTime)
             ? 0
             : transferredAmount.DailyTransfered;
         Assert(amount <= transferLimit.DayLimit - transferred,
@@ -128,8 +132,8 @@ public partial class CAContract
         State.DailyTransferredAmount[caHash][symbol] = new TransferredAmount
         {
             DailyTransfered = transferred + amount,
-            UpdateTime = IsOverDay(transferredAmount.UpdateTime, blockTime)
-                ? blockTime
+            UpdateTime = IsOverDay(transferredAmount.UpdateTime, Context.CurrentBlockTime)
+                ? Context.CurrentBlockTime
                 : transferredAmount.UpdateTime
         };
     }
@@ -137,11 +141,11 @@ public partial class CAContract
     private TransferLimit GetAccountTransferLimit(Hash caHash, string symbol)
     {
         // If the currency does not exist, the TokenDefaultTransferLimit is used
-        var defaultTokenTransferLimit = State.DefaultTokenTransferLimit[symbol] > 0
-            ? State.DefaultTokenTransferLimit[symbol]
+        var defaultTokenTransferLimit = State.TokenDefaultTransferLimit[symbol] > 0
+            ? State.TokenDefaultTransferLimit[symbol]
             // If TokenDefaultTransferLimit is not configured, the default transfer limit will be used
-            : State.TokenDefaultTransferLimit.Value > 0
-                ? State.TokenDefaultTransferLimit.Value
+            : State.TokenInitialTransferLimit.Value > 0
+                ? State.TokenInitialTransferLimit.Value
                 : CAContractConstants.TokenDefaultTransferLimitAmount;
         if (State.TransferLimit[caHash] == null || State.TransferLimit[caHash][symbol] == null)
         {

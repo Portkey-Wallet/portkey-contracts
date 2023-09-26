@@ -234,12 +234,14 @@ public partial class CAContract
         Assert(input.ContractAddress != null && !string.IsNullOrWhiteSpace(input.MethodName),
             "Invalid input.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
-        CheckForwardCallContractMethodPermission(Context.Sender, input.MethodName);
+        if (State.ForbiddenForwardCallContractMethod[input.ContractAddress]?[input.MethodName] != null)
+            Assert(!State.ForbiddenForwardCallContractMethod[input.ContractAddress][input.MethodName.ToLower()],
+                $"Does not have permission for {input.MethodName}.");
         if (input.MethodName == nameof(State.TokenContract.Transfer) &&
             input.ContractAddress == State.TokenContract.Value)
         {
             var transferInput = TransferInput.Parser.ParseFrom(input.Args);
-            UpdateDailyTransferredLimit(input.CaHash, transferInput.Symbol, transferInput.Amount);
+            UpdateDailyTransferredAmount(input.CaHash, transferInput.Symbol, transferInput.Amount);
         }
 
         Context.SendVirtualInline(input.CaHash, input.ContractAddress, input.MethodName, input.Args);
@@ -251,7 +253,7 @@ public partial class CAContract
         Assert(input.CaHash != null, "CA hash is null.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
         Assert(input.To != null && !string.IsNullOrWhiteSpace(input.Symbol), "Invalid input.");
-        UpdateDailyTransferredLimit(input.CaHash, input.Symbol, input.Amount);
+        UpdateDailyTransferredAmount(input.CaHash, input.Symbol, input.Amount);
         Context.SendVirtualInline(input.CaHash, State.TokenContract.Value, nameof(State.TokenContract.Transfer),
             new TransferInput
             {
@@ -298,9 +300,7 @@ public partial class CAContract
                 Amount = input.Amount,
                 Symbol = input.Symbol,
             }.ToByteString());
-        Context.LogDebug(() =>
-            $"after Context.SendVirtualInline: caHash == {input.CaHash}, symbol == {input.Symbol}, time=={Context.CurrentBlockTime}");
-        Context.Fire(new ManagerApproved()
+        Context.Fire(new ManagerApproved
         {
             CaHash = input.CaHash,
             Spender = input.Spender,
@@ -335,14 +335,5 @@ public partial class CAContract
     private ManagerInfo FindManagerInfo(RepeatedField<ManagerInfo> managerInfos, Address address)
     {
         return managerInfos.FirstOrDefault(s => s.Address == address);
-    }
-
-    private void CheckForwardCallContractMethodPermission(Address address, string method)
-    {
-        if (!State.ManagerApproveForbiddenEnabled.Value) return;
-        Assert(method != nameof(State.TokenContract.Approve), "No permission.");
-        if (State.ForbiddenForwardCallContractMethod[address] == null) return;
-        Assert(!State.ForbiddenForwardCallContractMethod[address][method.ToLower()],
-            $"Does not have permission for {method}.");
     }
 }

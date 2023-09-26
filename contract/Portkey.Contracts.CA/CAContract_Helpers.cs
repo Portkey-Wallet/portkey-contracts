@@ -17,6 +17,7 @@ public partial class CAContract
         {
             return false;
         }
+
         return CheckVerifierSignatureAndData(guardianInfo, methodName);
     }
 
@@ -65,7 +66,7 @@ public partial class CAContract
         var verifierAddress = docInfo.VerifierAddress;
         var verificationInfo = guardianInfo.VerificationInfo;
         var currentVerifierId = State.RemovedToCurrentVerifierIdMap[verificationInfo.Id];
-        var verifierServer = IsValidHash(currentVerifierId)
+        var verifierServer =IsValidHash(currentVerifierId)
             ? State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(v => v.Id == currentVerifierId)
             : State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(v => v.Id == verificationInfo.Id);
 
@@ -93,11 +94,13 @@ public partial class CAContract
 
         if (verifierDoc.Length == 7)
         {
-            if (methodName != nameof(OperationType.Approve).ToLower() && methodName != nameof(OperationType.ModifyTransferLimit).ToLower())
+            if (methodName != nameof(OperationType.Approve).ToLower() &&
+                methodName != nameof(OperationType.ModifyTransferLimit).ToLower())
             {
                 return int.Parse(verifierDoc[6]) == Context.ChainId;
             }
         }
+
         return true;
     }
 
@@ -160,21 +163,16 @@ public partial class CAContract
         return verificationDoc.Split(",")[4];
     }
 
-    private static bool IsValidSymbolChar(char character)
+    private static bool IsOverDay(Timestamp lastDayTime, Timestamp nowDayTime)
     {
-        return (character >= 'A' && character <= 'Z') || (character >= '0' && character <= '9');
-    }
-
-    private static bool IsOverDay(string lastDayTime, string nowDayTime)
-    {
-        return string.IsNullOrEmpty(lastDayTime) || DateTime.Parse(lastDayTime) < DateTime.Parse(nowDayTime);
+        return lastDayTime == null || DateTime.Parse(lastDayTime.ToDateTime().ToString("yyyy-MM-dd")) < DateTime.Parse(nowDayTime.ToDateTime().ToString("yyyy-MM-dd"));
     }
 
     private static string GetCurrentBlockTimeString(Timestamp currentBlockTime)
     {
         return currentBlockTime.ToDateTime().ToString("yyyyMMdd");
     }
-    
+
     private TokenInfo GetTokenInfo(string symbol)
     {
         return State.TokenContract.GetTokenInfo.Call(new GetTokenInfoInput

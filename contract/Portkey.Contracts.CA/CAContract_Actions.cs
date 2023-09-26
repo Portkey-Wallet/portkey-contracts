@@ -9,7 +9,7 @@ using Google.Protobuf.WellKnownTypes;
 
 namespace Portkey.Contracts.CA;
 
-public partial class CAContract : CAContractContainer.CAContractBase
+public partial class CAContract : CAContractImplContainer.CAContractImplBase
 {
     public override Empty Initialize(InitializeInput input)
     {
@@ -255,15 +255,6 @@ public partial class CAContract : CAContractContainer.CAContractBase
             State.CAContractAddresses[caContractAddress.ChainId] = caContractAddress.Address;
         }
 
-        return new Empty();
-    }
-
-    public override Empty SetManagerApproveForbiddenEnabled(ManagerApproveForbiddenEnabledInput input)
-    {
-        Assert(State.Admin.Value == Context.Sender, "No permission");
-        Assert(State.ManagerApproveForbiddenEnabled.Value != input.ManagerApproveForbiddenEnabled,
-            $"Already set {State.ManagerApproveForbiddenEnabled.Value}, no need to repeat settings");
-        State.ManagerApproveForbiddenEnabled.Value = input.ManagerApproveForbiddenEnabled;
         return new Empty();
     }
 }

@@ -8,11 +8,53 @@ package caimpl;
 import "aelf/core.proto";
 import "aelf/options.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "ca_contract.proto";
 
 option csharp_namespace = "Portkey.Contracts.CA";
 
 service CAContractImpl {
+  option (aelf.csharp_state) = "Portkey.Contracts.CA.CAContractState";
+  option (aelf.base) = "ca_contract.proto";
+  
+  // approve
+  rpc ManagerApprove(ManagerApproveInput) returns (google.protobuf.Empty) {}
+        
+  rpc SetForbiddenForwardCallContractMethod(SetForbiddenForwardCallContractMethodInput) returns (google.protobuf.Empty) {}  
+  
+  rpc SetTransferLimit(SetTransferLimitInput) returns (google.protobuf.Empty) {}  
+  
+  rpc GetTransferLimit(GetTransferLimitInput) returns (GetTransferLimitOutput) {option (aelf.is_view) = true;}
+      
+  rpc SetDefaultTokenTransferLimit(SetDefaultTokenTransferLimitInput) returns (google.protobuf.Empty) {}    
+  
+  rpc GetDefaultTokenTransferLimit(GetDefaultTokenTransferLimitInput) returns (GetDefaultTokenTransferLimitOutput) {option (aelf.is_view) = true;}   
+        
+}
 
+message ManagerApproveInput {
+    aelf.Hash ca_hash = 1;
+    aelf.Address spender = 2;
+    repeated ca.GuardianInfo guardians_approved = 3;
+    string symbol = 4;
+    int64 amount = 5;
+    External external = 6;
+}
+message ManagerApproved {
+    option (aelf.is_event) = true;
+    aelf.Hash ca_hash = 1;
+    aelf.Address spender = 2;
+    string symbol = 3;
+    int64 amount = 4;
+    External external = 5;
+}
+
+message SetTransferLimitInput {
+    aelf.Hash ca_hash = 1;
+    string symbol = 2;
+    repeated ca.GuardianInfo guardians_approved = 3;
+    int64 single_limit = 4;
+    int64 daily_limit = 5;
 }
 
 message GetTransferLimitInput {
@@ -60,7 +102,7 @@ message TransferLimit {
 }
 message TransferredAmount {
     int64 daily_transfered = 1;
-    string update_time = 2;
+    google.protobuf.Timestamp update_time = 2;
 }
 
 message External {
