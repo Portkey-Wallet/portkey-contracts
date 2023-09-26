@@ -24,9 +24,9 @@ public partial class CAContract
             DayLimit = input.DailyLimit,
             SingleLimit = input.SingleLimit
         };
-        State.DailyTransferredAmount[input.CaHash][input.Symbol] = new TransferredAmount()
+        State.DailyTransferredAmount[input.CaHash][input.Symbol] = new TransferredAmount
         {
-            UpdateTime = GetCurrentBlockTimeString(Context.CurrentBlockTime),
+            UpdateTime = Context.CurrentBlockTime,
             DailyTransfered = 0
         };
         Context.Fire(new TransferLimitChanged()
@@ -50,19 +50,18 @@ public partial class CAContract
         {
             SingleLimit = transferLimit.SingleLimit,
             DailyLimit = transferLimit.DayLimit,
-            DailyTransferredAmount = State.DailyTransferredAmount[input.CaHash] != null &&
-                                     State.DailyTransferredAmount[input.CaHash][input.Symbol] != null && !IsOverDay(
-                                         State.DailyTransferredAmount[input.CaHash][input.Symbol].UpdateTime,
-                                         GetCurrentBlockTimeString(Context.CurrentBlockTime))
-                ? State.DailyTransferredAmount[input.CaHash][input.Symbol].DailyTransfered
-                : 0
+            DailyTransferredAmount =
+                State.DailyTransferredAmount[input.CaHash]?[input.Symbol] != null && !IsOverDay(
+                    State.DailyTransferredAmount[input.CaHash][input.Symbol].UpdateTime, Context.CurrentBlockTime)
+                    ? State.DailyTransferredAmount[input.CaHash][input.Symbol].DailyTransfered
+                    : 0
         };
     }
 
     public override Empty SetDefaultTokenTransferLimit(SetDefaultTokenTransferLimitInput input)
     {
         Assert(Context.Sender == State.Admin.Value, "No permission.");
-        Assert(!string.IsNullOrEmpty(input.Symbol) && input.Symbol.All(IsValidSymbolChar), "Invalid symbol.");
+        Assert(!string.IsNullOrEmpty(input.Symbol), "Invalid symbol.");
         Assert(GetTokenInfo(input.Symbol) != null && GetTokenInfo(input.Symbol).Symbol == input.Symbol,
             $"Not exist symbol {input.Symbol}");
         Assert(input.DefaultLimit > 0, "DefaultLimit cannot be less than 0.");
@@ -73,8 +72,10 @@ public partial class CAContract
     public override GetDefaultTokenTransferLimitOutput GetDefaultTokenTransferLimit(
         GetDefaultTokenTransferLimitInput input)
     {
-        Assert(!string.IsNullOrEmpty(input.Symbol) && input.Symbol.All(IsValidSymbolChar), "Invalid symbol.");
-        return new GetDefaultTokenTransferLimitOutput()
+        Assert(!string.IsNullOrEmpty(input.Symbol), "Invalid symbol.");
+        Assert(GetTokenInfo(input.Symbol) != null && GetTokenInfo(input.Symbol).Symbol == input.Symbol,
+            $"Not exist symbol {input.Symbol}");
+        return new GetDefaultTokenTransferLimitOutput
         {
             Symbol = input.Symbol,
             DefaultLimit = State.DefaultTokenTransferLimit[input.Symbol] > 0
@@ -119,8 +120,7 @@ public partial class CAContract
                                 new TransferredAmount() { DailyTransfered = 0 };
         Assert(amount <= transferLimit.SingleLimit,
             $"The transfer amount {amount} has exceeded the single transfer limit {transferLimit.SingleLimit}");
-        var blockTime = GetCurrentBlockTimeString(Context.CurrentBlockTime);
-        var transferred = IsOverDay(transferredAmount.UpdateTime, blockTime)
+        var transferred = IsOverDay(transferredAmount.UpdateTime, Context.CurrentBlockTime)
             ? 0
             : transferredAmount.DailyTransfered;
         Assert(amount <= transferLimit.DayLimit - transferred,
@@ -128,8 +128,8 @@ public partial class CAContract
         State.DailyTransferredAmount[caHash][symbol] = new TransferredAmount
         {
             DailyTransfered = transferred + amount,
-            UpdateTime = IsOverDay(transferredAmount.UpdateTime, blockTime)
-                ? blockTime
+            UpdateTime = IsOverDay(transferredAmount.UpdateTime, Context.CurrentBlockTime)
+                ? Context.CurrentBlockTime
                 : transferredAmount.UpdateTime
         };
     }
