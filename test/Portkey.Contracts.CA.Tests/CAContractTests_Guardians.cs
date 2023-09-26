@@ -42,17 +42,15 @@ public partial class CAContractTests
     }
 
     private ByteString GenerateSignature(ECKeyPair verifier, Address verifierAddress,
-        DateTime verificationTime, Hash guardianType, int type, string salt, string operationType,
-        string merkleTree = "")
+        DateTime verificationTime, Hash guardianType, int type, string salt, string operationType)
     {
         if (string.IsNullOrWhiteSpace(salt))
         {
             salt = Salt;
         }
 
-        var data = !string.IsNullOrWhiteSpace(merkleTree)
-            ? $"{type},{guardianType.ToHex()},{verificationTime},{verifierAddress.ToBase58()},{salt},{operationType},{merkleTree}"
-            : $"{type},{guardianType.ToHex()},{verificationTime},{verifierAddress.ToBase58()},{salt},{operationType}";
+        var data =
+            $"{type},{guardianType.ToHex()},{verificationTime},{verifierAddress.ToBase58()},{salt},{operationType}";
         var dataHash = HashHelper.ComputeFrom(data);
         var signature = CryptoHelper.SignWithPrivateKey(verifier.PrivateKey, dataHash.ToByteArray());
         return ByteStringHelper.FromHexString(signature.ToHex());

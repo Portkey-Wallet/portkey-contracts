@@ -126,7 +126,7 @@ public partial class CAContractTests
             DailyLimit = _elfDefaultDailyLimit
         });
 
-        var transferLimitResult = await CaContractStub.GetTransferLimit.CallAsync(new GetTransferLimitInput()
+        var transferLimitResult = await CaContractStub.GetTransferLimit.CallAsync(new GetTransferLimitInput
         {
             CaHash = _transferLimitTestCaHash,
             Symbol = "CPU",
@@ -181,9 +181,8 @@ public partial class CAContractTests
             var salt = Guid.NewGuid().ToString("N");
             var setLimitOpType = Convert.ToInt32(OperationType.Approve).ToString();
             var setLimitSign = GenerateSignature(VerifierKeyPair, VerifierAddress, setLimitVerifyTime, _guardian, 0,
-                salt,
-                setLimitOpType);
-            var executionResult = await CaContractStubManagerInfo1.SetTransferLimit.SendAsync(
+                salt, setLimitOpType);
+            var executionResult = await CaContractStubManagerInfo1.SetTransferLimit.SendWithExceptionAsync(
                 new SetTransferLimitInput
                 {
                     CaHash = _transferLimitTestCaHash,
@@ -206,7 +205,7 @@ public partial class CAContractTests
                     SingleLimit = _elfDefaultSingleLimit,
                     DailyLimit = _elfDefaultDailyLimit
                 });
-            //executionResult.TransactionResult.Error.ShouldContain("JudgementStrategy validate failed");
+            executionResult.TransactionResult.Error.ShouldContain("JudgementStrategy validate failed");
         }
     }
 

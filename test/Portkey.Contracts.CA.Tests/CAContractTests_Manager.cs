@@ -1652,7 +1652,7 @@ public partial class CAContractTests
         var approveOpType = Convert.ToInt32(OperationType.ModifyTransferLimit).ToString();
         var approveSign = GenerateSignature(VerifierKeyPair, VerifierAddress, approveVerifyTime, _guardian, 0, salt,
             approveOpType);
-        var executionResult = await CaContractStubManagerInfo1.ManagerApprove.SendAsync(
+        var executionResult = await CaContractStubManagerInfo1.ManagerApprove.SendWithExceptionAsync(
             new ManagerApproveInput
             {
                 CaHash = _transferLimitTestCaHash,
@@ -1675,7 +1675,7 @@ public partial class CAContractTests
                 Symbol = "ELF",
                 Amount = 10000
             });
-        //executionResult.TransactionResult.Error.ShouldContain("JudgementStrategy validate failed");
+        executionResult.TransactionResult.Error.ShouldContain("JudgementStrategy validate failed");
     }
 
     private async Task CreateHolderNoPermission()
