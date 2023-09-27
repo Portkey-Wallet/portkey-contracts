@@ -179,13 +179,13 @@ public partial class CAContract
 
     public override GetRemovedToCurrentVerifierIdMapperOutput GetRemovedToCurrentVerifierIdMapper(Hash input)
     {
-        var toId = State.RemovedToCurrentVerifierIdMap[input];
+        var currentVerifierId = State.RemovedToCurrentVerifierIdMap[input];
         return new GetRemovedToCurrentVerifierIdMapperOutput
         {
             Mapper = new RemovedToCurrentVerifierIdMapperInfo()
             {
                 RemovedId = input,
-                CurrentId = toId
+                CurrentId = currentVerifierId
             }
         };
     }

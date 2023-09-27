@@ -247,6 +247,33 @@ public partial class CAContractTests
         defaultTokenTransferLimit.DefaultLimit.ShouldBe(_defaultTokenTransferLimit);
     }
 
+    [Fact]
+    public async Task SetCheckCreateIdInSignatureEnabledTest()
+    {
+        var result = await CaContractStub.GetCheckChainIdInSignatureEnabled.CallAsync(
+            new Empty());
+        result.CheckChainIdInSignatureEnabled.ShouldBeFalse();
+        await Initiate();
+        await TokenContractStub.Transfer.SendAsync(new TransferInput
+        {
+            Amount = 1000000000000,
+            Symbol = "ELF",
+            To = User1Address
+        });
+        var setResult = await CaContractUser1Stub.SetCheckChainIdInSignatureEnabled.SendWithExceptionAsync(new SetCheckChainIdInSignatureEnabledInput
+        {
+            CheckChainIdInSignatureEnabled = true
+        });
+        setResult.TransactionResult.Error.ShouldContain("No permission");
+        await CaContractStub.SetCheckChainIdInSignatureEnabled.SendAsync(new SetCheckChainIdInSignatureEnabledInput
+        {
+            CheckChainIdInSignatureEnabled = true
+        });
+        result = await CaContractStub.GetCheckChainIdInSignatureEnabled.CallAsync(
+            new Empty());
+        result.CheckChainIdInSignatureEnabled.ShouldBeTrue();
+    }
+
     private async Task InitTransferLimitTest()
     {
         if (_isInitialized) return;

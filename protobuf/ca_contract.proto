@@ -75,6 +75,8 @@ service CAContract {
   rpc AddCAServer (AddCAServerInput) returns (google.protobuf.Empty){}
 
   rpc RemoveCAServer (RemoveCAServerInput) returns (google.protobuf.Empty){}
+  
+  rpc SetCheckChainIdInSignatureEnabled(SetCheckChainIdInSignatureEnabledInput) returns (google.protobuf.Empty){}
 
   rpc GetHolderInfo(GetHolderInfoInput) returns (GetHolderInfoOutput) {option (aelf.is_view) = true;}
 
@@ -83,6 +85,8 @@ service CAContract {
   rpc GetRemovedToCurrentVerifierIdMapper (aelf.Hash) returns (GetRemovedToCurrentVerifierIdMapperOutput) {option (aelf.is_view) = true;}
 
   rpc GetCAServers (google.protobuf.Empty) returns (GetCAServersOutput) {option (aelf.is_view) = true;}
+  
+  rpc GetCheckChainIdInSignatureEnabled (google.protobuf.Empty) returns (GetCheckChainIdInSignatureEnabledOutput) {option (aelf.is_view) = true;}
 
   // Validates CAHolder with ManagerInfos
   rpc ValidateCAHolderInfoWithManagerInfosExists (ValidateCAHolderInfoWithManagerInfosExistsInput) returns (google.protobuf.Empty) {}
@@ -443,6 +447,14 @@ message SyncHolderInfoInput {
 message ValidateStrategyInput {
   StrategyNode strategy_node = 1;
   map<string, int64> variables = 2;
+}
+
+message SetCheckChainIdInSignatureEnabledInput {
+  bool check_chain_id_in_signature_enabled = 1;
+}
+
+message GetCheckChainIdInSignatureEnabledOutput {
+  bool check_chain_id_in_signature_enabled = 1;
 }
 
 message ValidateStrategyOutput {

@@ -158,4 +158,22 @@ public partial class CAContract
 
         return State.TransferLimit[caHash][symbol];
     }
+
+    public override Empty SetCheckChainIdInSignatureEnabled(SetCheckChainIdInSignatureEnabledInput input)
+    {
+        Assert(State.Admin.Value == Context.Sender, "No permission");
+        if (input.CheckChainIdInSignatureEnabled != State.CheckChainIdInSignatureEnabled.Value)
+        {
+            State.CheckChainIdInSignatureEnabled.Value = input.CheckChainIdInSignatureEnabled;
+        }
+        return new Empty();
+    }
+
+    public override GetCheckChainIdInSignatureEnabledOutput GetCheckChainIdInSignatureEnabled(Empty input)
+    {
+        return new GetCheckChainIdInSignatureEnabledOutput
+        {
+            CheckChainIdInSignatureEnabled = State.CheckChainIdInSignatureEnabled.Value
+        };
+    }
 }
