@@ -17,8 +17,7 @@ public partial class CAContract
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
         if (input.SingleLimit <= 0 || input.DailyLimit <= 0)
             Assert(input.SingleLimit == -1 && input.DailyLimit == -1, "Invalid transfer limit");
-        Assert(GetTokenInfo(input.Symbol) != null && GetTokenInfo(input.Symbol).Symbol == input.Symbol,
-            $"Not exist symbol {input.Symbol}");
+        Assert(GetTokenInfo(input.Symbol) != null, $"Not exist symbol {input.Symbol}");
         State.TransferLimit[input.CaHash][input.Symbol] = new TransferLimit()
         {
             DayLimit = input.DailyLimit,
@@ -62,8 +61,7 @@ public partial class CAContract
     {
         Assert(Context.Sender == State.Admin.Value, "No permission.");
         Assert(!string.IsNullOrEmpty(input.Symbol), "Invalid symbol.");
-        Assert(GetTokenInfo(input.Symbol) != null && GetTokenInfo(input.Symbol).Symbol == input.Symbol,
-            $"Not exist symbol {input.Symbol}");
+        Assert(GetTokenInfo(input.Symbol) != null, $"Not exist symbol {input.Symbol}");
         Assert(input.DefaultLimit > 0, "DefaultLimit cannot be less than 0.");
         State.TokenDefaultTransferLimit[input.Symbol] = input.DefaultLimit;
         return new Empty();
@@ -73,8 +71,7 @@ public partial class CAContract
         GetDefaultTokenTransferLimitInput input)
     {
         Assert(!string.IsNullOrEmpty(input.Symbol), "Invalid symbol.");
-        Assert(GetTokenInfo(input.Symbol) != null && GetTokenInfo(input.Symbol).Symbol == input.Symbol,
-            $"Not exist symbol {input.Symbol}");
+        Assert(GetTokenInfo(input.Symbol) != null, $"Not exist symbol {input.Symbol}");
         return new GetDefaultTokenTransferLimitOutput
         {
             Symbol = input.Symbol,

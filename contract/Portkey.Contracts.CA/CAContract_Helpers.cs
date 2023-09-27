@@ -239,12 +239,8 @@ public partial class CAContract
 
     private static bool IsOverDay(Timestamp lastDayTime, Timestamp nowDayTime)
     {
-        return lastDayTime == null || DateTime.Parse(lastDayTime.ToDateTime().ToString("yyyy-MM-dd")) < DateTime.Parse(nowDayTime.ToDateTime().ToString("yyyy-MM-dd"));
-    }
-
-    private static string GetCurrentBlockTimeString(Timestamp currentBlockTime)
-    {
-        return currentBlockTime.ToDateTime().ToString("yyyyMMdd");
+        return lastDayTime == null || DateTime.Parse(lastDayTime.ToDateTime().ToString("yyyy-MM-dd")) <
+            DateTime.Parse(nowDayTime.ToDateTime().ToString("yyyy-MM-dd"));
     }
 
     private TokenInfo GetTokenInfo(string symbol)
