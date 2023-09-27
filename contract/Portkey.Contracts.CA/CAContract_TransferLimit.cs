@@ -23,7 +23,7 @@ public partial class CAContract
             DayLimit = input.DailyLimit,
             SingleLimit = input.SingleLimit
         };
-        State.DailyTransferredAmount[input.CaHash][input.Symbol] = new TransferredAmount
+        State.DailyTransferredAmountMap[input.CaHash][input.Symbol] = new TransferredAmount
         {
             UpdateTime = Context.CurrentBlockTime,
             DailyTransfered = 0
@@ -50,9 +50,9 @@ public partial class CAContract
             SingleLimit = transferLimit.SingleLimit,
             DailyLimit = transferLimit.DayLimit,
             DailyTransferredAmount =
-                State.DailyTransferredAmount[input.CaHash]?[input.Symbol] != null && !IsOverDay(
-                    State.DailyTransferredAmount[input.CaHash][input.Symbol].UpdateTime, Context.CurrentBlockTime)
-                    ? State.DailyTransferredAmount[input.CaHash][input.Symbol].DailyTransfered
+                State.DailyTransferredAmountMap[input.CaHash]?[input.Symbol] != null && !IsOverDay(
+                    State.DailyTransferredAmountMap[input.CaHash][input.Symbol].UpdateTime, Context.CurrentBlockTime)
+                    ? State.DailyTransferredAmountMap[input.CaHash][input.Symbol].DailyTransfered
                     : 0
         };
     }
@@ -117,7 +117,7 @@ public partial class CAContract
         if (State.TransferLimit[caHash]?[symbol]?.DayLimit == -1) return;
 
         var transferLimit = GetAccountTransferLimit(caHash, symbol);
-        var transferredAmount = State.DailyTransferredAmount[caHash][symbol] ??
+        var transferredAmount = State.DailyTransferredAmountMap[caHash][symbol] ??
                                 new TransferredAmount() { DailyTransfered = 0 };
         Assert(amount <= transferLimit.SingleLimit,
             $"The transfer amount {amount} has exceeded the single transfer limit {transferLimit.SingleLimit}");
@@ -126,7 +126,7 @@ public partial class CAContract
             : transferredAmount.DailyTransfered;
         Assert(amount <= transferLimit.DayLimit - transferred,
             $"The transfer amount {amount} has exceeded the daily transfer balance.");
-        State.DailyTransferredAmount[caHash][symbol] = new TransferredAmount
+        State.DailyTransferredAmountMap[caHash][symbol] = new TransferredAmount
         {
             DailyTransfered = transferred + amount,
             UpdateTime = IsOverDay(transferredAmount.UpdateTime, Context.CurrentBlockTime)
