@@ -14,8 +14,8 @@ import "ca_contract.proto";
 option csharp_namespace = "Portkey.Contracts.CA";
 
 service CAContractImpl {
-  option (aelf.csharp_state) = "Portkey.Contracts.CA.CAContractState";
   option (aelf.base) = "ca_contract.proto";
+  option (aelf.csharp_state) = "Portkey.Contracts.CA.CAContractState";
   
   // approve
   rpc ManagerApprove(ManagerApproveInput) returns (google.protobuf.Empty) {}
