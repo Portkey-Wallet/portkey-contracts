@@ -23,11 +23,6 @@ public partial class CAContract
             DayLimit = input.DailyLimit,
             SingleLimit = input.SingleLimit
         };
-        State.DailyTransferredAmountMap[input.CaHash][input.Symbol] = new TransferredAmount
-        {
-            UpdateTime = Context.CurrentBlockTime,
-            DailyTransfered = 0
-        };
         Context.Fire(new TransferLimitChanged()
         {
             CaHash = input.CaHash,
@@ -104,9 +99,8 @@ public partial class CAContract
         }
 
         var holderJudgementStrategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
-        Assert(IsJudgementStrategySatisfied(holderInfo.GuardianList != null
-                ? holderInfo.GuardianList!.Guardians.Count
-                : 0, guardianApprovedAmount, holderJudgementStrategy),
+        Assert(IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count, guardianApprovedAmount,
+                holderJudgementStrategy),
             "JudgementStrategy validate failed");
     }
 
@@ -163,6 +157,7 @@ public partial class CAContract
         {
             State.CheckChainIdInSignatureEnabled.Value = input.CheckChainIdInSignatureEnabled;
         }
+
         return new Empty();
     }
 

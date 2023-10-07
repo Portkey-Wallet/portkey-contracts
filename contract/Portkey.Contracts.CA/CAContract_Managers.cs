@@ -234,9 +234,8 @@ public partial class CAContract
         Assert(input.ContractAddress != null && !string.IsNullOrWhiteSpace(input.MethodName),
             "Invalid input.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
-        if (State.ForbiddenForwardCallContractMethod[input.ContractAddress]?[input.MethodName] != null)
-            Assert(!State.ForbiddenForwardCallContractMethod[input.ContractAddress][input.MethodName.ToLower()],
-                $"Does not have permission for {input.MethodName}.");
+        Assert(!State.ForbiddenForwardCallContractMethod[input.ContractAddress][input.MethodName.ToLower()],
+            $"Does not have permission for {input.MethodName}.");
         if (input.MethodName == nameof(State.TokenContract.Transfer) &&
             input.ContractAddress == State.TokenContract.Value)
         {
@@ -306,7 +305,6 @@ public partial class CAContract
             Spender = input.Spender,
             Amount = input.Amount,
             Symbol = input.Symbol,
-            External = input.External
         });
         return new Empty();
     }
@@ -335,5 +333,13 @@ public partial class CAContract
     private ManagerInfo FindManagerInfo(RepeatedField<ManagerInfo> managerInfos, Address address)
     {
         return managerInfos.FirstOrDefault(s => s.Address == address);
+    }
+
+    private void CheckTransferGuardianSecurity(Hash caHash)
+    {
+        var holderInfo = State.HolderInfoMap[caHash];
+        Assert(State.HolderInfoMap[caHash] != null, $"CA holder is null.CA hash:{caHash}");
+        if (holderInfo.GuardianList?.Guardians?.Count < 2) return;
+        // Assert();
     }
 }
