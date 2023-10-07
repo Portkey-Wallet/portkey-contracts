@@ -38,7 +38,6 @@ message ManagerApproveInput {
     repeated ca.GuardianInfo guardians_approved = 3;
     string symbol = 4;
     int64 amount = 5;
-    External external = 6;
 }
 message ManagerApproved {
     option (aelf.is_event) = true;
