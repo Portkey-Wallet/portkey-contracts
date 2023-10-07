@@ -26,7 +26,7 @@ public partial class CAContract
         var isSpecifyVerifierId = IsValidHash(input.VerifierId);
         var verifierServerList = State.VerifiersServerList.Value;
         var server = isSpecifyVerifierId
-            ? verifierServerList.VerifierServers.FirstOrDefault(o => o.Name == input.Name && o.Id == input.VerifierId)
+            ? verifierServerList.VerifierServers.FirstOrDefault(o => o.Id == input.VerifierId)
             : verifierServerList.VerifierServers.FirstOrDefault(o => o.Name == input.Name);
 
         var serverId = isSpecifyVerifierId ? input.VerifierId : HashHelper.ConcatAndCompute(Context.TransactionId,
