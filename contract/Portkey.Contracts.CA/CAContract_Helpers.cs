@@ -22,6 +22,7 @@ public partial class CAContract
         {
             return false;
         }
+
         var verifierDoc = verificationDoc.Split(",");
         return verifierDoc.Length switch
         {
@@ -99,7 +100,7 @@ public partial class CAContract
         var operationTypeName = typeof(OperationType).GetEnumName(Convert.ToInt32(operationTypeStr))?.ToLower();
         return operationTypeName == methodName;
     }
-    
+
     private bool CheckVerifierSignatureAndDataWithCreateChainId(GuardianInfo guardianInfo, string methodName)
     {
         //[type,guardianIdentifierHash,verificationTime,verifierAddress,salt,operationType,createChainId]
@@ -175,6 +176,7 @@ public partial class CAContract
         {
             return int.Parse(verifierDoc[6]) == Context.ChainId;
         }
+
         return true;
     }
 
@@ -248,6 +250,15 @@ public partial class CAContract
         return State.TokenContract.GetTokenInfo.Call(new GetTokenInfoInput
         {
             Symbol = symbol
+        });
+    }
+
+    private GetBalanceOutput GetTokenBalance(string symbol, Address cAddress)
+    {
+        return State.TokenContract.GetBalance.Call(new GetBalanceInput
+        {
+            Symbol = symbol,
+            Owner = cAddress
         });
     }
 }

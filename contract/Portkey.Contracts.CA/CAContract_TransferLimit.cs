@@ -168,4 +168,23 @@ public partial class CAContract
             CheckChainIdInSignatureEnabled = State.CheckChainIdInSignatureEnabled.Value
         };
     }
+
+    public override Empty SetTransferSecurityThreshold(SetTransferSecurityThresholdInput input)
+    {
+        Assert(Context.Sender == State.Admin.Value, "No permission.");
+        Assert(!string.IsNullOrEmpty(input.Symbol), "Invalid symbol.");
+        Assert(GetTokenInfo(input.Symbol) != null, $"Not exist symbol {input.Symbol}");
+        Assert(input.SecurityThreshold > 0, "token threshold cannot be less than 0.");
+        State.TransferSecurityThreshold[input.Symbol] = input.SecurityThreshold;
+        return new Empty();
+    }
+
+    private void CheckTransferSecurity(Hash caHash, string symbol)
+    {
+        var holderInfo = State.HolderInfoMap[caHash];
+        Assert(State.HolderInfoMap[caHash] != null, $"CA holder is null.CA hash:{caHash}");
+        if (holderInfo.GuardianList?.Guardians?.Count < 2) return;
+        var amount = GetTokenBalance(symbol, Context.ConvertVirtualAddressToContractAddress(caHash));
+        Assert(amount.Balance < State.TransferSecurityThreshold[symbol], "low security level");
+    }
 }

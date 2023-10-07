@@ -240,6 +240,7 @@ public partial class CAContract
             input.ContractAddress == State.TokenContract.Value)
         {
             var transferInput = TransferInput.Parser.ParseFrom(input.Args);
+            CheckTransferSecurity(input.CaHash, transferInput.Symbol);
             UpdateDailyTransferredAmount(input.CaHash, transferInput.Symbol, transferInput.Amount);
         }
 
@@ -252,6 +253,7 @@ public partial class CAContract
         Assert(input.CaHash != null, "CA hash is null.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
         Assert(input.To != null && !string.IsNullOrWhiteSpace(input.Symbol), "Invalid input.");
+        CheckTransferSecurity(input.CaHash, input.Symbol);
         UpdateDailyTransferredAmount(input.CaHash, input.Symbol, input.Amount);
         Context.SendVirtualInline(input.CaHash, State.TokenContract.Value, nameof(State.TokenContract.Transfer),
             new TransferInput
@@ -333,13 +335,5 @@ public partial class CAContract
     private ManagerInfo FindManagerInfo(RepeatedField<ManagerInfo> managerInfos, Address address)
     {
         return managerInfos.FirstOrDefault(s => s.Address == address);
-    }
-
-    private void CheckTransferGuardianSecurity(Hash caHash)
-    {
-        var holderInfo = State.HolderInfoMap[caHash];
-        Assert(State.HolderInfoMap[caHash] != null, $"CA holder is null.CA hash:{caHash}");
-        if (holderInfo.GuardianList?.Guardians?.Count < 2) return;
-        // Assert();
     }
 }

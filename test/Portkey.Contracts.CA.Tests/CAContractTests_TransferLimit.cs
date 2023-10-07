@@ -287,6 +287,7 @@ public partial class CAContractTests
         await InitTestVerifierServer();
         await InitTestTransferLimitCaHolder();
         await InitDefaultTransferTokenLimit();
+        await InitTransferSecurityBalanceThreshold();
 
         _isInitialized = true;
     }
@@ -400,6 +401,15 @@ public partial class CAContractTests
         {
             Symbol = "ELF",
             DefaultLimit = 10000
+        });
+    }
+
+    private async Task InitTransferSecurityBalanceThreshold()
+    {
+        await CaContractStub.SetTransferSecurityThreshold.SendAsync(new SetTransferSecurityThresholdInput()
+        {
+            Symbol = "ELF",
+            SecurityThreshold = 10000
         });
     }
 }

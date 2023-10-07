@@ -29,7 +29,9 @@ service CAContractImpl {
   rpc SetDefaultTokenTransferLimit(SetDefaultTokenTransferLimitInput) returns (google.protobuf.Empty) {}    
   
   rpc GetDefaultTokenTransferLimit(GetDefaultTokenTransferLimitInput) returns (GetDefaultTokenTransferLimitOutput) {option (aelf.is_view) = true;}   
-        
+     
+  rpc SetTransferSecurityThreshold(SetTransferSecurityThresholdInput) returns (google.protobuf.Empty) {}
+   
 }
 
 message ManagerApproveInput {
@@ -117,4 +119,9 @@ message TransferLimitChanged{
     string symbol = 2 [(aelf.is_indexed) = true];
     int64 single_limit = 3 [(aelf.is_indexed) = true];
     int64 daily_limit = 4 [(aelf.is_indexed) = true];
+}
+
+message SetTransferSecurityThresholdInput{
+    string symbol = 1;
+    int64 security_threshold = 2;
 }
