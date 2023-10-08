@@ -187,15 +187,15 @@ public partial class CAContract
         return new Empty();
     }
 
-    public override GetTransferSecurityThresholdOutput GetTransferSecurityThreshold(
-        GetTransferSecurityThresholdInput input)
+    public override GetTransferSecurityCheckResultOutput GetTransferSecurityCheckResult(
+        GetTransferSecurityCheckResultInput input)
     {
         Assert(State.TransferSecurityThreshold[input.Symbol] != null,
             $"There is no threshold set for this symbol{input.Symbol}");
         Assert(State.HolderInfoMap[input.CaHash] != null, $"CA holder is null.CA hash:{input.CaHash}");
         var balance = GetTokenBalance(input.Symbol, Context.ConvertVirtualAddressToContractAddress(input.CaHash));
 
-        return new GetTransferSecurityThresholdOutput
+        return new GetTransferSecurityCheckResultOutput
         {
             Symbol = input.Symbol,
             GuardianAmount = State.TransferSecurityThreshold[input.Symbol].GuardianThreshold,
