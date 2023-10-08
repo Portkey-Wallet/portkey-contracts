@@ -35,6 +35,11 @@ public partial class CAContract
         else
         {
             server = verifierServerList.VerifierServers.FirstOrDefault(o => o.Name == input.Name);
+            if (server != null)
+            {
+                Assert(!isSpecifyVerifierId, "verifierServer name existed");
+                serverId = server.Id;
+            }
         }
 
         if (server == null)
