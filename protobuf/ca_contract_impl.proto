@@ -47,7 +47,6 @@ message ManagerApproved {
     aelf.Address spender = 2;
     string symbol = 3;
     int64 amount = 4;
-    External external = 5;
 }
 
 message SetTransferLimitInput {
