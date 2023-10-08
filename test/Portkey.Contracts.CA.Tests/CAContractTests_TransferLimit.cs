@@ -410,9 +410,9 @@ public partial class CAContractTests
     {
         await CaContractStub.SetTransferSecurityThreshold.SendAsync(new SetTransferSecurityThresholdInput
         {
-            Symbol = "ELF",
             TransferSecurityThreshold = new TransferSecurityThreshold()
             {
+                Symbol = "ELF",
                 GuardianThreshold = 2,
                 BalanceThreshold = 10000
             }

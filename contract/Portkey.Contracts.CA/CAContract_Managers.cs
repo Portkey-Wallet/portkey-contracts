@@ -240,7 +240,7 @@ public partial class CAContract
             input.ContractAddress == State.TokenContract.Value)
         {
             var transferInput = TransferInput.Parser.ParseFrom(input.Args);
-            Assert(IsTransferSecurity(input.CaHash, transferInput.Symbol), "Low transfer security level.");
+            Assert(IsTransferSecurity(input.CaHash), "Low transfer security level.");
             UpdateDailyTransferredAmount(input.CaHash, transferInput.Symbol, transferInput.Amount);
         }
 
@@ -253,7 +253,7 @@ public partial class CAContract
         Assert(input.CaHash != null, "CA hash is null.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
         Assert(input.To != null && !string.IsNullOrWhiteSpace(input.Symbol), "Invalid input.");
-        Assert(IsTransferSecurity(input.CaHash, input.Symbol), "Low transfer security level.");
+        Assert(IsTransferSecurity(input.CaHash), "Low transfer security level.");
         UpdateDailyTransferredAmount(input.CaHash, input.Symbol, input.Amount);
         Context.SendVirtualInline(input.CaHash, State.TokenContract.Value, nameof(State.TokenContract.Transfer),
             new TransferInput

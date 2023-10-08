@@ -172,47 +172,63 @@ public partial class CAContract
     public override Empty SetTransferSecurityThreshold(SetTransferSecurityThresholdInput input)
     {
         Assert(Context.Sender == State.Admin.Value, "No permission.");
-        Assert(!string.IsNullOrEmpty(input.Symbol), "Invalid symbol.");
-        Assert(GetTokenInfo(input.Symbol) != null, $"Not exist symbol {input.Symbol}");
         Assert(input.TransferSecurityThreshold != null, "Security threshold cannot be null.");
         Assert(input.TransferSecurityThreshold.BalanceThreshold > 0, "Token threshold cannot be less than 0.");
         Assert(input.TransferSecurityThreshold.GuardianThreshold > 0, "Guardian threshold cannot be less than 0.");
 
-        State.TransferSecurityThreshold[input.Symbol] = new TransferSecurityThreshold
+        foreach (var securityThreshold in State.TransferSecurityThresholdList.Value.TransferSecurityThresholds)
         {
+            if (securityThreshold.Symbol == input.TransferSecurityThreshold.Symbol)
+            {
+                // If the value is the same as before, it will be returned directly.
+                if (securityThreshold.GuardianThreshold == input.TransferSecurityThreshold.GuardianThreshold &&
+                    securityThreshold.BalanceThreshold == input.TransferSecurityThreshold.BalanceThreshold)
+                    return new Empty();
+                
+                // Otherwise, elements will be removed first and added last.
+                State.TransferSecurityThresholdList.Value.TransferSecurityThresholds.Remove(securityThreshold);
+                break;
+            }
+        }
+
+        State.TransferSecurityThresholdList.Value.TransferSecurityThresholds.Add(new TransferSecurityThreshold
+        {
+            Symbol = input.TransferSecurityThreshold.Symbol,
             GuardianThreshold = input.TransferSecurityThreshold.GuardianThreshold,
             BalanceThreshold = input.TransferSecurityThreshold.BalanceThreshold
-        };
+        });
 
+        Context.Fire(new TransferSecurityThresholdChanged
+        {
+            Symbol = input.TransferSecurityThreshold.Symbol,
+            GuardianThreshold = input.TransferSecurityThreshold.GuardianThreshold,
+            BalanceThreshold = input.TransferSecurityThreshold.BalanceThreshold
+        });
         return new Empty();
     }
 
     public override GetTransferSecurityCheckResultOutput GetTransferSecurityCheckResult(
         GetTransferSecurityCheckResultInput input)
     {
-        Assert(State.TransferSecurityThreshold[input.Symbol] != null,
-            $"There is no threshold set for this symbol{input.Symbol}");
         Assert(State.HolderInfoMap[input.CaHash] != null, $"CA holder is null.CA hash:{input.CaHash}");
-        var balance = GetTokenBalance(input.Symbol, Context.ConvertVirtualAddressToContractAddress(input.CaHash));
-
         return new GetTransferSecurityCheckResultOutput
         {
-            Symbol = input.Symbol,
-            GuardianAmount = State.TransferSecurityThreshold[input.Symbol].GuardianThreshold,
-            Balance = balance.Balance,
-            IsSecurity = IsTransferSecurity(input.CaHash, input.Symbol)
+            IsSecurity = IsTransferSecurity(input.CaHash)
         };
     }
 
-    private bool IsTransferSecurity(Hash caHash, string symbol)
+    private bool IsTransferSecurity(Hash caHash)
     {
-        // There is no security threshold set for this symbol, return true
-        if (State.TransferSecurityThreshold[symbol] == null) return true;
         var holderInfo = State.HolderInfoMap[caHash];
-        if (holderInfo.GuardianList?.Guardians?.Count >
-            State.TransferSecurityThreshold[symbol].GuardianThreshold) return true;
+        var guardianAmount = holderInfo.GuardianList?.Guardians?.Count;
+        foreach (var securityThreshold in State.TransferSecurityThresholdList.Value.TransferSecurityThresholds)
+        {
+            if (guardianAmount > securityThreshold.GuardianThreshold) continue;
+            var balance = GetTokenBalance(securityThreshold.Symbol,
+                Context.ConvertVirtualAddressToContractAddress(caHash));
+            if (balance.Balance >= securityThreshold.BalanceThreshold) return false;
+        }
 
-        var balance = GetTokenBalance(symbol, Context.ConvertVirtualAddressToContractAddress(caHash));
-        return balance.Balance < State.TransferSecurityThreshold[symbol].BalanceThreshold;
+        return true;
     }
 }

@@ -120,23 +120,30 @@ message TransferLimitChanged{
 }
 
 message SetTransferSecurityThresholdInput{
-    string symbol = 1;
-    TransferSecurityThreshold transfer_security_threshold = 2;
+    TransferSecurityThreshold transfer_security_threshold = 1;
 }
 
 message GetTransferSecurityCheckResultInput{
-    string symbol = 1;
-    aelf.Hash ca_hash = 2;
+    aelf.Hash ca_hash = 1;
 }
 
 message GetTransferSecurityCheckResultOutput{
-    string symbol = 1;
-    int64 guardian_amount = 2;
-    int64 balance = 3;
-    bool is_security = 4;
+    bool is_security = 1;
+}
+
+message TransferSecurityThresholdList{
+    repeated TransferSecurityThreshold transfer_security_thresholds = 1;
 }
 
 message TransferSecurityThreshold{
-    int64 guardian_threshold = 1;
-    int64 balance_threshold = 2;
+    string symbol = 1;
+    int64 guardian_threshold = 2;
+    int64 balance_threshold = 3;
+}
+
+message TransferSecurityThresholdChanged{
+    option (aelf.is_event) = true;
+    string symbol = 1;
+    int64 guardian_threshold = 2;
+    int64 balance_threshold = 3;
 }
