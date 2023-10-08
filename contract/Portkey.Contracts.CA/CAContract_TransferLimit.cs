@@ -57,8 +57,23 @@ public partial class CAContract
         Assert(Context.Sender == State.Admin.Value, "No permission.");
         Assert(!string.IsNullOrEmpty(input.Symbol), "Invalid symbol.");
         Assert(GetTokenInfo(input.Symbol) != null, $"Not exist symbol {input.Symbol}");
-        Assert(input.DefaultLimit > 0, "DefaultLimit cannot be less than 0.");
-        State.TokenDefaultTransferLimit[input.Symbol] = input.DefaultLimit;
+        Assert(input.TransferLimit.SingleLimit > 0, "SingleLimit cannot be less than 0.");
+        Assert(input.TransferLimit.DayLimit > 0, "DayLimit cannot be less than 0.");
+        State.TokenDefaultTransferLimit[input.Symbol] = new TransferLimit
+        {
+            SingleLimit = input.TransferLimit.SingleLimit,
+            DayLimit = input.TransferLimit.DayLimit
+        };
+
+        Context.Fire(new DefaultTokenTransferLimitChanged
+        {
+            Symbol = input.Symbol,
+            TransferLimit = new TransferLimit
+            {
+                SingleLimit = input.TransferLimit.SingleLimit,
+                DayLimit = input.TransferLimit.DayLimit
+            }
+        });
         return new Empty();
     }
 
@@ -70,11 +85,19 @@ public partial class CAContract
         return new GetDefaultTokenTransferLimitOutput
         {
             Symbol = input.Symbol,
-            DefaultLimit = State.TokenDefaultTransferLimit[input.Symbol] > 0
-                ? State.TokenDefaultTransferLimit[input.Symbol]
-                : State.TokenInitialTransferLimit.Value > 0
-                    ? State.TokenInitialTransferLimit.Value
-                    : CAContractConstants.TokenDefaultTransferLimitAmount
+            TransferLimit = new TransferLimit
+            {
+                SingleLimit = State.TokenDefaultTransferLimit[input.Symbol] != null
+                    ? State.TokenDefaultTransferLimit[input.Symbol].SingleLimit
+                    : State.TokenInitialTransferLimit.Value > 0
+                        ? State.TokenInitialTransferLimit.Value
+                        : CAContractConstants.TokenDefaultTransferLimitAmount,
+                DayLimit = State.TokenDefaultTransferLimit[input.Symbol] != null
+                    ? State.TokenDefaultTransferLimit[input.Symbol].DayLimit
+                    : State.TokenInitialTransferLimit.Value > 0
+                        ? State.TokenInitialTransferLimit.Value
+                        : CAContractConstants.TokenDefaultTransferLimitAmount
+            }
         };
     }
 
@@ -131,19 +154,20 @@ public partial class CAContract
 
     private TransferLimit GetAccountTransferLimit(Hash caHash, string symbol)
     {
-        // If the currency does not exist, the TokenDefaultTransferLimit is used
-        var defaultTokenTransferLimit = State.TokenDefaultTransferLimit[symbol] > 0
-            ? State.TokenDefaultTransferLimit[symbol]
-            // If TokenDefaultTransferLimit is not configured, the default transfer limit will be used
-            : State.TokenInitialTransferLimit.Value > 0
-                ? State.TokenInitialTransferLimit.Value
-                : CAContractConstants.TokenDefaultTransferLimitAmount;
         if (State.TransferLimit[caHash] == null || State.TransferLimit[caHash][symbol] == null)
         {
             State.TransferLimit[caHash][symbol] = new TransferLimit()
             {
-                SingleLimit = defaultTokenTransferLimit,
-                DayLimit = defaultTokenTransferLimit
+                SingleLimit = State.TokenDefaultTransferLimit[symbol] != null
+                    ? State.TokenDefaultTransferLimit[symbol].SingleLimit
+                    : State.TokenInitialTransferLimit.Value > 0
+                        ? State.TokenInitialTransferLimit.Value
+                        : CAContractConstants.TokenDefaultTransferLimitAmount,
+                DayLimit = State.TokenDefaultTransferLimit[symbol] != null
+                    ? State.TokenDefaultTransferLimit[symbol].DayLimit
+                    : State.TokenInitialTransferLimit.Value > 0
+                        ? State.TokenInitialTransferLimit.Value
+                        : CAContractConstants.TokenDefaultTransferLimitAmount
             };
         }
 
@@ -176,19 +200,26 @@ public partial class CAContract
         Assert(input.TransferSecurityThreshold.BalanceThreshold > 0, "Token threshold cannot be less than 0.");
         Assert(input.TransferSecurityThreshold.GuardianThreshold > 0, "Guardian threshold cannot be less than 0.");
 
-        foreach (var securityThreshold in State.TransferSecurityThresholdList.Value.TransferSecurityThresholds)
+        if (State.TransferSecurityThresholdList?.Value != null)
         {
-            if (securityThreshold.Symbol == input.TransferSecurityThreshold.Symbol)
+            foreach (var securityThreshold in State.TransferSecurityThresholdList.Value.TransferSecurityThresholds)
             {
-                // If the value is the same as before, it will be returned directly.
-                if (securityThreshold.GuardianThreshold == input.TransferSecurityThreshold.GuardianThreshold &&
-                    securityThreshold.BalanceThreshold == input.TransferSecurityThreshold.BalanceThreshold)
-                    return new Empty();
-                
-                // Otherwise, elements will be removed first and added last.
-                State.TransferSecurityThresholdList.Value.TransferSecurityThresholds.Remove(securityThreshold);
-                break;
+                if (securityThreshold.Symbol == input.TransferSecurityThreshold.Symbol)
+                {
+                    // If the value is the same as before, it will be returned directly.
+                    if (securityThreshold.GuardianThreshold == input.TransferSecurityThreshold.GuardianThreshold &&
+                        securityThreshold.BalanceThreshold == input.TransferSecurityThreshold.BalanceThreshold)
+                        return new Empty();
+
+                    // Otherwise, elements will be removed first and added last.
+                    State.TransferSecurityThresholdList.Value.TransferSecurityThresholds.Remove(securityThreshold);
+                    break;
+                }
             }
+        }
+        else
+        {
+            State.TransferSecurityThresholdList.Value = new TransferSecurityThresholdList();
         }
 
         State.TransferSecurityThresholdList.Value.TransferSecurityThresholds.Add(new TransferSecurityThreshold
@@ -221,12 +252,15 @@ public partial class CAContract
     {
         var holderInfo = State.HolderInfoMap[caHash];
         var guardianAmount = holderInfo.GuardianList?.Guardians?.Count;
-        foreach (var securityThreshold in State.TransferSecurityThresholdList.Value.TransferSecurityThresholds)
+        if (State.TransferSecurityThresholdList?.Value != null)
         {
-            if (guardianAmount > securityThreshold.GuardianThreshold) continue;
-            var balance = GetTokenBalance(securityThreshold.Symbol,
-                Context.ConvertVirtualAddressToContractAddress(caHash));
-            if (balance.Balance >= securityThreshold.BalanceThreshold) return false;
+            foreach (var securityThreshold in State.TransferSecurityThresholdList.Value.TransferSecurityThresholds)
+            {
+                if (guardianAmount > securityThreshold.GuardianThreshold) continue;
+                var balance = GetTokenBalance(securityThreshold.Symbol,
+                    Context.ConvertVirtualAddressToContractAddress(caHash));
+                if (balance.Balance >= securityThreshold.BalanceThreshold) return false;
+            }
         }
 
         return true;

@@ -20,5 +20,5 @@ public static class CAContractConstants
 
     public const int ManagerMaxCount = 70;
     
-    public const long TokenDefaultTransferLimitAmount = 10000000000000000;
+    public const long TokenDefaultTransferLimitAmount = 10000000;
 }

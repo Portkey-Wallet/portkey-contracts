@@ -229,7 +229,11 @@ public partial class CAContractTests
         await CaContractStub.SetDefaultTokenTransferLimit.SendAsync(new SetDefaultTokenTransferLimitInput
         {
             Symbol = "ELF",
-            DefaultLimit = _defaultTokenTransferLimit
+            TransferLimit = new TransferLimit
+            {
+                SingleLimit = _defaultTokenTransferLimit,
+                DayLimit = _defaultTokenTransferLimit
+            }
         });
     }
 
@@ -244,7 +248,7 @@ public partial class CAContractTests
                 Symbol = "ELF",
             });
         defaultTokenTransferLimit.Symbol.ShouldBe("ELF");
-        defaultTokenTransferLimit.DefaultLimit.ShouldBe(_defaultTokenTransferLimit);
+        defaultTokenTransferLimit.TransferLimit.SingleLimit.ShouldBe(_defaultTokenTransferLimit);
     }
 
     [Fact]
@@ -402,7 +406,11 @@ public partial class CAContractTests
         await CaContractStub.SetDefaultTokenTransferLimit.SendAsync(new SetDefaultTokenTransferLimitInput()
         {
             Symbol = "ELF",
-            DefaultLimit = 10000
+            TransferLimit = new TransferLimit
+            {
+                SingleLimit = _defaultTokenTransferLimit,
+                DayLimit = _defaultTokenTransferLimit
+            }
         });
     }
 

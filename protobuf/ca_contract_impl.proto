@@ -72,12 +72,12 @@ message GetTransferLimitOutput {
 
 message SetDefaultTokenTransferLimitInput {
     string symbol = 1;
-    int64 default_limit = 2;
+    TransferLimit transfer_limit = 2;
 }
 message DefaultTokenTransferLimitChanged {
     option (aelf.is_event) = true;
     string symbol = 1;
-    int64 default_limit = 2;
+    TransferLimit transfer_limit = 2;
 }
 message GetDefaultTokenTransferLimitInput {
     string symbol = 1;
@@ -85,7 +85,7 @@ message GetDefaultTokenTransferLimitInput {
 
 message GetDefaultTokenTransferLimitOutput {
     string symbol = 1;
-    int64 default_limit = 2;
+    TransferLimit transfer_limit = 2;
 }
 
 message SetForbiddenForwardCallContractMethodInput {
