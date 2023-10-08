@@ -208,8 +208,6 @@ public partial class CAContract
     {
         // There is no security threshold set for this symbol, return true
         if (State.TransferSecurityThreshold[symbol] == null) return true;
-
-        Assert(State.HolderInfoMap[caHash] != null, $"CA holder is null.CA hash:{caHash}");
         var holderInfo = State.HolderInfoMap[caHash];
         if (holderInfo.GuardianList?.Guardians?.Count >
             State.TransferSecurityThreshold[symbol].GuardianThreshold) return true;
