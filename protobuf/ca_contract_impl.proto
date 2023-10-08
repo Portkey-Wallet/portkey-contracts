@@ -33,7 +33,7 @@ service CAContractImpl {
      
   rpc SetTransferSecurityThreshold(SetTransferSecurityThresholdInput) returns (google.protobuf.Empty) {}
   
-  rpc GetTransferSecurityThreshold(GetTransferSecurityThresholdInput) returns (GetTransferSecurityThresholdOutput) {option (aelf.is_view) = true;}
+  rpc GetTransferSecurityCheckResult(GetTransferSecurityCheckResultInput) returns (GetTransferSecurityCheckResultOutput) {option (aelf.is_view) = true;}
 
 }
 
@@ -120,23 +120,30 @@ message TransferLimitChanged{
 }
 
 message SetTransferSecurityThresholdInput{
-    string symbol = 1;
-    TransferSecurityThreshold transfer_security_threshold = 2;
+    TransferSecurityThreshold transfer_security_threshold = 1;
 }
 
-message GetTransferSecurityThresholdInput{
-    string symbol = 1;
-    aelf.Hash ca_hash = 2;
+message GetTransferSecurityCheckResultInput{
+    aelf.Hash ca_hash = 1;
 }
 
-message GetTransferSecurityThresholdOutput{
-    string symbol = 1;
-    int64 guardian_amount = 2;
-    int64 balance = 3;
-    bool is_security = 4;
+message GetTransferSecurityCheckResultOutput{
+    bool is_security = 1;
+}
+
+message TransferSecurityThresholdList{
+    repeated TransferSecurityThreshold transfer_security_thresholds = 1;
 }
 
 message TransferSecurityThreshold{
-    int64 guardian_threshold = 1;
-    int64 balance_threshold = 2;
+    string symbol = 1;
+    int64 guardian_threshold = 2;
+    int64 balance_threshold = 3;
+}
+
+message TransferSecurityThresholdChanged{
+    option (aelf.is_event) = true;
+    string symbol = 1;
+    int64 guardian_threshold = 2;
+    int64 balance_threshold = 3;
 }
