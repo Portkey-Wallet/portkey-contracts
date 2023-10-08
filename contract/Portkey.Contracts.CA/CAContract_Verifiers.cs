@@ -25,12 +25,18 @@ public partial class CAContract
 
         var isSpecifyVerifierId = IsValidHash(input.VerifierId);
         var verifierServerList = State.VerifiersServerList.Value;
-        var server = isSpecifyVerifierId
-            ? verifierServerList.VerifierServers.FirstOrDefault(o => o.Id == input.VerifierId)
-            : verifierServerList.VerifierServers.FirstOrDefault(o => o.Name == input.Name);
-
         var serverId = isSpecifyVerifierId ? input.VerifierId : HashHelper.ConcatAndCompute(Context.TransactionId,
             HashHelper.ComputeFrom(Context.Self));
+        var server = verifierServerList.VerifierServers.FirstOrDefault(o => o.Id == serverId);
+        if (server != null)
+        {
+            Assert(server.Name == input.Name, "not support update name");
+        }
+        else
+        {
+            server = verifierServerList.VerifierServers.FirstOrDefault(o => o.Name == input.Name);
+        }
+
         if (server == null)
         {
             State.VerifiersServerList.Value.VerifierServers.Add(new VerifierServer
