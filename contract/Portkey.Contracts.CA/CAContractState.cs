@@ -60,7 +60,7 @@ public partial class CAContractState : ContractState
     public MappedState<int, Address> CAContractAddresses { get; set; }
 
     public SingletonState<long> TokenInitialTransferLimit { get; set; }
-    public MappedState<string, long> TransferSecurityThreshold { get; set; }
+    public MappedState<string, TransferSecurityThreshold> TransferSecurityThreshold { get; set; }
     public MappedState<Hash, string, TransferLimit> TransferLimit { get; set; }
     public MappedState<Hash, string, TransferredAmount> DailyTransferredAmountMap { get; set; }
     public MappedState<string, long> TokenDefaultTransferLimit { get; set; }

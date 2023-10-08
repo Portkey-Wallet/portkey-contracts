@@ -14,9 +14,10 @@ import "ca_contract.proto";
 option csharp_namespace = "Portkey.Contracts.CA";
 
 service CAContractImpl {
+  option (aelf.base) = "acs12.proto";
   option (aelf.base) = "ca_contract.proto";
   option (aelf.csharp_state) = "Portkey.Contracts.CA.CAContractState";
-  
+   
   // approve
   rpc ManagerApprove(ManagerApproveInput) returns (google.protobuf.Empty) {}
         
@@ -31,7 +32,9 @@ service CAContractImpl {
   rpc GetDefaultTokenTransferLimit(GetDefaultTokenTransferLimitInput) returns (GetDefaultTokenTransferLimitOutput) {option (aelf.is_view) = true;}   
      
   rpc SetTransferSecurityThreshold(SetTransferSecurityThresholdInput) returns (google.protobuf.Empty) {}
-   
+  
+  rpc GetTransferSecurityThreshold(GetTransferSecurityThresholdInput) returns (GetTransferSecurityThresholdOutput) {option (aelf.is_view) = true;}
+
 }
 
 message ManagerApproveInput {
@@ -118,5 +121,22 @@ message TransferLimitChanged{
 
 message SetTransferSecurityThresholdInput{
     string symbol = 1;
-    int64 security_threshold = 2;
+    TransferSecurityThreshold transfer_security_threshold = 2;
+}
+
+message GetTransferSecurityThresholdInput{
+    string symbol = 1;
+    aelf.Hash ca_hash = 2;
+}
+
+message GetTransferSecurityThresholdOutput{
+    string symbol = 1;
+    int64 guardian_amount = 2;
+    int64 balance = 3;
+    bool is_security = 4;
+}
+
+message TransferSecurityThreshold{
+    int64 guardian_threshold = 1;
+    int64 balance_threshold = 2;
 }

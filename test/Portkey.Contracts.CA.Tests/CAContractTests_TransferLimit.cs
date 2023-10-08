@@ -260,10 +260,11 @@ public partial class CAContractTests
             Symbol = "ELF",
             To = User1Address
         });
-        var setResult = await CaContractUser1Stub.SetCheckChainIdInSignatureEnabled.SendWithExceptionAsync(new SetCheckChainIdInSignatureEnabledInput
-        {
-            CheckChainIdInSignatureEnabled = true
-        });
+        var setResult = await CaContractUser1Stub.SetCheckChainIdInSignatureEnabled.SendWithExceptionAsync(
+            new SetCheckChainIdInSignatureEnabledInput
+            {
+                CheckChainIdInSignatureEnabled = true
+            });
         setResult.TransactionResult.Error.ShouldContain("No permission");
         await CaContractStub.SetCheckChainIdInSignatureEnabled.SendAsync(new SetCheckChainIdInSignatureEnabledInput
         {
@@ -324,30 +325,31 @@ public partial class CAContractTests
         _verifierId1 = _verifierServers[1].Id;
         _verifierId2 = _verifierServers[2].Id;
 
-        await CaContractStub.AddRemovedToCurrentVerifierIdMapper.SendAsync(new AddRemovedToCurrentVerifierIdMapperInput()
-        {
-            Mappers =
+        await CaContractStub.AddRemovedToCurrentVerifierIdMapper.SendAsync(
+            new AddRemovedToCurrentVerifierIdMapperInput()
             {
-                new RemovedToCurrentVerifierIdMapperInfo[]
+                Mappers =
                 {
-                    new()
+                    new RemovedToCurrentVerifierIdMapperInfo[]
                     {
-                        RemovedId = _verifierServers[0].Id,
-                        CurrentId = _verifierServers[0].Id
-                    },
-                    new()
-                    {
-                        RemovedId = _verifierServers[1].Id,
-                        CurrentId = _verifierServers[1].Id
-                    },
-                    new()
-                    {
-                        RemovedId = _verifierServers[2].Id,
-                        CurrentId = _verifierServers[2].Id
+                        new()
+                        {
+                            RemovedId = _verifierServers[0].Id,
+                            CurrentId = _verifierServers[0].Id
+                        },
+                        new()
+                        {
+                            RemovedId = _verifierServers[1].Id,
+                            CurrentId = _verifierServers[1].Id
+                        },
+                        new()
+                        {
+                            RemovedId = _verifierServers[2].Id,
+                            CurrentId = _verifierServers[2].Id
+                        }
                     }
                 }
-            }
-        });
+            });
     }
 
     private async Task InitTestTransferLimitCaHolder()
@@ -406,10 +408,14 @@ public partial class CAContractTests
 
     private async Task InitTransferSecurityBalanceThreshold()
     {
-        await CaContractStub.SetTransferSecurityThreshold.SendAsync(new SetTransferSecurityThresholdInput()
+        await CaContractStub.SetTransferSecurityThreshold.SendAsync(new SetTransferSecurityThresholdInput
         {
             Symbol = "ELF",
-            SecurityThreshold = 10000
+            TransferSecurityThreshold = new TransferSecurityThreshold()
+            {
+                GuardianThreshold = 2,
+                BalanceThreshold = 10000
+            }
         });
     }
 }

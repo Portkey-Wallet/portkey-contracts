@@ -15,9 +15,6 @@ import "acs12.proto";
 option csharp_namespace = "Portkey.Contracts.CA";
 
 service CAContract {
-  option (aelf.base) = "acs12.proto";
-  option (aelf.csharp_state) = "Portkey.Contracts.CA.CAContractState";
-
   rpc Initialize(InitializeInput) returns (google.protobuf.Empty){}
 
   // If the Guardian has CAHolder and Manager, meaning CAHolder created before, return true

@@ -174,17 +174,47 @@ public partial class CAContract
         Assert(Context.Sender == State.Admin.Value, "No permission.");
         Assert(!string.IsNullOrEmpty(input.Symbol), "Invalid symbol.");
         Assert(GetTokenInfo(input.Symbol) != null, $"Not exist symbol {input.Symbol}");
-        Assert(input.SecurityThreshold > 0, "token threshold cannot be less than 0.");
-        State.TransferSecurityThreshold[input.Symbol] = input.SecurityThreshold;
+        Assert(input.TransferSecurityThreshold != null, "Security threshold cannot be null.");
+        Assert(input.TransferSecurityThreshold.BalanceThreshold > 0, "Token threshold cannot be less than 0.");
+        Assert(input.TransferSecurityThreshold.GuardianThreshold > 0, "Guardian threshold cannot be less than 0.");
+
+        State.TransferSecurityThreshold[input.Symbol] = new TransferSecurityThreshold
+        {
+            GuardianThreshold = input.TransferSecurityThreshold.GuardianThreshold,
+            BalanceThreshold = input.TransferSecurityThreshold.BalanceThreshold
+        };
+
         return new Empty();
     }
 
-    private void CheckTransferSecurity(Hash caHash, string symbol)
+    public override GetTransferSecurityThresholdOutput GetTransferSecurityThreshold(
+        GetTransferSecurityThresholdInput input)
     {
-        var holderInfo = State.HolderInfoMap[caHash];
+        Assert(State.TransferSecurityThreshold[input.Symbol] != null,
+            $"There is no threshold set for this symbol{input.Symbol}");
+        Assert(State.HolderInfoMap[input.CaHash] != null, $"CA holder is null.CA hash:{input.CaHash}");
+        var balance = GetTokenBalance(input.Symbol, Context.ConvertVirtualAddressToContractAddress(input.CaHash));
+
+        return new GetTransferSecurityThresholdOutput
+        {
+            Symbol = input.Symbol,
+            GuardianAmount = State.TransferSecurityThreshold[input.Symbol].GuardianThreshold,
+            Balance = balance.Balance,
+            IsSecurity = IsTransferSecurity(input.CaHash, input.Symbol)
+        };
+    }
+
+    private bool IsTransferSecurity(Hash caHash, string symbol)
+    {
+        // There is no security threshold set for this symbol, return true
+        if (State.TransferSecurityThreshold[symbol] == null) return true;
+
         Assert(State.HolderInfoMap[caHash] != null, $"CA holder is null.CA hash:{caHash}");
-        if (holderInfo.GuardianList?.Guardians?.Count < 2) return;
-        var amount = GetTokenBalance(symbol, Context.ConvertVirtualAddressToContractAddress(caHash));
-        Assert(amount.Balance < State.TransferSecurityThreshold[symbol], "low security level");
+        var holderInfo = State.HolderInfoMap[caHash];
+        if (holderInfo.GuardianList?.Guardians?.Count >
+            State.TransferSecurityThreshold[symbol].GuardianThreshold) return true;
+
+        var balance = GetTokenBalance(symbol, Context.ConvertVirtualAddressToContractAddress(caHash));
+        return balance.Balance < State.TransferSecurityThreshold[symbol].BalanceThreshold;
     }
 }
