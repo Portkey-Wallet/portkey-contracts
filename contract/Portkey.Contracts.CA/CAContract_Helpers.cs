@@ -170,14 +170,7 @@ public partial class CAContract
         {
             return false;
         }
-
-        if (methodName != nameof(OperationType.Approve).ToLower() &&
-            methodName != nameof(OperationType.ModifyTransferLimit).ToLower())
-        {
-            return int.Parse(verifierDoc[6]) == Context.ChainId;
-        }
-
-        return true;
+        return int.Parse(verifierDoc[6]) == Context.ChainId;
     }
 
     private bool IsGuardianExist(Hash caHash, GuardianInfo guardianInfo)
