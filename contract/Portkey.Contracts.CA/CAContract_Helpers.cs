@@ -179,6 +179,14 @@ public partial class CAContract
             g => g.IdentifierHash == guardianInfo.IdentifierHash && g.Type == guardianInfo.Type &&
                  g.VerifierId == guardianInfo.VerificationInfo.Id
         );
+        if (satisfiedGuardians != null)
+        {
+            return true;
+        }
+        satisfiedGuardians = State.HolderInfoMap[caHash].GuardianList.Guardians.FirstOrDefault(
+            g => g.IdentifierHash == guardianInfo.IdentifierHash && g.Type == guardianInfo.Type &&
+                 State.RemovedToCurrentVerifierIdMap[g.VerifierId] == guardianInfo.VerificationInfo.Id
+        );
         return satisfiedGuardians != null;
     }
 
