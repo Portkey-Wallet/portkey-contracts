@@ -109,7 +109,7 @@ public partial class CAContract
         var holderInfo = State.HolderInfoMap[caHash];
         Assert(State.HolderInfoMap[caHash] != null, $"CA holder is null.CA hash:{caHash}");
         Assert(holderInfo.GuardianList?.Guardians?.Count > 0,
-            "Processing one the chain...");
+            "Processing on the chain...");
         var guardianApprovedAmount = 0;
         var guardianApprovedList = guardiansApproved
             .DistinctBy(g => $"{g.Type}{g.IdentifierHash}{g.VerificationInfo.Id}").ToList();
