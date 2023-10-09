@@ -122,9 +122,10 @@ public partial class CAContract
         }
 
         var holderJudgementStrategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
+        var onSyncChain = holderInfo.CreateChainId != 0 && holderInfo.CreateChainId != Context.ChainId;
         Assert(IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count, guardianApprovedAmount,
                 holderJudgementStrategy),
-            "JudgementStrategy validate failed");
+            onSyncChain ? "Processing on the chain..." : "JudgementStrategy validate failed");
     }
 
     private void UpdateDailyTransferredAmount(Hash caHash, string symbol, long amount)
