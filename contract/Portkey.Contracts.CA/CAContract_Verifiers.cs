@@ -185,6 +185,13 @@ public partial class CAContract
             Assert(verifierServer != null, "Destination verifierServer not existed");
             State.RemovedToCurrentVerifierIdMap[mapper.RemovedId] = mapper.CurrentId;
         }
+        Context.Fire(new RemovedToCurrentVerifierIdMapperAdded
+        {
+            MapperList = new RemovedToCurrentVerifierIdMapperInfoList
+            {
+                Mappers = { input.Mappers }
+            }
+        });
         return new Empty();
     }
 

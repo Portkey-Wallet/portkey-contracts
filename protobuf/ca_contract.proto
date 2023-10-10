@@ -573,6 +573,15 @@ message VerifierServerRemoved {
   VerifierServer verifier_server = 1 [(aelf.is_indexed) = true];
 }
 
+message RemovedToCurrentVerifierIdMapperAdded {
+    option (aelf.is_event) = true;
+    RemovedToCurrentVerifierIdMapperInfoList mapper_list = 1 [(aelf.is_indexed) = true];
+}
+
+message RemovedToCurrentVerifierIdMapperInfoList {
+    repeated RemovedToCurrentVerifierIdMapperInfo mappers = 1;
+}
+
 message CAServerAdded {
   option (aelf.is_event) = true;
   CAServer ca_sever_added = 1;
