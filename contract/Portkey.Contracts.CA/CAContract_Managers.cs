@@ -244,7 +244,7 @@ public partial class CAContract
             UpdateDailyTransferredAmount(input.CaHash, transferInput.Symbol, transferInput.Amount);
         }
 
-        Context.SendVirtualInline(input.CaHash, input.ContractAddress, input.MethodName, input.Args);
+        Context.SendVirtualInline(input.CaHash, input.ContractAddress, input.MethodName, input.Args, true);
         return new Empty();
     }
 
