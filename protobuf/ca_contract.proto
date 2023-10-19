@@ -499,6 +499,7 @@ message LoginGuardianAdded {
   aelf.Address ca_address = 2;
   aelf.Address manager = 3 [(aelf.is_indexed) = true];
   Guardian login_guardian = 4 [(aelf.is_indexed) = true];
+  bool is_create_holder = 5;
 }
 
 // SocialRecovery

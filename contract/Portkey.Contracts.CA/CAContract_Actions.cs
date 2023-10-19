@@ -114,6 +114,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
             CaAddress = Context.ConvertVirtualAddressToContractAddress(holderId),
             LoginGuardian = guardian,
             Manager = input.ManagerInfo.Address,
+            IsCreateHolder = true
         });
 
         return new Empty();
