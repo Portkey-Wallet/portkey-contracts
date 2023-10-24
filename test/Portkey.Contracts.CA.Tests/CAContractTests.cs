@@ -11,7 +11,7 @@ namespace Portkey.Contracts.CA;
 public partial class CAContractTests : CAContractTestBase
 {
     [Fact]
-    public async Task CreateHolderTest()
+    public async Task<Address> CreateHolderTest()
     {
         var verificationTime = DateTime.UtcNow;
         await CaContractStub.Initialize.SendAsync(new InitializeInput
@@ -175,6 +175,8 @@ public partial class CAContractTests : CAContractTestBase
             holderInfo.GuardianList.Guardians.Count.ShouldBe(2);
             holderInfo.GuardianList.Guardians.Last().GuardianType.GuardianType_.ShouldBe(GuardianType1);
         }*/
+
+        return caInfo.CaAddress;
     }
 
     [Fact]
@@ -447,13 +449,13 @@ public partial class CAContractTests : CAContractTestBase
     [Fact]
     public async Task CreateHolderTest_Delegator()
     {
-        await CreateHolderTest();
+        var caAddress = await CreateHolderTest();
 
         var delegations = await TokenContractStub.GetTransactionFeeDelegationsOfADelegatee.CallAsync(
             new GetTransactionFeeDelegationsOfADelegateeInput
             {
                 DelegateeAddress = CaContractAddress,
-                DelegatorAddress = User1Address
+                DelegatorAddress = caAddress
             });
 
         delegations.Delegations["ELF"].ShouldBe(100_00000000);
