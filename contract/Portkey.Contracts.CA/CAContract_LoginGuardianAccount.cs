@@ -50,10 +50,14 @@ public partial class CAContract
 
         State.GuardianMap[loginGuardian.IdentifierHash] = input.CaHash;
 
+        
+        var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
+        UpgradeSecondaryDelegatee(caAddress, holderInfo.ManagerInfos);
+        
         Context.Fire(new LoginGuardianAdded
         {
             CaHash = input.CaHash,
-            CaAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash),
+            CaAddress = caAddress,
             LoginGuardian = guardian,
             Manager = Context.Sender
         });
@@ -105,6 +109,8 @@ public partial class CAContract
             Manager = Context.Sender
         });
 
+        var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
+        
         // not found, or removed and be registered by others later, quit to be idempotent
         if (holderInfo.GuardianList.Guardians.Where(g =>
                 g.IdentifierHash == loginGuardian.IdentifierHash).All(g => !g.IsLoginGuardian))
@@ -113,12 +119,14 @@ public partial class CAContract
             Context.Fire(new LoginGuardianUnbound
             {
                 CaHash = input.CaHash,
-                CaAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash),
+                CaAddress = caAddress,
                 LoginGuardianIdentifierHash = loginGuardian.IdentifierHash,
                 Manager = Context.Sender
             });
         }
-
+        
+        UpgradeSecondaryDelegatee(caAddress, holderInfo.ManagerInfos);
+        
         return new Empty();
     }
 

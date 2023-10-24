@@ -89,7 +89,7 @@ public partial class CAContractTests
     }
 
     [Fact]
-    public async Task SocialRecoveryTest()
+    public async Task<Address> SocialRecoveryTest()
     {
         await CreateHolderDefault();
         var verificationTime = DateTime.UtcNow;
@@ -138,18 +138,20 @@ public partial class CAContractTests
                 DelegatorAddress = User2Address
             });
         delegateAllowance.Delegations["ELF"].ShouldBe(10000000000000000L);
+
+        return caInfo.CaAddress;
     }
 
     [Fact]
     public async Task SocialRecoveryTest_Delegator()
     {
-        await SocialRecoveryTest();
+        var caAddress = await SocialRecoveryTest();
 
         var delegations = await TokenContractStub.GetTransactionFeeDelegationsOfADelegatee.CallAsync(
             new GetTransactionFeeDelegationsOfADelegateeInput
             {
                 DelegateeAddress = CaContractAddress,
-                DelegatorAddress = User2Address
+                DelegatorAddress = caAddress
             });
 
         delegations.Delegations["ELF"].ShouldBe(100_00000000);

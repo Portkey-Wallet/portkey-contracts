@@ -1,8 +1,10 @@
 using System;
 using System.Linq;
 using AElf;
+using AElf.Contracts.MultiToken;
 using AElf.CSharp.Core.Extension;
 using AElf.Types;
+using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
 
 namespace Portkey.Contracts.CA;
@@ -192,5 +194,20 @@ public partial class CAContract
     private string GetSaltFromVerificationDoc(string verificationDoc)
     {
         return verificationDoc.Split(",")[4];
+    }
+    private bool IfCaHasSecondaryDelegatee(Address delegatorAddress)
+    {
+        var delegateeList = State.TokenContract.GetTransactionFeeDelegatees.Call(new GetTransactionFeeDelegateesInput
+        {
+            DelegatorAddress = delegatorAddress
+        });
+        return delegateeList.DelegateeAddresses.Contains(Context.Self);
+    }
+    
+    private void UpgradeSecondaryDelegatee(Address caAddress, RepeatedField<ManagerInfo> managerInfos)
+    {
+        if (IfCaHasSecondaryDelegatee(caAddress)) return;
+        RemoveContractDelegators(managerInfos);
+        SetSecondaryDelegator(caAddress);
     }
 }

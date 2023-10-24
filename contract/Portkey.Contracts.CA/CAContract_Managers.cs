@@ -60,12 +60,14 @@ public partial class CAContract
         State.HolderInfoMap[caHash].ManagerInfos.Add(input.ManagerInfo);
         SetDelegator(caHash, input.ManagerInfo);
 
-        SetContractDelegator(input.ManagerInfo);
+        var caAddress = Context.ConvertVirtualAddressToContractAddress(caHash);
+        UpgradeSecondaryDelegatee(caAddress,holderInfo.ManagerInfos);
+        
 
         Context.Fire(new ManagerInfoSocialRecovered()
         {
             CaHash = caHash,
-            CaAddress = Context.ConvertVirtualAddressToContractAddress(caHash),
+            CaAddress = caAddress,
             Manager = input.ManagerInfo.Address,
             ExtraData = input.ManagerInfo.ExtraData
         });
@@ -89,13 +91,14 @@ public partial class CAContract
 
         holderInfo.ManagerInfos.Add(input.ManagerInfo);
         SetDelegator(input.CaHash, input.ManagerInfo);
-
-        SetContractDelegator(input.ManagerInfo);
+        
+        var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
+        UpgradeSecondaryDelegatee(caAddress, holderInfo.ManagerInfos);
 
         Context.Fire(new ManagerInfoAdded
         {
             CaHash = input.CaHash,
-            CaAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash),
+            CaAddress = caAddress,
             Manager = input.ManagerInfo.Address,
             ExtraData = input.ManagerInfo.ExtraData
         });
@@ -157,12 +160,14 @@ public partial class CAContract
 
         holderInfo.ManagerInfos.Remove(managerInfo);
         RemoveDelegator(caHash, managerInfo);
-        RemoveContractDelegator(managerInfo);
 
+        var caAddress = Context.ConvertVirtualAddressToContractAddress(caHash);
+        UpgradeSecondaryDelegatee(caAddress, holderInfo.ManagerInfos);
+        
         Context.Fire(new ManagerInfoRemoved
         {
             CaHash = caHash,
-            CaAddress = Context.ConvertVirtualAddressToContractAddress(caHash),
+            CaAddress = caAddress,
             Manager = managerInfo.Address,
             ExtraData = managerInfo.ExtraData
         });

@@ -94,7 +94,8 @@ public partial class CAContract : CAContractContainer.CAContractBase
 
         SetDelegator(holderId, input.ManagerInfo);
 
-        SetContractDelegator(input.ManagerInfo);
+        var caAddress = Context.ConvertVirtualAddressToContractAddress(holderId);
+        SetSecondaryDelegator(caAddress);
 
         // Log Event
         Context.Fire(new CAHolderCreated
@@ -109,7 +110,7 @@ public partial class CAContract : CAContractContainer.CAContractBase
         Context.Fire(new LoginGuardianAdded
         {
             CaHash = holderId,
-            CaAddress = Context.ConvertVirtualAddressToContractAddress(holderId),
+            CaAddress = caAddress,
             LoginGuardian = guardian,
             Manager = input.ManagerInfo.Address,
         });
@@ -177,14 +178,14 @@ public partial class CAContract : CAContractContainer.CAContractBase
         }
     }
 
-    private void SetContractDelegator(ManagerInfo managerInfo)
+    private void SetSecondaryDelegator(Address delegatorAddress)
     {
         // Todo Temporary, need delete later
         if (State.ContractDelegationFee.Value == null)
         {
             State.ContractDelegationFee!.Value = new ContractDelegationFee
             {
-                Amount = CAContractConstants.DefaultContractDelegationFee
+                Amount = CAContractConstants.DefaultSecondaryDelegationFee
             };
         }
 
@@ -195,7 +196,7 @@ public partial class CAContract : CAContractContainer.CAContractBase
 
         State.TokenContract.SetTransactionFeeDelegations.Send(new SetTransactionFeeDelegationsInput
         {
-            DelegatorAddress = managerInfo.Address,
+            DelegatorAddress = delegatorAddress,
             Delegations =
             {
                 delegations
@@ -203,12 +204,15 @@ public partial class CAContract : CAContractContainer.CAContractBase
         });
     }
 
-    private void RemoveContractDelegator(ManagerInfo managerInfo)
+    private void RemoveContractDelegators(RepeatedField<ManagerInfo> managerInfos)
     {
-        State.TokenContract.RemoveTransactionFeeDelegator.Send(new RemoveTransactionFeeDelegatorInput
+        foreach (var managerInfo in managerInfos)
         {
-            DelegatorAddress = managerInfo.Address,
-        });
+            State.TokenContract.RemoveTransactionFeeDelegator.Send(new RemoveTransactionFeeDelegatorInput
+            {
+                DelegatorAddress = managerInfo.Address,
+            });
+        }
     }
 
     public override Empty SetContractDelegationFee(SetContractDelegationFeeInput input)
