@@ -39,7 +39,10 @@ public partial class CAContract
         Assert(!string.IsNullOrEmpty(input.Symbol), "Invalid symbol.");
 
         // When the user does not set transferLimit, use the default value of symbol
-        var transferLimit = GetAccountTransferLimit(input.CaHash, input.Symbol);
+        var transferLimit = State.TransferLimit[input.CaHash][input.Symbol] != null
+            ? State.TransferLimit[input.CaHash][input.Symbol]
+            : GetDefaultTransferLimit(input.Symbol);
+
         return new GetTransferLimitOutput
         {
             SingleLimit = transferLimit.SingleLimit,
@@ -85,19 +88,7 @@ public partial class CAContract
         return new GetDefaultTokenTransferLimitOutput
         {
             Symbol = input.Symbol,
-            TransferLimit = new TransferLimit
-            {
-                SingleLimit = State.TokenDefaultTransferLimit[input.Symbol] != null
-                    ? State.TokenDefaultTransferLimit[input.Symbol].SingleLimit
-                    : State.TokenInitialTransferLimit.Value > 0
-                        ? State.TokenInitialTransferLimit.Value
-                        : CAContractConstants.TokenDefaultTransferLimitAmount,
-                DayLimit = State.TokenDefaultTransferLimit[input.Symbol] != null
-                    ? State.TokenDefaultTransferLimit[input.Symbol].DayLimit
-                    : State.TokenInitialTransferLimit.Value > 0
-                        ? State.TokenInitialTransferLimit.Value
-                        : CAContractConstants.TokenDefaultTransferLimitAmount
-            }
+            TransferLimit = GetDefaultTransferLimit(input.Symbol)
         };
     }
 
@@ -133,7 +124,10 @@ public partial class CAContract
         // When transferlimit is -1, no limit calculation is performed.
         if (State.TransferLimit[caHash]?[symbol]?.DayLimit == -1) return;
 
-        var transferLimit = GetAccountTransferLimit(caHash, symbol);
+        var transferLimit = State.TransferLimit[caHash][symbol] != null
+            ? State.TransferLimit[caHash][symbol]
+            : GetDefaultTransferLimit(symbol);
+
         var transferredAmount = State.DailyTransferredAmountMap[caHash][symbol] ??
                                 new TransferredAmount() { DailyTransfered = 0 };
         Assert(amount <= transferLimit.SingleLimit,
@@ -152,26 +146,21 @@ public partial class CAContract
         };
     }
 
-    private TransferLimit GetAccountTransferLimit(Hash caHash, string symbol)
+    private TransferLimit GetDefaultTransferLimit(string symbol)
     {
-        if (State.TransferLimit[caHash][symbol] == null)
+        return new TransferLimit
         {
-            State.TransferLimit[caHash][symbol] = new TransferLimit()
-            {
-                SingleLimit = State.TokenDefaultTransferLimit[symbol] != null
-                    ? State.TokenDefaultTransferLimit[symbol].SingleLimit
-                    : State.TokenInitialTransferLimit.Value > 0
-                        ? State.TokenInitialTransferLimit.Value
-                        : CAContractConstants.TokenDefaultTransferLimitAmount,
-                DayLimit = State.TokenDefaultTransferLimit[symbol] != null
-                    ? State.TokenDefaultTransferLimit[symbol].DayLimit
-                    : State.TokenInitialTransferLimit.Value > 0
-                        ? State.TokenInitialTransferLimit.Value
-                        : CAContractConstants.TokenDefaultTransferLimitAmount
-            };
-        }
-
-        return State.TransferLimit[caHash][symbol];
+            SingleLimit = State.TokenDefaultTransferLimit[symbol] != null
+                ? State.TokenDefaultTransferLimit[symbol].SingleLimit
+                : State.TokenInitialTransferLimit.Value > 0
+                    ? State.TokenInitialTransferLimit.Value
+                    : CAContractConstants.TokenDefaultTransferLimitAmount,
+            DayLimit = State.TokenDefaultTransferLimit[symbol] != null
+                ? State.TokenDefaultTransferLimit[symbol].DayLimit
+                : State.TokenInitialTransferLimit.Value > 0
+                    ? State.TokenInitialTransferLimit.Value
+                    : CAContractConstants.TokenDefaultTransferLimitAmount
+        };
     }
 
     public override Empty SetCheckChainIdInSignatureEnabled(SetCheckChainIdInSignatureEnabledInput input)
