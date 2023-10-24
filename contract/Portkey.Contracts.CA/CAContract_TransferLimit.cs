@@ -154,7 +154,7 @@ public partial class CAContract
 
     private TransferLimit GetAccountTransferLimit(Hash caHash, string symbol)
     {
-        if (State.TransferLimit[caHash] == null || State.TransferLimit[caHash][symbol] == null)
+        if (State.TransferLimit[caHash][symbol] == null)
         {
             State.TransferLimit[caHash][symbol] = new TransferLimit()
             {
