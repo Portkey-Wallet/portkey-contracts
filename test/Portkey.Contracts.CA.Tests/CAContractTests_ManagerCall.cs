@@ -37,7 +37,7 @@ public partial class CAContractTests
             {
                 To = User2Address,
                 Symbol = "ELF",
-                Amount = 1_00000000,
+                Amount = 10000,
                 Memo = "ca transfer."
             }.ToBytesValue().Value
         };
@@ -48,7 +48,7 @@ public partial class CAContractTests
                 Owner = User2Address,
                 Symbol = "ELF"
             });
-            balance.Balance.ShouldBe(1_00000000);
+            balance.Balance.ShouldBe(10000);
         }
     }
 
@@ -193,7 +193,7 @@ public partial class CAContractTests
             CaHash = caHash,
             To = User2Address,
             Symbol = "ELF",
-            Amount = 1_00000000,
+            Amount = 10000,
             Memo = "ca transfer."
         });
         {
@@ -202,7 +202,7 @@ public partial class CAContractTests
                 Owner = User2Address,
                 Symbol = "ELF"
             });
-            balance.Balance.ShouldBe(1_00000000);
+            balance.Balance.ShouldBe(10000);
         }
     }
 

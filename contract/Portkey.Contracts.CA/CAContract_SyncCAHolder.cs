@@ -17,12 +17,32 @@ public partial class CAContract
         Assert(input.ManagerInfos != null, "input.ManagerInfos is null");
 
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
-
         ValidateLoginGuardian(input.CaHash, holderInfo, input.LoginGuardians);
 
         ValidateManager(holderInfo, input.ManagerInfos);
-
+        AssertCreateChain(holderInfo);
+        if (holderInfo.CreateChainId == 0)
+        {
+            holderInfo.CreateChainId = Context.ChainId;
+        }
+        Assert(holderInfo.CreateChainId == input.CreateChainId, "Invalid input createChainId.");
+        Assert(input.GuardianList?.Guardians?.Count > 0, "Input guardianList is empty.");
+        Assert(holderInfo.GuardianList.Guardians.Count == input.GuardianList.Guardians.Count, 
+            "The amount of input.GuardianList not equals to HolderInfo's GuardianList");
+        ValidateGuardianList(holderInfo.GuardianList, input.GuardianList);
         return new Empty();
+    }
+
+    private void ValidateGuardianList(GuardianList desGuardianList, GuardianList srcGuardianList)
+    {
+        foreach (var guardianInfo in desGuardianList.Guardians)
+        {
+            var searchGuardian = srcGuardianList.Guardians.FirstOrDefault(
+                g => g.IdentifierHash == guardianInfo.IdentifierHash && g.Type == guardianInfo.Type &&
+                     g.VerifierId == guardianInfo.VerifierId
+            );
+            Assert(searchGuardian != null, $"Guardian:{guardianInfo.VerifierId} is not in input GuardianList");
+        }
     }
 
     private void ValidateLoginGuardian(Hash caHash, HolderInfo holderInfo,
@@ -78,6 +98,7 @@ public partial class CAContract
 
         var holderId = transactionInput.CaHash;
         var holderInfo = State.HolderInfoMap[holderId] ?? new HolderInfo { CreatorAddress = Context.Sender };
+        holderInfo.CreateChainId = transactionInput.CreateChainId;
 
         var managerInfosToAdd = ManagerInfosExcept(transactionInput.ManagerInfos, holderInfo.ManagerInfos);
         var managerInfosToRemove = ManagerInfosExcept(holderInfo.ManagerInfos, transactionInput.ManagerInfos);
@@ -102,6 +123,26 @@ public partial class CAContract
         var loginGuardiansUnbound =
             SyncLoginGuardianUnbound(transactionInput.CaHash, transactionInput.NotLoginGuardians);
 
+        if (holderInfo.GuardianList == null)
+        {
+            holderInfo.GuardianList = new GuardianList
+            {
+                Guardians = { }
+            };
+        }
+
+        var guardiansAdded = GuardiansExcept(transactionInput.GuardianList.Guardians, holderInfo.GuardianList.Guardians);
+        var guardiansRemoved = GuardiansExcept(holderInfo.GuardianList.Guardians, transactionInput.GuardianList.Guardians);
+        foreach (var guardian in guardiansAdded)
+        {
+            holderInfo.GuardianList.Guardians.Add(guardian);
+        }
+
+        foreach (var guardian in guardiansRemoved)
+        {
+            holderInfo.GuardianList.Guardians.Remove(guardian);
+        }
+
         State.HolderInfoMap[holderId] = holderInfo;
 
         Context.Fire(new CAHolderSynced
@@ -124,6 +165,14 @@ public partial class CAContract
             LoginGuardiansUnbound = new LoginGuardianList
             {
                 LoginGuardians = { loginGuardiansUnbound }
+            },
+            GuardiansAdded = new GuardianList
+            {
+                Guardians = { guardiansAdded }
+            },
+            GuardiansRemoved = new GuardianList
+            {
+                Guardians = { guardiansRemoved }
             }
         });
 
@@ -199,6 +248,33 @@ public partial class CAContract
             if (!theSame)
             {
                 resultSet.Add(managerInfo1);
+            }
+        }
+
+        return resultSet;
+    }
+    
+    private RepeatedField<Guardian> GuardiansExcept(RepeatedField<Guardian> src,
+        RepeatedField<Guardian> destination)
+    {
+        RepeatedField<Guardian> resultSet = new RepeatedField<Guardian>();
+
+        foreach (var srcGuardian in src)
+        {
+            bool theSame = false;
+            foreach (var desGuardian in destination)
+            {
+                if (srcGuardian.IdentifierHash == desGuardian.IdentifierHash &&
+                    srcGuardian.VerifierId == desGuardian.VerifierId && srcGuardian.Type == desGuardian.Type)
+                {
+                    theSame = true;
+                    break;
+                }
+            }
+
+            if (!theSame)
+            {
+                resultSet.Add(srcGuardian);
             }
         }
 

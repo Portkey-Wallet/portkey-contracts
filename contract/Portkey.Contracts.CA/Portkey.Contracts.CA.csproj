@@ -48,8 +48,14 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ContractCode Include="..\..\protobuf\ca_contract.proto">
+        <ContractBase Include="..\..\protobuf\ca_contract.proto">
             <Link>Protobuf\Proto\ca_contract.proto</Link>
-        </ContractCode>
+        </ContractBase>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ContractCode Include="..\..\protobuf\ca_contract_impl.proto">
+        <Link>Protobuf\Proto\ca_contract_impl.proto</Link>
+      </ContractCode>
     </ItemGroup>
 </Project>

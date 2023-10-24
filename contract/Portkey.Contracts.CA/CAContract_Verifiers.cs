@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using AElf;
 using AElf.Sdk.CSharp;
+using AElf.Types;
 using Google.Protobuf.WellKnownTypes;
 
 namespace Portkey.Contracts.CA;
@@ -22,12 +23,24 @@ public partial class CAContract
 
         State.VerifiersServerList.Value ??= new VerifierServerList();
 
-        var serverId = HashHelper.ConcatAndCompute(Context.TransactionId,
-            HashHelper.ComputeFrom(Context.Self));
-
+        var isSpecifyVerifierId = IsValidHash(input.VerifierId);
         var verifierServerList = State.VerifiersServerList.Value;
-        var server = verifierServerList.VerifierServers
-            .FirstOrDefault(server => server.Name == input.Name);
+        var serverId = isSpecifyVerifierId ? input.VerifierId : HashHelper.ConcatAndCompute(Context.TransactionId,
+            HashHelper.ComputeFrom(Context.Self));
+        var server = verifierServerList.VerifierServers.FirstOrDefault(o => o.Id == serverId);
+        if (server != null)
+        {
+            Assert(server.Name == input.Name, "not support update name");
+        }
+        else
+        {
+            server = verifierServerList.VerifierServers.FirstOrDefault(o => o.Name == input.Name);
+            if (server != null)
+            {
+                Assert(!isSpecifyVerifierId, "verifierServer name existed");
+                serverId = server.Id;
+            }
+        }
 
         if (server == null)
         {
@@ -159,7 +172,39 @@ public partial class CAContract
         {
             output.VerifierServers.Add(verifierServerList.VerifierServers);
         }
-
         return output;
+    }
+    
+    public override Empty AddRemovedToCurrentVerifierIdMapper(AddRemovedToCurrentVerifierIdMapperInput input)
+    {
+        Assert(State.Admin.Value == Context.Sender, "No permission");
+        Assert(input.Mappers.Count > 0, "Invalid input");
+        foreach (var mapper in input.Mappers)
+        {
+            var verifierServer = State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(o => o.Id == mapper.CurrentId);
+            Assert(verifierServer != null, "Destination verifierServer not existed");
+            State.RemovedToCurrentVerifierIdMap[mapper.RemovedId] = mapper.CurrentId;
+        }
+        Context.Fire(new RemovedToCurrentVerifierIdMapperAdded
+        {
+            MapperList = new RemovedToCurrentVerifierIdMapperInfoList
+            {
+                Mappers = { input.Mappers }
+            }
+        });
+        return new Empty();
+    }
+
+    public override GetRemovedToCurrentVerifierIdMapperOutput GetRemovedToCurrentVerifierIdMapper(Hash input)
+    {
+        var currentVerifierId = State.RemovedToCurrentVerifierIdMap[input];
+        return new GetRemovedToCurrentVerifierIdMapperOutput
+        {
+            Mapper = new RemovedToCurrentVerifierIdMapperInfo()
+            {
+                RemovedId = input,
+                CurrentId = currentVerifierId
+            }
+        };
     }
 }
