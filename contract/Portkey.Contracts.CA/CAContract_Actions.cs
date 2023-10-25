@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using AElf;
 using AElf.Contracts.MultiToken;
 using AElf.Sdk.CSharp;
@@ -8,7 +9,7 @@ using Google.Protobuf.WellKnownTypes;
 
 namespace Portkey.Contracts.CA;
 
-public partial class CAContract : CAContractContainer.CAContractBase
+public partial class CAContract : CAContractImplContainer.CAContractImplBase
 {
     public override Empty Initialize(InitializeInput input)
     {
@@ -54,6 +55,7 @@ public partial class CAContract : CAContractContainer.CAContractBase
         var holderInfo = new HolderInfo();
         holderId = HashHelper.ConcatAndCompute(Context.TransactionId, Context.PreviousBlockHash);
         holderInfo.CreatorAddress = Context.Sender;
+        holderInfo.CreateChainId = Context.ChainId;
         holderInfo.ManagerInfos.Add(input.ManagerInfo);
         //Check verifier signature.
         var methodName = nameof(CreateCAHolder).ToLower();
@@ -112,9 +114,20 @@ public partial class CAContract : CAContractContainer.CAContractBase
             CaAddress = Context.ConvertVirtualAddressToContractAddress(holderId),
             LoginGuardian = guardian,
             Manager = input.ManagerInfo.Address,
+            IsCreateHolder = true
         });
 
         return new Empty();
+    }
+    
+    private void AssertCreateChain(HolderInfo holderInfo)
+    {
+        Assert(holderInfo.GuardianList != null && holderInfo.GuardianList.Guardians != null && 
+               holderInfo.GuardianList.Guardians.Count > 0, "Not on registered chain");
+        if (holderInfo.CreateChainId > 0)
+        {
+            Assert(holderInfo.CreateChainId == Context.ChainId, "Not on registered chain");
+        }
     }
 
     private bool IsJudgementStrategySatisfied(int guardianCount, int guardianApprovedCount, StrategyNode strategyNode)
@@ -233,14 +246,6 @@ public partial class CAContract : CAContractContainer.CAContractBase
         {
             DelegationFee = State.ContractDelegationFee.Value
         };
-    }
-
-    public override Empty ChangeOperationTypeInSignatureEnabled(OperationTypeInSignatureEnabledInput input)
-    {
-        Assert(State.Admin.Value == Context.Sender, "No permission");
-        Assert(State.OperationTypeInSignatureEnabled.Value != input.OperationTypeInSignatureEnabled, "invalid input");
-        State.OperationTypeInSignatureEnabled.Value = input.OperationTypeInSignatureEnabled;
-        return new Empty();
     }
 
     public override Empty SetCAContractAddresses(SetCAContractAddressesInput input)

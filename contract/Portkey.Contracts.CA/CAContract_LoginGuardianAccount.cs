@@ -18,7 +18,7 @@ public partial class CAContract
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
 
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
-
+        AssertCreateChain(holderInfo);
         var loginGuardian = input.Guardian;
 
         var isOccupied = CheckLoginGuardianIsNotOccupied(loginGuardian, input.CaHash);
@@ -49,7 +49,7 @@ public partial class CAContract
         State.LoginGuardianMap[loginGuardian.IdentifierHash][loginGuardian.VerifierId] = input.CaHash;
 
         State.GuardianMap[loginGuardian.IdentifierHash] = input.CaHash;
-
+        
         Context.Fire(new LoginGuardianAdded
         {
             CaHash = input.CaHash,
@@ -72,7 +72,7 @@ public partial class CAContract
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
 
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
-
+        AssertCreateChain(holderInfo);
         // if CAHolder only have one LoginGuardian,not Allow Unset;
         Assert(holderInfo.GuardianList!.Guardians.Count(g => g.IsLoginGuardian) > 1,
             "only one LoginGuardian,can not be Unset");
@@ -118,7 +118,7 @@ public partial class CAContract
                 Manager = Context.Sender
             });
         }
-
+        
         return new Empty();
     }
 

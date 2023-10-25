@@ -18,10 +18,7 @@ public partial class CAContractTests
         {
             ContractAdmin = DefaultAccount.Address,
         });
-        await CaContractStub.ChangeOperationTypeInSignatureEnabled.SendAsync(new OperationTypeInSignatureEnabledInput()
-        {
-            OperationTypeInSignatureEnabled = true
-        });
+       
         
         var caContractAddresses = new List<CAContractAddress>
         {
@@ -84,10 +81,6 @@ public partial class CAContractTests
         await CaContractStub.Initialize.SendAsync(new InitializeInput()
         {
             ContractAdmin = DefaultAccount.Address,
-        });
-        await CaContractStub.ChangeOperationTypeInSignatureEnabled.SendAsync(new OperationTypeInSignatureEnabledInput()
-        {
-            OperationTypeInSignatureEnabled = true
         });
         await CaContractStub.AddCAServer.SendAsync( new AddCAServerInput()
         {
