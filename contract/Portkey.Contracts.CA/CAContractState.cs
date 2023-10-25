@@ -1,5 +1,6 @@
 using AElf.Sdk.CSharp.State;
 using AElf.Types;
+using Google.Protobuf.Collections;
 
 namespace Portkey.Contracts.CA;
 
@@ -22,6 +23,11 @@ public partial class CAContractState : ContractState
     /// multiple Login Guardian to one HolderInfo Hash
     /// </summary>
     public MappedState<Hash, Hash> GuardianMap { get; set; }
+
+    /// <summary>
+    /// removedId -> currentId
+    /// </summary>
+    public MappedState<Hash, Hash> RemovedToCurrentVerifierIdMap { get; set; }
 
     /// <summary>
     /// HolderInfo Hash -> HolderInfo
@@ -51,9 +57,15 @@ public partial class CAContractState : ContractState
     //
     public MappedState<Hash, bool> VerifierDocMap { get; set; }
 
-    public SingletonState<bool> OperationTypeInSignatureEnabled { get; set; }
-
     public MappedState<int, Address> CAContractAddresses { get; set; }
+
+    public SingletonState<long> TokenInitialTransferLimit { get; set; }
+    public SingletonState<TransferSecurityThresholdList> TransferSecurityThresholdList { get; set; }
+    public MappedState<Hash, string, TransferLimit> TransferLimit { get; set; }
+    public MappedState<Hash, string, TransferredAmount> DailyTransferredAmountMap { get; set; }
+    public MappedState<string, TransferLimit> TokenDefaultTransferLimit { get; set; }
+    public MappedState<Address, string, bool> ForbiddenForwardCallContractMethod { get; set; }
+    public SingletonState<bool> CheckChainIdInSignatureEnabled { get; set; }
     
     public SingletonState<SecondaryDelegationFee> SecondaryDelegationFee { get; set; }
 }

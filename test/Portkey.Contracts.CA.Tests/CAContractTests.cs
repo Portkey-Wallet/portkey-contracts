@@ -18,10 +18,6 @@ public partial class CAContractTests : CAContractTestBase
         {
             ContractAdmin = DefaultAddress,
         });
-        await CaContractStub.ChangeOperationTypeInSignatureEnabled.SendAsync(new OperationTypeInSignatureEnabledInput()
-        {
-            OperationTypeInSignatureEnabled = true
-        });
         {
             await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
             {
@@ -245,10 +241,7 @@ public partial class CAContractTests : CAContractTestBase
         {
             ContractAdmin = DefaultAddress,
         });
-        await CaContractStub.ChangeOperationTypeInSignatureEnabled.SendAsync(new OperationTypeInSignatureEnabledInput()
-        {
-            OperationTypeInSignatureEnabled = true
-        });
+
         var executionResult = await CaContractStub.CreateCAHolder.SendWithExceptionAsync(new CreateCAHolderInput
         {
             GuardianApproved = null,
@@ -267,10 +260,6 @@ public partial class CAContractTests : CAContractTestBase
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
             ContractAdmin = DefaultAddress,
-        });
-        await CaContractStub.ChangeOperationTypeInSignatureEnabled.SendAsync(new OperationTypeInSignatureEnabledInput()
-        {
-            OperationTypeInSignatureEnabled = true
         });
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
@@ -305,10 +294,6 @@ public partial class CAContractTests : CAContractTestBase
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
             ContractAdmin = DefaultAddress,
-        });
-        await CaContractStub.ChangeOperationTypeInSignatureEnabled.SendAsync(new OperationTypeInSignatureEnabledInput()
-        {
-            OperationTypeInSignatureEnabled = true
         });
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
@@ -481,11 +466,7 @@ public partial class CAContractTests : CAContractTestBase
         {
             ContractAdmin = DefaultAddress,
         });
-        await CaContractStub.ChangeOperationTypeInSignatureEnabled.SendAsync(new OperationTypeInSignatureEnabledInput()
-        {
-            OperationTypeInSignatureEnabled = true
-        });
-        
+
         var result = await CaContractStub.Initialize.SendWithExceptionAsync(new InitializeInput
         {
             ContractAdmin = DefaultAddress
