@@ -90,7 +90,7 @@ service CAContract {
   
   rpc SetContractDelegationFee (SetContractDelegationFeeInput) returns (google.protobuf.Empty) {}
   
-  rpc GetContractDelegationFee (google.protobuf.Empty) returns (GetContractDelegationFeeOutput) {}
+  rpc GetContractDelegationFee (google.protobuf.Empty) returns (GetContractDelegationFeeOutput) {option (aelf.is_view) = true;}
   
   rpc AddCreatorController (ControllerInput) returns (google.protobuf.Empty) {}
 
@@ -111,6 +111,10 @@ service CAContract {
   rpc ChangeOperationTypeInSignatureEnabled (OperationTypeInSignatureEnabledInput) returns (google.protobuf.Empty) {}
 
   rpc SetCAContractAddresses (SetCAContractAddressesInput) returns (google.protobuf.Empty) {}
+
+  rpc SetSecondaryDelegationFee (SetSecondaryDelegationFeeInput) returns (google.protobuf.Empty) {}
+
+  rpc GetSecondaryDelegationFee (google.protobuf.Empty) returns (SecondaryDelegationFee) { option (aelf.is_view) = true; }
 
 }
 
@@ -429,6 +433,14 @@ message ValidateStrategyOutput {
   bool bool_result = 1;
   int64 int64_result = 2;
   StrategyNode strategy_output = 3;
+}
+
+message SecondaryDelegationFee {
+  int64 amount = 1;
+}
+
+message SetSecondaryDelegationFeeInput {
+  SecondaryDelegationFee delegation_fee = 1;
 }
 
 // LogEvent

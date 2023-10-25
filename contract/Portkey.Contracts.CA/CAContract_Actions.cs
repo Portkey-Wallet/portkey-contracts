@@ -180,18 +180,14 @@ public partial class CAContract : CAContractContainer.CAContractBase
 
     private void SetSecondaryDelegator(Address delegatorAddress)
     {
-        // Todo Temporary, need delete later
-        if (State.ContractDelegationFee.Value == null)
+        State.SecondaryDelegationFee.Value ??= new SecondaryDelegationFee
         {
-            State.ContractDelegationFee!.Value = new ContractDelegationFee
-            {
-                Amount = CAContractConstants.DefaultSecondaryDelegationFee
-            };
-        }
+            Amount = CAContractConstants.DefaultSecondaryDelegationFee
+        };
 
         var delegations = new Dictionary<string, long>
         {
-            [CAContractConstants.ELFTokenSymbol] = State.ContractDelegationFee.Value.Amount
+            [CAContractConstants.ELFTokenSymbol] = State.SecondaryDelegationFee.Value.Amount
         };
 
         State.TokenContract.SetTransactionFeeDelegations.Send(new SetTransactionFeeDelegationsInput
@@ -237,6 +233,24 @@ public partial class CAContract : CAContractContainer.CAContractBase
         {
             DelegationFee = State.ContractDelegationFee.Value
         };
+    }
+
+    public override Empty SetSecondaryDelegationFee(SetSecondaryDelegationFeeInput input)
+    {
+        Assert(State.Admin.Value == Context.Sender, "No permission");
+        Assert(input != null && input.DelegationFee != null, "Invalid input");
+        Assert(input.DelegationFee.Amount >= 0, "Amount can not be less than 0");
+
+        State.SecondaryDelegationFee.Value ??= new SecondaryDelegationFee();
+
+        State.SecondaryDelegationFee.Value.Amount = input.DelegationFee.Amount;
+
+        return new Empty();
+    }
+
+    public override SecondaryDelegationFee GetSecondaryDelegationFee(Empty input)
+    {
+        return State.SecondaryDelegationFee.Value;
     }
 
     public override Empty ChangeOperationTypeInSignatureEnabled(OperationTypeInSignatureEnabledInput input)

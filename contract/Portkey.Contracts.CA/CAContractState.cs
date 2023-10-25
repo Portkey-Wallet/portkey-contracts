@@ -54,4 +54,6 @@ public partial class CAContractState : ContractState
     public SingletonState<bool> OperationTypeInSignatureEnabled { get; set; }
 
     public MappedState<int, Address> CAContractAddresses { get; set; }
+    
+    public SingletonState<SecondaryDelegationFee> SecondaryDelegationFee { get; set; }
 }
