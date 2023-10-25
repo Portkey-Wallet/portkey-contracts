@@ -266,14 +266,6 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         return State.SecondaryDelegationFee.Value;
     }
 
-    public override Empty ChangeOperationTypeInSignatureEnabled(OperationTypeInSignatureEnabledInput input)
-    {
-        Assert(State.Admin.Value == Context.Sender, "No permission");
-        Assert(State.OperationTypeInSignatureEnabled.Value != input.OperationTypeInSignatureEnabled, "invalid input");
-        State.OperationTypeInSignatureEnabled.Value = input.OperationTypeInSignatureEnabled;
-        return new Empty();
-    }
-
     public override Empty SetCAContractAddresses(SetCAContractAddressesInput input)
     {
         Assert(State.Admin.Value == Context.Sender, "No permission");
