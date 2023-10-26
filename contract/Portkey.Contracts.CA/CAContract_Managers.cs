@@ -59,13 +59,12 @@ public partial class CAContract
         Assert(holderInfo.ManagerInfos.Count < CAContractConstants.ManagerMaxCount,
             "The amount of ManagerInfos out of limit");
 
-        State.HolderInfoMap[caHash].ManagerInfos.Add(input.ManagerInfo);
-        SetDelegator(caHash, input.ManagerInfo);
-
         var caAddress = Context.ConvertVirtualAddressToContractAddress(caHash);
         UpgradeSecondaryDelegatee(caAddress,holderInfo.ManagerInfos);
         
-
+        State.HolderInfoMap[caHash].ManagerInfos.Add(input.ManagerInfo);
+        SetDelegator(caHash, input.ManagerInfo);
+        
         Context.Fire(new ManagerInfoSocialRecovered()
         {
             CaHash = caHash,
@@ -91,11 +90,11 @@ public partial class CAContract
         Assert(holderInfo.ManagerInfos.Count < CAContractConstants.ManagerMaxCount,
             "The amount of ManagerInfos out of limit");
 
-        holderInfo.ManagerInfos.Add(input.ManagerInfo);
-        SetDelegator(input.CaHash, input.ManagerInfo);
-        
         var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
         UpgradeSecondaryDelegatee(caAddress, holderInfo.ManagerInfos);
+        
+        holderInfo.ManagerInfos.Add(input.ManagerInfo);
+        SetDelegator(input.CaHash, input.ManagerInfo);
 
         Context.Fire(new ManagerInfoAdded
         {
@@ -160,13 +159,13 @@ public partial class CAContract
         {
             return new Empty();
         }
-
-        holderInfo.ManagerInfos.Remove(managerInfo);
-        RemoveDelegator(caHash, managerInfo);
-
+        
         var caAddress = Context.ConvertVirtualAddressToContractAddress(caHash);
         UpgradeSecondaryDelegatee(caAddress, holderInfo.ManagerInfos);
         
+        holderInfo.ManagerInfos.Remove(managerInfo);
+        RemoveDelegator(caHash, managerInfo);
+
         Context.Fire(new ManagerInfoRemoved
         {
             CaHash = caHash,
@@ -189,6 +188,8 @@ public partial class CAContract
         var managerInfosToUpdate = input.ManagerInfos.Distinct().ToList();
 
         var managerInfoList = holderInfo.ManagerInfos;
+        
+        var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
 
         foreach (var manager in managerInfosToUpdate)
         {
@@ -203,11 +204,13 @@ public partial class CAContract
             Context.Fire(new ManagerInfoUpdated
             {
                 CaHash = input.CaHash,
-                CaAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash),
+                CaAddress = caAddress,
                 Manager = managerToUpdate.Address,
                 ExtraData = managerToUpdate.ExtraData
             });
         }
+        
+        UpgradeSecondaryDelegatee(caAddress, holderInfo.ManagerInfos);
 
         return new Empty();
     }
