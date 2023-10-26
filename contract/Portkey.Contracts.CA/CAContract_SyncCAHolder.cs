@@ -183,7 +183,8 @@ public partial class CAContract
             GuardiansRemoved = new GuardianList
             {
                 Guardians = { guardiansRemoved }
-            }
+            },
+            CreateChainId = transactionInput.CreateChainId
         });
 
         return new Empty();
