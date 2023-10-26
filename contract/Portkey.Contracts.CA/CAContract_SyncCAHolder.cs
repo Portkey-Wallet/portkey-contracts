@@ -21,15 +21,18 @@ public partial class CAContract
 
         ValidateManager(holderInfo, input.ManagerInfos);
         AssertCreateChain(holderInfo);
-        if (holderInfo.CreateChainId == 0)
+        if (State.CheckChainIdInSignatureEnabled.Value)
         {
-            holderInfo.CreateChainId = Context.ChainId;
+            if (holderInfo.CreateChainId == 0)
+            {
+                holderInfo.CreateChainId = Context.ChainId;
+            }
+            Assert(holderInfo.CreateChainId == input.CreateChainId, "Invalid input createChainId.");
+            Assert(input.GuardianList?.Guardians?.Count > 0, "Input guardianList is empty.");
+            Assert(holderInfo.GuardianList.Guardians.Count == input.GuardianList.Guardians.Count, 
+                "The amount of input.GuardianList not equals to HolderInfo's GuardianList");
+            ValidateGuardianList(holderInfo.GuardianList, input.GuardianList);
         }
-        Assert(holderInfo.CreateChainId == input.CreateChainId, "Invalid input createChainId.");
-        Assert(input.GuardianList?.Guardians?.Count > 0, "Input guardianList is empty.");
-        Assert(holderInfo.GuardianList.Guardians.Count == input.GuardianList.Guardians.Count, 
-            "The amount of input.GuardianList not equals to HolderInfo's GuardianList");
-        ValidateGuardianList(holderInfo.GuardianList, input.GuardianList);
         return new Empty();
     }
 
@@ -98,7 +101,6 @@ public partial class CAContract
 
         var holderId = transactionInput.CaHash;
         var holderInfo = State.HolderInfoMap[holderId] ?? new HolderInfo { CreatorAddress = Context.Sender };
-        holderInfo.CreateChainId = transactionInput.CreateChainId;
 
         var managerInfosToAdd = ManagerInfosExcept(transactionInput.ManagerInfos, holderInfo.ManagerInfos);
         var managerInfosToRemove = ManagerInfosExcept(holderInfo.ManagerInfos, transactionInput.ManagerInfos);
@@ -123,24 +125,32 @@ public partial class CAContract
         var loginGuardiansUnbound =
             SyncLoginGuardianUnbound(transactionInput.CaHash, transactionInput.NotLoginGuardians);
 
-        if (holderInfo.GuardianList == null)
+        var guardiansAdded = new RepeatedField<Guardian>();
+        var guardiansRemoved = new RepeatedField<Guardian>();
+        if (State.CheckChainIdInSignatureEnabled.Value)
         {
-            holderInfo.GuardianList = new GuardianList
+            holderInfo.CreateChainId = transactionInput.CreateChainId;
+            if (holderInfo.GuardianList == null)
             {
-                Guardians = { }
-            };
-        }
+                holderInfo.GuardianList = new GuardianList
+                {
+                    Guardians = { }
+                };
+            }
 
-        var guardiansAdded = GuardiansExcept(transactionInput.GuardianList.Guardians, holderInfo.GuardianList.Guardians);
-        var guardiansRemoved = GuardiansExcept(holderInfo.GuardianList.Guardians, transactionInput.GuardianList.Guardians);
-        foreach (var guardian in guardiansAdded)
-        {
-            holderInfo.GuardianList.Guardians.Add(guardian);
-        }
+            guardiansAdded =
+                GuardiansExcept(transactionInput.GuardianList.Guardians, holderInfo.GuardianList.Guardians);
+            guardiansRemoved =
+                GuardiansExcept(holderInfo.GuardianList.Guardians, transactionInput.GuardianList.Guardians);
+            foreach (var guardian in guardiansAdded)
+            {
+                holderInfo.GuardianList.Guardians.Add(guardian);
+            }
 
-        foreach (var guardian in guardiansRemoved)
-        {
-            holderInfo.GuardianList.Guardians.Remove(guardian);
+            foreach (var guardian in guardiansRemoved)
+            {
+                holderInfo.GuardianList.Guardians.Remove(guardian);
+            }
         }
 
         State.HolderInfoMap[holderId] = holderInfo;
@@ -173,7 +183,8 @@ public partial class CAContract
             GuardiansRemoved = new GuardianList
             {
                 Guardians = { guardiansRemoved }
-            }
+            },
+            CreateChainId = transactionInput.CreateChainId
         });
 
         return new Empty();
