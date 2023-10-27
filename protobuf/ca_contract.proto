@@ -50,14 +50,15 @@ service CAContract {
   rpc Recover (RecoverInput) returns (google.protobuf.Empty) {}
 
   // If the managerInfo is already exists, return true
-  rpc AddManagerInfo (AddManagerInfoInput) returns (google.protobuf.Empty) {}
+  rpc AddManager (AddManagerInput) returns (google.protobuf.Empty) {}
 
   // If the managerInfo is already removed, return true
-  rpc RemoveManagerInfo (RemoveManagerInfoInput) returns (google.protobuf.Empty) {}
+  rpc RemoveManager (RemoveManagerInput) returns (google.protobuf.Empty) {}
   
-  rpc RemoveOtherManagerInfo (RemoveOtherManagerInfoInput) returns (google.protobuf.Empty) {}
+  // rpc RemoveOtherManagerInfo (RemoveOtherManagerInfoInput) returns (google.protobuf.Empty) {}
+  // NOTE: Should be merged with RemoveManager
   
-  rpc UpdateManagerInfos (UpdateManagerInfosInput) returns (google.protobuf.Empty) {}
+  rpc UpdateManagers (UpdateManagersInput) returns (google.protobuf.Empty) {}
 
   // If End Points already exists, return true
   rpc AddVerifierServerEndPoints (AddVerifierServerEndPointsInput) returns (google.protobuf.Empty) {}
@@ -363,12 +364,12 @@ message RecoverInput {
   ManagerInfo manager_info = 3;
 }
 
-message AddManagerInfoInput {
+message AddManagerInput {
   aelf.Hash ca_hash = 1;
   ManagerInfo manager_info = 2;
 }
 
-message RemoveManagerInfoInput {
+message RemoveManagerInput {
   aelf.Hash ca_hash = 1;
 }
 
@@ -378,7 +379,7 @@ message RemoveOtherManagerInfoInput {
   repeated GuardianInfo guardians_approved = 3;
 }
 
-message UpdateManagerInfosInput {
+message UpdateManagersInput {
   aelf.Hash ca_hash = 1;
   repeated ManagerInfo manager_infos = 2;
 }
