@@ -18,7 +18,7 @@ service CAContract {
   rpc Initialize(InitializeInput) returns (google.protobuf.Empty){}
 
   // If the Guardian has CAHolder and Manager, meaning CAHolder created before, return true
-  rpc CreateCAHolder (CreateCAHolderInput) returns (google.protobuf.Empty) {}
+  rpc CreateAccount (CreateAccountInput) returns (google.protobuf.Empty) {}
 
   // If Guardian is already added, return ture
   rpc AddGuardian (AddGuardianInput) returns (google.protobuf.Empty) {}
@@ -210,7 +210,7 @@ message RemovedToCurrentVerifierIdMapperInfo {
 }
 
 
-message CreateCAHolderInput {
+message CreateAccountInput {
   GuardianInfo guardian_approved = 1;
   ManagerInfo manager_info = 2;
   StrategyNode judgement_strategy = 3;
@@ -628,7 +628,7 @@ message AdminChanged {
 
 enum OperationType {
   Unknown = 0;
-  CreateCAHolder = 1;
+  CreateAccount = 1;
   SocialRecovery = 2;
   AddGuardian = 3;
   RemoveGuardian = 4;
