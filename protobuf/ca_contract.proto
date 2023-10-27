@@ -18,7 +18,7 @@ service CAContract {
   rpc Initialize(InitializeInput) returns (google.protobuf.Empty){}
 
   // If the Guardian has CAHolder and Manager, meaning CAHolder created before, return true
-  rpc CreateCAHolder (CreateCAHolderInput) returns (google.protobuf.Empty) {}
+  rpc CreateAccount (CreateCAHolderInput) returns (google.protobuf.Empty) {}
 
   // If Guardian is already added, return ture
   rpc AddGuardian (AddGuardianInput) returns (google.protobuf.Empty) {}
