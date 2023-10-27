@@ -29,11 +29,12 @@ service CAContract {
   rpc UpdateGuardian (UpdateGuardianInput) returns (google.protobuf.Empty) {}
 
   // If Guardian is already setted, return true
-  rpc SetGuardianForLogin (SetGuardianForLoginInput) returns (google.protobuf.Empty) {}
+  rpc UpdateLoginGuardian (UpdateLoginGuardianInput) returns (google.protobuf.Empty) {}
 
   // If Guardian is already unsetted, return true
-  rpc UnsetGuardianForLogin (UnsetGuardianForLoginInput) returns (google.protobuf.Empty) {}
-
+  // rpc UnsetGuardianForLogin (UnsetGuardianForLoginInput) returns (google.protobuf.Empty) {}
+  // NOTE: Removed and merged into UpdateLoginGuardian
+  
   //Manager call other contracts.
   rpc ManagerForwardCall (ManagerForwardCallInput) returns (google.protobuf.Empty) {}
 
@@ -292,9 +293,15 @@ message UpdateGuardianInput{
   repeated GuardianInfo guardians_approved = 4;
 }
 
-message SetGuardianForLoginInput {
+message UpdateLoginGuardianInput {
+  enum UpdateType {
+    UNKNOWN = 0;
+    ADD = 1;
+    REMOVE = 2;
+  }
   aelf.Hash ca_hash = 1;
   Guardian guardian = 2;
+  UpdateType update_type = 3;
 }
 
 message UnsetGuardianForLoginInput {
