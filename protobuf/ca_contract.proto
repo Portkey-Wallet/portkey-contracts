@@ -71,9 +71,11 @@ service CAContract {
   rpc RemoveVerifier (RemoveVerifierInput) returns (google.protobuf.Empty) {}
 
   rpc AddCAServer (AddCAServerInput) returns (google.protobuf.Empty){}
+  // NOTE: Redundant, needs to be removed
 
   rpc RemoveCAServer (RemoveCAServerInput) returns (google.protobuf.Empty){}
-  
+  // NOTE: Redundant, needs to be removed
+
   rpc SetCheckChainIdInSignatureEnabled(SetCheckChainIdInSignatureEnabledInput) returns (google.protobuf.Empty){}
 
   rpc GetAccount(GetAccountInput) returns (GetAccountOutput) {option (aelf.is_view) = true;}
