@@ -39,10 +39,12 @@ service CAContract {
   rpc Forward (ForwardInput) returns (google.protobuf.Empty) {}
 
   //Manager send transfer transaction.
-  rpc ManagerTransfer (ManagerTransferInput) returns (google.protobuf.Empty){}
+  rpc MultiTokenTransfer (MultiTokenTransferInput) returns (google.protobuf.Empty){}
+  // NOTE: This should be deprecated in the future to remove dependency on Multitoken Contract
 
   //Manager send transfer from transaction.
-  rpc ManagerTransferFrom (ManagerTransferFromInput) returns (google.protobuf.Empty){}
+  rpc MultiTokenTransferFrom (MultiTokenTransferFromInput) returns (google.protobuf.Empty){}
+  // NOTE: This should be deprecated in the future to remove dependency on Multitoken Contract
 
   // If ManagerInfo is already binded, return true
   rpc SocialRecovery (SocialRecoveryInput) returns (google.protobuf.Empty) {}
@@ -316,7 +318,7 @@ message ForwardInput {
   bytes args = 4;
 }
 
-message ManagerTransferInput{
+message MultiTokenTransferInput {
   aelf.Hash ca_hash = 1;
   // The receiver of the token.
   aelf.Address to = 2;
@@ -328,7 +330,7 @@ message ManagerTransferInput{
   string memo = 5;
 }
 
-message ManagerTransferFromInput{
+message MultiTokenTransferFromInput{
   aelf.Hash ca_hash = 1;
   // The source address of the token.
   aelf.Address from = 2;
