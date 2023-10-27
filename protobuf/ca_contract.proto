@@ -458,7 +458,7 @@ message ValidateStrategyOutput {
 
 // LogEvent
 // CAHolder created
-message CAHolderCreated {
+message AccountCreated {
   option (aelf.is_event) = true;
   aelf.Address creator = 1 [(aelf.is_indexed) = true];
   aelf.Hash ca_hash = 2 [(aelf.is_indexed) = true];
@@ -592,7 +592,7 @@ message CAServerRemoved {
   option (aelf.is_event) = true;
   CAServer ca_server_removed = 1;
 }
-message CAHolderSynced {
+message AccountSynced {
   option (aelf.is_event) = true;
   aelf.Address creator = 1 [(aelf.is_indexed) = true];
   aelf.Hash ca_hash = 2 [(aelf.is_indexed) = true];
