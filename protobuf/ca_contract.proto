@@ -36,7 +36,7 @@ service CAContract {
   // NOTE: Removed and merged into UpdateLoginGuardian
   
   //Manager call other contracts.
-  rpc ManagerForwardCall (ManagerForwardCallInput) returns (google.protobuf.Empty) {}
+  rpc Forward (ForwardInput) returns (google.protobuf.Empty) {}
 
   //Manager send transfer transaction.
   rpc ManagerTransfer (ManagerTransferInput) returns (google.protobuf.Empty){}
@@ -309,7 +309,7 @@ message UnsetGuardianForLoginInput {
   Guardian guardian = 2;
 }
 
-message ManagerForwardCallInput {
+message ForwardInput {
   aelf.Hash ca_hash = 1;
   aelf.Address contract_address = 2;
   string method_name = 3;
