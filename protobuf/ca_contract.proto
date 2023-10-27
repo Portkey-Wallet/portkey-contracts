@@ -97,9 +97,9 @@ service CAContract {
 
   rpc ValidateExpression (ValidateExpressionInput) returns (ValidateExpressionOutput) {option (aelf.is_view) = true;}
   
-  rpc SetFee (SetFee) returns (google.protobuf.Empty) {}
+  rpc SetFee (google.protobuf.Int64Value) returns (google.protobuf.Empty) {}
   
-  rpc GetFee (google.protobuf.Empty) returns (GetContractDelegationFeeOutput) {}
+  rpc GetFee (google.protobuf.Empty) returns (google.protobuf.Int64Value) {}
   
   rpc AddController (aelf.Address) returns (google.protobuf.Empty) {}
 
