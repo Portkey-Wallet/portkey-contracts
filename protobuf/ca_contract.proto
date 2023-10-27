@@ -222,16 +222,22 @@ message RemovedToCurrentVerifierIdMapperInfo {
 
 
 message CreateAccountInput {
-  GuardianInfo guardian_approved = 1;
+  Guardian guardian_approved = 1;
   ManagerInfo manager_info = 2;
   StrategyNode judgement_strategy = 3;
 }
 
-message GuardianInfo {
+message Guardian {
   GuardianType type = 1;
   aelf.Hash identifier_hash = 2;
-  VerificationInfo verification_info = 3;
 }
+
+message ApprovedGuadian {
+  Guardian guardian = 1;
+  VerificationInfo verification_info = 2;
+}
+
+
 message VerificationInfo {
   aelf.Hash id = 1;
   bytes signature = 2;
@@ -286,21 +292,21 @@ message GetFee {
 
 message AddGuardianInput {
   aelf.Hash ca_hash = 1;
-  GuardianInfo guardian_to_add = 2;
-  repeated GuardianInfo guardians_approved = 3;
+  Guardian guardian_to_add = 2;
+  repeated Guardian guardians_approved = 3;
 }
 
 message RemoveGuardianInput {
   aelf.Hash ca_hash = 1;
-  GuardianInfo guardian_to_remove = 2;
-  repeated GuardianInfo guardians_approved = 3;
+  Guardian guardian_to_remove = 2;
+  repeated Guardian guardians_approved = 3;
 }
 
 message UpdateGuardianInput{
   aelf.Hash ca_hash = 1;
-  GuardianInfo guardian_to_update_pre = 2;
-  GuardianInfo guardian_to_update_new = 3;
-  repeated GuardianInfo guardians_approved = 4;
+  Guardian guardian_to_update_pre = 2;
+  Guardian guardian_to_update_new = 3;
+  repeated Guardian guardians_approved = 4;
 }
 
 message UpdateLoginGuardianInput {
@@ -367,7 +373,7 @@ message GetAccountOutput{
 
 message RecoverInput {
   aelf.Hash login_guardian_identifier_hash = 1;
-  repeated GuardianInfo guardians_approved = 2;
+  repeated Guardian guardians_approved = 2;
   ManagerInfo manager_info = 3;
 }
 
@@ -383,7 +389,7 @@ message RemoveManagerInput {
 message RemoveOtherManagerInfoInput {
   aelf.Hash ca_hash = 1;
   ManagerInfo manager_info = 2;
-  repeated GuardianInfo guardians_approved = 3;
+  repeated Guardian guardians_approved = 3;
 }
 
 message UpdateManagersInput {
