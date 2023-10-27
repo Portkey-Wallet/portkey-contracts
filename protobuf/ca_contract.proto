@@ -47,7 +47,7 @@ service CAContract {
   // NOTE: This should be deprecated in the future to remove dependency on Multitoken Contract
 
   // If ManagerInfo is already binded, return true
-  rpc SocialRecovery (SocialRecoveryInput) returns (google.protobuf.Empty) {}
+  rpc Recover (RecoverInput) returns (google.protobuf.Empty) {}
 
   // If the managerInfo is already exists, return true
   rpc AddManagerInfo (AddManagerInfoInput) returns (google.protobuf.Empty) {}
@@ -357,7 +357,7 @@ message GetHolderInfoOutput{
   int32 create_chain_id = 5;
 }
 
-message SocialRecoveryInput {
+message RecoverInput {
   aelf.Hash login_guardian_identifier_hash = 1;
   repeated GuardianInfo guardians_approved = 2;
   ManagerInfo manager_info = 3;
