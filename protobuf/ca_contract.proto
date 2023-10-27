@@ -232,7 +232,7 @@ message Guardian {
   aelf.Hash identifier_hash = 2;
 }
 
-message ApprovedGuadian {
+message ApprovedGuardian {
   Guardian guardian = 1;
   VerificationInfo verification_info = 2;
 }
