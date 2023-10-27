@@ -9,6 +9,7 @@ import "aelf/core.proto";
 import "aelf/options.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
 import "authority_info.proto";
 import "acs12.proto";
 
@@ -129,7 +130,7 @@ message HolderInfo {
   aelf.Address creator_address = 1;
   repeated ManagerInfo manager_infos = 2;
   GuardianList guardian_list = 3;
-  StrategyNode judgement_strategy = 4;
+  ExpressionNode judgement_strategy = 4;
   int32 create_chain_id = 5;
 }
 
@@ -224,7 +225,7 @@ message RemovedToCurrentVerifierIdMapperInfo {
 message CreateAccountInput {
   Guardian guardian_approved = 1;
   ManagerInfo manager_info = 2;
-  StrategyNode judgement_strategy = 3;
+  ExpressionNode judgement_strategy = 3;
 }
 
 message Guardian {
@@ -244,13 +245,13 @@ message VerificationInfo {
   string verification_doc = 3;
 }
 
-enum StrategyValueType {
+enum OperandType {
   STRATEGY = 0;
   LONG = 1;
   VARIABLE = 2;
 }
 
-enum StrategyName {
+enum OperatorType {
   And = 0;
   Or = 1;
   Not = 2;
@@ -264,20 +265,25 @@ enum StrategyName {
   RatioByTenThousand = 10;
 }
 
-message StrategyNode {
-  StrategyName name = 1;
-  repeated StrategyValueType type = 2;
+message ExpressionNode {
+  OperatorType operator = 1;
+  repeated OperandType type = 2;
   repeated bytes value = 3;
 }
+
+// NOTE can be replaced with google.protobuf.Int64Value
 
 message StrategyLongWrapper {
   int64 value = 1;
 }
 
+// NOTE can be replace with google.protobuf.StringValue
 message StrategyStringWrapper {
   string value = 1;
+
 }
 
+// NOTE can be replace with google.protobuf.Int64Value
 message ContractDelegationFee {
   int64 amount = 1;
 }
@@ -461,7 +467,7 @@ message SyncAccountInput {
 }
 
 message ValidateExpressionInput {
-  StrategyNode strategy_node = 1;
+  ExpressionNode strategy_node = 1;
   map<string, int64> variables = 2;
 }
 
@@ -476,7 +482,7 @@ message GetCheckChainIdInSignatureEnabledOutput {
 message ValidateExpressionOutput {
   bool bool_result = 1;
   int64 int64_result = 2;
-  StrategyNode strategy_output = 3;
+  ExpressionNode strategy_output = 3;
 }
 
 // LogEvent
