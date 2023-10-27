@@ -61,13 +61,14 @@ service CAContract {
   rpc UpdateManagers (UpdateManagersInput) returns (google.protobuf.Empty) {}
 
   // If End Points already exists, return true
-  rpc AddVerifierServerEndPoints (AddVerifierServerEndPointsInput) returns (google.protobuf.Empty) {}
+  rpc UpdateVerifier (UpdateVerifierInput) returns (google.protobuf.Empty) {}
 
   // If End Points does not exists, return true
-  rpc RemoveVerifierServerEndPoints (RemoveVerifierServerEndPointsInput) returns (google.protobuf.Empty) {}
+  // rpc RemoveVerifierServerEndPoints (RemoveVerifierServerEndPointsInput) returns (google.protobuf.Empty) {}
+  // NOTE: 
 
   // if Verifier Server does not exists, return true
-  rpc RemoveVerifierServer (RemoveVerifierServerInput) returns (google.protobuf.Empty) {}
+  rpc RemoveVerifier (RemoveVerifierInput) returns (google.protobuf.Empty) {}
 
   rpc AddCAServer (AddCAServerInput) returns (google.protobuf.Empty){}
 
@@ -77,7 +78,7 @@ service CAContract {
 
   rpc GetHolderInfo(GetHolderInfoInput) returns (GetHolderInfoOutput) {option (aelf.is_view) = true;}
 
-  rpc GetVerifierServers (google.protobuf.Empty) returns (GetVerifierServersOutput) {option (aelf.is_view) = true;}
+  rpc GetVerifiers (google.protobuf.Empty) returns (GetVerifiersOutput) {option (aelf.is_view) = true;}
   
   rpc GetRemovedToCurrentVerifierIdMapper (aelf.Hash) returns (GetRemovedToCurrentVerifierIdMapperOutput) {option (aelf.is_view) = true;}
 
@@ -384,7 +385,7 @@ message UpdateManagersInput {
   repeated ManagerInfo manager_infos = 2;
 }
 
-message AddVerifierServerEndPointsInput {
+message UpdateVerifierInput {
   // If not exists, add; If does, insert
   string name = 1;
   string image_url = 2;
@@ -394,7 +395,7 @@ message AddVerifierServerEndPointsInput {
   aelf.Hash verifier_id = 5;
 }
 
-message RemoveVerifierServerInput {
+message RemoveVerifierInput {
   // If not exists, add; If does, insert
   aelf.Hash id = 1;
 }
@@ -415,7 +416,7 @@ message RemoveCAServerInput {
   string name = 1;
 }
 
-message GetVerifierServersOutput {
+message GetVerifiersOutput {
   repeated VerifierServer verifier_servers = 1;
 }
 
