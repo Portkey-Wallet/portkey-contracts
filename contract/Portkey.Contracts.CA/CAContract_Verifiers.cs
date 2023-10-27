@@ -181,8 +181,6 @@ public partial class CAContract
         Assert(input.Mappers.Count > 0, "Invalid input");
         foreach (var mapper in input.Mappers)
         {
-            var verifierServer = State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(o => o.Id == mapper.CurrentId);
-            Assert(verifierServer != null, "Destination verifierServer not existed");
             State.RemovedToCurrentVerifierIdMap[mapper.RemovedId] = mapper.CurrentId;
         }
         Context.Fire(new RemovedToCurrentVerifierIdMapperAdded
