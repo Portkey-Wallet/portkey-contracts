@@ -58,12 +58,4 @@ public partial class CAContractState : ContractState
     public MappedState<Hash, bool> VerifierDocMap { get; set; }
 
     public MappedState<int, Address> CAContractAddresses { get; set; }
-
-    public SingletonState<long> TokenInitialTransferLimit { get; set; }
-    public SingletonState<TransferSecurityThresholdList> TransferSecurityThresholdList { get; set; }
-    public MappedState<Hash, string, TransferLimit> TransferLimit { get; set; }
-    public MappedState<Hash, string, TransferredAmount> DailyTransferredAmountMap { get; set; }
-    public MappedState<string, TransferLimit> TokenDefaultTransferLimit { get; set; }
-    public MappedState<Address, string, bool> ForbiddenForwardCallContractMethod { get; set; }
-    public SingletonState<bool> CheckChainIdInSignatureEnabled { get; set; }
 }
