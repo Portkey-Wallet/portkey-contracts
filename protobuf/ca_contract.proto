@@ -76,7 +76,7 @@ service CAContract {
   
   rpc SetCheckChainIdInSignatureEnabled(SetCheckChainIdInSignatureEnabledInput) returns (google.protobuf.Empty){}
 
-  rpc GetHolderInfo(GetHolderInfoInput) returns (GetHolderInfoOutput) {option (aelf.is_view) = true;}
+  rpc GetAccount(GetAccountInput) returns (GetAccountOutput) {option (aelf.is_view) = true;}
 
   rpc GetVerifiers (google.protobuf.Empty) returns (GetVerifiersOutput) {option (aelf.is_view) = true;}
   
@@ -346,12 +346,12 @@ message MultiTokenTransferFromInput{
   string memo = 6;
 }
 
-message GetHolderInfoInput {
+message GetAccountInput {
   aelf.Hash ca_hash = 1;
   aelf.Hash login_guardian_identifier_hash = 2;
 }
 
-message GetHolderInfoOutput{
+message GetAccountOutput{
   aelf.Hash ca_hash = 1;
   aelf.Address ca_address = 2;
   GuardianList guardian_list = 3;
