@@ -91,7 +91,7 @@ service CAContract {
   // Validates CAHolder with ManagerInfos
   rpc ValidateCAHolderInfoWithManagerInfosExists (ValidateCAHolderInfoWithManagerInfosExistsInput) returns (google.protobuf.Empty) {}
 
-  rpc SyncHolderInfo (SyncHolderInfoInput) returns (google.protobuf.Empty) {}
+  rpc SyncAccount (SyncAccountInput) returns (google.protobuf.Empty) {}
 
   rpc ValidateStrategy (ValidateStrategyInput) returns (ValidateStrategyOutput) {option (aelf.is_view) = true;}
   
@@ -446,7 +446,7 @@ message VerificationTransactionInfo {
   aelf.MerklePath merkle_path = 4;
 }
 
-message SyncHolderInfoInput {
+message SyncAccountInput {
   VerificationTransactionInfo verification_transaction_info = 1;
 }
 
