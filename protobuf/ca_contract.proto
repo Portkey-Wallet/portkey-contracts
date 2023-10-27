@@ -100,19 +100,22 @@ service CAContract {
   
   rpc GetFee (google.protobuf.Empty) returns (GetContractDelegationFeeOutput) {}
   
-  rpc AddCreatorController (ControllerInput) returns (google.protobuf.Empty) {}
+  rpc AddController (aelf.Address) returns (google.protobuf.Empty) {}
 
-  rpc RemoveCreatorController (ControllerInput) returns (google.protobuf.Empty) {}
+  rpc RemoveController (aelf.Address) returns (google.protobuf.Empty) {}
   
-  rpc GetCreatorControllers (google.protobuf.Empty) returns (ControllerOutput) {option (aelf.is_view) = true;}
+  rpc GetControllers (google.protobuf.Empty) returns (aelf.Address) {option (aelf.is_view) = true;}
 
-  rpc AddServerController (ControllerInput) returns (google.protobuf.Empty) {}
+  // rpc AddServerController (ControllerInput) returns (google.protobuf.Empty) {}
+  // NOTE: Redundant, not to be removed
   
-  rpc RemoveServerController (ControllerInput) returns (google.protobuf.Empty) {}
-  
-  rpc GetServerControllers (google.protobuf.Empty) returns (ControllerOutput) {option (aelf.is_view) = true;}
-  
-  rpc ChangeAdmin (AdminInput) returns (google.protobuf.Empty) {}
+  //rpc RemoveServerController (ControllerInput) returns (google.protobuf.Empty) {}
+  // NOTE: Redundant, not to be removed
+
+  //rpc GetServerControllers (google.protobuf.Empty) returns (ControllerOutput) {option (aelf.is_view) = true;}
+  // NOTE: Redundant, not to be removed
+
+  rpc ChangeAdmin (aelf.Address) returns (google.protobuf.Empty) {}
   
   rpc GetAdmin (google.protobuf.Empty) returns (AdminOutput) {option (aelf.is_view) = true;}
 
