@@ -105,17 +105,16 @@ public partial class CAContract
         var managerInfosToAdd = ManagerInfosExcept(transactionInput.ManagerInfos, holderInfo.ManagerInfos);
         var managerInfosToRemove = ManagerInfosExcept(holderInfo.ManagerInfos, transactionInput.ManagerInfos);
 
-        holderInfo.ManagerInfos.AddRange(managerInfosToAdd);
-        SetDelegators(holderId, managerInfosToAdd);
         foreach (var managerInfo in managerInfosToRemove)
         {
             holderInfo.ManagerInfos.Remove(managerInfo);
         }
+        RemoveDelegators(holderId, managerInfosToRemove);
+        holderInfo.ManagerInfos.AddRange(managerInfosToAdd);
+        SetDelegators(holderId, managerInfosToAdd);
 
         var caAddress = Context.ConvertVirtualAddressToContractAddress(holderId);
         UpgradeSecondaryDelegatee(caAddress, holderInfo.ManagerInfos);
-
-        RemoveDelegators(holderId, managerInfosToRemove);
 
         var loginGuardiansAdded = SyncLoginGuardianAdded(transactionInput.CaHash, transactionInput.LoginGuardians);
         var loginGuardiansUnbound =
