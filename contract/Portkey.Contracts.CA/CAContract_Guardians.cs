@@ -68,11 +68,15 @@ public partial class CAContract
             IsLoginGuardian = false
         };
         State.HolderInfoMap[input.CaHash].GuardianList?.Guardians.Add(guardianAdded);
+
+        var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
+        UpgradeSecondaryDelegatee(caAddress, holderInfo.ManagerInfos);
+        
         Context.Fire(new GuardianAdded
         {
             CaHash = input.CaHash,
-            CaAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash),
-            GuardianAdded_ = guardianAdded,
+            CaAddress = caAddress,
+            GuardianAdded_ = guardianAdded
         });
         return new Empty();
     }
@@ -142,11 +146,13 @@ public partial class CAContract
         {
             State.LoginGuardianMap[toRemoveGuardian.IdentifierHash].Remove(toRemoveGuardian.VerifierId);
         }
+        var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
+        UpgradeSecondaryDelegatee(caAddress, holderInfo.ManagerInfos);
 
         Context.Fire(new GuardianRemoved
         {
             CaHash = input.CaHash,
-            CaAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash),
+            CaAddress = caAddress,
             GuardianRemoved_ = toRemoveGuardian
         });
 
@@ -231,10 +237,13 @@ public partial class CAContract
             State.LoginGuardianMap[existPreGuardian.IdentifierHash][existPreGuardian.VerifierId] = input.CaHash;
         }
 
+        var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
+        UpgradeSecondaryDelegatee(caAddress, holderInfo.ManagerInfos);
+        
         Context.Fire(new GuardianUpdated
         {
             CaHash = input.CaHash,
-            CaAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash),
+            CaAddress = caAddress,
             GuardianUpdatedPre = preGuardian,
             GuardianUpdatedNew = existPreGuardian
         });

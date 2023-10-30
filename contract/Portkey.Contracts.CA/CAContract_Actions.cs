@@ -96,7 +96,8 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
 
         SetDelegator(holderId, input.ManagerInfo);
 
-        SetContractDelegator(input.ManagerInfo);
+        var caAddress = Context.ConvertVirtualAddressToContractAddress(holderId);
+        SetSecondaryDelegator(caAddress);
 
         // Log Event
         Context.Fire(new CAHolderCreated
@@ -111,7 +112,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         Context.Fire(new LoginGuardianAdded
         {
             CaHash = holderId,
-            CaAddress = Context.ConvertVirtualAddressToContractAddress(holderId),
+            CaAddress = caAddress,
             LoginGuardian = guardian,
             Manager = input.ManagerInfo.Address,
             IsCreateHolder = true
@@ -190,25 +191,21 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         }
     }
 
-    private void SetContractDelegator(ManagerInfo managerInfo)
+    private void SetSecondaryDelegator(Address delegatorAddress)
     {
-        // Todo Temporary, need delete later
-        if (State.ContractDelegationFee.Value == null)
+        State.SecondaryDelegationFee.Value ??= new SecondaryDelegationFee
         {
-            State.ContractDelegationFee!.Value = new ContractDelegationFee
-            {
-                Amount = CAContractConstants.DefaultContractDelegationFee
-            };
-        }
+            Amount = CAContractConstants.DefaultSecondaryDelegationFee
+        };
 
         var delegations = new Dictionary<string, long>
         {
-            [CAContractConstants.ELFTokenSymbol] = State.ContractDelegationFee.Value.Amount
+            [CAContractConstants.ELFTokenSymbol] = State.SecondaryDelegationFee.Value.Amount
         };
 
         State.TokenContract.SetTransactionFeeDelegations.Send(new SetTransactionFeeDelegationsInput
         {
-            DelegatorAddress = managerInfo.Address,
+            DelegatorAddress = delegatorAddress,
             Delegations =
             {
                 delegations
@@ -216,12 +213,15 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         });
     }
 
-    private void RemoveContractDelegator(ManagerInfo managerInfo)
+    private void RemoveContractDelegators(RepeatedField<ManagerInfo> managerInfos)
     {
-        State.TokenContract.RemoveTransactionFeeDelegator.Send(new RemoveTransactionFeeDelegatorInput
+        foreach (var managerInfo in managerInfos)
         {
-            DelegatorAddress = managerInfo.Address,
-        });
+            State.TokenContract.RemoveTransactionFeeDelegator.Send(new RemoveTransactionFeeDelegatorInput
+            {
+                DelegatorAddress = managerInfo.Address,
+            });
+        }
     }
 
     public override Empty SetContractDelegationFee(SetContractDelegationFeeInput input)
@@ -246,6 +246,24 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         {
             DelegationFee = State.ContractDelegationFee.Value
         };
+    }
+
+    public override Empty SetSecondaryDelegationFee(SetSecondaryDelegationFeeInput input)
+    {
+        Assert(State.Admin.Value == Context.Sender, "No permission");
+        Assert(input != null && input.DelegationFee != null, "Invalid input");
+        Assert(input.DelegationFee.Amount >= 0, "Amount can not be less than 0");
+
+        State.SecondaryDelegationFee.Value ??= new SecondaryDelegationFee();
+
+        State.SecondaryDelegationFee.Value.Amount = input.DelegationFee.Amount;
+
+        return new Empty();
+    }
+
+    public override SecondaryDelegationFee GetSecondaryDelegationFee(Empty input)
+    {
+        return State.SecondaryDelegationFee.Value;
     }
 
     public override Empty SetCAContractAddresses(SetCAContractAddressesInput input)

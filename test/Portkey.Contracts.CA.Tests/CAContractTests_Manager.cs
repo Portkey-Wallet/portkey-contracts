@@ -88,7 +88,7 @@ public partial class CAContractTests
     }
 
     [Fact]
-    public async Task SocialRecoveryTest()
+    public async Task<Address> SocialRecoveryTest()
     {
         await CreateHolderDefault();
         var verificationTime = DateTime.UtcNow;
@@ -139,18 +139,20 @@ public partial class CAContractTests
                 DelegatorAddress = User2Address
             });
         delegateAllowance.Delegations["ELF"].ShouldBe(10000000000000000L);
+
+        return caInfo.CaAddress;
     }
 
     [Fact]
     public async Task SocialRecoveryTest_Delegator()
     {
-        await SocialRecoveryTest();
+        var caAddress = await SocialRecoveryTest();
 
         var delegations = await TokenContractStub.GetTransactionFeeDelegationsOfADelegatee.CallAsync(
             new GetTransactionFeeDelegationsOfADelegateeInput
             {
                 DelegateeAddress = CaContractAddress,
-                DelegatorAddress = User2Address
+                DelegatorAddress = caAddress
             });
 
         delegations.Delegations["ELF"].ShouldBe(100_00000000);
@@ -766,7 +768,7 @@ public partial class CAContractTests
     }
 
     [Fact]
-    public async Task AddManagerInfoTest()
+    public async Task<Address> AddManagerInfoTest()
     {
         await CreateHolderDefault();
         var verifierServer = await CaContractStub.GetVerifierServers.CallAsync(new Empty());
@@ -831,18 +833,20 @@ public partial class CAContractTests
             CaHash = caInfo.CaHash
         });
         txExecutionResult.TransactionResult.Error.ShouldContain("invalid input manager");
+
+        return caInfo.CaAddress;
     }
 
     [Fact]
     public async Task AddManagerInfo_Delegator()
     {
-        await AddManagerInfoTest();
+        var caAddress = await AddManagerInfoTest();
 
         var delegations = await TokenContractStub.GetTransactionFeeDelegationsOfADelegatee.CallAsync(
             new GetTransactionFeeDelegationsOfADelegateeInput
             {
                 DelegateeAddress = CaContractAddress,
-                DelegatorAddress = User2Address
+                DelegatorAddress = caAddress
             });
 
         delegations.Delegations["ELF"].ShouldBe(100_00000000);

@@ -107,17 +107,13 @@ public partial class CAContract
 
         holderInfo.ManagerInfos.AddRange(managerInfosToAdd);
         SetDelegators(holderId, managerInfosToAdd);
-
-        foreach (var managerInfo in managerInfosToAdd)
-        {
-            SetContractDelegator(managerInfo);
-        }
-
         foreach (var managerInfo in managerInfosToRemove)
         {
             holderInfo.ManagerInfos.Remove(managerInfo);
-            RemoveContractDelegator(managerInfo);
         }
+
+        var caAddress = Context.ConvertVirtualAddressToContractAddress(holderId);
+        UpgradeSecondaryDelegatee(caAddress, holderInfo.ManagerInfos);
 
         RemoveDelegators(holderId, managerInfosToRemove);
 
@@ -159,7 +155,7 @@ public partial class CAContract
         {
             Creator = Context.Sender,
             CaHash = holderId,
-            CaAddress = Context.ConvertVirtualAddressToContractAddress(holderId),
+            CaAddress = caAddress,
             ManagerInfosAdded = new ManagerInfoList
             {
                 ManagerInfos = { managerInfosToAdd }
