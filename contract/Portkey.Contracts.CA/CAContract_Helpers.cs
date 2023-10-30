@@ -76,11 +76,17 @@ public partial class CAContract
         //Check verifier address and data.
         var verifierAddress = docInfo.VerifierAddress;
         var verificationInfo = guardianInfo.VerificationInfo;
-        var currentVerifierId = State.RemovedToCurrentVerifierIdMap[verificationInfo.Id];
-        var verifierServer = IsValidHash(currentVerifierId)
-            ? State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(v => v.Id == currentVerifierId)
-            : State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(v => v.Id == verificationInfo.Id);
-
+        var verifierServer = State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(v => v.Id == verificationInfo.Id);
+        if (verifierServer == null)
+        {
+            var currentVerifierId = State.RemovedToCurrentVerifierIdMap[verificationInfo.Id];
+            if (IsValidHash(currentVerifierId))
+            {
+                verifierServer =
+                    State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(v => v.Id == currentVerifierId);
+            }
+        }
+        
         //Recovery verifier address.
         var data = HashHelper.ComputeFrom(verificationInfo.VerificationDoc);
         var publicKey = Context.RecoverPublicKey(verificationInfo.Signature.ToByteArray(),
@@ -144,10 +150,16 @@ public partial class CAContract
         //Check verifier address and data.
         var verifierAddress = docInfo.VerifierAddress;
         var verificationInfo = guardianInfo.VerificationInfo;
-        var currentVerifierId = State.RemovedToCurrentVerifierIdMap[verificationInfo.Id];
-        var verifierServer = IsValidHash(currentVerifierId)
-            ? State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(v => v.Id == currentVerifierId)
-            : State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(v => v.Id == verificationInfo.Id);
+        var verifierServer = State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(v => v.Id == verificationInfo.Id);
+        if (verifierServer == null)
+        {
+            var currentVerifierId = State.RemovedToCurrentVerifierIdMap[verificationInfo.Id];
+            if (IsValidHash(currentVerifierId))
+            {
+                verifierServer =
+                    State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(v => v.Id == currentVerifierId);
+            }
+        }
 
         //Recovery verifier address.
         var data = HashHelper.ComputeFrom(verificationInfo.VerificationDoc);
