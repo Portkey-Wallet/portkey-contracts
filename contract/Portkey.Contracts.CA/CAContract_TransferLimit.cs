@@ -118,34 +118,6 @@ public partial class CAContract
             onSyncChain ? "Processing on the chain..." : "JudgementStrategy validate failed");
     }
 
-    private void UpdateDailyTransferredAmount(Hash caHash, string symbol, long amount)
-    {
-        Assert(amount > 0, "Invalid amount.");
-        // When transferlimit is -1, no limit calculation is performed.
-        if (State.TransferLimit[caHash]?[symbol]?.DayLimit == -1) return;
-
-        var transferLimit = State.TransferLimit[caHash][symbol] != null
-            ? State.TransferLimit[caHash][symbol]
-            : GetDefaultTransferLimit(symbol);
-
-        var transferredAmount = State.DailyTransferredAmountMap[caHash][symbol] ??
-                                new TransferredAmount() { DailyTransfered = 0 };
-        Assert(amount <= transferLimit.SingleLimit,
-            $"The transfer amount {amount} has exceeded the single transfer limit {transferLimit.SingleLimit}");
-        var transferred = IsOverDay(transferredAmount.UpdateTime, Context.CurrentBlockTime)
-            ? 0
-            : transferredAmount.DailyTransfered;
-        Assert(amount <= transferLimit.DayLimit - transferred,
-            $"The transfer amount {amount} has exceeded the daily transfer balance.");
-        State.DailyTransferredAmountMap[caHash][symbol] = new TransferredAmount
-        {
-            DailyTransfered = transferred + amount,
-            UpdateTime = IsOverDay(transferredAmount.UpdateTime, Context.CurrentBlockTime)
-                ? Context.CurrentBlockTime
-                : transferredAmount.UpdateTime
-        };
-    }
-
     private TransferLimit GetDefaultTransferLimit(string symbol)
     {
         return new TransferLimit

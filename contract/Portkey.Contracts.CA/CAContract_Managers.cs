@@ -60,11 +60,11 @@ public partial class CAContract
             "The amount of ManagerInfos out of limit");
 
         var caAddress = Context.ConvertVirtualAddressToContractAddress(caHash);
-        UpgradeSecondaryDelegatee(caAddress,holderInfo.ManagerInfos);
-        
+        UpgradeSecondaryDelegatee(caAddress, holderInfo.ManagerInfos);
+
         State.HolderInfoMap[caHash].ManagerInfos.Add(input.ManagerInfo);
         SetDelegator(caHash, input.ManagerInfo);
-        
+
         Context.Fire(new ManagerInfoSocialRecovered()
         {
             CaHash = caHash,
@@ -92,7 +92,7 @@ public partial class CAContract
 
         var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
         UpgradeSecondaryDelegatee(caAddress, holderInfo.ManagerInfos);
-        
+
         holderInfo.ManagerInfos.Add(input.ManagerInfo);
         SetDelegator(input.CaHash, input.ManagerInfo);
 
@@ -159,10 +159,10 @@ public partial class CAContract
         {
             return new Empty();
         }
-        
+
         var caAddress = Context.ConvertVirtualAddressToContractAddress(caHash);
         UpgradeSecondaryDelegatee(caAddress, holderInfo.ManagerInfos);
-        
+
         holderInfo.ManagerInfos.Remove(managerInfo);
         RemoveDelegator(caHash, managerInfo);
 
@@ -188,7 +188,7 @@ public partial class CAContract
         var managerInfosToUpdate = input.ManagerInfos.Distinct().ToList();
 
         var managerInfoList = holderInfo.ManagerInfos;
-        
+
         var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
 
         foreach (var manager in managerInfosToUpdate)
@@ -209,7 +209,7 @@ public partial class CAContract
                 ExtraData = managerToUpdate.ExtraData
             });
         }
-        
+
         UpgradeSecondaryDelegatee(caAddress, holderInfo.ManagerInfos);
 
         return new Empty();
@@ -249,8 +249,7 @@ public partial class CAContract
             input.ContractAddress == State.TokenContract.Value)
         {
             var transferInput = TransferInput.Parser.ParseFrom(input.Args);
-            Assert(IsTransferSecurity(input.CaHash), "Low transfer security level.");
-            UpdateDailyTransferredAmount(input.CaHash, transferInput.Symbol, transferInput.Amount);
+            CheckTransferSecurity(input.CaHash, input.GuardiansApproved, transferInput.Symbol, transferInput.Amount);
         }
 
         Context.SendVirtualInline(input.CaHash, input.ContractAddress, input.MethodName, input.Args);
@@ -262,8 +261,7 @@ public partial class CAContract
         Assert(input.CaHash != null, "CA hash is null.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
         Assert(input.To != null && !string.IsNullOrWhiteSpace(input.Symbol), "Invalid input.");
-        Assert(IsTransferSecurity(input.CaHash), "Low transfer security level.");
-        UpdateDailyTransferredAmount(input.CaHash, input.Symbol, input.Amount);
+        CheckTransferSecurity(input.CaHash, input.GuardiansApproved, input.Symbol, input.Amount);
         Context.SendVirtualInline(input.CaHash, State.TokenContract.Value, nameof(State.TokenContract.Transfer),
             new TransferInput
             {
@@ -339,6 +337,44 @@ public partial class CAContract
     {
         Assert(State.HolderInfoMap[caHash] != null, $"CA holder is null.CA hash:{caHash}");
         Assert(State.HolderInfoMap[caHash].ManagerInfos.Any(m => m.Address == address), "No permission.");
+    }
+
+    private void CheckTransferSecurity(Hash caHash, RepeatedField<GuardianInfo> guardiansApproved, string symbol,
+        long amount)
+    {
+        var transferredAmount = State.DailyTransferredAmountMap[caHash][symbol] ??
+                                new TransferredAmount() { DailyTransfered = 0 };
+        var overDayFlag = IsOverDay(transferredAmount.UpdateTime, Context.CurrentBlockTime);
+        var transferred = overDayFlag
+            ? 0
+            : transferredAmount.DailyTransfered;
+        var transferLimit = State.TransferLimit[caHash][symbol] != null
+            ? State.TransferLimit[caHash][symbol]
+            : GetDefaultTransferLimit(symbol);
+
+        if (guardiansApproved.Count > 0)
+        {
+            GuardianApprovedCheck(caHash, guardiansApproved, OperationType.GuardianApproveTransfer,
+                nameof(OperationType.GuardianApproveTransfer).ToLower());
+        }
+        else
+        {
+            Assert(IsTransferSecurity(caHash), "Low transfer security level.");
+            Assert(amount > 0, "Invalid amount.");
+            if (State.TransferLimit[caHash]?[symbol]?.DayLimit == -1) return;
+            Assert(amount <= transferLimit.SingleLimit,
+                $"The transfer amount {amount} has exceeded the single transfer limit {transferLimit.SingleLimit}");
+            Assert(amount <= transferLimit.DayLimit - transferred,
+                $"The transfer amount {amount} has exceeded the daily transfer balance.");
+        }
+
+        State.DailyTransferredAmountMap[caHash][symbol] = new TransferredAmount
+        {
+            DailyTransfered = transferred + amount,
+            UpdateTime = overDayFlag
+                ? Context.CurrentBlockTime
+                : transferredAmount.UpdateTime
+        };
     }
 
     private ManagerInfo FindManagerInfo(RepeatedField<ManagerInfo> managerInfos, Address address)
