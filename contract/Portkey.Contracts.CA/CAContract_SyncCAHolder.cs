@@ -86,16 +86,34 @@ public partial class CAContract
         }
     }
 
+    public override Empty SyncHolderInfos(SyncHolderInfosInput input)
+    {
+        foreach (var holderInfoInput in input.VerificationTransactionInfos)
+        {
+            SyncHolderInfo(new SyncHolderInfoInput
+            {
+                VerificationTransactionInfo = holderInfoInput
+            });
+        }
+        return new Empty();
+    }
+
     public override Empty SyncHolderInfo(SyncHolderInfoInput input)
     {
-        var originalTransaction = Transaction.Parser.ParseFrom(input.VerificationTransactionInfo.TransactionBytes);
+        SyncHolderInfo(input.VerificationTransactionInfo);
+        return new Empty();
+    }
+
+    private void SyncHolderInfo(VerificationTransactionInfo verificationTransactionInfo)
+    {
+        var originalTransaction = Transaction.Parser.ParseFrom(verificationTransactionInfo.TransactionBytes);
         AssertCrossChainTransaction(originalTransaction,
-            nameof(ValidateCAHolderInfoWithManagerInfosExists), input.VerificationTransactionInfo.FromChainId);
+            nameof(ValidateCAHolderInfoWithManagerInfosExists), verificationTransactionInfo.FromChainId);
 
         var originalTransactionId = originalTransaction.GetHash();
 
-        TransactionVerify(originalTransactionId, input.VerificationTransactionInfo.ParentChainHeight,
-            input.VerificationTransactionInfo.FromChainId, input.VerificationTransactionInfo.MerklePath);
+        TransactionVerify(originalTransactionId, verificationTransactionInfo.ParentChainHeight,
+            verificationTransactionInfo.FromChainId, verificationTransactionInfo.MerklePath);
         var transactionInput =
             ValidateCAHolderInfoWithManagerInfosExistsInput.Parser.ParseFrom(originalTransaction.Params);
 
@@ -181,8 +199,6 @@ public partial class CAContract
             },
             CreateChainId = transactionInput.CreateChainId
         });
-
-        return new Empty();
     }
 
 
