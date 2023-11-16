@@ -253,7 +253,7 @@ public partial class CAContract
             UpdateDailyTransferredAmount(input.CaHash, transferInput.Symbol, transferInput.Amount);
         }
 
-        Context.SendVirtualInline(input.CaHash, input.ContractAddress, input.MethodName, input.Args);
+        Context.SendVirtualInline(input.CaHash, input.ContractAddress, input.MethodName, input.Args, true);
         return new Empty();
     }
 
@@ -271,7 +271,7 @@ public partial class CAContract
                 Amount = input.Amount,
                 Symbol = input.Symbol,
                 Memo = input.Memo
-            }.ToByteString());
+            }.ToByteString(), true);
         return new Empty();
     }
 
@@ -290,7 +290,7 @@ public partial class CAContract
                 Amount = input.Amount,
                 Symbol = input.Symbol,
                 Memo = input.Memo
-            }.ToByteString());
+            }.ToByteString(), true);
         return new Empty();
     }
 
@@ -309,7 +309,7 @@ public partial class CAContract
                 Spender = input.Spender,
                 Amount = input.Amount,
                 Symbol = input.Symbol,
-            }.ToByteString());
+            }.ToByteString(), true);
         Context.Fire(new ManagerApproved
         {
             CaHash = input.CaHash,

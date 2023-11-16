@@ -38,12 +38,17 @@
         <ContractReference Include="..\..\protobuf\association_contract.proto">
             <Link>Protobuf\Proto\association_contract.proto</Link>
         </ContractReference>
-
+<!--        <ContractReference Include="..\..\protobuf\virtual_transaction.proto">-->
+<!--            <Link>Protobuf\Proto\virtual_transaction.proto</Link>-->
+<!--        </ContractReference>-->
     </ItemGroup>
     
     <ItemGroup>
         <ContractBase Include="..\..\protobuf\acs12.proto">
             <Link>Protobuf\Proto\reference\acs12.proto</Link>
+        </ContractBase>
+        <ContractBase Include="..\..\protobuf\virtual_transaction.proto">
+            <Link>Protobuf\Proto\virtual_transaction.proto</Link>
         </ContractBase>
     </ItemGroup>
 
