@@ -11,11 +11,11 @@ namespace Portkey.Contracts.CA;
 
 public partial class CAContract
 {
-    private bool CheckVerifierSignatureAndDataCompatible(GuardianInfo guardianInfo, string methodName)
+    private bool CheckVerifierSignatureAndDataCompatible(GuardianInfo guardianInfo, string methodName, Hash caHash = null)
     {
         if (State.CheckChainIdInSignatureEnabled.Value)
         {
-            return CheckVerifierSignatureAndDataWithCreateChainId(guardianInfo, methodName);
+            return CheckVerifierSignatureAndDataWithCreateChainId(guardianInfo, methodName, caHash);
         }
 
         var verificationDoc = guardianInfo.VerificationInfo.VerificationDoc;
@@ -28,7 +28,7 @@ public partial class CAContract
         return verifierDoc.Length switch
         {
             6 => CheckVerifierSignatureAndData(guardianInfo, methodName),
-            7 => CheckVerifierSignatureAndDataWithCreateChainId(guardianInfo, methodName),
+            7 => CheckVerifierSignatureAndDataWithCreateChainId(guardianInfo, methodName, caHash),
             _ => false
         };
     }
@@ -108,7 +108,7 @@ public partial class CAContract
         return operationTypeName == methodName;
     }
 
-    private bool CheckVerifierSignatureAndDataWithCreateChainId(GuardianInfo guardianInfo, string methodName)
+    private bool CheckVerifierSignatureAndDataWithCreateChainId(GuardianInfo guardianInfo, string methodName, Hash caHash)
     {
         //[type,guardianIdentifierHash,verificationTime,verifierAddress,salt,operationType,createChainId]
         var verificationDoc = guardianInfo.VerificationInfo.VerificationDoc;
@@ -183,7 +183,22 @@ public partial class CAContract
         {
             return false;
         }
+
+        if (operationTypeName == nameof(OperationType.AddGuardian).ToLower() && !CheckOnCreateChain(State.HolderInfoMap[caHash]))
+        {
+            return true;
+        }
         return int.Parse(verifierDoc[6]) == Context.ChainId;
+    }
+    
+    private bool CheckOnCreateChain(HolderInfo holderInfo)
+    {
+        if (holderInfo.GuardianList == null || holderInfo.GuardianList.Guardians == null || 
+            holderInfo.GuardianList.Guardians.Count == 0)
+        {
+            return false;
+        }
+        return holderInfo.CreateChainId == Context.ChainId || holderInfo.CreateChainId == 0;
     }
 
     private bool IsGuardianExist(Hash caHash, GuardianInfo guardianInfo)
