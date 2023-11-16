@@ -122,17 +122,12 @@ public partial class CAContract
         long amount)
     {
         Assert(amount > 0, "Invalid amount.");
-
         var transferredAmount = State.DailyTransferredAmountMap[caHash][symbol] ??
-                                new TransferredAmount() { DailyTransfered = 0 };
+                                new TransferredAmount { DailyTransfered = 0 };
         var overDayFlag = IsOverDay(transferredAmount.UpdateTime, Context.CurrentBlockTime);
         var transferred = overDayFlag
             ? 0
             : transferredAmount.DailyTransfered;
-        var transferLimit = State.TransferLimit[caHash][symbol] != null
-            ? State.TransferLimit[caHash][symbol]
-            : GetDefaultTransferLimit(symbol);
-
         if (guardiansApproved.Count > 0)
         {
             GuardianApprovedCheck(caHash, guardiansApproved, OperationType.GuardianApproveTransfer,
@@ -142,6 +137,9 @@ public partial class CAContract
         {
             Assert(IsTransferSecurity(caHash), "Low transfer security level.");
             if (State.TransferLimit[caHash]?[symbol]?.DayLimit == -1) return;
+            var transferLimit = State.TransferLimit[caHash][symbol] != null
+                ? State.TransferLimit[caHash][symbol]
+                : GetDefaultTransferLimit(symbol);
             Assert(amount <= transferLimit.SingleLimit,
                 $"The transfer amount {amount} has exceeded the single transfer limit {transferLimit.SingleLimit}");
             Assert(amount <= transferLimit.DayLimit - transferred,
