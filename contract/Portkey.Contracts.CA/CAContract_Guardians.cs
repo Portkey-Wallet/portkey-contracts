@@ -50,8 +50,9 @@ public partial class CAContract
         }
 
         //Whether the approved guardians count is satisfied.
+        var holderJudgementStrategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
         var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count,
-            guardianApprovedAmount, holderInfo.JudgementStrategy);
+            guardianApprovedAmount, holderJudgementStrategy);
         if (!isJudgementStrategySatisfied)
         {
             return new Empty();
