@@ -88,12 +88,9 @@ public partial class CAContract
 
     public override Empty SyncHolderInfos(SyncHolderInfosInput input)
     {
-        foreach (var holderInfoInput in input.VerificationTransactionInfos)
+        foreach (var verificationTransactionInfo in input.VerificationTransactionInfos)
         {
-            SyncHolderInfo(new SyncHolderInfoInput
-            {
-                VerificationTransactionInfo = holderInfoInput
-            });
+            SyncHolderInfo(verificationTransactionInfo);
         }
         return new Empty();
     }
