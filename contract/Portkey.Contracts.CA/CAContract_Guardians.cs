@@ -17,7 +17,6 @@ public partial class CAContract
             "Invalid input.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
-        AssertCreateChain(holderInfo);
         //Whether the guardian to be added has already in the holder info.
         //Filter: guardian.type && guardian.IdentifierHash && VerifierId
         var toAddGuardian = holderInfo.GuardianList.Guardians.FirstOrDefault(g =>
@@ -40,19 +39,20 @@ public partial class CAContract
             //Whether the guardian exists in the holder info.
             if (!IsGuardianExist(input.CaHash, guardian)) continue;
             //Check the verifier signature and data of the guardian to be approved.
-            var isApproved = CheckVerifierSignatureAndDataCompatible(guardian, methodName);
+            var isApproved = CheckVerifierSignatureAndDataCompatible(guardian, methodName, input.CaHash);
             if (!isApproved) continue;
             guardianApprovedAmount++;
         }
 
-        if (!CheckVerifierSignatureAndDataCompatible(input.GuardianToAdd, methodName))
+        if (!CheckVerifierSignatureAndDataCompatible(input.GuardianToAdd, methodName, input.CaHash))
         {
             return new Empty();
         }
 
         //Whether the approved guardians count is satisfied.
+        var holderJudgementStrategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
         var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count,
-            guardianApprovedAmount, holderInfo.JudgementStrategy);
+            guardianApprovedAmount, holderJudgementStrategy);
         if (!isJudgementStrategySatisfied)
         {
             return new Empty();
