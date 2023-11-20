@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Threading.Tasks;
+using AElf;
 using AElf.Types;
 using Google.Protobuf.Collections;
 using Shouldly;
@@ -23,7 +24,9 @@ public partial class CAContractTests
             {
                 CaHash = getHolderInfo.CaHash,
                 ManagerInfos = { getHolderInfo.ManagerInfos },
-                LoginGuardians = { getHolderInfo.GuardianList.Guardians.Select(g => g.IdentifierHash) }
+                LoginGuardians = { getHolderInfo.GuardianList.Guardians.Select(g => g.IdentifierHash) },
+                CreateChainId = ChainHelper.ConvertBase58ToChainId("AELF"),
+                GuardianList = getHolderInfo.GuardianList
             });
     }
 

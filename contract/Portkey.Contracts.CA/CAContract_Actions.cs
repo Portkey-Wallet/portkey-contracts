@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using AElf;
 using AElf.Contracts.MultiToken;
 using AElf.Sdk.CSharp;
@@ -8,7 +9,7 @@ using Google.Protobuf.WellKnownTypes;
 
 namespace Portkey.Contracts.CA;
 
-public partial class CAContract : CAContractContainer.CAContractBase
+public partial class CAContract : CAContractImplContainer.CAContractImplBase
 {
     public override Empty Initialize(InitializeInput input)
     {
@@ -54,6 +55,7 @@ public partial class CAContract : CAContractContainer.CAContractBase
         var holderInfo = new HolderInfo();
         holderId = HashHelper.ConcatAndCompute(Context.TransactionId, Context.PreviousBlockHash);
         holderInfo.CreatorAddress = Context.Sender;
+        holderInfo.CreateChainId = Context.ChainId;
         holderInfo.ManagerInfos.Add(input.ManagerInfo);
         //Check verifier signature.
         var methodName = nameof(CreateCAHolder).ToLower();
@@ -94,7 +96,8 @@ public partial class CAContract : CAContractContainer.CAContractBase
 
         SetDelegator(holderId, input.ManagerInfo);
 
-        SetContractDelegator(input.ManagerInfo);
+        var caAddress = Context.ConvertVirtualAddressToContractAddress(holderId);
+        SetSecondaryDelegator(caAddress);
 
         // Log Event
         Context.Fire(new CAHolderCreated
@@ -109,12 +112,23 @@ public partial class CAContract : CAContractContainer.CAContractBase
         Context.Fire(new LoginGuardianAdded
         {
             CaHash = holderId,
-            CaAddress = Context.ConvertVirtualAddressToContractAddress(holderId),
+            CaAddress = caAddress,
             LoginGuardian = guardian,
             Manager = input.ManagerInfo.Address,
+            IsCreateHolder = true
         });
 
         return new Empty();
+    }
+    
+    private void AssertCreateChain(HolderInfo holderInfo)
+    {
+        Assert(holderInfo.GuardianList != null && holderInfo.GuardianList.Guardians != null && 
+               holderInfo.GuardianList.Guardians.Count > 0, "Not on registered chain");
+        if (holderInfo.CreateChainId > 0)
+        {
+            Assert(holderInfo.CreateChainId == Context.ChainId, "Not on registered chain");
+        }
     }
 
     private bool IsJudgementStrategySatisfied(int guardianCount, int guardianApprovedCount, StrategyNode strategyNode)
@@ -177,25 +191,21 @@ public partial class CAContract : CAContractContainer.CAContractBase
         }
     }
 
-    private void SetContractDelegator(ManagerInfo managerInfo)
+    private void SetSecondaryDelegator(Address delegatorAddress)
     {
-        // Todo Temporary, need delete later
-        if (State.ContractDelegationFee.Value == null)
+        State.SecondaryDelegationFee.Value ??= new SecondaryDelegationFee
         {
-            State.ContractDelegationFee!.Value = new ContractDelegationFee
-            {
-                Amount = CAContractConstants.DefaultContractDelegationFee
-            };
-        }
+            Amount = CAContractConstants.DefaultSecondaryDelegationFee
+        };
 
         var delegations = new Dictionary<string, long>
         {
-            [CAContractConstants.ELFTokenSymbol] = State.ContractDelegationFee.Value.Amount
+            [CAContractConstants.ELFTokenSymbol] = State.SecondaryDelegationFee.Value.Amount
         };
 
         State.TokenContract.SetTransactionFeeDelegations.Send(new SetTransactionFeeDelegationsInput
         {
-            DelegatorAddress = managerInfo.Address,
+            DelegatorAddress = delegatorAddress,
             Delegations =
             {
                 delegations
@@ -203,12 +213,15 @@ public partial class CAContract : CAContractContainer.CAContractBase
         });
     }
 
-    private void RemoveContractDelegator(ManagerInfo managerInfo)
+    private void RemoveContractDelegators(RepeatedField<ManagerInfo> managerInfos)
     {
-        State.TokenContract.RemoveTransactionFeeDelegator.Send(new RemoveTransactionFeeDelegatorInput
+        foreach (var managerInfo in managerInfos)
         {
-            DelegatorAddress = managerInfo.Address,
-        });
+            State.TokenContract.RemoveTransactionFeeDelegator.Send(new RemoveTransactionFeeDelegatorInput
+            {
+                DelegatorAddress = managerInfo.Address,
+            });
+        }
     }
 
     public override Empty SetContractDelegationFee(SetContractDelegationFeeInput input)
@@ -235,12 +248,22 @@ public partial class CAContract : CAContractContainer.CAContractBase
         };
     }
 
-    public override Empty ChangeOperationTypeInSignatureEnabled(OperationTypeInSignatureEnabledInput input)
+    public override Empty SetSecondaryDelegationFee(SetSecondaryDelegationFeeInput input)
     {
         Assert(State.Admin.Value == Context.Sender, "No permission");
-        Assert(State.OperationTypeInSignatureEnabled.Value != input.OperationTypeInSignatureEnabled, "invalid input");
-        State.OperationTypeInSignatureEnabled.Value = input.OperationTypeInSignatureEnabled;
+        Assert(input != null && input.DelegationFee != null, "Invalid input");
+        Assert(input.DelegationFee.Amount >= 0, "Amount can not be less than 0");
+
+        State.SecondaryDelegationFee.Value ??= new SecondaryDelegationFee();
+
+        State.SecondaryDelegationFee.Value.Amount = input.DelegationFee.Amount;
+
         return new Empty();
+    }
+
+    public override SecondaryDelegationFee GetSecondaryDelegationFee(Empty input)
+    {
+        return State.SecondaryDelegationFee.Value;
     }
 
     public override Empty SetCAContractAddresses(SetCAContractAddressesInput input)

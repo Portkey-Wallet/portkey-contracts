@@ -11,16 +11,12 @@ namespace Portkey.Contracts.CA;
 public partial class CAContractTests : CAContractTestBase
 {
     [Fact]
-    public async Task CreateHolderTest()
+    public async Task<Address> CreateHolderTest()
     {
         var verificationTime = DateTime.UtcNow;
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
             ContractAdmin = DefaultAddress,
-        });
-        await CaContractStub.ChangeOperationTypeInSignatureEnabled.SendAsync(new OperationTypeInSignatureEnabledInput()
-        {
-            OperationTypeInSignatureEnabled = true
         });
         {
             await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
@@ -175,6 +171,8 @@ public partial class CAContractTests : CAContractTestBase
             holderInfo.GuardianList.Guardians.Count.ShouldBe(2);
             holderInfo.GuardianList.Guardians.Last().GuardianType.GuardianType_.ShouldBe(GuardianType1);
         }*/
+
+        return caInfo.CaAddress;
     }
 
     [Fact]
@@ -243,10 +241,7 @@ public partial class CAContractTests : CAContractTestBase
         {
             ContractAdmin = DefaultAddress,
         });
-        await CaContractStub.ChangeOperationTypeInSignatureEnabled.SendAsync(new OperationTypeInSignatureEnabledInput()
-        {
-            OperationTypeInSignatureEnabled = true
-        });
+
         var executionResult = await CaContractStub.CreateCAHolder.SendWithExceptionAsync(new CreateCAHolderInput
         {
             GuardianApproved = null,
@@ -265,10 +260,6 @@ public partial class CAContractTests : CAContractTestBase
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
             ContractAdmin = DefaultAddress,
-        });
-        await CaContractStub.ChangeOperationTypeInSignatureEnabled.SendAsync(new OperationTypeInSignatureEnabledInput()
-        {
-            OperationTypeInSignatureEnabled = true
         });
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
@@ -303,10 +294,6 @@ public partial class CAContractTests : CAContractTestBase
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
             ContractAdmin = DefaultAddress,
-        });
-        await CaContractStub.ChangeOperationTypeInSignatureEnabled.SendAsync(new OperationTypeInSignatureEnabledInput()
-        {
-            OperationTypeInSignatureEnabled = true
         });
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
@@ -447,13 +434,13 @@ public partial class CAContractTests : CAContractTestBase
     [Fact]
     public async Task CreateHolderTest_Delegator()
     {
-        await CreateHolderTest();
+        var caAddress = await CreateHolderTest();
 
         var delegations = await TokenContractStub.GetTransactionFeeDelegationsOfADelegatee.CallAsync(
             new GetTransactionFeeDelegationsOfADelegateeInput
             {
                 DelegateeAddress = CaContractAddress,
-                DelegatorAddress = User1Address
+                DelegatorAddress = caAddress
             });
 
         delegations.Delegations["ELF"].ShouldBe(100_00000000);
@@ -479,11 +466,7 @@ public partial class CAContractTests : CAContractTestBase
         {
             ContractAdmin = DefaultAddress,
         });
-        await CaContractStub.ChangeOperationTypeInSignatureEnabled.SendAsync(new OperationTypeInSignatureEnabledInput()
-        {
-            OperationTypeInSignatureEnabled = true
-        });
-        
+
         var result = await CaContractStub.Initialize.SendWithExceptionAsync(new InitializeInput
         {
             ContractAdmin = DefaultAddress
