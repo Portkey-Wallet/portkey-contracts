@@ -85,6 +85,8 @@ service CAContract {
   rpc ValidateCAHolderInfoWithManagerInfosExists (ValidateCAHolderInfoWithManagerInfosExistsInput) returns (google.protobuf.Empty) {}
 
   rpc SyncHolderInfo (SyncHolderInfoInput) returns (google.protobuf.Empty) {}
+  
+  rpc SyncHolderInfos (SyncHolderInfosInput) returns (google.protobuf.Empty) {}
 
   rpc ValidateStrategy (ValidateStrategyInput) returns (ValidateStrategyOutput) {option (aelf.is_view) = true;}
   
@@ -440,6 +442,10 @@ message VerificationTransactionInfo {
 
 message SyncHolderInfoInput {
   VerificationTransactionInfo verification_transaction_info = 1;
+}
+
+message SyncHolderInfosInput {
+  repeated VerificationTransactionInfo verification_transaction_infos = 1;
 }
 
 message ValidateStrategyInput {
