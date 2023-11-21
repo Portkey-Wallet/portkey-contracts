@@ -163,7 +163,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
                 {
                     delegations
                 }
-            }.ToByteString(), true);
+            }.ToByteString());
     }
 
     private void SetDelegators(Hash holderId, RepeatedField<ManagerInfo> managerInfos)
@@ -181,7 +181,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
             new RemoveTransactionFeeDelegatorInput
             {
                 DelegatorAddress = managerInfo.Address
-            }.ToByteString(), true);
+            }.ToByteString());
     }
 
     private void RemoveDelegators(Hash holderId, RepeatedField<ManagerInfo> managerInfos)
