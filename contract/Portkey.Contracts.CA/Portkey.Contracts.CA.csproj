@@ -32,6 +32,12 @@
         <ContractReference Include="..\..\protobuf\token_contract.proto">
             <Link>Protobuf\Proto\reference\token_contract.proto</Link>
         </ContractReference>
+        <ContractReference Include="..\..\protobuf\token_contract_impl.proto">
+            <Link>Protobuf\Proto\reference\token_contract_impl.proto</Link>
+        </ContractReference>
+        <ContractReference Include="..\..\protobuf\transaction_fee.proto">
+            <Link>Protobuf\Proto\reference\transaction_fee.proto</Link>
+        </ContractReference>
         <ContractReference Include="..\..\protobuf\acs3.proto">
             <Link>Protobuf\Proto\reference\acs3.proto</Link>
         </ContractReference>
@@ -44,6 +50,11 @@
     <ItemGroup>
         <ContractBase Include="..\..\protobuf\acs12.proto">
             <Link>Protobuf\Proto\reference\acs12.proto</Link>
+        </ContractBase>
+    </ItemGroup>
+    <ItemGroup>
+        <ContractBase Include="..\..\protobuf\acs2.proto">
+            <Link>Protobuf\Proto\reference\acs2.proto</Link>
         </ContractBase>
     </ItemGroup>
 

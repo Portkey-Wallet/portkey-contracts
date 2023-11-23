@@ -53,7 +53,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         if (holderId != null) return new Empty();
 
         var holderInfo = new HolderInfo();
-        holderId = HashHelper.ConcatAndCompute(Context.TransactionId, Context.PreviousBlockHash);
+        holderId = HashHelper.ConcatAndCompute(Context.TransactionId, HashHelper.ComputeFrom(Context.ChainId.ToBytes()));
         holderInfo.CreatorAddress = Context.Sender;
         holderInfo.CreateChainId = Context.ChainId;
         holderInfo.ManagerInfos.Add(input.ManagerInfo);
