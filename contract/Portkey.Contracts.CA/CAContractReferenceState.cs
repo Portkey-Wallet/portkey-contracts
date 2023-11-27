@@ -5,8 +5,7 @@ namespace Portkey.Contracts.CA;
 
 public partial class CAContractState
 {
-    internal TokenContractContainer.TokenContractReferenceState TokenContract { get; set; }
-    internal TokenContractImplContainer.TokenContractImplReferenceState TokenContractImpl{ get; set; }
+    internal TokenContractImplContainer.TokenContractImplReferenceState TokenContract { get; set; }
     internal ACS0Container.ACS0ReferenceState GenesisContract { get; set; }
     
     

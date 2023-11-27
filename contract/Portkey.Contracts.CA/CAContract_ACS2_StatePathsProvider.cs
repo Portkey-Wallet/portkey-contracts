@@ -57,8 +57,7 @@ public partial class CAContract
                 {
                     WritePaths =
                     {
-                        GetPath(nameof(CAContractState.HolderInfoMap),transactionInput.CaHash.ToHex()),
-                        GetPath(nameof(CAContractState.HolderInfoMap),transactionInput.CaHash.ToHex()),
+                        GetPath(nameof(CAContractState.HolderInfoMap),transactionInput.CaHash.ToHex())
                     },
                     ReadPaths =
                     {
@@ -86,7 +85,8 @@ public partial class CAContract
                     AddPathForDelegateesMap(resource,managerInfo.Address);
                 }
                 AddPathForUpdateSecondaryDelegatee(resource,holderId, holderInfo);
-                addPathForGuardianMap(transactionInput, holderId, resource);
+                //add guardian
+                AddPathForGuardianMap(transactionInput, holderId, resource);
                 return resource;
             }
             
@@ -128,7 +128,7 @@ public partial class CAContract
         }
     }
 
-    private void addPathForGuardianMap(ValidateCAHolderInfoWithManagerInfosExistsInput transactionInput, Hash holderId,
+    private void AddPathForGuardianMap(ValidateCAHolderInfoWithManagerInfosExistsInput transactionInput, Hash holderId,
         ResourceInfo resource)
     {
         if (transactionInput.NotLoginGuardians != null)
@@ -138,6 +138,16 @@ public partial class CAContract
                 if (State.GuardianMap[notLoginGuardian] == holderId)
                 {
                     resource.WritePaths.Add(GetPath(nameof(CAContractState.GuardianMap), notLoginGuardian.ToHex()));
+                }
+            }
+        }
+        if (transactionInput.LoginGuardians != null)
+        {
+            foreach (var loginGuardian in transactionInput.LoginGuardians)
+            {
+                if (State.GuardianMap[loginGuardian] != holderId)
+                {
+                    resource.WritePaths.Add(GetPath(nameof(CAContractState.GuardianMap), loginGuardian.ToHex()));
                 }
             }
         }
@@ -207,7 +217,7 @@ public partial class CAContract
     private List<string> GetMethodsFeeSymbols(string methodName)
     {
         var symbols = new List<string>();
-        var methodFees = State.TokenContractImpl.GetMethodFee.Call(new StringValue{Value = methodName});
+        var methodFees = State.TokenContract.GetMethodFee.Call(new StringValue{Value = methodName});
         if (methodFees != null)
         {
             foreach (var methodFee in methodFees.Fees)
@@ -255,7 +265,7 @@ public partial class CAContract
     private List<string> GetDelegateeList(Address delegator, Address to, string methodName)
     {
         var delegateeList = new List<string>();
-        var allDelegatees = State.TokenContractImpl.GetTransactionFeeDelegateeList.Call(
+        var allDelegatees = State.TokenContract.GetTransactionFeeDelegateeList.Call(
             new GetTransactionFeeDelegateeListInput
             {
                 DelegatorAddress = delegator,
@@ -273,7 +283,7 @@ public partial class CAContract
 
     private void AddPathForTransactionFeeFreeAllowance(ResourceInfo resourceInfo, Address from)
     {
-        var symbols = State.TokenContractImpl.GetTransactionFeeFreeAllowancesConfig.Call(new Empty());
+        var symbols = State.TokenContract.GetTransactionFeeFreeAllowancesConfig.Call(new Empty());
         if (symbols != null)
         {
             foreach (var symbol in symbols.Value.Select(config=>config.Symbol))
