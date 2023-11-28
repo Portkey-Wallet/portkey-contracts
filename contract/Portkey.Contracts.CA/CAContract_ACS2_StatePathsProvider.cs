@@ -41,7 +41,7 @@ public partial class CAContract
                 var caAddress = Context.ConvertVirtualAddressToContractAddress(holderId);
                 AddPathForDelegateesMap(resource,caAddress);
                 // add fee path
-                AddPathForTransactionFee(resource, txn.From.ToString(), txn.MethodName);
+                AddPathForTransactionFee(resource, txn.From.ToBase58(), txn.MethodName);
                 AddPathForDelegatees(resource, txn.From, txn.To, txn.MethodName);
                 AddPathForTransactionFeeFreeAllowance(resource, txn.From);
                 return resource;
@@ -68,7 +68,7 @@ public partial class CAContract
                     }
                 };
                 // add fee path
-                AddPathForTransactionFee(resource, txn.From.ToString(), txn.MethodName);
+                AddPathForTransactionFee(resource, txn.From.ToBase58(), txn.MethodName);
                 AddPathForDelegatees(resource, txn.From, txn.To, txn.MethodName);
                 AddPathForTransactionFeeFreeAllowance(resource, txn.From);
                 // add Delegators path
@@ -112,7 +112,7 @@ public partial class CAContract
                     resource.WritePaths.Add(  GetPath(nameof(CAContractState.VerifierDocMap),GetVerifierId(guardian)));
                 }
                 // add fee path
-                AddPathForTransactionFee(resource, txn.From.ToString(), txn.MethodName);
+                AddPathForTransactionFee(resource, txn.From.ToBase58(), txn.MethodName);
                 AddPathForDelegatees(resource, txn.From, txn.To, txn.MethodName);
                 AddPathForTransactionFeeFreeAllowance(resource, txn.From);
                 // add Delegators path
