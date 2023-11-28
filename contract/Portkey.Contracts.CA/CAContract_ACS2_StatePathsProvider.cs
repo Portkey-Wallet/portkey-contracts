@@ -46,6 +46,38 @@ public partial class CAContract
                 AddPathForTransactionFeeFreeAllowance(resource, txn.From);
                 return resource;
             }
+            case nameof(SocialRecovery):
+            {
+                var args = SocialRecoveryInput.Parser.ParseFrom(txn.Params);
+                var resource = new ResourceInfo
+                {
+                    WritePaths =
+                    {
+                        GetPath(nameof(CAContractState.HolderInfoMap),State.GuardianMap[args.LoginGuardianIdentifierHash].ToHex()),
+                    },
+                    ReadPaths =
+                    {
+                        GetPath(nameof(CAContractState.GuardianMap),args.LoginGuardianIdentifierHash.ToHex()),
+                        GetPath(nameof(CAContractState.ContractDelegationFee)),
+                        GetPath(nameof(CAContractState.VerifiersServerList)),
+                        GetPath(nameof(CAContractState.SecondaryDelegationFee))
+                    }
+                };
+                foreach (var guardian in args.GuardiansApproved)
+                {
+                    resource.WritePaths.Add(  GetPath(nameof(CAContractState.VerifierDocMap),GetVerifierId(guardian)));
+                }
+                // add fee path
+                AddPathForTransactionFee(resource, txn.From.ToBase58(), txn.MethodName);
+                AddPathForDelegatees(resource, txn.From, txn.To, txn.MethodName);
+                AddPathForTransactionFeeFreeAllowance(resource, txn.From);
+                // add Delegators path
+                var holderId = State.GuardianMap[args.LoginGuardianIdentifierHash];
+                var holderInfo = State.HolderInfoMap[holderId];
+                AddPathForUpdateSecondaryDelegatee(resource,holderId, holderInfo);
+                AddPathForDelegateesMap(resource,args.ManagerInfo.Address);
+                return resource;
+            }
 
             case nameof(SyncHolderInfo):
             {
@@ -89,39 +121,31 @@ public partial class CAContract
                 AddPathForGuardianMap(transactionInput, holderId, resource);
                 return resource;
             }
-            
-            case nameof(SocialRecovery):
+            case nameof(ValidateCAHolderInfoWithManagerInfosExists):
             {
-                var args = SocialRecoveryInput.Parser.ParseFrom(txn.Params);
+                var args = ValidateCAHolderInfoWithManagerInfosExistsInput.Parser.ParseFrom(txn.Params);
                 var resource = new ResourceInfo
                 {
-                    WritePaths =
-                    {
-                        GetPath(nameof(CAContractState.HolderInfoMap),State.GuardianMap[args.LoginGuardianIdentifierHash].ToHex()),
-                    },
                     ReadPaths =
                     {
-                        GetPath(nameof(CAContractState.GuardianMap),args.LoginGuardianIdentifierHash.ToHex()),
-                        GetPath(nameof(CAContractState.ContractDelegationFee)),
-                        GetPath(nameof(CAContractState.VerifiersServerList)),
-                        GetPath(nameof(CAContractState.SecondaryDelegationFee))
+                        GetPath(nameof(CAContractState.HolderInfoMap),args.CaHash.ToHex()),
+                        GetPath(nameof(CAContractState.CheckChainIdInSignatureEnabled)),
                     }
                 };
-                foreach (var guardian in args.GuardiansApproved)
+                if (args.LoginGuardians != null)
                 {
-                    resource.WritePaths.Add(  GetPath(nameof(CAContractState.VerifierDocMap),GetVerifierId(guardian)));
+                    foreach (var loginGuardian in args.LoginGuardians)
+                    { 
+                        resource.ReadPaths.Add(GetPath(nameof(CAContractState.GuardianMap), loginGuardian.ToHex()));
+                    }
                 }
                 // add fee path
                 AddPathForTransactionFee(resource, txn.From.ToBase58(), txn.MethodName);
                 AddPathForDelegatees(resource, txn.From, txn.To, txn.MethodName);
                 AddPathForTransactionFeeFreeAllowance(resource, txn.From);
-                // add Delegators path
-                var holderId = State.GuardianMap[args.LoginGuardianIdentifierHash];
-                var holderInfo = State.HolderInfoMap[holderId];
-                AddPathForUpdateSecondaryDelegatee(resource,holderId, holderInfo);
-                AddPathForDelegateesMap(resource,args.ManagerInfo.Address);
                 return resource;
             }
+            
 
             default:
                 return new ResourceInfo { NonParallelizable = true };

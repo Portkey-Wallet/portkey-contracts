@@ -180,6 +180,16 @@ public partial class CAContractTests
       result.WritePaths.Count.ShouldBeGreaterThan(0);
     }
     
+    [Fact]
+    public async Task ACS2_GetResourceInfo_ValidateCAHolderInfoWithManagerInfosExistsInput_Test()
+    {
+        var existInput = await CreateValidateCAHolderInfoWithManagerInfosExistsInput();
+        var verifierInfo = GenerateCaTransaction(Accounts[0].Address,nameof(CaContractStub.ValidateCAHolderInfoWithManagerInfosExists),existInput);
+        var result = await Acs2BaseStub.GetResourceInfo.CallAsync(verifierInfo);
+        result.NonParallelizable.ShouldBeFalse();
+        result.WritePaths.Count.ShouldBeGreaterThan(0);
+    }
+    
     
 
     private async Task<ValidateCAHolderInfoWithManagerInfosExistsInput> CreateValidateCAHolderInfoWithManagerInfosExistsInput()
