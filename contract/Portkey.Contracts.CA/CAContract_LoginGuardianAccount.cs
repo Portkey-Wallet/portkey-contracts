@@ -135,7 +135,7 @@ public partial class CAContract
             var guardianToSetLogin = input.GuardianToUnsetLogin;
             Assert(loginGuardian.IdentifierHash == guardianToSetLogin.IdentifierHash && loginGuardian.VerifierId == guardianToSetLogin.VerificationInfo.Id &&
                    loginGuardian.Type == guardianToSetLogin.Type, "Input guardian not equal guardianToUnsetLogin.");
-            var methodName = nameof(OperationType.SetLoginAccount).ToLower();
+            var methodName = nameof(OperationType.UnSetLoginAccount).ToLower();
             //Check the verifier signature and data of the guardian to be added.
             if (!CheckVerifierSignatureAndDataCompatible(input.GuardianToUnsetLogin, methodName, input.CaHash))
             {
