@@ -1,6 +1,7 @@
 using System.Linq;
 using AElf.Sdk.CSharp;
 using AElf.Types;
+using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
 
 namespace Portkey.Contracts.CA;
@@ -44,6 +45,24 @@ public partial class CAContract
             return new Empty();
         }
 
+        if (State.SetUnsetLoginGuardianCheckGuardianApprovedEnabled.Value || (input.GuardianToSetLogin != null && input.GuardiansApproved.Count > 0) )
+        {
+            var guardianToSetLogin = input.GuardianToSetLogin;
+            Assert(loginGuardian.IdentifierHash == guardianToSetLogin.IdentifierHash && loginGuardian.VerifierId == guardianToSetLogin.VerificationInfo.Id &&
+                   loginGuardian.Type == guardianToSetLogin.Type, "Input guardian not equal guardianToSetLogin.");
+            var methodName = nameof(OperationType.SetLoginAccount).ToLower();
+            //Check the verifier signature and data of the guardian to be added.
+            if (!CheckVerifierSignatureAndDataCompatible(input.GuardianToSetLogin, methodName, input.CaHash))
+            {
+                return new Empty();
+            }
+
+            var guardianApprovedAmount = GetGuardianApprovedAmount(input.CaHash, input.GuardiansApproved, methodName);
+            var holderJudgementStrategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
+            Assert(IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count, guardianApprovedAmount,
+                holderJudgementStrategy), "JudgementStrategy validate failed");
+        }
+
         guardian.IsLoginGuardian = true;
 
         State.LoginGuardianMap[loginGuardian.IdentifierHash][loginGuardian.VerifierId] = input.CaHash;
@@ -62,6 +81,22 @@ public partial class CAContract
         });
 
         return new Empty();
+    }
+
+    private int GetGuardianApprovedAmount(Hash cahHash, RepeatedField<GuardianInfo> guardianApproved, string methodName)
+    {
+        var guardianApprovedAmount = 0;
+        var guardianApprovedList = guardianApproved
+            .DistinctBy(g => $"{g.Type}{g.IdentifierHash}{g.VerificationInfo.Id}")
+            .ToList();
+        foreach (var guardianInfo in guardianApprovedList)
+        {
+            if (!IsGuardianExist(cahHash, guardianInfo)) continue;
+            var isApproved = CheckVerifierSignatureAndDataCompatible(guardianInfo, methodName, cahHash);
+            if (!isApproved) continue;
+            guardianApprovedAmount++;
+        }
+        return guardianApprovedAmount;
     }
 
     // Unset a Guardian for login, if already unset, return ture
@@ -94,7 +129,24 @@ public partial class CAContract
         if (guardian == null || !guardian.IsLoginGuardian)
         {
             return new Empty();
-        } 
+        }
+        if (State.SetUnsetLoginGuardianCheckGuardianApprovedEnabled.Value || (input.GuardianToUnsetLogin != null && input.GuardiansApproved.Count > 0) )
+        {
+            var guardianToSetLogin = input.GuardianToUnsetLogin;
+            Assert(loginGuardian.IdentifierHash == guardianToSetLogin.IdentifierHash && loginGuardian.VerifierId == guardianToSetLogin.VerificationInfo.Id &&
+                   loginGuardian.Type == guardianToSetLogin.Type, "Input guardian not equal guardianToUnsetLogin.");
+            var methodName = nameof(OperationType.SetLoginAccount).ToLower();
+            //Check the verifier signature and data of the guardian to be added.
+            if (!CheckVerifierSignatureAndDataCompatible(input.GuardianToUnsetLogin, methodName, input.CaHash))
+            {
+                return new Empty();
+            }
+
+            var guardianApprovedAmount = GetGuardianApprovedAmount(input.CaHash, input.GuardiansApproved, methodName);
+            var holderJudgementStrategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
+            Assert(IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count, guardianApprovedAmount,
+                holderJudgementStrategy), "JudgementStrategy validate failed");
+        }
 
         guardian.IsLoginGuardian = false;
 
