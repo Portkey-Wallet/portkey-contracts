@@ -38,7 +38,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
     /// <returns></returns>
     public override Empty CreateCAHolder(CreateCAHolderInput input)
     {
-        Assert(!State.ForbiddenCreateHolder.Value, "Register already forbidden.");
+        Assert(!State.CreateHolderForbidden.Value, "Register already forbidden.");
         //Assert(Context.Sender == State.RegisterOrRecoveryController.Value,"No permission.");
         Assert(State.CreatorControllers.Value.Controllers.Contains(Context.Sender), "No permission");
         Assert(input != null, "Invalid input.");
@@ -278,18 +278,18 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         return new Empty();
     }
 
-    public override Empty SetForbiddenCreateHolder(SetForbiddenCreateHolderInput input)
+    public override Empty SetCreateHolderForbidden(SetCreateHolderForbiddenInput input)
     {
         Assert(State.Admin.Value == Context.Sender, "No permission");
-        State.ForbiddenCreateHolder.Value = input.ForbiddenCreateHolder;
+        State.CreateHolderForbidden.Value = input.CreateHolderForbidden;
         return new Empty();
     }
 
-    public override SetForbiddenCreateHolderOutput GetForbiddenCreateHolder(Empty input)
+    public override GetCreateHolderForbiddenOutput GetCreateHolderForbidden(Empty input)
     {
-        return new SetForbiddenCreateHolderOutput
+        return new GetCreateHolderForbiddenOutput()
         {
-            ForbiddenCreateHolder = State.ForbiddenCreateHolder.Value
+            CreateHolderForbidden = State.CreateHolderForbidden.Value
         };
     }
 }

@@ -18,8 +18,8 @@ service CAContractImpl {
   option (aelf.base) = "ca_contract.proto";
   option (aelf.csharp_state) = "Portkey.Contracts.CA.CAContractState";
   // register forbidden
-  rpc SetForbiddenCreateHolder(SetForbiddenCreateHolderInput) returns (google.protobuf.Empty) {}
-  rpc GetForbiddenCreateHolder(google.protobuf.Empty) returns (SetForbiddenCreateHolderOutput) {option (aelf.is_view) = true;}
+  rpc SetCreateHolderForbidden(SetCreateHolderForbiddenInput) returns (google.protobuf.Empty) {}
+  rpc GetCreateHolderForbidden(google.protobuf.Empty) returns (GetCreateHolderForbiddenOutput) {option (aelf.is_view) = true;}
    
   // approve
   rpc ManagerApprove(ManagerApproveInput) returns (google.protobuf.Empty) {}
@@ -40,12 +40,12 @@ service CAContractImpl {
 
 }
 
-message SetForbiddenCreateHolderInput {
-  bool forbidden_create_holder = 1;
+message SetCreateHolderForbiddenInput {
+  bool create_holder_forbidden = 1;
 }
 
-message SetForbiddenCreateHolderOutput {
-  bool forbidden_create_holder = 1;
+message GetCreateHolderForbiddenOutput {
+  bool create_holder_forbidden = 1;
 }
 
 message ManagerApproveInput {
