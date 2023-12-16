@@ -17,16 +17,10 @@ public partial class CAContract
             "Invalid input.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
-        //Whether the guardian to be added has already in the holder info.
-        //Filter: guardian.type && guardian.IdentifierHash && VerifierId
-        var toAddGuardian = holderInfo.GuardianList.Guardians.FirstOrDefault(g =>
-            g.Type == input.GuardianToAdd.Type && g.IdentifierHash == input.GuardianToAdd.IdentifierHash &&
-            g.VerifierId == input.GuardianToAdd.VerificationInfo.Id);
-
-        if (toAddGuardian != null)
-        {
-            return new Empty();
-        }
+        Assert(holderInfo.GuardianList.Guardians.FirstOrDefault(g => g.VerifierId == input.GuardianToAdd.VerificationInfo.Id) == null,
+            "The verifier already exists");
+        Assert(holderInfo.GuardianList.Guardians.FirstOrDefault(g => g.Type == input.GuardianToAdd.Type && g.IdentifierHash == input.GuardianToAdd.IdentifierHash) == null,
+            "The account already exists");
 
         var methodName = nameof(OperationType.AddGuardian).ToLower();
         //Check the verifier signature and data of the guardian to be added.
