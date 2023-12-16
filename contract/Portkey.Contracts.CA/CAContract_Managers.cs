@@ -269,7 +269,7 @@ public partial class CAContract
                 Amount = input.Amount,
                 Symbol = input.Symbol,
                 Memo = input.Memo
-            }.ToByteString(), true);
+            }.ToByteString());
         return new Empty();
     }
 
@@ -288,7 +288,7 @@ public partial class CAContract
                 Amount = input.Amount,
                 Symbol = input.Symbol,
                 Memo = input.Memo
-            }.ToByteString(), true);
+            }.ToByteString());
         return new Empty();
     }
 
@@ -307,7 +307,7 @@ public partial class CAContract
                 Spender = input.Spender,
                 Amount = input.Amount,
                 Symbol = input.Symbol,
-            }.ToByteString(), true);
+            }.ToByteString());
         Context.Fire(new ManagerApproved
         {
             CaHash = input.CaHash,
