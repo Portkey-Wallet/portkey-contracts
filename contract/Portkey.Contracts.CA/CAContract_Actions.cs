@@ -97,7 +97,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         SetDelegator(holderId, input.ManagerInfo);
 
         var caAddress = Context.ConvertVirtualAddressToContractAddress(holderId);
-        SetSecondaryDelegator(caAddress);
+        SetProjectDelegator(caAddress);
 
         // Log Event
         Context.Fire(new CAHolderCreated
@@ -190,29 +190,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
             RemoveDelegator(holderId, managerInfo);
         }
     }
-
-    private void SetSecondaryDelegator(Address delegatorAddress)
-    {
-        State.SecondaryDelegationFee.Value ??= new SecondaryDelegationFee
-        {
-            Amount = CAContractConstants.DefaultSecondaryDelegationFee
-        };
-
-        var delegations = new Dictionary<string, long>
-        {
-            [CAContractConstants.ELFTokenSymbol] = State.SecondaryDelegationFee.Value.Amount
-        };
-
-        State.TokenContract.SetTransactionFeeDelegations.Send(new SetTransactionFeeDelegationsInput
-        {
-            DelegatorAddress = delegatorAddress,
-            Delegations =
-            {
-                delegations
-            }
-        });
-    }
-
+    
     private void RemoveContractDelegators(RepeatedField<ManagerInfo> managerInfos)
     {
         foreach (var managerInfo in managerInfos)
