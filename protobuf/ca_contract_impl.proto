@@ -50,7 +50,7 @@ service CAContractImpl {
   
   rpc SetCaProjectDelegateHash (aelf.Hash) returns (google.protobuf.Empty) {}
   
-  rpc GetProjectDelegatee (aelf.Hash) returns (ProjectDelegateInfo) { option (aelf.is_view) = true; }
+  rpc GetProjectDelegatee (aelf.Hash) returns (GetProjectDelegateInfoOutput) { option (aelf.is_view) = true; }
 
 }
 
@@ -200,5 +200,11 @@ message ProjectDelegateInfo {
     aelf.Address project_controller = 1;
     repeated aelf.Hash delegatee_hash_list = 2;
     aelf.Address signer = 3;
-    int32 select_index = 4;
+}
+
+message GetProjectDelegateInfoOutput {
+  aelf.Address project_controller = 1;
+  repeated aelf.Hash delegatee_hash_list = 2;
+  aelf.Address signer = 3;
+  repeated aelf.Address delegatee_address_list = 4;
 }

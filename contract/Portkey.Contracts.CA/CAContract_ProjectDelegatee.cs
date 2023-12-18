@@ -111,9 +111,25 @@ public partial class CAContract
         return new Empty();
     }
 
-    public override ProjectDelegateInfo GetProjectDelegatee(Hash input)
+    public override GetProjectDelegateInfoOutput GetProjectDelegatee(Hash input)
     {
-        return State.ProjectDelegateInfo[input];
+        var projectDelegateInfo = State.ProjectDelegateInfo[input];
+        if (projectDelegateInfo == null)
+        {
+            return new GetProjectDelegateInfoOutput();
+        }
+
+        var result = new GetProjectDelegateInfoOutput
+        {
+            ProjectController = projectDelegateInfo.ProjectController,
+            Signer = projectDelegateInfo.Signer,
+            DelegateeHashList = {projectDelegateInfo.DelegateeHashList}
+        };
+        foreach (var delegateeHash in result.DelegateeHashList)
+        {
+            result.DelegateeAddressList.Add(Context.ConvertVirtualAddressToContractAddress(delegateeHash));
+        }
+        return result;
     }
 
     public override Empty SetCaProjectDelegateHash(Hash input)
