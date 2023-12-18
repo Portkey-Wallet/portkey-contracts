@@ -17,6 +17,9 @@ service CAContractImpl {
   option (aelf.base) = "acs12.proto";
   option (aelf.base) = "ca_contract.proto";
   option (aelf.csharp_state) = "Portkey.Contracts.CA.CAContractState";
+  // register disable
+  rpc SetCreateHolderDisable(SetCreateHolderDisableInput) returns (google.protobuf.Empty) {}
+  rpc GetCreateHolderDisable(google.protobuf.Empty) returns (GetCreateHolderDisableOutput) {option (aelf.is_view) = true;}
    
   // approve
   rpc ManagerApprove(ManagerApproveInput) returns (google.protobuf.Empty) {}
@@ -35,6 +38,14 @@ service CAContractImpl {
   
   rpc GetTransferSecurityCheckResult(GetTransferSecurityCheckResultInput) returns (GetTransferSecurityCheckResultOutput) {option (aelf.is_view) = true;}
 
+}
+
+message SetCreateHolderDisableInput {
+  bool create_holder_disable = 1;
+}
+
+message GetCreateHolderDisableOutput {
+  bool create_holder_Disable = 1;
 }
 
 message ManagerApproveInput {
