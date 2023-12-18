@@ -11,7 +11,7 @@ public partial class CAContractState : ContractState
     // public SingletonState<Address> RegisterOrRecoveryController { get; set; }
     //
     // public SingletonState<Address> SetConfigController { get; set; }
-    public SingletonState<bool> CreateHolderForbidden { get; set; }
+    public SingletonState<bool> CreateHolderDisable { get; set; }
 
     /// <summary>
     /// Login Guardian identifier hash  -> Verifier Id -> HolderInfo Hash
