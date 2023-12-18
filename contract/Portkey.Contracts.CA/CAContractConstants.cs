@@ -1,3 +1,5 @@
+using System.Diagnostics.Contracts;
+
 namespace Portkey.Contracts.CA;
 
 public static class CAContractConstants
@@ -21,4 +23,5 @@ public static class CAContractConstants
     public const int ManagerMaxCount = 70;
     
     public const long TokenDefaultTransferLimitAmount = 100000000000000000;
+    public const int DelegateeListMaxCount = 10;
 }

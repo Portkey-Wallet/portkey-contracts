@@ -68,4 +68,6 @@ public partial class CAContractState : ContractState
     public MappedState<Address, string, bool> ForbiddenForwardCallContractMethod { get; set; }
     public SingletonState<bool> CheckChainIdInSignatureEnabled { get; set; }
     public SingletonState<SecondaryDelegationFee> SecondaryDelegationFee { get; set; }
+    public MappedState<Hash, ProjectDelegateInfo> ProjectDelegateInfo { get; set; }
+    public SingletonState<Hash> CaProjectDelegateHash { get; set; }
 }

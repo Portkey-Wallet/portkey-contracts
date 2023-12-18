@@ -37,6 +37,23 @@ service CAContractImpl {
   rpc SetTransferSecurityThreshold(SetTransferSecurityThresholdInput) returns (google.protobuf.Empty) {}
   
   rpc GetTransferSecurityCheckResult(GetTransferSecurityCheckResultInput) returns (GetTransferSecurityCheckResultOutput) {option (aelf.is_view) = true;}
+  
+  // secondaryDelegatee
+  rpc RegisterProjectDelegatee (RegisterProjectDelegateeInput) returns (google.protobuf.Empty) {}
+    
+  rpc AddProjectDelegateeList (AddProjectDelegateeListInput) returns (google.protobuf.Empty) {}
+  
+  rpc RemoveProjectDelegateeList (RemoveProjectDelegateeListInput) returns (google.protobuf.Empty) {}
+  
+  rpc SetProjectDelegateController(SetProjectDelegateControllerInput) returns (google.protobuf.Empty){}
+  
+  rpc SetProjectDelegateSigner(SetProjectDelegateSignerInput) returns (google.protobuf.Empty){}
+  
+  rpc WithdrawProjectDelegateeToken(WithdrawProjectDelegateeTokenInput) returns (google.protobuf.Empty){}
+  
+  rpc SetCaProjectDelegateHash (aelf.Hash) returns (google.protobuf.Empty) {}
+  
+  rpc GetProjectDelegatee (aelf.Hash) returns (GetProjectDelegateInfoOutput) { option (aelf.is_view) = true; }
 
 }
 
@@ -157,4 +174,48 @@ message TransferSecurityThresholdChanged{
     string symbol = 1;
     int64 guardian_threshold = 2;
     int64 balance_threshold = 3;
+}
+
+message RegisterProjectDelegateeInput {
+  string project_name = 1;
+  repeated string salts = 2;
+}
+
+message AddProjectDelegateeListInput{
+  aelf.Hash project_hash = 1;
+  repeated string salts = 2;
+}
+
+message RemoveProjectDelegateeListInput{
+  aelf.Hash project_hash = 1;
+  repeated aelf.Hash delegatee_hash_list = 2;
+}
+
+message SetProjectDelegateControllerInput {
+    aelf.Hash project_hash = 1;
+    aelf.Address project_controller = 2;
+}
+
+message SetProjectDelegateSignerInput {
+    aelf.Hash project_hash = 1;
+    aelf.Address signer = 2;
+}
+
+message WithdrawProjectDelegateeTokenInput {
+    aelf.Hash project_hash = 1;
+    aelf.Hash delegatee_hash = 2;
+    int64 amount = 3;
+}
+
+message ProjectDelegateInfo {
+    aelf.Address project_controller = 1;
+    repeated aelf.Hash delegatee_hash_list = 2;
+    aelf.Address signer = 3;
+}
+
+message GetProjectDelegateInfoOutput {
+  aelf.Address project_controller = 1;
+  repeated aelf.Hash delegatee_hash_list = 2;
+  aelf.Address signer = 3;
+  repeated aelf.Address delegatee_address_list = 4;
 }
