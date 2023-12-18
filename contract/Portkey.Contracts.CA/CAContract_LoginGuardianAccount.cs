@@ -1,6 +1,7 @@
 using System.Linq;
 using AElf.Sdk.CSharp;
 using AElf.Types;
+using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
 
 namespace Portkey.Contracts.CA;
@@ -13,13 +14,23 @@ public partial class CAContract
         Assert(input != null, "input should not be null");
         Assert(input!.CaHash != null, "CaHash should not be null");
         // Guardian should be valid, not null, and be with non-null Value
-        Assert(input.Guardian != null, "Guardian should not be null");
-        Assert(IsValidHash(input.Guardian!.IdentifierHash), "Guardian IdentifierHash should not be null");
+        var checkGuardiansApproved = input.GuardianToSetLogin != null;
+        var loginGuardian = checkGuardiansApproved
+            ? new Guardian
+            {
+                IdentifierHash = input.GuardianToSetLogin.IdentifierHash,
+                VerifierId = input.GuardianToSetLogin.IdentifierHash,
+                Type = input.GuardianToSetLogin.Type
+            }
+            : input.Guardian;
+        Assert(loginGuardian != null, "Guardian should not be null");
+        Assert(IsValidHash(loginGuardian.IdentifierHash), "Guardian IdentifierHash should not be null");
+        Assert(!checkGuardiansApproved || input.GuardiansApproved.Count > 0, "GuardiansApproved should not be empty");
+
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
 
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
         AssertCreateChain(holderInfo);
-        var loginGuardian = input.Guardian;
 
         var isOccupied = CheckLoginGuardianIsNotOccupied(loginGuardian, input.CaHash);
 
@@ -44,6 +55,20 @@ public partial class CAContract
             return new Empty();
         }
 
+        if (checkGuardiansApproved)
+        {
+            var methodName = nameof(OperationType.SetLoginAccount).ToLower();
+            if (!CheckVerifierSignatureAndDataCompatible(input.GuardianToSetLogin, methodName, input.CaHash))
+            {
+                return new Empty();
+            }
+
+            var guardianApprovedAmount = GetGuardianApprovedAmount(input.CaHash, input.GuardiansApproved, methodName);
+            var holderJudgementStrategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
+            Assert(IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count, guardianApprovedAmount,
+                holderJudgementStrategy), "JudgementStrategy validate failed");
+        }
+
         guardian.IsLoginGuardian = true;
 
         State.LoginGuardianMap[loginGuardian.IdentifierHash][loginGuardian.VerifierId] = input.CaHash;
@@ -64,14 +89,40 @@ public partial class CAContract
         return new Empty();
     }
 
+    private int GetGuardianApprovedAmount(Hash cahHash, RepeatedField<GuardianInfo> guardianApproved, string methodName)
+    {
+        var guardianApprovedAmount = 0;
+        var guardianApprovedList = guardianApproved
+            .DistinctBy(g => $"{g.Type}{g.IdentifierHash}{g.VerificationInfo.Id}")
+            .ToList();
+        foreach (var guardianInfo in guardianApprovedList)
+        {
+            if (!IsGuardianExist(cahHash, guardianInfo)) continue;
+            var isApproved = CheckVerifierSignatureAndDataCompatible(guardianInfo, methodName, cahHash);
+            if (!isApproved) continue;
+            guardianApprovedAmount++;
+        }
+        return guardianApprovedAmount;
+    }
+
     // Unset a Guardian for login, if already unset, return ture
     public override Empty UnsetGuardianForLogin(UnsetGuardianForLoginInput input)
     {
         Assert(input != null, "Invalid input");
         Assert(input!.CaHash != null, "CaHash can not be null");
         // Guardian should be valid, not null, and be with non-null Value
-        Assert(input.Guardian != null, "Guardian can not be null");
-        Assert(IsValidHash(input.Guardian!.IdentifierHash), "Guardian IdentifierHash can not be null");
+        var checkGuardiansApproved = input.GuardianToUnsetLogin != null;
+        var loginGuardian = checkGuardiansApproved
+            ? new Guardian
+            {
+                IdentifierHash = input.GuardianToUnsetLogin.IdentifierHash,
+                VerifierId = input.GuardianToUnsetLogin.IdentifierHash,
+                Type = input.GuardianToUnsetLogin.Type
+            }
+            : input.Guardian;
+        Assert(loginGuardian != null, "Guardian should not be null");
+        Assert(IsValidHash(loginGuardian.IdentifierHash), "Guardian IdentifierHash should not be null");
+        Assert(!checkGuardiansApproved || input.GuardiansApproved.Count > 0, "GuardiansApproved should not be empty");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
 
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
@@ -79,7 +130,6 @@ public partial class CAContract
         // if CAHolder only have one LoginGuardian,not Allow Unset;
         Assert(holderInfo.GuardianList!.Guardians.Count(g => g.IsLoginGuardian) > 1,
             "only one LoginGuardian,can not be Unset");
-        var loginGuardian = input.Guardian;
 
         // if (State.LoginGuardianMap[loginGuardian.IdentifierHash][input.Guardian.VerifierId] == null ||
         //     State.LoginGuardianMap[loginGuardian.IdentifierHash][input.Guardian.VerifierId] != input.CaHash)
@@ -94,7 +144,20 @@ public partial class CAContract
         if (guardian == null || !guardian.IsLoginGuardian)
         {
             return new Empty();
-        } 
+        }
+        if (checkGuardiansApproved)
+        {
+            var methodName = nameof(OperationType.UnSetLoginAccount).ToLower();
+            if (!CheckVerifierSignatureAndDataCompatible(input.GuardianToUnsetLogin, methodName, input.CaHash))
+            {
+                return new Empty();
+            }
+
+            var guardianApprovedAmount = GetGuardianApprovedAmount(input.CaHash, input.GuardiansApproved, methodName);
+            var holderJudgementStrategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
+            Assert(IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count, guardianApprovedAmount,
+                holderJudgementStrategy), "JudgementStrategy validate failed");
+        }
 
         guardian.IsLoginGuardian = false;
 

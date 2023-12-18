@@ -302,11 +302,15 @@ message UpdateGuardianInput{
 message SetGuardianForLoginInput {
   aelf.Hash ca_hash = 1;
   Guardian guardian = 2;
+  GuardianInfo guardian_to_set_login = 3;
+  repeated GuardianInfo guardians_approved = 4;
 }
 
 message UnsetGuardianForLoginInput {
   aelf.Hash ca_hash = 1;
   Guardian guardian = 2;
+  GuardianInfo guardian_to_unset_login = 3;
+  repeated GuardianInfo guardians_approved = 4;
 }
 
 message ManagerForwardCallInput {
@@ -659,6 +663,7 @@ enum OperationType {
   Approve = 8;
   ModifyTransferLimit = 9;
   GuardianApproveTransfer = 10;
+  UnSetLoginAccount = 11;
 }
 message SetCAContractAddressesInput {
   repeated CAContractAddress ca_contract_addresses = 1;
