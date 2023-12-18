@@ -14,13 +14,23 @@ public partial class CAContract
         Assert(input != null, "input should not be null");
         Assert(input!.CaHash != null, "CaHash should not be null");
         // Guardian should be valid, not null, and be with non-null Value
-        Assert(input.Guardian != null, "Guardian should not be null");
-        Assert(IsValidHash(input.Guardian!.IdentifierHash), "Guardian IdentifierHash should not be null");
+        var checkGuardiansApproved = input.GuardianToSetLogin != null;
+        var loginGuardian = checkGuardiansApproved
+            ? new Guardian
+            {
+                IdentifierHash = input.GuardianToSetLogin.IdentifierHash,
+                VerifierId = input.GuardianToSetLogin.IdentifierHash,
+                Type = input.GuardianToSetLogin.Type
+            }
+            : input.Guardian;
+        Assert(loginGuardian != null, "Guardian should not be null");
+        Assert(IsValidHash(loginGuardian.IdentifierHash), "Guardian IdentifierHash should not be null");
+        Assert(!checkGuardiansApproved || input.GuardiansApproved.Count > 0, "GuardiansApproved should not be empty");
+
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
 
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
         AssertCreateChain(holderInfo);
-        var loginGuardian = input.Guardian;
 
         var isOccupied = CheckLoginGuardianIsNotOccupied(loginGuardian, input.CaHash);
 
@@ -45,13 +55,9 @@ public partial class CAContract
             return new Empty();
         }
 
-        if (State.SetUnsetLoginGuardianCheckGuardianApprovedEnabled.Value || (input.GuardianToSetLogin != null && input.GuardiansApproved.Count > 0) )
+        if (checkGuardiansApproved)
         {
-            var guardianToSetLogin = input.GuardianToSetLogin;
-            Assert(loginGuardian.IdentifierHash == guardianToSetLogin.IdentifierHash && loginGuardian.VerifierId == guardianToSetLogin.VerificationInfo.Id &&
-                   loginGuardian.Type == guardianToSetLogin.Type, "Input guardian not equal guardianToSetLogin.");
             var methodName = nameof(OperationType.SetLoginAccount).ToLower();
-            //Check the verifier signature and data of the guardian to be added.
             if (!CheckVerifierSignatureAndDataCompatible(input.GuardianToSetLogin, methodName, input.CaHash))
             {
                 return new Empty();
@@ -105,8 +111,18 @@ public partial class CAContract
         Assert(input != null, "Invalid input");
         Assert(input!.CaHash != null, "CaHash can not be null");
         // Guardian should be valid, not null, and be with non-null Value
-        Assert(input.Guardian != null, "Guardian can not be null");
-        Assert(IsValidHash(input.Guardian!.IdentifierHash), "Guardian IdentifierHash can not be null");
+        var checkGuardiansApproved = input.GuardianToUnsetLogin != null;
+        var loginGuardian = checkGuardiansApproved
+            ? new Guardian
+            {
+                IdentifierHash = input.GuardianToUnsetLogin.IdentifierHash,
+                VerifierId = input.GuardianToUnsetLogin.IdentifierHash,
+                Type = input.GuardianToUnsetLogin.Type
+            }
+            : input.Guardian;
+        Assert(loginGuardian != null, "Guardian should not be null");
+        Assert(IsValidHash(loginGuardian.IdentifierHash), "Guardian IdentifierHash should not be null");
+        Assert(!checkGuardiansApproved || input.GuardiansApproved.Count > 0, "GuardiansApproved should not be empty");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
 
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
@@ -114,7 +130,6 @@ public partial class CAContract
         // if CAHolder only have one LoginGuardian,not Allow Unset;
         Assert(holderInfo.GuardianList!.Guardians.Count(g => g.IsLoginGuardian) > 1,
             "only one LoginGuardian,can not be Unset");
-        var loginGuardian = input.Guardian;
 
         // if (State.LoginGuardianMap[loginGuardian.IdentifierHash][input.Guardian.VerifierId] == null ||
         //     State.LoginGuardianMap[loginGuardian.IdentifierHash][input.Guardian.VerifierId] != input.CaHash)
@@ -130,13 +145,9 @@ public partial class CAContract
         {
             return new Empty();
         }
-        if (State.SetUnsetLoginGuardianCheckGuardianApprovedEnabled.Value || (input.GuardianToUnsetLogin != null && input.GuardiansApproved.Count > 0) )
+        if (checkGuardiansApproved)
         {
-            var guardianToSetLogin = input.GuardianToUnsetLogin;
-            Assert(loginGuardian.IdentifierHash == guardianToSetLogin.IdentifierHash && loginGuardian.VerifierId == guardianToSetLogin.VerificationInfo.Id &&
-                   loginGuardian.Type == guardianToSetLogin.Type, "Input guardian not equal guardianToUnsetLogin.");
             var methodName = nameof(OperationType.UnSetLoginAccount).ToLower();
-            //Check the verifier signature and data of the guardian to be added.
             if (!CheckVerifierSignatureAndDataCompatible(input.GuardianToUnsetLogin, methodName, input.CaHash))
             {
                 return new Empty();

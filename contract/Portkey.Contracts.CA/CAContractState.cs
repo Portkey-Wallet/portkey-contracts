@@ -66,6 +66,5 @@ public partial class CAContractState : ContractState
     public MappedState<string, TransferLimit> TokenDefaultTransferLimit { get; set; }
     public MappedState<Address, string, bool> ForbiddenForwardCallContractMethod { get; set; }
     public SingletonState<bool> CheckChainIdInSignatureEnabled { get; set; }
-    public SingletonState<bool> SetUnsetLoginGuardianCheckGuardianApprovedEnabled { get; set; }
     public SingletonState<SecondaryDelegationFee> SecondaryDelegationFee { get; set; }
 }
