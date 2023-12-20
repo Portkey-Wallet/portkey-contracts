@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using AElf;
 using AElf.Contracts.MultiToken;

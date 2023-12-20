@@ -1,16 +1,11 @@
 using AElf.Sdk.CSharp.State;
 using AElf.Types;
-using Google.Protobuf.Collections;
 
 namespace Portkey.Contracts.CA;
 
 public partial class CAContractState : ContractState
 {
     public SingletonState<bool> Initialized { get; set; }
-
-    // public SingletonState<Address> RegisterOrRecoveryController { get; set; }
-    //
-    // public SingletonState<Address> SetConfigController { get; set; }
     public SingletonState<bool> CreateHolderDisable { get; set; }
 
     /// <summary>
@@ -45,9 +40,6 @@ public partial class CAContractState : ContractState
     /// only on MainChain
     /// </summary>
     public SingletonState<CAServerList> CaServerList { get; set; }
-
-    // public SingletonState<AuthorityInfo> MethodFeeController { get; set; }
-    // public MappedState<string, MethodFees> TransactionFees { get; set; }
     public SingletonState<ContractDelegationFee> ContractDelegationFee { get; set; }
 
     //

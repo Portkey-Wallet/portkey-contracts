@@ -1,5 +1,3 @@
-using System.Diagnostics.Contracts;
-
 namespace Portkey.Contracts.CA;
 
 public static class CAContractConstants
