@@ -153,7 +153,7 @@ public partial class CAContract
 
         guardian.IsLoginGuardian = false;
 
-        State.LoginGuardianMap[loginGuardian.IdentifierHash].Remove(input.Guardian.VerifierId);
+        State.LoginGuardianMap[loginGuardian.IdentifierHash].Remove(loginGuardian.VerifierId);
 
         Context.Fire(new LoginGuardianRemoved
         {
