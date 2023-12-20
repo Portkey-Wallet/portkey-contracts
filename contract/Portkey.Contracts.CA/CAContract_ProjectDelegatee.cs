@@ -135,7 +135,7 @@ public partial class CAContract
     public override Empty SetCaProjectDelegateHash(Hash input)
     {
         Assert(IsValidHash(input), "Invalid input.");
-        Assert(State.ServerControllers.Value.Controllers.Contains(Context.Sender), "No permission");
+        Assert(Context.Sender == State.Admin.Value, "No permission");
         State.CaProjectDelegateHash.Value = input;
         return new Empty();
     }
