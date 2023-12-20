@@ -127,12 +127,6 @@ public partial class CAContract
         Assert(holderInfo.GuardianList!.Guardians.Count(g => g.IsLoginGuardian) > 1,
             "only one LoginGuardian,can not be Unset");
 
-        // if (State.LoginGuardianMap[loginGuardian.IdentifierHash][input.Guardian.VerifierId] == null ||
-        //     State.LoginGuardianMap[loginGuardian.IdentifierHash][input.Guardian.VerifierId] != input.CaHash)
-        // {
-        //     return new Empty();
-        // }
-
         var guardian = holderInfo.GuardianList!.Guardians.FirstOrDefault(t =>
             t.VerifierId == loginGuardian.VerifierId && t.IdentifierHash == loginGuardian.IdentifierHash &&
             t.Type == loginGuardian.Type);
