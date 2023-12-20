@@ -10,7 +10,7 @@ namespace Portkey.Contracts.CA;
 
 public partial class CAContract
 {
-    public override Empty RegisterProjectDelegatee(RegisterProjectDelegateeInput input)
+    public override Hash RegisterProjectDelegatee(RegisterProjectDelegateeInput input)
     {
         Assert(!string.IsNullOrWhiteSpace(input.ProjectName), "Invalid project name.");
         Assert(input.Salts.Count > 0, "Input salts is empty.");
@@ -28,7 +28,7 @@ public partial class CAContract
         }
 
         State.ProjectDelegateInfo[projectHash] = projectDelegateInfo;
-        return new Empty();
+        return projectHash;
     }
 
     public override Empty AddProjectDelegateeList(AddProjectDelegateeListInput input)
