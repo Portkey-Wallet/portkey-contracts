@@ -58,11 +58,7 @@ public partial class CAContract
         if (checkGuardiansApproved)
         {
             var methodName = nameof(OperationType.SetLoginAccount).ToLower();
-            if (!CheckVerifierSignatureAndDataCompatible(input.GuardianToSetLogin, methodName, input.CaHash))
-            {
-                return new Empty();
-            }
-
+            input.GuardiansApproved.Add(input.GuardianToSetLogin);
             var guardianApprovedAmount = GetGuardianApprovedAmount(input.CaHash, input.GuardiansApproved, methodName);
             var holderJudgementStrategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
             Assert(IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count, guardianApprovedAmount,
@@ -148,11 +144,7 @@ public partial class CAContract
         if (checkGuardiansApproved)
         {
             var methodName = nameof(OperationType.UnSetLoginAccount).ToLower();
-            if (!CheckVerifierSignatureAndDataCompatible(input.GuardianToUnsetLogin, methodName, input.CaHash))
-            {
-                return new Empty();
-            }
-
+            input.GuardiansApproved.Add(input.GuardianToUnsetLogin);
             var guardianApprovedAmount = GetGuardianApprovedAmount(input.CaHash, input.GuardiansApproved, methodName);
             var holderJudgementStrategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
             Assert(IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count, guardianApprovedAmount,

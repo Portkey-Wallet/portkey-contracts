@@ -39,7 +39,7 @@ service CAContractImpl {
   rpc GetTransferSecurityCheckResult(GetTransferSecurityCheckResultInput) returns (GetTransferSecurityCheckResultOutput) {option (aelf.is_view) = true;}
   
   // secondaryDelegatee
-  rpc RegisterProjectDelegatee (RegisterProjectDelegateeInput) returns (google.protobuf.Empty) {}
+  rpc RegisterProjectDelegatee (RegisterProjectDelegateeInput) returns (aelf.Hash) {}
     
   rpc AddProjectDelegateeList (AddProjectDelegateeListInput) returns (google.protobuf.Empty) {}
   

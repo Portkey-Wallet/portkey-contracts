@@ -295,6 +295,10 @@ public partial class CAContract
 
     private void UpgradeProjectDelegatee(Address caAddress, RepeatedField<ManagerInfo> managerInfos)
     {
+        if (!IsValidHash(State.CaProjectDelegateHash.Value) || State.ProjectDelegateInfo[State.CaProjectDelegateHash.Value].DelegateeHashList.Count == 0)
+        {
+            return;
+        }
         if (IfCaHasProjectDelegatee(caAddress)) return;
         RemoveContractDelegators(managerInfos);
         State.TokenContract.RemoveTransactionFeeDelegator.Send(new RemoveTransactionFeeDelegatorInput
@@ -336,10 +340,6 @@ public partial class CAContract
 
     private bool IfCaHasProjectDelegatee(Address delegatorAddress)
     {
-        if (!IsValidHash(State.CaProjectDelegateHash.Value) || State.ProjectDelegateInfo[State.CaProjectDelegateHash.Value].DelegateeHashList.Count == 0)
-        {
-            return false;
-        }
         var delegateeList = State.TokenContract.GetTransactionFeeDelegatees.Call(new GetTransactionFeeDelegateesInput
         {
             DelegatorAddress = delegatorAddress
