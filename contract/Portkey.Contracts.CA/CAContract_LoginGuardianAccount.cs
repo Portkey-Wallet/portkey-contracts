@@ -19,7 +19,7 @@ public partial class CAContract
             ? new Guardian
             {
                 IdentifierHash = input.GuardianToSetLogin.IdentifierHash,
-                VerifierId = input.GuardianToSetLogin.IdentifierHash,
+                VerifierId = input.GuardianToSetLogin.VerificationInfo.Id,
                 Type = input.GuardianToSetLogin.Type
             }
             : input.Guardian;
@@ -47,8 +47,8 @@ public partial class CAContract
             "Internal error, how can it be?");
 
         var guardian = holderInfo.GuardianList!.Guardians.FirstOrDefault(t =>
-            t.VerifierId == input.Guardian.VerifierId && t.IdentifierHash == input.Guardian.IdentifierHash &&
-            t.Type == input.Guardian.Type);
+            t.VerifierId == loginGuardian.VerifierId && t.IdentifierHash == loginGuardian.IdentifierHash &&
+            t.Type == loginGuardian.Type);
 
         if (guardian == null)
         {
@@ -112,7 +112,7 @@ public partial class CAContract
             ? new Guardian
             {
                 IdentifierHash = input.GuardianToUnsetLogin.IdentifierHash,
-                VerifierId = input.GuardianToUnsetLogin.IdentifierHash,
+                VerifierId = input.GuardianToUnsetLogin.VerificationInfo.Id,
                 Type = input.GuardianToUnsetLogin.Type
             }
             : input.Guardian;
@@ -134,8 +134,8 @@ public partial class CAContract
         // }
 
         var guardian = holderInfo.GuardianList!.Guardians.FirstOrDefault(t =>
-            t.VerifierId == input.Guardian.VerifierId && t.IdentifierHash == input.Guardian.IdentifierHash &&
-            t.Type == input.Guardian.Type);
+            t.VerifierId == loginGuardian.VerifierId && t.IdentifierHash == loginGuardian.IdentifierHash &&
+            t.Type == loginGuardian.Type);
 
         if (guardian == null || !guardian.IsLoginGuardian)
         {
