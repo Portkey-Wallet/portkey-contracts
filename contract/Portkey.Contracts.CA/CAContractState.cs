@@ -26,11 +26,6 @@ public partial class CAContractState : ContractState
     public MappedState<Hash, Hash> GuardianMap { get; set; }
 
     /// <summary>
-    /// removedId -> currentId
-    /// </summary>
-    public MappedState<Hash, Hash> RemovedToCurrentVerifierIdMap { get; set; }
-
-    /// <summary>
     /// HolderInfo Hash -> HolderInfo
     /// All CA contracts
     /// </summary>
@@ -66,7 +61,6 @@ public partial class CAContractState : ContractState
     public MappedState<Hash, string, TransferredAmount> DailyTransferredAmountMap { get; set; }
     public MappedState<string, TransferLimit> TokenDefaultTransferLimit { get; set; }
     public MappedState<Address, string, bool> ForbiddenForwardCallContractMethod { get; set; }
-    public SingletonState<bool> CheckChainIdInSignatureEnabled { get; set; }
     public SingletonState<SecondaryDelegationFee> SecondaryDelegationFee { get; set; }
     public MappedState<Hash, ProjectDelegateInfo> ProjectDelegateInfo { get; set; }
     public SingletonState<Hash> CaProjectDelegateHash { get; set; }

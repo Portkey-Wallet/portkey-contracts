@@ -21,18 +21,16 @@ public partial class CAContract
 
         ValidateManager(holderInfo, input.ManagerInfos);
         AssertCreateChain(holderInfo);
-        if (State.CheckChainIdInSignatureEnabled.Value)
+        if (holderInfo.CreateChainId == 0)
         {
-            if (holderInfo.CreateChainId == 0)
-            {
-                holderInfo.CreateChainId = Context.ChainId;
-            }
-            Assert(holderInfo.CreateChainId == input.CreateChainId, "Invalid input createChainId.");
-            Assert(input.GuardianList?.Guardians?.Count > 0, "Input guardianList is empty.");
-            Assert(holderInfo.GuardianList.Guardians.Count == input.GuardianList.Guardians.Count, 
-                "The amount of input.GuardianList not equals to HolderInfo's GuardianList");
-            ValidateGuardianList(holderInfo.GuardianList, input.GuardianList);
+            holderInfo.CreateChainId = Context.ChainId;
         }
+
+        Assert(holderInfo.CreateChainId == input.CreateChainId, "Invalid input createChainId.");
+        Assert(input.GuardianList?.Guardians?.Count > 0, "Input guardianList is empty.");
+        Assert(holderInfo.GuardianList.Guardians.Count == input.GuardianList.Guardians.Count,
+            "The amount of input.GuardianList not equals to HolderInfo's GuardianList");
+        ValidateGuardianList(holderInfo.GuardianList, input.GuardianList);
         return new Empty();
     }
 
@@ -137,30 +135,27 @@ public partial class CAContract
 
         var guardiansAdded = new RepeatedField<Guardian>();
         var guardiansRemoved = new RepeatedField<Guardian>();
-        if (State.CheckChainIdInSignatureEnabled.Value)
+        holderInfo.CreateChainId = transactionInput.CreateChainId;
+        if (holderInfo.GuardianList == null)
         {
-            holderInfo.CreateChainId = transactionInput.CreateChainId;
-            if (holderInfo.GuardianList == null)
+            holderInfo.GuardianList = new GuardianList
             {
-                holderInfo.GuardianList = new GuardianList
-                {
-                    Guardians = { }
-                };
-            }
+                Guardians = { }
+            };
+        }
 
-            guardiansAdded =
-                GuardiansExcept(transactionInput.GuardianList.Guardians, holderInfo.GuardianList.Guardians);
-            guardiansRemoved =
-                GuardiansExcept(holderInfo.GuardianList.Guardians, transactionInput.GuardianList.Guardians);
-            foreach (var guardian in guardiansAdded)
-            {
-                holderInfo.GuardianList.Guardians.Add(guardian);
-            }
+        guardiansAdded =
+            GuardiansExcept(transactionInput.GuardianList.Guardians, holderInfo.GuardianList.Guardians);
+        guardiansRemoved =
+            GuardiansExcept(holderInfo.GuardianList.Guardians, transactionInput.GuardianList.Guardians);
+        foreach (var guardian in guardiansAdded)
+        {
+            holderInfo.GuardianList.Guardians.Add(guardian);
+        }
 
-            foreach (var guardian in guardiansRemoved)
-            {
-                holderInfo.GuardianList.Guardians.Remove(guardian);
-            }
+        foreach (var guardian in guardiansRemoved)
+        {
+            holderInfo.GuardianList.Guardians.Remove(guardian);
         }
 
         State.HolderInfoMap[holderId] = holderInfo;
@@ -299,16 +294,7 @@ public partial class CAContract
 
         return resultSet;
     }
-
-    private Transaction MethodNameVerify(VerificationTransactionInfo info, string methodNameExpected)
-    {
-        var originalTransaction = Transaction.Parser.ParseFrom(info.TransactionBytes);
-        Assert(originalTransaction.MethodName == methodNameExpected, $"Invalid transaction method.");
-
-        return originalTransaction;
-    }
-
-
+    
     private void TransactionVerify(Hash transactionId, long parentChainHeight, int chainId, MerklePath merklePath)
     {
         var verificationInput = new VerifyTransactionInput

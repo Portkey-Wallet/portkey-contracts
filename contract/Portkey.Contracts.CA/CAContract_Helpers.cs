@@ -15,11 +15,6 @@ public partial class CAContract
 {
     private bool CheckVerifierSignatureAndDataCompatible(GuardianInfo guardianInfo, string methodName, Hash caHash = null)
     {
-        if (State.CheckChainIdInSignatureEnabled.Value)
-        {
-            return CheckVerifierSignatureAndDataWithCreateChainId(guardianInfo, methodName, caHash);
-        }
-
         var verificationDoc = guardianInfo.VerificationInfo.VerificationDoc;
         if (verificationDoc == null || string.IsNullOrWhiteSpace(verificationDoc))
         {
@@ -29,87 +24,11 @@ public partial class CAContract
         var verifierDoc = verificationDoc.Split(",");
         return verifierDoc.Length switch
         {
-            6 => CheckVerifierSignatureAndData(guardianInfo, methodName),
             7 => CheckVerifierSignatureAndDataWithCreateChainId(guardianInfo, methodName, caHash),
             _ => false
         };
     }
-
-
-    private bool CheckVerifierSignatureAndData(GuardianInfo guardianInfo, string methodName)
-    {
-        //[type,guardianIdentifierHash,verificationTime,verifierAddress,salt,operationType]
-        var verificationDoc = guardianInfo.VerificationInfo.VerificationDoc;
-        if (verificationDoc == null || string.IsNullOrWhiteSpace(verificationDoc))
-        {
-            return false;
-        }
-
-        var verifierDoc = verificationDoc.Split(",");
-
-        if (verifierDoc.Length != 6)
-        {
-            return false;
-        }
-
-        var docInfo = GetVerificationDoc(verificationDoc);
-
-        if (docInfo.OperationType == "0")
-        {
-            return false;
-        }
-
-        var key = HashHelper.ComputeFrom(guardianInfo.VerificationInfo.Signature.ToByteArray());
-        if (State.VerifierDocMap[key])
-        {
-            return false;
-        }
-
-
-        //Check expired time 1h.
-        var verificationTime = DateTime.SpecifyKind(Convert.ToDateTime(docInfo.VerificationTime), DateTimeKind.Utc);
-        if (verificationTime.ToTimestamp().AddHours(1) <= Context.CurrentBlockTime ||
-            !int.TryParse(docInfo.GuardianType, out var type) ||
-            (int)guardianInfo.Type != type ||
-            guardianInfo.IdentifierHash != docInfo.IdentifierHash)
-        {
-            return false;
-        }
-
-        //Check verifier address and data.
-        var verifierAddress = docInfo.VerifierAddress;
-        var verificationInfo = guardianInfo.VerificationInfo;
-        var verifierServer = State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(v => v.Id == verificationInfo.Id);
-        if (verifierServer == null)
-        {
-            var currentVerifierId = State.RemovedToCurrentVerifierIdMap[verificationInfo.Id];
-            if (IsValidHash(currentVerifierId))
-            {
-                verifierServer =
-                    State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(v => v.Id == currentVerifierId);
-            }
-        }
-        
-        //Recovery verifier address.
-        var data = HashHelper.ComputeFrom(verificationInfo.VerificationDoc);
-        var publicKey = Context.RecoverPublicKey(verificationInfo.Signature.ToByteArray(),
-            data.ToByteArray());
-        var verifierAddressFromPublicKey = Address.FromPublicKey(publicKey);
-
-
-        if (verifierServer == null || verifierAddressFromPublicKey != verifierAddress ||
-            !verifierServer.VerifierAddresses.Contains(verifierAddress))
-        {
-            return false;
-        }
-
-        key = HashHelper.ComputeFrom(guardianInfo.VerificationInfo.Signature.ToByteArray());
-        State.VerifierDocMap[key] = true;
-        var operationTypeStr = docInfo.OperationType;
-        var operationTypeName = typeof(OperationType).GetEnumName(Convert.ToInt32(operationTypeStr))?.ToLower();
-        return operationTypeName == methodName;
-    }
-
+    
     private bool CheckVerifierSignatureAndDataWithCreateChainId(GuardianInfo guardianInfo, string methodName, Hash caHash)
     {
         //[type,guardianIdentifierHash,verificationTime,verifierAddress,salt,operationType,createChainId]
@@ -154,15 +73,6 @@ public partial class CAContract
         var verifierAddress = docInfo.VerifierAddress;
         var verificationInfo = guardianInfo.VerificationInfo;
         var verifierServer = State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(v => v.Id == verificationInfo.Id);
-        if (verifierServer == null)
-        {
-            var currentVerifierId = State.RemovedToCurrentVerifierIdMap[verificationInfo.Id];
-            if (IsValidHash(currentVerifierId))
-            {
-                verifierServer =
-                    State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(v => v.Id == currentVerifierId);
-            }
-        }
 
         //Recovery verifier address.
         var data = HashHelper.ComputeFrom(verificationInfo.VerificationDoc);
@@ -209,26 +119,12 @@ public partial class CAContract
             g => g.IdentifierHash == guardianInfo.IdentifierHash && g.Type == guardianInfo.Type &&
                  g.VerifierId == guardianInfo.VerificationInfo.Id
         );
-        if (satisfiedGuardians != null)
-        {
-            return true;
-        }
-        satisfiedGuardians = State.HolderInfoMap[caHash].GuardianList.Guardians.FirstOrDefault(
-            g => g.IdentifierHash == guardianInfo.IdentifierHash && g.Type == guardianInfo.Type &&
-                 State.RemovedToCurrentVerifierIdMap[g.VerifierId] == guardianInfo.VerificationInfo.Id
-        );
         return satisfiedGuardians != null;
     }
 
     private bool IsValidHash(Hash hash)
     {
         return hash != null && !hash.Value.IsEmpty;
-    }
-
-    private void ValidateOperationType(OperationType type)
-    {
-        Assert(!string.IsNullOrWhiteSpace(typeof(OperationType).GetEnumName(Convert.ToInt32(type))),
-            $"The OperationType: {type} does not exist");
     }
 
     private class VerificationDocInfo

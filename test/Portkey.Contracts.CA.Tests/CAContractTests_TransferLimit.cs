@@ -253,34 +253,6 @@ public partial class CAContractTests
     }
 
     [Fact]
-    public async Task SetCheckCreateIdInSignatureEnabledTest()
-    {
-        var result = await CaContractStub.GetCheckChainIdInSignatureEnabled.CallAsync(
-            new Empty());
-        result.CheckChainIdInSignatureEnabled.ShouldBeFalse();
-        await Initiate();
-        await TokenContractStub.Transfer.SendAsync(new TransferInput
-        {
-            Amount = 1000000000000,
-            Symbol = "ELF",
-            To = User1Address
-        });
-        var setResult = await CaContractUser1Stub.SetCheckChainIdInSignatureEnabled.SendWithExceptionAsync(
-            new SetCheckChainIdInSignatureEnabledInput
-            {
-                CheckChainIdInSignatureEnabled = true
-            });
-        setResult.TransactionResult.Error.ShouldContain("No permission");
-        await CaContractStub.SetCheckChainIdInSignatureEnabled.SendAsync(new SetCheckChainIdInSignatureEnabledInput
-        {
-            CheckChainIdInSignatureEnabled = true
-        });
-        result = await CaContractStub.GetCheckChainIdInSignatureEnabled.CallAsync(
-            new Empty());
-        result.CheckChainIdInSignatureEnabled.ShouldBeTrue();
-    }
-
-    [Fact]
     public async Task UpdateDailyTransferredAmount_TransferAddGuardianApproveTest()
     {
         await InitTransferLimitTest();
@@ -494,32 +466,6 @@ public partial class CAContractTests
         _verifierId = _verifierServers[0].Id;
         _verifierId1 = _verifierServers[1].Id;
         _verifierId2 = _verifierServers[2].Id;
-
-        await CaContractStub.AddRemovedToCurrentVerifierIdMapper.SendAsync(
-            new AddRemovedToCurrentVerifierIdMapperInput()
-            {
-                Mappers =
-                {
-                    new RemovedToCurrentVerifierIdMapperInfo[]
-                    {
-                        new()
-                        {
-                            RemovedId = _verifierServers[0].Id,
-                            CurrentId = _verifierServers[0].Id
-                        },
-                        new()
-                        {
-                            RemovedId = _verifierServers[1].Id,
-                            CurrentId = _verifierServers[1].Id
-                        },
-                        new()
-                        {
-                            RemovedId = _verifierServers[2].Id,
-                            CurrentId = _verifierServers[2].Id
-                        }
-                    }
-                }
-            });
     }
 
     private async Task InitTestTransferLimitCaHolder()

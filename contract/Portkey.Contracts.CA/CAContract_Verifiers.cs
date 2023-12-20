@@ -174,35 +174,4 @@ public partial class CAContract
         }
         return output;
     }
-    
-    public override Empty AddRemovedToCurrentVerifierIdMapper(AddRemovedToCurrentVerifierIdMapperInput input)
-    {
-        Assert(State.Admin.Value == Context.Sender, "No permission");
-        Assert(input.Mappers.Count > 0, "Invalid input");
-        foreach (var mapper in input.Mappers)
-        {
-            State.RemovedToCurrentVerifierIdMap[mapper.RemovedId] = mapper.CurrentId;
-        }
-        Context.Fire(new RemovedToCurrentVerifierIdMapperAdded
-        {
-            MapperList = new RemovedToCurrentVerifierIdMapperInfoList
-            {
-                Mappers = { input.Mappers }
-            }
-        });
-        return new Empty();
-    }
-
-    public override GetRemovedToCurrentVerifierIdMapperOutput GetRemovedToCurrentVerifierIdMapper(Hash input)
-    {
-        var currentVerifierId = State.RemovedToCurrentVerifierIdMap[input];
-        return new GetRemovedToCurrentVerifierIdMapperOutput
-        {
-            Mapper = new RemovedToCurrentVerifierIdMapperInfo()
-            {
-                RemovedId = input,
-                CurrentId = currentVerifierId
-            }
-        };
-    }
 }

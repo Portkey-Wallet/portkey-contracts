@@ -69,18 +69,12 @@ service CAContract {
 
   rpc RemoveCAServer (RemoveCAServerInput) returns (google.protobuf.Empty){}
   
-  rpc SetCheckChainIdInSignatureEnabled(SetCheckChainIdInSignatureEnabledInput) returns (google.protobuf.Empty){}
-
   rpc GetHolderInfo(GetHolderInfoInput) returns (GetHolderInfoOutput) {option (aelf.is_view) = true;}
 
   rpc GetVerifierServers (google.protobuf.Empty) returns (GetVerifierServersOutput) {option (aelf.is_view) = true;}
   
-  rpc GetRemovedToCurrentVerifierIdMapper (aelf.Hash) returns (GetRemovedToCurrentVerifierIdMapperOutput) {option (aelf.is_view) = true;}
-
   rpc GetCAServers (google.protobuf.Empty) returns (GetCAServersOutput) {option (aelf.is_view) = true;}
   
-  rpc GetCheckChainIdInSignatureEnabled (google.protobuf.Empty) returns (GetCheckChainIdInSignatureEnabledOutput) {option (aelf.is_view) = true;}
-
   // Validates CAHolder with ManagerInfos
   rpc ValidateCAHolderInfoWithManagerInfosExists (ValidateCAHolderInfoWithManagerInfosExistsInput) returns (google.protobuf.Empty) {}
 
@@ -112,8 +106,6 @@ service CAContract {
 
   rpc SetCAContractAddresses (SetCAContractAddressesInput) returns (google.protobuf.Empty) {}
   
-  rpc AddRemovedToCurrentVerifierIdMapper (AddRemovedToCurrentVerifierIdMapperInput) returns (google.protobuf.Empty) {}
-
   rpc SetSecondaryDelegationFee (SetSecondaryDelegationFeeInput) returns (google.protobuf.Empty) {}
 
   rpc GetSecondaryDelegationFee (google.protobuf.Empty) returns (SecondaryDelegationFee) { option (aelf.is_view) = true; }
@@ -206,16 +198,6 @@ message AdminInput{
 message AdminOutput{
   aelf.Address address = 1;
 }
-
-message AddRemovedToCurrentVerifierIdMapperInput {
-    repeated RemovedToCurrentVerifierIdMapperInfo mappers = 1;
-}
-
-message RemovedToCurrentVerifierIdMapperInfo {
-   aelf.Hash removed_id = 1;
-   aelf.Hash current_id = 2;
-}
-
 
 message CreateCAHolderInput {
   GuardianInfo guardian_approved = 1;
@@ -422,10 +404,6 @@ message GetVerifierServersOutput {
   repeated VerifierServer verifier_servers = 1;
 }
 
-message GetRemovedToCurrentVerifierIdMapperOutput {
-  RemovedToCurrentVerifierIdMapperInfo mapper = 1;
-}
-
 message GetCAServersOutput {
   repeated CAServer ca_servers = 1;
 }
@@ -597,15 +575,6 @@ message VerifierServerEndPointsRemoved {
 message VerifierServerRemoved {
   option (aelf.is_event) = true;
   VerifierServer verifier_server = 1 [(aelf.is_indexed) = true];
-}
-
-message RemovedToCurrentVerifierIdMapperAdded {
-    option (aelf.is_event) = true;
-    RemovedToCurrentVerifierIdMapperInfoList mapper_list = 1 [(aelf.is_indexed) = true];
-}
-
-message RemovedToCurrentVerifierIdMapperInfoList {
-    repeated RemovedToCurrentVerifierIdMapperInfo mappers = 1;
 }
 
 message CAServerAdded {

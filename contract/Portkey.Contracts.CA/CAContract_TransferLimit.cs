@@ -172,25 +172,6 @@ public partial class CAContract
         };
     }
 
-    public override Empty SetCheckChainIdInSignatureEnabled(SetCheckChainIdInSignatureEnabledInput input)
-    {
-        Assert(State.Admin.Value == Context.Sender, "No permission");
-        if (input.CheckChainIdInSignatureEnabled != State.CheckChainIdInSignatureEnabled.Value)
-        {
-            State.CheckChainIdInSignatureEnabled.Value = input.CheckChainIdInSignatureEnabled;
-        }
-
-        return new Empty();
-    }
-
-    public override GetCheckChainIdInSignatureEnabledOutput GetCheckChainIdInSignatureEnabled(Empty input)
-    {
-        return new GetCheckChainIdInSignatureEnabledOutput
-        {
-            CheckChainIdInSignatureEnabled = State.CheckChainIdInSignatureEnabled.Value
-        };
-    }
-
     public override Empty SetTransferSecurityThreshold(SetTransferSecurityThresholdInput input)
     {
         Assert(Context.Sender == State.Admin.Value, "No permission.");
