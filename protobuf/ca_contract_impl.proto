@@ -52,6 +52,8 @@ service CAContractImpl {
   rpc WithdrawProjectDelegateeToken(WithdrawProjectDelegateeTokenInput) returns (google.protobuf.Empty){}
   
   rpc SetCaProjectDelegateHash (aelf.Hash) returns (google.protobuf.Empty) {}
+
+  rpc GetCaProjectDelegateHash (google.protobuf.Empty) returns (aelf.Hash) {}
   
   rpc GetProjectDelegatee (aelf.Hash) returns (GetProjectDelegateInfoOutput) { option (aelf.is_view) = true; }
 

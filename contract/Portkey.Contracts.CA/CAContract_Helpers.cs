@@ -310,6 +310,10 @@ public partial class CAContract
 
     private void SetProjectDelegator(Address delegatorAddress)
     {
+        if (!IsValidHash(State.CaProjectDelegateHash.Value))
+        {
+            return;
+        }
         var projectDelegateInfo = State.ProjectDelegateInfo[State.CaProjectDelegateHash.Value];
         if (projectDelegateInfo == null || projectDelegateInfo.DelegateeHashList.Count == 0)
         {

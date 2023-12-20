@@ -139,4 +139,9 @@ public partial class CAContract
         State.CaProjectDelegateHash.Value = input;
         return new Empty();
     }
+
+    public override Hash GetCaProjectDelegateHash(Empty input)
+    {
+        return State.CaProjectDelegateHash.Value;
+    }
 }
