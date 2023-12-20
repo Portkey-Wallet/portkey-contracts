@@ -19,7 +19,9 @@ public static class CAContractConstants
     public const long DefaultSecondaryDelegationFee = 100_00000000;
 
     public const int ManagerMaxCount = 70;
-    
+
     public const long TokenDefaultTransferLimitAmount = 100000000000000000;
     public const int DelegateeListMaxCount = 10;
+
+    public const int MainChainId = 9992731;
 }

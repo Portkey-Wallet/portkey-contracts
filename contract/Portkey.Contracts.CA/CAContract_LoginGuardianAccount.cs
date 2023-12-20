@@ -59,7 +59,7 @@ public partial class CAContract
         {
             var methodName = nameof(OperationType.SetLoginAccount).ToLower();
             input.GuardiansApproved.Add(input.GuardianToSetLogin);
-            var guardianApprovedAmount = GetGuardianApprovedAmount(input.CaHash, input.GuardiansApproved, methodName);
+            var guardianApprovedAmount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved, methodName);
             var holderJudgementStrategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
             Assert(IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count, guardianApprovedAmount,
                 holderJudgementStrategy), "JudgementStrategy validate failed");
@@ -70,10 +70,10 @@ public partial class CAContract
         State.LoginGuardianMap[loginGuardian.IdentifierHash][loginGuardian.VerifierId] = input.CaHash;
 
         State.GuardianMap[loginGuardian.IdentifierHash] = input.CaHash;
-        
+
         var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
         UpgradeProjectDelegatee(caAddress, holderInfo.ManagerInfos);
-        
+
         Context.Fire(new LoginGuardianAdded
         {
             CaHash = input.CaHash,
@@ -85,20 +85,21 @@ public partial class CAContract
         return new Empty();
     }
 
-    private int GetGuardianApprovedAmount(Hash cahHash, RepeatedField<GuardianInfo> guardianApproved, string methodName)
+    private int GetGuardianApprovedCount(Hash cahHash, RepeatedField<GuardianInfo> guardianApproved, string methodName)
     {
-        var guardianApprovedAmount = 0;
+        var guardianApprovedCount = 0;
         var guardianApprovedList = guardianApproved
             .DistinctBy(g => $"{g.Type}{g.IdentifierHash}{g.VerificationInfo.Id}")
             .ToList();
         foreach (var guardianInfo in guardianApprovedList)
         {
             if (!IsGuardianExist(cahHash, guardianInfo)) continue;
-            var isApproved = CheckVerifierSignatureAndDataCompatible(guardianInfo, methodName, cahHash);
+            var isApproved = CheckVerifierSignatureAndData(guardianInfo, methodName, cahHash);
             if (!isApproved) continue;
-            guardianApprovedAmount++;
+            guardianApprovedCount++;
         }
-        return guardianApprovedAmount;
+
+        return guardianApprovedCount;
     }
 
     // Unset a Guardian for login, if already unset, return ture
@@ -135,13 +136,14 @@ public partial class CAContract
         {
             return new Empty();
         }
+
         if (checkGuardiansApproved)
         {
             var methodName = nameof(OperationType.UnSetLoginAccount).ToLower();
             input.GuardiansApproved.Add(input.GuardianToUnsetLogin);
-            var guardianApprovedAmount = GetGuardianApprovedAmount(input.CaHash, input.GuardiansApproved, methodName);
+            var guardianApprovedCount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved, methodName);
             var holderJudgementStrategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
-            Assert(IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count, guardianApprovedAmount,
+            Assert(IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count, guardianApprovedCount,
                 holderJudgementStrategy), "JudgementStrategy validate failed");
         }
 
@@ -158,7 +160,7 @@ public partial class CAContract
         });
 
         var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
-        
+
         // not found, or removed and be registered by others later, quit to be idempotent
         if (holderInfo.GuardianList.Guardians.Where(g =>
                 g.IdentifierHash == loginGuardian.IdentifierHash).All(g => !g.IsLoginGuardian))
@@ -172,9 +174,9 @@ public partial class CAContract
                 Manager = Context.Sender
             });
         }
-        
+
         UpgradeProjectDelegatee(caAddress, holderInfo.ManagerInfos);
-        
+
         return new Empty();
     }
 

@@ -84,10 +84,6 @@ service CAContract {
 
   rpc ValidateStrategy (ValidateStrategyInput) returns (ValidateStrategyOutput) {option (aelf.is_view) = true;}
   
-  rpc SetContractDelegationFee (SetContractDelegationFeeInput) returns (google.protobuf.Empty) {}
-  
-  rpc GetContractDelegationFee (google.protobuf.Empty) returns (GetContractDelegationFeeOutput) {option (aelf.is_view) = true;}
-  
   rpc AddCreatorController (ControllerInput) returns (google.protobuf.Empty) {}
 
   rpc RemoveCreatorController (ControllerInput) returns (google.protobuf.Empty) {}
@@ -104,8 +100,6 @@ service CAContract {
   
   rpc GetAdmin (google.protobuf.Empty) returns (AdminOutput) {option (aelf.is_view) = true;}
 
-  rpc SetCAContractAddresses (SetCAContractAddressesInput) returns (google.protobuf.Empty) {}
-  
   rpc SetSecondaryDelegationFee (SetSecondaryDelegationFeeInput) returns (google.protobuf.Empty) {}
 
   rpc GetSecondaryDelegationFee (google.protobuf.Empty) returns (SecondaryDelegationFee) { option (aelf.is_view) = true; }
@@ -252,14 +246,6 @@ message StrategyStringWrapper {
 
 message ContractDelegationFee {
   int64 amount = 1;
-}
-
-message SetContractDelegationFeeInput {
-  ContractDelegationFee delegation_fee = 1;
-}
-
-message GetContractDelegationFeeOutput {
-  ContractDelegationFee delegation_fee = 1;
 }
 
 message AddGuardianInput {
@@ -633,11 +619,4 @@ enum OperationType {
   ModifyTransferLimit = 9;
   GuardianApproveTransfer = 10;
   UnSetLoginAccount = 11;
-}
-message SetCAContractAddressesInput {
-  repeated CAContractAddress ca_contract_addresses = 1;
-}
-message CAContractAddress {
-   aelf.Address address = 1;
-   int32 chain_id = 2;
 }

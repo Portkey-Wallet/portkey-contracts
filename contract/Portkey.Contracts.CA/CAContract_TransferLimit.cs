@@ -100,20 +100,11 @@ public partial class CAContract
         var holderInfo = State.HolderInfoMap[caHash];
         Assert(State.HolderInfoMap[caHash] != null, $"CA holder is null.CA hash:{caHash}");
         Assert(holderInfo.GuardianList?.Guardians?.Count > 0, "Processing on the chain...");
-        var guardianApprovedAmount = 0;
-        var guardianApprovedList = guardiansApproved
-            .DistinctBy(g => $"{g.Type}{g.IdentifierHash}{g.VerificationInfo.Id}").ToList();
-        foreach (var guardian in guardianApprovedList)
-        {
-            if (!IsGuardianExist(caHash, guardian)) continue;
-            var isApproved = CheckVerifierSignatureAndDataCompatible(guardian, methodName);
-            if (!isApproved) continue;
-            guardianApprovedAmount++;
-        }
+        var guardianApprovedCount = GetGuardianApprovedCount(caHash, guardiansApproved, methodName);
 
         var holderJudgementStrategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
         var onSyncChain = holderInfo.CreateChainId != 0 && holderInfo.CreateChainId != Context.ChainId;
-        Assert(IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count, guardianApprovedAmount,
+        Assert(IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count, guardianApprovedCount,
                 holderJudgementStrategy),
             onSyncChain ? "Processing on the chain..." : "JudgementStrategy validate failed");
     }

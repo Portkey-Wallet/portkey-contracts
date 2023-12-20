@@ -305,3 +305,4 @@ test/patched/*
 tools
 .dotnet
 .idea/
+src/AElf.Boilerplate.ContractsContract.Launcher/contracts/*

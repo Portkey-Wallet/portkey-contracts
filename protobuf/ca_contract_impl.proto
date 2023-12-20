@@ -17,10 +17,7 @@ service CAContractImpl {
   option (aelf.base) = "acs12.proto";
   option (aelf.base) = "ca_contract.proto";
   option (aelf.csharp_state) = "Portkey.Contracts.CA.CAContractState";
-  // register disable
-  rpc SetCreateHolderDisable(SetCreateHolderDisableInput) returns (google.protobuf.Empty) {}
-  rpc GetCreateHolderDisable(google.protobuf.Empty) returns (GetCreateHolderDisableOutput) {option (aelf.is_view) = true;}
-   
+    
   // approve
   rpc ManagerApprove(ManagerApproveInput) returns (google.protobuf.Empty) {}
         

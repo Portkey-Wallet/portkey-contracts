@@ -13,9 +13,14 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
     public override Empty Initialize(InitializeInput input)
     {
         Assert(!State.Initialized.Value, "Already initialized.");
-        State.GenesisContract.Value = Context.GetZeroSmartContractAddress();
-        var author = State.GenesisContract.GetContractAuthor.Call(Context.Self);
-        Assert(author == Context.Sender, "No permission.");
+        // The main chain uses the audit deployment, does not verify the Author
+        if (Context.ChainId != CAContractConstants.MainChainId)
+        {
+            State.GenesisContract.Value = Context.GetZeroSmartContractAddress();
+            var author = State.GenesisContract.GetContractAuthor.Call(Context.Self);
+            Assert(author == Context.Sender, "No permission.");
+        }
+
         State.Admin.Value = input.ContractAdmin ?? Context.Sender;
         State.CreatorControllers.Value = new ControllerList { Controllers = { input.ContractAdmin ?? Context.Sender } };
         State.ServerControllers.Value = new ControllerList { Controllers = { input.ContractAdmin ?? Context.Sender } };
@@ -33,7 +38,6 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
     /// <returns></returns>
     public override Empty CreateCAHolder(CreateCAHolderInput input)
     {
-        Assert(!State.CreateHolderDisable.Value, "Register already disable.");
         Assert(State.CreatorControllers.Value.Controllers.Contains(Context.Sender), "No permission");
         Assert(input != null, "Invalid input.");
         Assert(input!.GuardianApproved != null && IsValidHash(input.GuardianApproved.IdentifierHash),
@@ -54,7 +58,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         holderInfo.ManagerInfos.Add(input.ManagerInfo);
         //Check verifier signature.
         var methodName = nameof(CreateCAHolder).ToLower();
-        if (!CheckVerifierSignatureAndDataCompatible(input.GuardianApproved, methodName))
+        if (!CheckVerifierSignatureAndData(input.GuardianApproved, methodName))
         {
             return new Empty();
         }
@@ -115,15 +119,12 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
 
         return new Empty();
     }
-    
+
     private void AssertCreateChain(HolderInfo holderInfo)
     {
-        Assert(holderInfo.GuardianList != null && holderInfo.GuardianList.Guardians != null && 
+        Assert(holderInfo.GuardianList != null && holderInfo.GuardianList.Guardians != null &&
                holderInfo.GuardianList.Guardians.Count > 0, "Not on registered chain");
-        if (holderInfo.CreateChainId > 0)
-        {
-            Assert(holderInfo.CreateChainId == Context.ChainId, "Not on registered chain");
-        }
+        Assert(holderInfo.CreateChainId == Context.ChainId, "Not on registered chain");
     }
 
     private bool IsJudgementStrategySatisfied(int guardianCount, int guardianApprovedCount, StrategyNode strategyNode)
@@ -185,41 +186,6 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
             RemoveDelegator(holderId, managerInfo);
         }
     }
-    
-    private void RemoveContractDelegators(RepeatedField<ManagerInfo> managerInfos)
-    {
-        foreach (var managerInfo in managerInfos)
-        {
-            State.TokenContract.RemoveTransactionFeeDelegator.Send(new RemoveTransactionFeeDelegatorInput
-            {
-                DelegatorAddress = managerInfo.Address,
-            });
-        }
-    }
-
-    public override Empty SetContractDelegationFee(SetContractDelegationFeeInput input)
-    {
-        Assert(State.Admin.Value == Context.Sender, "No permission");
-        Assert(input != null && input.DelegationFee != null, "invalid input");
-        Assert(input!.DelegationFee!.Amount >= 0, "input can not be less than 0");
-
-        if (State.ContractDelegationFee.Value == null)
-        {
-            State.ContractDelegationFee!.Value = new ContractDelegationFee();
-        }
-
-        State.ContractDelegationFee.Value.Amount = input.DelegationFee.Amount;
-
-        return new Empty();
-    }
-
-    public override GetContractDelegationFeeOutput GetContractDelegationFee(Empty input)
-    {
-        return new GetContractDelegationFeeOutput
-        {
-            DelegationFee = State.ContractDelegationFee.Value
-        };
-    }
 
     public override Empty SetSecondaryDelegationFee(SetSecondaryDelegationFeeInput input)
     {
@@ -237,31 +203,5 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
     public override SecondaryDelegationFee GetSecondaryDelegationFee(Empty input)
     {
         return State.SecondaryDelegationFee.Value;
-    }
-
-    public override Empty SetCAContractAddresses(SetCAContractAddressesInput input)
-    {
-        Assert(State.Admin.Value == Context.Sender, "No permission");
-        foreach (var caContractAddress in input.CaContractAddresses)
-        {
-            State.CAContractAddresses[caContractAddress.ChainId] = caContractAddress.Address;
-        }
-
-        return new Empty();
-    }
-
-    public override Empty SetCreateHolderDisable(SetCreateHolderDisableInput input)
-    {
-        Assert(State.Admin.Value == Context.Sender, "No permission");
-        State.CreateHolderDisable.Value = input.CreateHolderDisable;
-        return new Empty();
-    }
-
-    public override GetCreateHolderDisableOutput GetCreateHolderDisable(Empty input)
-    {
-        return new GetCreateHolderDisableOutput()
-        {
-            CreateHolderDisable = State.CreateHolderDisable.Value
-        };
     }
 }

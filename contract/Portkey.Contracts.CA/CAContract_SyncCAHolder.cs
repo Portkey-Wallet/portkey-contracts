@@ -21,11 +21,6 @@ public partial class CAContract
 
         ValidateManager(holderInfo, input.ManagerInfos);
         AssertCreateChain(holderInfo);
-        if (holderInfo.CreateChainId == 0)
-        {
-            holderInfo.CreateChainId = Context.ChainId;
-        }
-
         Assert(holderInfo.CreateChainId == input.CreateChainId, "Invalid input createChainId.");
         Assert(input.GuardianList?.Guardians?.Count > 0, "Input guardianList is empty.");
         Assert(holderInfo.GuardianList.Guardians.Count == input.GuardianList.Guardians.Count,
@@ -197,9 +192,7 @@ public partial class CAContract
     private void AssertCrossChainTransaction(Transaction originalTransaction,
         string validMethodName, int fromChainId)
     {
-        var validateResult = originalTransaction.MethodName == validMethodName
-                             && originalTransaction.To == State.CAContractAddresses[fromChainId];
-        Assert(validateResult, "Invalid transaction.");
+        Assert(originalTransaction.MethodName == validMethodName, "Invalid transaction.");
     }
 
 

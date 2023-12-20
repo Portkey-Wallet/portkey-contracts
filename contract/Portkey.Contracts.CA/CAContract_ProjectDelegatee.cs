@@ -107,7 +107,7 @@ public partial class CAContract
                 Amount = input.Amount,
                 Symbol = CAContractConstants.ELFTokenSymbol,
                 Memo = "Withdraw Project Delegatee Token"
-            }.ToByteString());
+            }.ToByteString(), true);
         return new Empty();
     }
 

@@ -6,7 +6,6 @@ namespace Portkey.Contracts.CA;
 public partial class CAContractState : ContractState
 {
     public SingletonState<bool> Initialized { get; set; }
-    public SingletonState<bool> CreateHolderDisable { get; set; }
 
     /// <summary>
     /// Login Guardian identifier hash  -> Verifier Id -> HolderInfo Hash
@@ -40,12 +39,9 @@ public partial class CAContractState : ContractState
     /// only on MainChain
     /// </summary>
     public SingletonState<CAServerList> CaServerList { get; set; }
-    public SingletonState<ContractDelegationFee> ContractDelegationFee { get; set; }
 
     //
     public MappedState<Hash, bool> VerifierDocMap { get; set; }
-
-    public MappedState<int, Address> CAContractAddresses { get; set; }
 
     public SingletonState<long> TokenInitialTransferLimit { get; set; }
     public SingletonState<TransferSecurityThresholdList> TransferSecurityThresholdList { get; set; }

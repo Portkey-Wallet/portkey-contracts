@@ -13,7 +13,7 @@ namespace Portkey.Contracts.CA;
 
 public partial class CAContract
 {
-    private bool CheckVerifierSignatureAndDataCompatible(GuardianInfo guardianInfo, string methodName, Hash caHash = null)
+    private bool CheckVerifierSignatureAndData(GuardianInfo guardianInfo, string methodName, Hash caHash = null)
     {
         var verificationDoc = guardianInfo.VerificationInfo.VerificationDoc;
         if (verificationDoc == null || string.IsNullOrWhiteSpace(verificationDoc))
@@ -28,8 +28,9 @@ public partial class CAContract
             _ => false
         };
     }
-    
-    private bool CheckVerifierSignatureAndDataWithCreateChainId(GuardianInfo guardianInfo, string methodName, Hash caHash)
+
+    private bool CheckVerifierSignatureAndDataWithCreateChainId(GuardianInfo guardianInfo, string methodName,
+        Hash caHash)
     {
         //[type,guardianIdentifierHash,verificationTime,verifierAddress,salt,operationType,createChainId]
         var verificationDoc = guardianInfo.VerificationInfo.VerificationDoc;
@@ -72,7 +73,8 @@ public partial class CAContract
         //Check verifier address and data.
         var verifierAddress = docInfo.VerifierAddress;
         var verificationInfo = guardianInfo.VerificationInfo;
-        var verifierServer = State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(v => v.Id == verificationInfo.Id);
+        var verifierServer =
+            State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(v => v.Id == verificationInfo.Id);
 
         //Recovery verifier address.
         var data = HashHelper.ComputeFrom(verificationInfo.VerificationDoc);
@@ -96,20 +98,23 @@ public partial class CAContract
             return false;
         }
 
-        if (operationTypeName == nameof(OperationType.AddGuardian).ToLower() && !CheckOnCreateChain(State.HolderInfoMap[caHash]))
+        if (operationTypeName == nameof(OperationType.AddGuardian).ToLower() &&
+            !CheckOnCreateChain(State.HolderInfoMap[caHash]))
         {
             return true;
         }
+
         return int.Parse(verifierDoc[6]) == Context.ChainId;
     }
-    
+
     private bool CheckOnCreateChain(HolderInfo holderInfo)
     {
-        if (holderInfo.GuardianList == null || holderInfo.GuardianList.Guardians == null || 
+        if (holderInfo.GuardianList == null || holderInfo.GuardianList.Guardians == null ||
             holderInfo.GuardianList.Guardians.Count == 0)
         {
             return false;
         }
+
         return holderInfo.CreateChainId == Context.ChainId || holderInfo.CreateChainId == 0;
     }
 
@@ -191,12 +196,12 @@ public partial class CAContract
 
     private void UpgradeProjectDelegatee(Address caAddress, RepeatedField<ManagerInfo> managerInfos)
     {
-        if (!IsValidHash(State.CaProjectDelegateHash.Value) || State.ProjectDelegateInfo[State.CaProjectDelegateHash.Value].DelegateeHashList.Count == 0)
+        if (!IsValidHash(State.CaProjectDelegateHash.Value) ||
+            State.ProjectDelegateInfo[State.CaProjectDelegateHash.Value].DelegateeHashList.Count == 0)
         {
             return;
         }
-        if (IfCaHasProjectDelegatee(caAddress)) return;
-        RemoveContractDelegators(managerInfos);
+
         State.TokenContract.RemoveTransactionFeeDelegator.Send(new RemoveTransactionFeeDelegatorInput
         {
             DelegatorAddress = caAddress,
@@ -210,6 +215,7 @@ public partial class CAContract
         {
             return;
         }
+
         var projectDelegateInfo = State.ProjectDelegateInfo[State.CaProjectDelegateHash.Value];
         if (projectDelegateInfo == null || projectDelegateInfo.DelegateeHashList.Count == 0)
         {
@@ -225,7 +231,7 @@ public partial class CAContract
         {
             [CAContractConstants.ELFTokenSymbol] = State.SecondaryDelegationFee.Value.Amount
         };
-        
+
         var selectIndex = (int)(Context.TransactionId.ToInt64() % projectDelegateInfo.DelegateeHashList.Count);
         Context.SendVirtualInline(projectDelegateInfo.DelegateeHashList[selectIndex], State.TokenContract.Value,
             nameof(State.TokenContract.SetTransactionFeeDelegations), new SetTransactionFeeDelegationsInput
@@ -235,22 +241,6 @@ public partial class CAContract
                 {
                     delegations
                 }
-            }.ToByteString());
-    }
-
-    private bool IfCaHasProjectDelegatee(Address delegatorAddress)
-    {
-        var delegateeList = State.TokenContract.GetTransactionFeeDelegatees.Call(new GetTransactionFeeDelegateesInput
-        {
-            DelegatorAddress = delegatorAddress
-        });
-        foreach (var delegateeHash in State.ProjectDelegateInfo[State.CaProjectDelegateHash.Value].DelegateeHashList)
-        {
-            if (delegateeList.DelegateeAddresses.Contains(Context.ConvertVirtualAddressToContractAddress(delegateeHash)))
-            {
-                return true;
-            }
-        }
-        return false;
+            }.ToByteString(), true);
     }
 }
