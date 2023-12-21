@@ -57,9 +57,8 @@ public partial class CAContract
 
         if (checkGuardiansApproved)
         {
-            var methodName = nameof(OperationType.SetLoginAccount).ToLower();
             input.GuardiansApproved.Add(input.GuardianToSetLogin);
-            var guardianApprovedAmount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved, methodName);
+            var guardianApprovedAmount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved, nameof(OperationType.SetLoginAccount).ToLower());
             var holderJudgementStrategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
             Assert(IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count, guardianApprovedAmount,
                 holderJudgementStrategy), "JudgementStrategy validate failed");
@@ -139,9 +138,8 @@ public partial class CAContract
 
         if (checkGuardiansApproved)
         {
-            var methodName = nameof(OperationType.UnSetLoginAccount).ToLower();
             input.GuardiansApproved.Add(input.GuardianToUnsetLogin);
-            var guardianApprovedCount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved, methodName);
+            var guardianApprovedCount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved, nameof(OperationType.UnSetLoginAccount).ToLower());
             var holderJudgementStrategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
             Assert(IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count, guardianApprovedCount,
                 holderJudgementStrategy), "JudgementStrategy validate failed");
