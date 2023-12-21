@@ -209,12 +209,17 @@ public partial class CAContract
     {
         Assert(State.Admin.Value.Equals(Context.Sender), "No permission.");
         Assert(!string.IsNullOrWhiteSpace(input.MethodName), "Invalid input.");
+        if (State.ConfigurationContract.Value == null)
+        {
+            State.ConfigurationContract.Value =
+                Context.GetContractAddressByName(SmartContractConstants.ConfigurationContractSystemName);
+        }
         State.ManagerForwardCallParallelMap[input.ContractAddress][input.MethodName] = input.IsParallel;
         return new Empty();
     }
 
     public override GetManagerForwardCallParallelInfoOutput GetManagerForwardCallParallelInfo(
-        GetManagerForwardCallParallelInput input)
+        GetManagerForwardCallParallelInfoInput input)
     {
         return new GetManagerForwardCallParallelInfoOutput
         {
