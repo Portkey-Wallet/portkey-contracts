@@ -57,6 +57,7 @@ public partial class CAContract
         Assert(projectDelegateInfo != null, "ProjectDelegateInfo not existed.");
         Assert(Context.Sender == projectDelegateInfo.ProjectController, "No permission.");
         var removeHashList = input.DelegateeHashList.Intersect(projectDelegateInfo.DelegateeHashList).ToList();
+        Assert(removeHashList.Count < projectDelegateInfo.DelegateeHashList.Count, "Can not remove all delegatee hash list.");
         if (removeHashList.Count == 0)
         {
             return new Empty();
