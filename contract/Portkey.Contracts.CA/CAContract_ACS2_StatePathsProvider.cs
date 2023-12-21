@@ -1,6 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
+using AElf;
 using AElf.Contracts.MultiToken;
+using AElf.Sdk.CSharp;
+using AElf.Standards.ACS12;
 using AElf.Standards.ACS2;
 using AElf.Types;
 using Google.Protobuf;
@@ -80,10 +83,11 @@ public partial class CAContract
 
     private void AddPathForTransactionFeeFreeAllowance(ResourceInfo resourceInfo, Address from)
     {
-        var symbols = State.TokenContract.GetTransactionFeeFreeAllowancesConfig.Call(new Empty());
-        if (symbols != null)
+        var getTransactionFeeFreeAllowancesConfigOutput =
+            State.TokenContract.GetTransactionFeeFreeAllowancesConfig.Call(new Empty());
+        if (getTransactionFeeFreeAllowancesConfigOutput != null)
         {
-            foreach (var symbol in symbols.Value.Select(config => config.Symbol))
+            foreach (var symbol in getTransactionFeeFreeAllowancesConfigOutput.Value.Select(config => config.Symbol))
             {
                 resourceInfo.WritePaths.Add(GetPath(State.TokenContract.Value, "TransactionFeeFreeAllowances",
                     from.ToBase58(), symbol));
@@ -116,37 +120,55 @@ public partial class CAContract
 
     private List<string> GetTransactionFeeSymbols(string methodName)
     {
-        var symbols = GetMethodsFeeSymbols(methodName);
-        var sizeFeeSymbols = GetSizeFeeSymbols().SymbolsToPayTxSizeFee;
-
-        foreach (var sizeFee in sizeFeeSymbols)
+        var actualFee = GetActualFee(methodName);
+        var symbols = new List<string>();
+        if (actualFee.Fees != null)
         {
-            if (!symbols.Contains(sizeFee.TokenSymbol))
-                symbols.Add(sizeFee.TokenSymbol);
+            symbols = actualFee.Fees.Select(fee => fee.Symbol).Distinct().ToList();
         }
 
+        if (!actualFee.IsSizeFeeFree)
+        {
+            var sizeFeeSymbols = GetSizeFeeSymbols().SymbolsToPayTxSizeFee;
+
+            foreach (var sizeFee in sizeFeeSymbols)
+            {
+                if (!symbols.Contains(sizeFee.TokenSymbol))
+                    symbols.Add(sizeFee.TokenSymbol);
+            }
+        }
         return symbols;
     }
 
-    private List<string> GetMethodsFeeSymbols(string methodName)
-    {
-        var symbols = new List<string>();
-        var methodFees = State.TokenContract.GetMethodFee.Call(new StringValue { Value = methodName });
-        if (methodFees != null)
-        {
-            foreach (var methodFee in methodFees.Fees)
-            {
-                if (!symbols.Contains(methodFee.Symbol) && methodFee.BasicFee > 0)
-                    symbols.Add(methodFee.Symbol);
-            }
 
-            if (methodFees.IsSizeFeeFree)
-            {
-                return symbols;
-            }
+    private UserContractMethodFees GetActualFee(string methodName)
+    {
+        var UserContractMethodFeeKey = "UserContractMethodFee";
+        //configuration_key:UserContractMethod_contractAddress_methodName
+        var spec = State.ConfigurationContract.GetConfiguration.Call(new StringValue
+        {
+            Value = $"{UserContractMethodFeeKey}_{Context.Self}_{methodName}"
+        });
+        var fee = new UserContractMethodFees();
+        if (!spec.Value.IsNullOrEmpty())
+        {
+            fee.MergeFrom(spec.Value);
+            return fee;
         }
 
-        return symbols;
+        //If special key is null,get the normal fee set by the configuration contract.
+        //configuration_key:UserContractMethod
+        var value = State.ConfigurationContract.GetConfiguration.Call(new StringValue
+        {
+            Value = UserContractMethodFeeKey
+        });
+        if (value.Value.IsNullOrEmpty())
+        {
+            return new UserContractMethodFees();
+        }
+
+        fee.MergeFrom(value.Value);
+        return fee;
     }
 
     private SymbolListToPayTxSizeFee GetSizeFeeSymbols()
@@ -165,27 +187,40 @@ public partial class CAContract
                 DelegatorAddress = delegator,
                 ContractAddress = to,
                 MethodName = methodName
-            });
+            }).DelegateeAddresses;
 
+        if (allDelegatees == null || allDelegatees.Count == 0)
+        {
+            allDelegatees = State.TokenContract.GetTransactionFeeDelegatees.Call(new GetTransactionFeeDelegateesInput
+            {
+                DelegatorAddress = delegator
+            }).DelegateeAddresses;
+        }
         if (allDelegatees != null)
         {
-            delegateeList.AddRange(allDelegatees.DelegateeAddresses.Select(address => address.ToBase58()));
+            delegateeList.AddRange(allDelegatees.Select(address => address.ToBase58()));
         }
 
         return delegateeList;
     }
 
 
-    public override Empty SetManagerForwardCallParallel(SetManagerForwardCallParallelInfoInput input)
+    public override Empty SetManagerForwardCallParallelInfo(SetManagerForwardCallParallelInfoInput input)
     {
-        Assert(State.ServerControllers.Value.Controllers.Contains(Context.Sender), "No permission");
+        Assert(State.Admin.Value.Equals(Context.Sender), "No permission.");
         Assert(!string.IsNullOrWhiteSpace(input.MethodName), "Invalid input.");
         State.ManagerForwardCallParallelMap[input.ContractAddress][input.MethodName] = input.IsParallel;
         return new Empty();
     }
 
-    public override BoolValue IsManagerForwardCallParallel(GetManagerForwardCallParallelInput input)
+    public override GetManagerForwardCallParallelInfoOutput GetManagerForwardCallParallelInfo(
+        GetManagerForwardCallParallelInput input)
     {
-        return new BoolValue { Value = State.ManagerForwardCallParallelMap[input.ContractAddress][input.MethodName] };
+        return new GetManagerForwardCallParallelInfoOutput
+        {
+            ContractAddress = input.ContractAddress,
+            MethodName = input.MethodName,
+            IsParallel = State.ManagerForwardCallParallelMap[input.ContractAddress][input.MethodName]
+        };
     }
 }
