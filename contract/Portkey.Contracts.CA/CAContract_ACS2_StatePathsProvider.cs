@@ -24,12 +24,12 @@ public partial class CAContract
 
                 var transaction = new Transaction
                 {
-                    From = Context.ConvertVirtualAddressToContractAddress(args.CaHash, args.ContractAddress),
+                    From = Context.ConvertVirtualAddressToContractAddress(args.CaHash, Context.Self),
                     To = args.ContractAddress,
                     MethodName = args.MethodName,
                     Params = args.Args,
                 };
-                var resource = Context.Call<ResourceInfo>(txn.From, args.ContractAddress, "GetResourceInfo",
+                var resource = Context.Call<ResourceInfo>(txn.From, args.ContractAddress, nameof(GetResourceInfo),
                     transaction.ToByteString());
                 // add fee path
                 AddPathForTransactionFee(resource, txn.From.ToBase58(), txn.MethodName);
