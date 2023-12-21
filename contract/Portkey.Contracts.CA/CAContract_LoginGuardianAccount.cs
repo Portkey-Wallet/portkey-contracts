@@ -14,7 +14,11 @@ public partial class CAContract
         Assert(input != null, "input should not be null");
         Assert(input!.CaHash != null, "CaHash should not be null");
         // Guardian should be valid, not null, and be with non-null Value
-        var checkGuardiansApproved = input.GuardianToSetLogin != null;
+        var checkGuardiansApproved = State.LoginGuardianCheckGuardianApprovedEnabled.Value || input.GuardianToSetLogin != null;
+        if (checkGuardiansApproved)
+        {
+            Assert(input.GuardiansApproved.Count > 0, "GuardiansApproved should not be empty.");
+        }
         var loginGuardian = checkGuardiansApproved
             ? new Guardian
             {
@@ -25,7 +29,6 @@ public partial class CAContract
             : input.Guardian;
         Assert(loginGuardian != null, "Guardian should not be null");
         Assert(IsValidHash(loginGuardian.IdentifierHash), "Guardian IdentifierHash should not be null");
-        Assert(!checkGuardiansApproved || input.GuardiansApproved.Count > 0, "GuardiansApproved should not be empty");
 
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
 
@@ -107,7 +110,11 @@ public partial class CAContract
         Assert(input != null, "Invalid input");
         Assert(input!.CaHash != null, "CaHash can not be null");
         // Guardian should be valid, not null, and be with non-null Value
-        var checkGuardiansApproved = input.GuardianToUnsetLogin != null;
+        var checkGuardiansApproved = State.LoginGuardianCheckGuardianApprovedEnabled.Value || input.GuardianToUnsetLogin != null;
+        if (checkGuardiansApproved)
+        {
+            Assert(input.GuardiansApproved.Count > 0, "GuardiansApproved should not be empty.");
+        }
         var loginGuardian = checkGuardiansApproved
             ? new Guardian
             {
@@ -118,7 +125,6 @@ public partial class CAContract
             : input.Guardian;
         Assert(loginGuardian != null, "Guardian should not be null");
         Assert(IsValidHash(loginGuardian.IdentifierHash), "Guardian IdentifierHash should not be null");
-        Assert(!checkGuardiansApproved || input.GuardiansApproved.Count > 0, "GuardiansApproved should not be empty");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
 
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
@@ -195,5 +201,20 @@ public partial class CAContract
         return result == caHash
             ? CAContractConstants.LoginGuardianIsYours
             : CAContractConstants.LoginGuardianIsOccupiedByOthers;
+    }
+
+    public override Empty SetLoginGuardianCheckGuardianApprovedEnabled(SetLoginGuardianCheckGuardianApprovedEnabledInput input)
+    {
+        Assert(Context.Sender == State.Admin.Value, "No permission.");
+        State.LoginGuardianCheckGuardianApprovedEnabled.Value = input.LoginGuardianCheckGuardianApprovedEnabled;
+        return new Empty();
+    }
+
+    public override GetLoginGuardianCheckGuardianApprovedEnabledOutput GetLoginGuardianCheckGuardianApprovedEnabled(Empty input)
+    {
+        return new GetLoginGuardianCheckGuardianApprovedEnabledOutput
+        {
+            LoginGuardianCheckGuardianApprovedEnabled = State.LoginGuardianCheckGuardianApprovedEnabled.Value
+        };
     }
 }
