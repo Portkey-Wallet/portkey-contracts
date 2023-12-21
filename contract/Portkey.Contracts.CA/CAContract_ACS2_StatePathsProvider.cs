@@ -17,7 +17,7 @@ public partial class CAContract
             case nameof(ManagerForwardCall):
             {
                 var args = ManagerForwardCallInput.Parser.ParseFrom(txn.Params);
-                if (State.ManagerForwardCallParallelMap[args.ContractAddress][args.MethodName])
+                if (!State.ManagerForwardCallParallelMap[args.ContractAddress][args.MethodName])
                 {
                     return new ResourceInfo { NonParallelizable = true };
                 }
