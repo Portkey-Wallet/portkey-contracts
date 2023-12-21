@@ -2,11 +2,6 @@ namespace Portkey.Contracts.CA;
 
 public static class CAContractConstants
 {
-    public const int LoginGuardianIsOccupiedByOthers = 0;
-
-    // >1 fine, == 0 , conflict.
-    public const int LoginGuardianIsNotOccupied = 1;
-    public const int LoginGuardianIsYours = 2;
 
     public const string GuardianApprovedCount = "guardianApprovedCount";
     public const string GuardianCount = "guardianCount";
@@ -24,4 +19,13 @@ public static class CAContractConstants
     public const int DelegateeListMaxCount = 10;
 
     public const int MainChainId = 9992731;
+    
+    
+}
+
+enum LoginGuardianStatus
+{
+    IsOccupiedByOthers,
+    IsNotOccupied,
+    IsYours
 }

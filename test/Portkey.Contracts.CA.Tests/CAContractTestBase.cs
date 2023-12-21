@@ -1,15 +1,12 @@
 using System.IO;
-using AElf;
 using AElf.Boilerplate.TestBase;
-using AElf.Boilerplate.TestBase.SmartContractNameProviders;
-using AElf.Contracts.Genesis;
 using AElf.Contracts.MultiToken;
 using AElf.Cryptography.ECDSA;
 using AElf.Kernel;
 using AElf.Standards.ACS0;
+using AElf.Standards.ACS2;
 using AElf.Types;
 using Google.Protobuf;
-using Org.BouncyCastle.Asn1.X509;
 using Volo.Abp.Threading;
 
 namespace Portkey.Contracts.CA;
@@ -26,8 +23,11 @@ public class CAContractTestBase : DAppContractTestBase<CAContractTestModule>
 
     // internal CAContractContainer.CAContractStub CaContractUser1Stub { get; set; }
     internal TokenContractContainer.TokenContractStub TokenContractStub { get; set; }
+    internal TokenContractImplContainer.TokenContractImplStub TokenContractImplStub { get; set; }
 
     internal ACS0Container.ACS0Stub ZeroContractStub { get; set; }
+
+    internal ACS2BaseContainer.ACS2BaseStub Acs2BaseStub;
 
 
     protected ECKeyPair DefaultKeyPair => Accounts[0].KeyPair;
@@ -54,6 +54,8 @@ public class CAContractTestBase : DAppContractTestBase<CAContractTestModule>
     protected CAContractTestBase()
     {
         TokenContractStub = GetTokenContractTester(DefaultKeyPair);
+        TokenContractImplStub = GetTester<TokenContractImplContainer.TokenContractImplStub>(TokenContractAddress,
+            DefaultKeyPair);
         ZeroContractStub = GetContractZeroTester(DefaultKeyPair);
         var result = AsyncHelper.RunSync(async () => await ZeroContractStub.DeploySmartContract.SendAsync(
             new ContractDeploymentInput
@@ -67,6 +69,7 @@ public class CAContractTestBase : DAppContractTestBase<CAContractTestModule>
         CaContractStub = GetCaContractTester(DefaultKeyPair);
         CaContractStubManagerInfo1 = GetCaContractTester(User1KeyPair);
         CaContractUser1Stub = GetCaContractTester(User1KeyPair);
+        Acs2BaseStub = GetTester<ACS2BaseContainer.ACS2BaseStub>(CaContractAddress, DefaultKeyPair);
         //ParliamentContractStub = GetParliamentContractTester(DefaultKeyPair);
     }
 

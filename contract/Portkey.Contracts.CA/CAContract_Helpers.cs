@@ -5,7 +5,6 @@ using AElf;
 using AElf.Contracts.MultiToken;
 using AElf.CSharp.Core.Extension;
 using AElf.Types;
-using Google.Protobuf;
 using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
 
@@ -194,18 +193,14 @@ public partial class CAContract
         });
     }
 
-    private void UpgradeProjectDelegatee(Address caAddress, RepeatedField<ManagerInfo> managerInfos)
+    private void UpgradeProjectDelegatee(Address caAddress)
     {
-        if (!IsValidHash(State.CaProjectDelegateHash.Value) ||
+        if (!IsValidHash(State.CaProjectDelegateHash.Value) || State.ProjectDelegateInfo[State.CaProjectDelegateHash.Value] == null ||
             State.ProjectDelegateInfo[State.CaProjectDelegateHash.Value].DelegateeHashList.Count == 0)
         {
             return;
         }
-
-        State.TokenContract.RemoveTransactionFeeDelegator.Send(new RemoveTransactionFeeDelegatorInput
-        {
-            DelegatorAddress = caAddress,
-        });
+        if (IfCaHasProjectDelegatee(caAddress)) return;
         SetProjectDelegator(caAddress);
     }
 
@@ -231,16 +226,26 @@ public partial class CAContract
         {
             [CAContractConstants.ELFTokenSymbol] = State.SecondaryDelegationFee.Value.Amount
         };
-
-        var selectIndex = (int)(Context.TransactionId.ToInt64() % projectDelegateInfo.DelegateeHashList.Count);
-        Context.SendVirtualInline(projectDelegateInfo.DelegateeHashList[selectIndex], State.TokenContract.Value,
-            nameof(State.TokenContract.SetTransactionFeeDelegations), new SetTransactionFeeDelegationsInput
+        // Randomly select a delegatee based on the address
+        var selectIndex = (int)Math.Abs(delegatorAddress.ToByteArray().ToInt64(true) % projectDelegateInfo.DelegateeHashList.Count);
+        State.TokenContract.SetTransactionFeeDelegations.VirtualSend(projectDelegateInfo.DelegateeHashList[selectIndex],
+            new SetTransactionFeeDelegationsInput
             {
                 DelegatorAddress = delegatorAddress,
                 Delegations =
                 {
                     delegations
                 }
-            }.ToByteString(), true);
+            });
+    }
+
+    private bool IfCaHasProjectDelegatee(Address delegatorAddress)
+    {
+        var delegateeList = State.TokenContract.GetTransactionFeeDelegatees.Call(new GetTransactionFeeDelegateesInput
+        {
+            DelegatorAddress = delegatorAddress
+        });
+        return State.ProjectDelegateInfo[State.CaProjectDelegateHash.Value].DelegateeHashList.Any(delegateeHash =>
+            delegateeList.DelegateeAddresses.Contains(Context.ConvertVirtualAddressToContractAddress(delegateeHash)));
     }
 }

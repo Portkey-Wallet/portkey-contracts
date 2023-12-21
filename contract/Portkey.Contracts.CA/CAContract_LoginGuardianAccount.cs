@@ -14,9 +14,22 @@ public partial class CAContract
         Assert(input != null, "input should not be null");
         Assert(input!.CaHash != null, "CaHash should not be null");
         // Guardian should be valid, not null, and be with non-null Value
-        Assert(input.GuardianToSetLogin != null && input.GuardiansApproved.Count > 0, "Invalid input.");
-        var loginGuardian = input.GuardianToSetLogin;
+        var checkGuardiansApproved = State.LoginGuardianCheckGuardianApprovedEnabled.Value || input.GuardianToSetLogin != null;
+        if (checkGuardiansApproved)
+        {
+            Assert(input.GuardiansApproved.Count > 0, "GuardiansApproved should not be empty.");
+        }
+        var loginGuardian = checkGuardiansApproved
+            ? new Guardian
+            {
+                IdentifierHash = input.GuardianToSetLogin.IdentifierHash,
+                VerifierId = input.GuardianToSetLogin.VerificationInfo.Id,
+                Type = input.GuardianToSetLogin.Type
+            }
+            : input.Guardian;
+        Assert(loginGuardian != null, "Guardian should not be null");
         Assert(IsValidHash(loginGuardian.IdentifierHash), "Guardian IdentifierHash should not be null");
+
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
 
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
@@ -24,20 +37,20 @@ public partial class CAContract
 
         var isOccupied = CheckLoginGuardianIsNotOccupied(loginGuardian, input.CaHash);
 
-        Assert(isOccupied != CAContractConstants.LoginGuardianIsOccupiedByOthers,
-            $"The login guardian --{input.GuardianToSetLogin!.IdentifierHash}-- is occupied by others!");
+        Assert(isOccupied != LoginGuardianStatus.IsOccupiedByOthers,
+            $"The login guardian --{loginGuardian!.IdentifierHash}-- is occupied by others!");
 
         // for idempotent
-        if (isOccupied == CAContractConstants.LoginGuardianIsYours)
+        if (isOccupied == LoginGuardianStatus.IsYours)
         {
             return new Empty();
         }
 
-        Assert(isOccupied == CAContractConstants.LoginGuardianIsNotOccupied,
+        Assert(isOccupied == LoginGuardianStatus.IsNotOccupied,
             "Internal error, how can it be?");
 
         var guardian = holderInfo.GuardianList!.Guardians.FirstOrDefault(t =>
-            t.VerifierId == loginGuardian.VerificationInfo.Id && t.IdentifierHash == loginGuardian.IdentifierHash &&
+            t.VerifierId == loginGuardian.VerifierId && t.IdentifierHash == loginGuardian.IdentifierHash &&
             t.Type == loginGuardian.Type);
 
         if (guardian == null)
@@ -45,22 +58,25 @@ public partial class CAContract
             return new Empty();
         }
 
-        input.GuardiansApproved.Add(input.GuardianToSetLogin);
-        var guardianApprovedAmount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved,
-            nameof(OperationType.SetLoginAccount).ToLower());
-        var holderJudgementStrategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
-        Assert(IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count, guardianApprovedAmount,
-            holderJudgementStrategy), "JudgementStrategy validate failed");
+        if (checkGuardiansApproved)
+        {
+            var methodName = nameof(OperationType.SetLoginAccount).ToLower();
+            input.GuardiansApproved.Add(input.GuardianToSetLogin);
+            var guardianApprovedCount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved, methodName);
+            var holderJudgementStrategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
+            Assert(IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count, guardianApprovedCount,
+                holderJudgementStrategy), "JudgementStrategy validate failed");
+        }
 
         guardian.IsLoginGuardian = true;
 
-        State.LoginGuardianMap[loginGuardian.IdentifierHash][loginGuardian.VerificationInfo.Id] = input.CaHash;
+        State.LoginGuardianMap[loginGuardian.IdentifierHash][loginGuardian.VerifierId] = input.CaHash;
 
         State.GuardianMap[loginGuardian.IdentifierHash] = input.CaHash;
-
+        
         var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
-        UpgradeProjectDelegatee(caAddress, holderInfo.ManagerInfos);
-
+        UpgradeProjectDelegatee(caAddress);
+        
         Context.Fire(new LoginGuardianAdded
         {
             CaHash = input.CaHash,
@@ -85,7 +101,6 @@ public partial class CAContract
             if (!isApproved) continue;
             guardianApprovedCount++;
         }
-
         return guardianApprovedCount;
     }
 
@@ -95,8 +110,20 @@ public partial class CAContract
         Assert(input != null, "Invalid input");
         Assert(input!.CaHash != null, "CaHash can not be null");
         // Guardian should be valid, not null, and be with non-null Value
-        Assert(input.GuardianToUnsetLogin != null && input.GuardiansApproved.Count > 0, "Invalid input.");
-        var loginGuardian = input.GuardianToUnsetLogin;
+        var checkGuardiansApproved = State.LoginGuardianCheckGuardianApprovedEnabled.Value || input.GuardianToUnsetLogin != null;
+        if (checkGuardiansApproved)
+        {
+            Assert(input.GuardiansApproved.Count > 0, "GuardiansApproved should not be empty.");
+        }
+        var loginGuardian = checkGuardiansApproved
+            ? new Guardian
+            {
+                IdentifierHash = input.GuardianToUnsetLogin.IdentifierHash,
+                VerifierId = input.GuardianToUnsetLogin.VerificationInfo.Id,
+                Type = input.GuardianToUnsetLogin.Type
+            }
+            : input.Guardian;
+        Assert(loginGuardian != null, "Guardian should not be null");
         Assert(IsValidHash(loginGuardian.IdentifierHash), "Guardian IdentifierHash should not be null");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
 
@@ -106,26 +133,33 @@ public partial class CAContract
         Assert(holderInfo.GuardianList!.Guardians.Count(g => g.IsLoginGuardian) > 1,
             "only one LoginGuardian,can not be Unset");
 
+        // if (State.LoginGuardianMap[loginGuardian.IdentifierHash][input.Guardian.VerifierId] == null ||
+        //     State.LoginGuardianMap[loginGuardian.IdentifierHash][input.Guardian.VerifierId] != input.CaHash)
+        // {
+        //     return new Empty();
+        // }
+
         var guardian = holderInfo.GuardianList!.Guardians.FirstOrDefault(t =>
-            t.VerifierId == loginGuardian.VerificationInfo.Id && t.IdentifierHash == loginGuardian.IdentifierHash &&
+            t.VerifierId == loginGuardian.VerifierId && t.IdentifierHash == loginGuardian.IdentifierHash &&
             t.Type == loginGuardian.Type);
 
         if (guardian == null || !guardian.IsLoginGuardian)
         {
             return new Empty();
         }
-
-
-        input.GuardiansApproved.Add(input.GuardianToUnsetLogin);
-        var guardianApprovedCount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved,
-            nameof(OperationType.UnSetLoginAccount).ToLower());
-        var holderJudgementStrategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
-        Assert(IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count, guardianApprovedCount,
-            holderJudgementStrategy), "JudgementStrategy validate failed");
+        if (checkGuardiansApproved)
+        {
+            var methodName = nameof(OperationType.UnSetLoginAccount).ToLower();
+            input.GuardiansApproved.Add(input.GuardianToUnsetLogin);
+            var guardianApprovedCount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved, methodName);
+            var holderJudgementStrategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
+            Assert(IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count, guardianApprovedCount,
+                holderJudgementStrategy), "JudgementStrategy validate failed");
+        }
 
         guardian.IsLoginGuardian = false;
 
-        State.LoginGuardianMap[loginGuardian.IdentifierHash].Remove(loginGuardian.VerificationInfo.Id);
+        State.LoginGuardianMap[loginGuardian.IdentifierHash].Remove(loginGuardian.VerifierId);
 
         Context.Fire(new LoginGuardianRemoved
         {
@@ -136,7 +170,7 @@ public partial class CAContract
         });
 
         var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
-
+        
         // not found, or removed and be registered by others later, quit to be idempotent
         if (holderInfo.GuardianList.Guardians.Where(g =>
                 g.IdentifierHash == loginGuardian.IdentifierHash).All(g => !g.IsLoginGuardian))
@@ -150,22 +184,37 @@ public partial class CAContract
                 Manager = Context.Sender
             });
         }
-
-        UpgradeProjectDelegatee(caAddress, holderInfo.ManagerInfos);
-
+        
+        UpgradeProjectDelegatee(caAddress);
+        
         return new Empty();
     }
 
-    private int CheckLoginGuardianIsNotOccupied(GuardianInfo guardian, Hash caHash)
+    private LoginGuardianStatus CheckLoginGuardianIsNotOccupied(Guardian guardian, Hash caHash)
     {
-        var result = State.LoginGuardianMap[guardian.IdentifierHash][guardian.VerificationInfo.Id];
+        var result = State.LoginGuardianMap[guardian.IdentifierHash][guardian.VerifierId];
         if (result == null)
         {
-            return CAContractConstants.LoginGuardianIsNotOccupied;
+            return LoginGuardianStatus.IsNotOccupied;
         }
 
         return result == caHash
-            ? CAContractConstants.LoginGuardianIsYours
-            : CAContractConstants.LoginGuardianIsOccupiedByOthers;
+            ? LoginGuardianStatus.IsYours
+            : LoginGuardianStatus.IsOccupiedByOthers;
+    }
+
+    public override Empty SetLoginGuardianCheckGuardianApprovedEnabled(SetLoginGuardianCheckGuardianApprovedEnabledInput input)
+    {
+        Assert(Context.Sender == State.Admin.Value, "No permission.");
+        State.LoginGuardianCheckGuardianApprovedEnabled.Value = input.LoginGuardianCheckGuardianApprovedEnabled;
+        return new Empty();
+    }
+
+    public override GetLoginGuardianCheckGuardianApprovedEnabledOutput GetLoginGuardianCheckGuardianApprovedEnabled(Empty input)
+    {
+        return new GetLoginGuardianCheckGuardianApprovedEnabledOutput
+        {
+            LoginGuardianCheckGuardianApprovedEnabled = State.LoginGuardianCheckGuardianApprovedEnabled.Value
+        };
     }
 }

@@ -34,6 +34,7 @@ public partial class CAContractTests
     private Hash _verifierId4;
     private const string ImageUrl = "https://portkey-did.s3.ap-northeast-1.amazonaws.com/img/Portkey.png";
     private const string Salt = "salt";
+    public const int MainChainId = 9992731;
 
     public CAContractTests()
     {
@@ -46,7 +47,7 @@ public partial class CAContractTests
     }
 
     private ByteString GenerateSignature(ECKeyPair verifier, Address verifierAddress,
-        DateTime verificationTime, Hash guardianType, int type, string salt, string operationType)
+        DateTime verificationTime, Hash guardianType, int type, string salt, string operationType, int targetChainId = MainChainId)
     {
         if (string.IsNullOrWhiteSpace(salt))
         {
@@ -54,7 +55,7 @@ public partial class CAContractTests
         }
 
         var data =
-            $"{type},{guardianType.ToHex()},{verificationTime},{verifierAddress.ToBase58()},{salt},{operationType}";
+            $"{type},{guardianType.ToHex()},{verificationTime},{verifierAddress.ToBase58()},{salt},{operationType},{targetChainId}";
         var dataHash = HashHelper.ComputeFrom(data);
         var signature = CryptoHelper.SignWithPrivateKey(verifier.PrivateKey, dataHash.ToByteArray());
         return ByteStringHelper.FromHexString(signature.ToHex());
@@ -128,7 +129,7 @@ public partial class CAContractTests
                     Id = _verifierId,
                     Signature = signature,
                     VerificationDoc =
-                        $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(10)},{VerifierAddress.ToBase58()},{salt},{operationType}"
+                        $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(10)},{VerifierAddress.ToBase58()},{salt},{operationType},{MainChainId}"
                 }
             },
             ManagerInfo = new ManagerInfo
@@ -213,7 +214,7 @@ public partial class CAContractTests
                     Id = _verifierId,
                     Signature = signature,
                     VerificationDoc =
-                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType}"
+                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType},{MainChainId}"
                 }
             },
             ManagerInfo = new ManagerInfo
@@ -244,7 +245,7 @@ public partial class CAContractTests
             GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime.AddSeconds(5), _guardian1, 0, salt,
                 operationType);
         var verificationDoc =
-            $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType}";
+            $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType},{MainChainId}";
         var guardianApprove = new List<GuardianInfo>
         {
             new GuardianInfo
@@ -271,7 +272,7 @@ public partial class CAContractTests
                     Id = _verifierId1,
                     Signature = signature1,
                     VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(5)},{VerifierAddress1.ToBase58()},{salt},{operationType}"
+                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(5)},{VerifierAddress1.ToBase58()},{salt},{operationType},{MainChainId}"
                 }
             },
             GuardiansApproved = { guardianApprove }
@@ -304,7 +305,7 @@ public partial class CAContractTests
             GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime.AddSeconds(5), _guardian1, 0, salt,
                 removeOperationType);
         var verificationDoc =
-            $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{removeOperationType}";
+            $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{removeOperationType},{MainChainId}";
         var guardianApprove = new List<GuardianInfo>
         {
             new GuardianInfo
@@ -331,7 +332,7 @@ public partial class CAContractTests
                     Id = _verifierId1,
                     Signature = signature1,
                     VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(5)},{VerifierAddress1.ToBase58()},{salt},{removeOperationType}"
+                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(5)},{VerifierAddress1.ToBase58()},{salt},{removeOperationType},{MainChainId}"
                 }
             },
 
@@ -394,7 +395,7 @@ public partial class CAContractTests
                     Id = _verifierId,
                     Signature = signature,
                     VerificationDoc =
-                        $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(10)},{VerifierAddress.ToBase58()},{salt},{operationType}"
+                        $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(10)},{VerifierAddress.ToBase58()},{salt},{operationType},{MainChainId}"
                 }
             },
             ManagerInfo = new ManagerInfo
@@ -436,7 +437,7 @@ public partial class CAContractTests
             GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime.AddMinutes(2), _guardian1, 0, Salt,
                 addGuardianOperationType);
         var verificationDoc =
-            $"{0},{_guardian1.ToHex()},{verificationTime.AddMinutes(1)},{VerifierAddress.ToBase58()},{Salt},{addGuardianOperationType}";
+            $"{0},{_guardian1.ToHex()},{verificationTime.AddMinutes(1)},{VerifierAddress.ToBase58()},{Salt},{addGuardianOperationType},{MainChainId}";
         var guardianApprove = new List<GuardianInfo>
         {
             new GuardianInfo
@@ -463,7 +464,7 @@ public partial class CAContractTests
                     Id = _verifierId1,
                     Signature = signature,
                     VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(10)},{VerifierAddress.ToBase58()},{salt},{addGuardianOperationType}"
+                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(10)},{VerifierAddress.ToBase58()},{salt},{addGuardianOperationType},{MainChainId}"
                 }
             },
             GuardiansApproved = { guardianApprove }
@@ -501,7 +502,7 @@ public partial class CAContractTests
                     Id = _verifierId,
                     Signature = signature,
                     VerificationDoc =
-                        $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(1)},{VerifierAddress.ToBase58()},{salt},{operationType}"
+                        $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(1)},{VerifierAddress.ToBase58()},{salt},{operationType},{MainChainId}"
                 }
             },
             new GuardianInfo
@@ -513,7 +514,7 @@ public partial class CAContractTests
                     Id = _verifierId1,
                     Signature = signature1,
                     VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(2)},{VerifierAddress1.ToBase58()},{salt1},{operationType}"
+                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(2)},{VerifierAddress1.ToBase58()},{salt1},{operationType},{MainChainId}"
                 }
             },
         };
@@ -529,7 +530,7 @@ public partial class CAContractTests
                     Id = _verifierId2,
                     Signature = signature2,
                     VerificationDoc =
-                        $"{3},{_guardian1.ToHex()},{verificationTime.AddSeconds(3)},{VerifierAddress2.ToBase58()},{salt2},{operationType}"
+                        $"{3},{_guardian1.ToHex()},{verificationTime.AddSeconds(3)},{VerifierAddress2.ToBase58()},{salt2},{operationType},{MainChainId}"
                 }
             },
             GuardiansApproved = { guardianApprove }
@@ -566,7 +567,7 @@ public partial class CAContractTests
                     Signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(100), _guardian,
                         0, salt, operationType),
                     VerificationDoc =
-                        $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(100)},{VerifierAddress.ToBase58()},{salt},{operationType}"
+                        $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(100)},{VerifierAddress.ToBase58()},{salt},{operationType},{MainChainId}"
                 }
             },
             new GuardianInfo
@@ -579,7 +580,7 @@ public partial class CAContractTests
                     Signature = GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime.AddSeconds(200), _guardian1, 0, salt,
                             operationType),
                     VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(200)},{VerifierAddress1.ToBase58()},{salt},{operationType}"
+                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(200)},{VerifierAddress1.ToBase58()},{salt},{operationType},{MainChainId}"
                 }
             },
             new GuardianInfo
@@ -592,7 +593,7 @@ public partial class CAContractTests
                     Signature = GenerateSignature(VerifierKeyPair2, VerifierAddress2, verificationTime.AddSeconds(400),
                         _guardian1, 3, salt, operationType),
                     VerificationDoc =
-                        $"{3},{_guardian1.ToHex()},{verificationTime.AddSeconds(400)},{VerifierAddress2.ToBase58()},{salt},{operationType}"
+                        $"{3},{_guardian1.ToHex()},{verificationTime.AddSeconds(400)},{VerifierAddress2.ToBase58()},{salt},{operationType},{MainChainId}"
                 }
             }
         };
@@ -609,7 +610,7 @@ public partial class CAContractTests
                     Signature = GenerateSignature(VerifierKeyPair4, VerifierAddress4, verificationTime.AddSeconds(500), _guardian2, 1, salt,
                         operationType),
                     VerificationDoc =
-                        $"{1},{_guardian2.ToHex()},{verificationTime.AddSeconds(500)},{VerifierAddress4.ToBase58()},{salt},{operationType}"
+                        $"{1},{_guardian2.ToHex()},{verificationTime.AddSeconds(500)},{VerifierAddress4.ToBase58()},{salt},{operationType},{MainChainId}"
                 }
             },
             GuardiansApproved = { guardianApprove }
@@ -654,7 +655,7 @@ public partial class CAContractTests
                     Id = _verifierId,
                     Signature = signature,
                     VerificationDoc =
-                        $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(11)},{VerifierAddress.ToBase58()},{salt},{operationType}"
+                        $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(11)},{VerifierAddress.ToBase58()},{salt},{operationType},{MainChainId}"
                 }
             },
             new GuardianInfo
@@ -666,7 +667,7 @@ public partial class CAContractTests
                     Id = _verifierId1,
                     Signature = signature1,
                     VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(12)},{VerifierAddress1.ToBase58()},{salt},{operationType}"
+                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(12)},{VerifierAddress1.ToBase58()},{salt},{operationType},{MainChainId}"
                 }
             },
             new GuardianInfo
@@ -678,7 +679,7 @@ public partial class CAContractTests
                     Id = _verifierId2,
                     Signature = signature2,
                     VerificationDoc =
-                        $"{3},{_guardian1.ToHex()},{verificationTime.AddSeconds(13)},{VerifierAddress2.ToBase58()},{salt},{operationType}"
+                        $"{3},{_guardian1.ToHex()},{verificationTime.AddSeconds(13)},{VerifierAddress2.ToBase58()},{salt},{operationType},{MainChainId}"
                 }
             }
         };
@@ -694,7 +695,7 @@ public partial class CAContractTests
                     Id = _verifierId3,
                     Signature = signature3,
                     VerificationDoc =
-                        $"{2},{_guardian2.ToHex()},{verificationTime.AddSeconds(14)},{VerifierAddress3.ToBase58()},{salt},{operationType}"
+                        $"{2},{_guardian2.ToHex()},{verificationTime.AddSeconds(14)},{VerifierAddress3.ToBase58()},{salt},{operationType},{MainChainId}"
                 }
             },
             GuardiansApproved = { guardianApprove }
@@ -802,7 +803,7 @@ public partial class CAContractTests
                     Id = _verifierId,
                     Signature = signature,
                     VerificationDoc =
-                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType}"
+                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType},{MainChainId}"
                 }
             }
         };
@@ -818,7 +819,7 @@ public partial class CAContractTests
                     Id = _verifierId1,
                     Signature = signature1,
                     VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(1)},{VerifierAddress1.ToBase58()},{salt1},{operationType}"
+                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(1)},{VerifierAddress1.ToBase58()},{salt1},{operationType},{MainChainId}"
                 }
             },
             GuardiansApproved = { guardianApprove }
@@ -851,7 +852,7 @@ public partial class CAContractTests
                     Id = _verifierId,
                     Signature = signature,
                     VerificationDoc =
-                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType}"
+                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType},{MainChainId}"
                 }
             }
         };
@@ -867,7 +868,7 @@ public partial class CAContractTests
                     Id = _verifierId1,
                     Signature = signature1,
                     VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(1)},{VerifierAddress.ToBase58()},{salt1},{operationType}"
+                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(1)},{VerifierAddress.ToBase58()},{salt1},{operationType},{MainChainId}"
                 }
             },
             GuardiansApproved = { guardianApprove }
@@ -910,7 +911,7 @@ public partial class CAContractTests
                         Id = _verifierId,
                         Signature = signature,
                         VerificationDoc =
-                            $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType}"
+                            $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType},{MainChainId}"
                     }
                 }
             };
@@ -926,7 +927,7 @@ public partial class CAContractTests
                         Id = _verifierId1,
                         Signature = signature1,
                         VerificationDoc =
-                            $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(1)},{VerifierAddress.ToBase58()},{salt1},{operationType}"
+                            $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(1)},{VerifierAddress.ToBase58()},{salt1},{operationType},{MainChainId}"
                     }
                 },
                 GuardiansApproved = { guardianApprove }
@@ -981,7 +982,7 @@ public partial class CAContractTests
                 {
                     Id = _verifierId1,
                     VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(1)},{VerifierAddress.ToBase58()},{salt1},{operationType}",
+                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(1)},{VerifierAddress.ToBase58()},{salt1},{operationType},{MainChainId}",
                     Signature = signature1
                 }
             },
@@ -1018,7 +1019,7 @@ public partial class CAContractTests
                     Id = _verifierId,
                     Signature = signature,
                     VerificationDoc =
-                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType}",
+                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType},{MainChainId}",
                 }
             }
         };
@@ -1034,7 +1035,7 @@ public partial class CAContractTests
                         Id = _verifierId1,
                         Signature = signature1,
                         VerificationDoc =
-                            $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(1)},{VerifierAddress.ToBase58()},{salt1},{operationType}",
+                            $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(1)},{VerifierAddress.ToBase58()},{salt1},{operationType},{MainChainId}",
                     }
                 },
                 GuardiansApproved =
@@ -1068,7 +1069,7 @@ public partial class CAContractTests
                         Id = _verifierId1,
                         Signature = signature1,
                         VerificationDoc =
-                            $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt1},{operationType}",
+                            $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt1},{operationType},{MainChainId}",
                     }
                 }
             });
@@ -1097,7 +1098,7 @@ public partial class CAContractTests
                     Id = _verifierId1,
                     Signature = signature1,
                     VerificationDoc =
-                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{salt},{operationType}"
+                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{salt},{operationType},{MainChainId}"
                 }
             }
         };
@@ -1113,7 +1114,7 @@ public partial class CAContractTests
                     Id = _verifierId1,
                     Signature = signature1,
                     VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(1)},{VerifierAddress1.ToBase58()},{salt},{operationType}"
+                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(1)},{VerifierAddress1.ToBase58()},{salt},{operationType},{MainChainId}"
                 }
             },
             GuardiansApproved = { guardianApprove }
@@ -1151,7 +1152,7 @@ public partial class CAContractTests
                     Id = _verifierId,
                     Signature = signature,
                     VerificationDoc =
-                        $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(6)},{VerifierAddress.ToBase58()},{salt},{removeOperationType}",
+                        $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(6)},{VerifierAddress.ToBase58()},{salt},{removeOperationType},{MainChainId}",
                 }
             }
         };
@@ -1199,7 +1200,7 @@ public partial class CAContractTests
                     Signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(30), _guardian,
                         0, salt, operationType),
                     VerificationDoc =
-                        $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(30)},{VerifierAddress.ToBase58()},{salt},{operationType}"
+                        $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(30)},{VerifierAddress.ToBase58()},{salt},{operationType},{MainChainId}"
                 }
             },
             new()
@@ -1212,7 +1213,7 @@ public partial class CAContractTests
                     Signature = GenerateSignature(VerifierKeyPair2, VerifierAddress2, verificationTime.AddSeconds(20), _guardian1, 3, salt,
                         operationType),
                     VerificationDoc =
-                        $"{3},{_guardian1.ToHex()},{verificationTime.AddSeconds(20)},{VerifierAddress1.ToBase58()},{salt},{operationType}"
+                        $"{3},{_guardian1.ToHex()},{verificationTime.AddSeconds(20)},{VerifierAddress1.ToBase58()},{salt},{operationType},{MainChainId}"
                 }
             }
         };
@@ -1285,7 +1286,7 @@ public partial class CAContractTests
                     Id = _verifierId1,
                     Signature = signature1,
                     VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(1)},{VerifierAddress.ToBase58()},{salt1},{operationType}",
+                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(1)},{VerifierAddress.ToBase58()},{salt1},{operationType},{MainChainId}",
                 }
             }
         };
@@ -1330,7 +1331,7 @@ public partial class CAContractTests
                     Id = _verifierId,
                     Signature = signature,
                     VerificationDoc =
-                        $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(6)},{VerifierAddress1.ToBase58()},{salt},{operationType}",
+                        $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(6)},{VerifierAddress1.ToBase58()},{salt},{operationType},{MainChainId}",
                 }
             }
         };
@@ -1354,7 +1355,7 @@ public partial class CAContractTests
                     Id = _verifierId1,
                     Signature = signature1,
                     VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(4)},{VerifierAddress1.ToBase58()},{salt},{operationType}",
+                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(4)},{VerifierAddress1.ToBase58()},{salt},{operationType},{MainChainId}",
                 }
             },
             GuardiansApproved = { guardianApprove }
@@ -1392,7 +1393,7 @@ public partial class CAContractTests
                     Id = _verifierId,
                     Signature = signature,
                     VerificationDoc =
-                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{salt},{operationType}",
+                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{salt},{operationType},{MainChainId}",
                 }
             }
         };
@@ -1408,7 +1409,7 @@ public partial class CAContractTests
                     Id = _verifierId1,
                     Signature = signature1,
                     VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(1)},{VerifierAddress1.ToBase58()},{salt1},{operationType}",
+                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(1)},{VerifierAddress1.ToBase58()},{salt1},{operationType},{MainChainId}",
                 }
             },
             GuardiansApproved =
@@ -1444,7 +1445,7 @@ public partial class CAContractTests
                     Id = _verifierId,
                     Signature = signature,
                     VerificationDoc =
-                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType}",
+                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType},{MainChainId}",
                 }
             }
         };
@@ -1519,7 +1520,7 @@ public partial class CAContractTests
                             _guardian,
                             0, salt, removeOperationType),
                         VerificationDoc =
-                            $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(6)},{VerifierAddress.ToBase58()},{salt},{removeOperationType}",
+                            $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(6)},{VerifierAddress.ToBase58()},{salt},{removeOperationType},{MainChainId}",
                     }
                 },
                 new GuardianInfo
@@ -1533,7 +1534,7 @@ public partial class CAContractTests
                             0, salt,
                             addOperationType),
                         VerificationDoc =
-                            $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(7)},{VerifierAddress2.ToBase58()},{salt},{removeOperationType}",
+                            $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(7)},{VerifierAddress2.ToBase58()},{salt},{removeOperationType},{MainChainId}",
                     }
                 }
             };
@@ -1606,7 +1607,7 @@ public partial class CAContractTests
                     Id = _verifierId,
                     Signature = signature,
                     VerificationDoc =
-                        $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(6)},{VerifierAddress.ToBase58()},{salt},{operationType}",
+                        $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(6)},{VerifierAddress.ToBase58()},{salt},{operationType},{MainChainId}",
                 }
             }
         };
@@ -1666,7 +1667,7 @@ public partial class CAContractTests
                     Id = _verifierId,
                     Signature = signature,
                     VerificationDoc =
-                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType}",
+                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType},{MainChainId}",
                 }
             },
             new GuardianInfo
@@ -1678,7 +1679,7 @@ public partial class CAContractTests
                     Id = _verifierId1,
                     Signature = signature2,
                     VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(30)},{VerifierAddress1.ToBase58()},{salt},{operationType}"
+                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(30)},{VerifierAddress1.ToBase58()},{salt},{operationType},{MainChainId}"
                 }
             }
         };
@@ -1695,7 +1696,7 @@ public partial class CAContractTests
                     Signature = GenerateSignature(VerifierKeyPair2, VerifierAddress2, verificationTime.AddSeconds(15),
                         _guardian1, 1, salt, operationType),
                     VerificationDoc =
-                        $"{1},{_guardian1.ToHex()},{verificationTime.AddSeconds(15)},{VerifierAddress2.ToBase58()},{salt},{operationType}"
+                        $"{1},{_guardian1.ToHex()},{verificationTime.AddSeconds(15)},{VerifierAddress2.ToBase58()},{salt},{operationType},{MainChainId}"
                 }
             },
             GuardiansApproved = { guardianApprove }
@@ -1736,7 +1737,7 @@ public partial class CAContractTests
                     Id = _verifierId,
                     Signature = signature3,
                     VerificationDoc =
-                        $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(60)},{VerifierAddress.ToBase58()},{salt},{updateOperationType}"
+                        $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(60)},{VerifierAddress.ToBase58()},{salt},{updateOperationType},{MainChainId}"
                 }
             },
             new GuardianInfo
@@ -1748,7 +1749,7 @@ public partial class CAContractTests
                     Id = _verifierId1,
                     Signature = signature4,
                     VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(70)},{VerifierAddress1.ToBase58()},{salt},{updateOperationType}"
+                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(70)},{VerifierAddress1.ToBase58()},{salt},{updateOperationType},{MainChainId}"
                 }
             }
         };
@@ -1820,7 +1821,7 @@ public partial class CAContractTests
                     Signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0, salt,
                         addOperationType),
                     VerificationDoc =
-                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{addOperationType}"
+                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{addOperationType},{MainChainId}"
                 }
             },
             new GuardianInfo
@@ -1833,7 +1834,7 @@ public partial class CAContractTests
                     Signature = GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime, _guardian1, 0, salt,
                         addOperationType),
                     VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{salt},{addOperationType}"
+                        $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{salt},{addOperationType},{MainChainId}"
                 }
             }
         };
@@ -1850,7 +1851,7 @@ public partial class CAContractTests
                     Signature = GenerateSignature(VerifierKeyPair2, VerifierAddress2, verificationTime.AddSeconds(1), _guardian1,
                         1, salt, addOperationType),
                     VerificationDoc =
-                        $"{1},{_guardian1.ToHex()},{verificationTime.AddSeconds(1)},{VerifierAddress2.ToBase58()},{salt},{addOperationType}"
+                        $"{1},{_guardian1.ToHex()},{verificationTime.AddSeconds(1)},{VerifierAddress2.ToBase58()},{salt},{addOperationType},{MainChainId}"
                 }
             },
             GuardiansApproved = { guardianApprove }
@@ -1882,7 +1883,7 @@ public partial class CAContractTests
                     Id = _verifierId,
                     Signature = signature3,
                     VerificationDoc =
-                        $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(5)},{VerifierAddress.ToBase58()},{salt},{updateOperationType}"
+                        $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(5)},{VerifierAddress.ToBase58()},{salt},{updateOperationType},{MainChainId}"
                 }
             },
             new GuardianInfo
@@ -1894,7 +1895,7 @@ public partial class CAContractTests
                     Id = _verifierId1,
                     Signature = signature4,
                     VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(5)},{VerifierAddress1.ToBase58()},{salt},{updateOperationType}"
+                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(5)},{VerifierAddress1.ToBase58()},{salt},{updateOperationType},{MainChainId}"
                 }
             }
         };
@@ -1976,7 +1977,7 @@ public partial class CAContractTests
                     Id = _verifierId,
                     Signature = signature,
                     VerificationDoc =
-                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType}",
+                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType},{MainChainId}",
                 }
             },
             new GuardianInfo
@@ -1988,7 +1989,7 @@ public partial class CAContractTests
                     Id = _verifierId1,
                     Signature = signature1,
                     VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{salt1},{operationType}",
+                        $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{salt1},{operationType},{MainChainId}",
                 }
             },
             // new GuardianInfo
@@ -2000,7 +2001,7 @@ public partial class CAContractTests
             //         Id = _verifierId2,
             //         Signature = signature2,
             //         VerificationDoc =
-            //             $"{3},{_guardian1.ToHex()},{verificationTime},{VerifierAddress2.ToBase58()},{salt2},{operationType}",
+            //             $"{3},{_guardian1.ToHex()},{verificationTime},{VerifierAddress2.ToBase58()},{salt2},{operationType},{MainChainId}",
             //     }
             // },
         };
@@ -2069,7 +2070,7 @@ public partial class CAContractTests
                     Id = _verifierId,
                     Signature = signature,
                     VerificationDoc =
-                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType}",
+                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType},{MainChainId}",
                 }
             },
             new GuardianInfo
@@ -2081,7 +2082,7 @@ public partial class CAContractTests
                     Id = _verifierId1,
                     Signature = signature1,
                     VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{salt1},{operationType}",
+                        $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{salt1},{operationType},{MainChainId}",
                 }
             },
         };
@@ -2254,7 +2255,7 @@ public partial class CAContractTests
                     Id = _verifierId,
                     Signature = signature,
                     VerificationDoc =
-                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType}"
+                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType},{MainChainId}"
                 }
             },
             new GuardianInfo
@@ -2349,7 +2350,7 @@ public partial class CAContractTests
                     Id = _verifierId,
                     Signature = signature,
                     VerificationDoc =
-                        $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(10)},{VerifierAddress.ToBase58()},{salt},{operationType}"
+                        $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(10)},{VerifierAddress.ToBase58()},{salt},{operationType},{MainChainId}"
                 }
             },
             ManagerInfo = new ManagerInfo
@@ -2528,7 +2529,7 @@ public partial class CAContractTests
             GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime.AddSeconds(5), _guardian1, 0,
                 salt, operationType);
         var verificationDoc =
-            $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType}";
+            $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType},{MainChainId}";
         var guardianApprove = new List<GuardianInfo>
         {
             new GuardianInfo
@@ -2555,7 +2556,7 @@ public partial class CAContractTests
                     Id = _verifierId1,
                     Signature = signature1,
                     VerificationDoc =
-                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(5)},{VerifierAddress1.ToBase58()},{salt},{operationType}"
+                        $"{0},{_guardian1.ToHex()},{verificationTime.AddSeconds(5)},{VerifierAddress1.ToBase58()},{salt},{operationType},{MainChainId}"
                 }
             },
             GuardiansApproved = { guardianApprove }

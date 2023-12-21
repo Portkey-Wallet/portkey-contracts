@@ -44,7 +44,7 @@ public partial class CAContractTests
                         Id = _verifierServers[0].Id,
                         Signature = setLimitSign,
                         VerificationDoc =
-                            $"{0},{_guardian.ToHex()},{setLimitVerifyTime},{VerifierAddress.ToBase58()},{salt},{setLimitOpType}"
+                            $"{0},{_guardian.ToHex()},{setLimitVerifyTime},{VerifierAddress.ToBase58()},{salt},{setLimitOpType},{MainChainId}"
                     }
                 }
             },
@@ -84,7 +84,7 @@ public partial class CAContractTests
                         Id = _verifierServers[0].Id,
                         Signature = setLimitSign,
                         VerificationDoc =
-                            $"{0},{_guardian.ToHex()},{setLimitVerifyTime},{VerifierAddress.ToBase58()},{salt},{setLimitOpType}"
+                            $"{0},{_guardian.ToHex()},{setLimitVerifyTime},{VerifierAddress.ToBase58()},{salt},{setLimitOpType},{MainChainId}"
                     }
                 }
             },
@@ -118,7 +118,7 @@ public partial class CAContractTests
                         Id = _verifierServers[0].Id,
                         Signature = setLimitSign,
                         VerificationDoc =
-                            $"{0},{_guardian.ToHex()},{setLimitVerifyTime},{VerifierAddress.ToBase58()},{salt},{setLimitOpType}"
+                            $"{0},{_guardian.ToHex()},{setLimitVerifyTime},{VerifierAddress.ToBase58()},{salt},{setLimitOpType},{MainChainId}"
                     }
                 }
             },
@@ -161,7 +161,7 @@ public partial class CAContractTests
                         Id = _verifierServers[0].Id,
                         Signature = setLimitSign,
                         VerificationDoc =
-                            $"{0},{_guardian.ToHex()},{setLimitVerifyTime},{VerifierAddress.ToBase58()},{salt},{setLimitOpType}"
+                            $"{0},{_guardian.ToHex()},{setLimitVerifyTime},{VerifierAddress.ToBase58()},{salt},{setLimitOpType},{MainChainId}"
                     }
                 }
             },
@@ -196,7 +196,7 @@ public partial class CAContractTests
                             Id = _verifierServers[0].Id,
                             Signature = setLimitSign,
                             VerificationDoc =
-                                $"{0},{_guardian.ToHex()},{setLimitVerifyTime},{VerifierAddress.ToBase58()},{salt},{setLimitOpType}"
+                                $"{0},{_guardian.ToHex()},{setLimitVerifyTime},{VerifierAddress.ToBase58()},{salt},{setLimitOpType},{MainChainId}"
                         }
                     }
                 },
@@ -291,7 +291,7 @@ public partial class CAContractTests
                         Id = _verifierServers[0].Id,
                         Signature = managerForwardCallSign,
                         VerificationDoc =
-                            $"{0},{_guardian.ToHex()},{managerForwardCallVerifyTime},{VerifierAddress.ToBase58()},{salt},{managerForwardCallOpType}"
+                            $"{0},{_guardian.ToHex()},{managerForwardCallVerifyTime},{VerifierAddress.ToBase58()},{salt},{managerForwardCallOpType},{MainChainId}"
                     }
                 }
             },
@@ -372,7 +372,7 @@ public partial class CAContractTests
                         Id = _verifierServers[0].Id,
                         Signature = managerTransferSign,
                         VerificationDoc =
-                            $"{0},{_guardian.ToHex()},{managerTransferVerifyTime},{VerifierAddress.ToBase58()},{salt},{managerTransferOpType}"
+                            $"{0},{_guardian.ToHex()},{managerTransferVerifyTime},{VerifierAddress.ToBase58()},{salt},{managerTransferOpType},{MainChainId}"
                     }
                 }
             }
@@ -507,7 +507,7 @@ public partial class CAContractTests
                     Id = id,
                     Signature = signature,
                     VerificationDoc =
-                        $"{0},{_guardian.ToHex()},{verifyTime},{VerifierAddress.ToBase58()},{salt},{opType}"
+                        $"{0},{_guardian.ToHex()},{verifyTime},{VerifierAddress.ToBase58()},{salt},{opType},{MainChainId}"
                 }
             },
             ManagerInfo = manager
