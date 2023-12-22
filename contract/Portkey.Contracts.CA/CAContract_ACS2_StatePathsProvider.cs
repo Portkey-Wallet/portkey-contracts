@@ -38,6 +38,28 @@ public partial class CAContract
                 AddPathForTransactionFee(resource, txn.From.ToBase58(), txn.MethodName);
                 AddPathForTransactionFeeFreeAllowance(resource, txn.From);
                 AddPathForDelegatees(resource, txn.From, txn.To, txn.MethodName);
+                // handle transfer 
+                if (args.MethodName == nameof(State.TokenContract.Transfer) &&
+                    args.ContractAddress == State.TokenContract.Value)
+                {
+                    var transferInput = TransferInput.Parser.ParseFrom(args.Args);
+                    resource.ReadPaths.Add(GetPath(nameof(State.HolderInfoMap), args.CaHash.ToHex()));
+                    resource.ReadPaths.Add(GetPath(nameof(State.TransferSecurityThresholdList)));
+                    resource.ReadPaths.Add(GetPath(nameof(State.TokenInitialTransferLimit)));
+                    resource.ReadPaths.Add(GetPath(nameof(State.TokenDefaultTransferLimit),
+                        transferInput.Symbol));
+                    resource.ReadPaths.Add(GetPath(nameof(State.CheckChainIdInSignatureEnabled)));
+                    foreach (var guardian in args.GuardiansApproved)
+                    {
+                        resource.WritePaths.Add(
+                            GetPath(nameof(State.VerifierDocMap), GetVerifierId(guardian)));
+                    }
+
+                    resource.WritePaths.Add(
+                        GetPath(nameof(State.DailyTransferredAmountMap), args.CaHash.ToHex(), transferInput.Symbol));
+                }
+
+               
                 return resource;
             }
             default:
@@ -118,6 +140,10 @@ public partial class CAContract
         };
     }
 
+    private ScopedStatePath GetPath(params string[] parts)
+    {
+        return GetPath(Context.Self, parts);
+    }
     private List<string> GetTransactionFeeSymbols(string methodName)
     {
         var actualFee = GetActualFee(methodName);
@@ -202,6 +228,11 @@ public partial class CAContract
         }
 
         return delegateeList;
+    }
+
+    private string GetVerifierId(GuardianInfo guardianInfo)
+    {
+        return HashHelper.ComputeFrom(guardianInfo.VerificationInfo.Signature.ToByteArray()).ToHex();
     }
 
 
