@@ -19,8 +19,11 @@ service CAContractImpl {
   option (aelf.base) = "ca_contract.proto";
   option (aelf.csharp_state) = "Portkey.Contracts.CA.CAContractState";
   // register disable
-  rpc SetCreateHolderDisable(SetCreateHolderDisableInput) returns (google.protobuf.Empty) {}
-  rpc GetCreateHolderDisable(google.protobuf.Empty) returns (GetCreateHolderDisableOutput) {option (aelf.is_view) = true;}
+  rpc SetCreateHolderEnabled(SetCreateHolderEnabledInput) returns (google.protobuf.Empty) {}
+  rpc GetCreateHolderEnabled(google.protobuf.Empty) returns (GetCreateHolderEnabledOutput) {option (aelf.is_view) = true;}
+
+  rpc SetLoginGuardianCheckGuardianApprovedEnabled(SetLoginGuardianCheckGuardianApprovedEnabledInput) returns (google.protobuf.Empty) {}
+  rpc GetLoginGuardianCheckGuardianApprovedEnabled(google.protobuf.Empty) returns (GetLoginGuardianCheckGuardianApprovedEnabledOutput) {option (aelf.is_view) = true;}
    
   // approve
   rpc ManagerApprove(ManagerApproveInput) returns (google.protobuf.Empty) {}
@@ -64,12 +67,20 @@ service CAContractImpl {
        
 }
 
-message SetCreateHolderDisableInput {
-  bool create_holder_disable = 1;
+message SetCreateHolderEnabledInput {
+  bool create_holder_enabled = 1;
 }
 
-message GetCreateHolderDisableOutput {
-  bool create_holder_Disable = 1;
+message GetCreateHolderEnabledOutput {
+  bool create_holder_enabled = 1;
+}
+
+message SetLoginGuardianCheckGuardianApprovedEnabledInput {
+  bool login_guardian_check_guardian_approved_enabled = 1;
+}
+
+message GetLoginGuardianCheckGuardianApprovedEnabledOutput {
+  bool login_guardian_check_guardian_approved_enabled = 1;
 }
 
 message ManagerApproveInput {
