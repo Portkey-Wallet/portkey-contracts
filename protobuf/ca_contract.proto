@@ -137,6 +137,7 @@ enum GuardianType {
   GUARDIAN_TYPE_OF_PHONE = 1;
   GUARDIAN_TYPE_OF_GOOGLE = 2;
   GUARDIAN_TYPE_OF_APPLE = 3;
+  GUARDIAN_TYPE_OF_TELEGRAM = 4;
 }
 
 message VerifierServer {
@@ -269,16 +270,14 @@ message UpdateGuardianInput{
 
 message SetGuardianForLoginInput {
   aelf.Hash ca_hash = 1;
-  Guardian guardian = 2;
-  GuardianInfo guardian_to_set_login = 3;
-  repeated GuardianInfo guardians_approved = 4;
+  GuardianInfo guardian_to_set_login = 2;
+  repeated GuardianInfo guardians_approved = 3;
 }
 
 message UnsetGuardianForLoginInput {
   aelf.Hash ca_hash = 1;
-  Guardian guardian = 2;
-  GuardianInfo guardian_to_unset_login = 3;
-  repeated GuardianInfo guardians_approved = 4;
+  GuardianInfo guardian_to_unset_login = 2;
+  repeated GuardianInfo guardians_approved = 3;
 }
 
 message ManagerForwardCallInput {
@@ -421,14 +420,6 @@ message SyncHolderInfosInput {
 message ValidateStrategyInput {
   StrategyNode strategy_node = 1;
   map<string, int64> variables = 2;
-}
-
-message SetCheckChainIdInSignatureEnabledInput {
-  bool check_chain_id_in_signature_enabled = 1;
-}
-
-message GetCheckChainIdInSignatureEnabledOutput {
-  bool check_chain_id_in_signature_enabled = 1;
 }
 
 message ValidateStrategyOutput {

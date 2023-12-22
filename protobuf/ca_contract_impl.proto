@@ -56,14 +56,6 @@ service CAContractImpl {
 
 }
 
-message SetCreateHolderDisableInput {
-  bool create_holder_disable = 1;
-}
-
-message GetCreateHolderDisableOutput {
-  bool create_holder_Disable = 1;
-}
-
 message ManagerApproveInput {
     aelf.Hash ca_hash = 1;
     aelf.Address spender = 2;
