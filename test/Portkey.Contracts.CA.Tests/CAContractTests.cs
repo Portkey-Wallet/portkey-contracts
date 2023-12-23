@@ -18,10 +18,6 @@ public partial class CAContractTests : CAContractTestBase
         {
             ContractAdmin = DefaultAddress,
         });
-        await CaContractStub.SetCreateHolderEnabled.SendAsync(new SetCreateHolderEnabledInput
-        {
-            CreateHolderEnabled = true
-        });
         {
             await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
             {

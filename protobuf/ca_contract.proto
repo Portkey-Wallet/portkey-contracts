@@ -270,14 +270,16 @@ message UpdateGuardianInput{
 
 message SetGuardianForLoginInput {
   aelf.Hash ca_hash = 1;
-  GuardianInfo guardian_to_set_login = 2;
-  repeated GuardianInfo guardians_approved = 3;
+  Guardian guardian = 2;
+  GuardianInfo guardian_to_set_login = 3;
+  repeated GuardianInfo guardians_approved = 4;
 }
 
 message UnsetGuardianForLoginInput {
   aelf.Hash ca_hash = 1;
-  GuardianInfo guardian_to_unset_login = 2;
-  repeated GuardianInfo guardians_approved = 3;
+  Guardian guardian = 2;
+  GuardianInfo guardian_to_unset_login = 3;
+  repeated GuardianInfo guardians_approved = 4;
 }
 
 message ManagerForwardCallInput {

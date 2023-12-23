@@ -68,10 +68,6 @@ public partial class CAContractTests
         {
             ContractAdmin = DefaultAddress,
         });
-        await CaContractStub.SetCreateHolderEnabled.SendAsync(new SetCreateHolderEnabledInput
-        {
-            CreateHolderEnabled = true
-        });
         {
             await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
             {
@@ -353,10 +349,6 @@ public partial class CAContractTests
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
             ContractAdmin = DefaultAddress,
-        });
-        await CaContractStub.SetCreateHolderEnabled.SendAsync(new SetCreateHolderEnabledInput
-        {
-            CreateHolderEnabled = true
         });
         {
             await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
@@ -2311,10 +2303,6 @@ public partial class CAContractTests
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
             ContractAdmin = DefaultAddress,
-        });
-        await CaContractStub.SetCreateHolderEnabled.SendAsync(new SetCreateHolderEnabledInput
-        {
-            CreateHolderEnabled = true
         });
 
         {
