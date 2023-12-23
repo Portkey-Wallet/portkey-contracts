@@ -13,13 +13,8 @@ public partial class CAContractTests
 
     public async Task AddCAServerTest()
     {
-        //set admin
-        await CaContractStub.Initialize.SendAsync(new InitializeInput()
-        {
-            ContractAdmin = DefaultAccount.Address,
-        });
-       
-        
+        await Initiate();
+
         var caContractAddresses = new List<CAContractAddress>
         {
             new CAContractAddress()
@@ -78,10 +73,7 @@ public partial class CAContractTests
     public async Task RemoveCAServerTest()
     {
         //set admin
-        await CaContractStub.Initialize.SendAsync(new InitializeInput()
-        {
-            ContractAdmin = DefaultAccount.Address,
-        });
+        await Initiate();
         await CaContractStub.AddCAServer.SendAsync( new AddCAServerInput()
         {
             Name = "Server1",
