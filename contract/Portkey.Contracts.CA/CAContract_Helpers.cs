@@ -295,7 +295,8 @@ public partial class CAContract
 
     private void UpgradeProjectDelegatee(Address caAddress, RepeatedField<ManagerInfo> managerInfos)
     {
-        if (!IsValidHash(State.CaProjectDelegateHash.Value) || State.ProjectDelegateInfo[State.CaProjectDelegateHash.Value].DelegateeHashList.Count == 0)
+        if (!IsValidHash(State.CaProjectDelegateHash.Value) || State.ProjectDelegateInfo[State.CaProjectDelegateHash.Value] == null ||
+            State.ProjectDelegateInfo[State.CaProjectDelegateHash.Value].DelegateeHashList.Count == 0)
         {
             return;
         }
@@ -330,7 +331,7 @@ public partial class CAContract
             [CAContractConstants.ELFTokenSymbol] = State.SecondaryDelegationFee.Value.Amount
         };
         
-        var selectIndex = (int)(Context.TransactionId.ToInt64() % projectDelegateInfo.DelegateeHashList.Count);
+        var selectIndex = (int)(Math.Abs(Context.TransactionId.ToInt64()) % projectDelegateInfo.DelegateeHashList.Count);
         Context.SendVirtualInline(projectDelegateInfo.DelegateeHashList[selectIndex], State.TokenContract.Value,
             nameof(State.TokenContract.SetTransactionFeeDelegations), new SetTransactionFeeDelegationsInput
             {

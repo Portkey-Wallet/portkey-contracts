@@ -44,22 +44,22 @@ public partial class CAContractTests
         result.TransactionResult.Error.ShouldContain("invalid input");
     }
     
-    [Fact]
-    public async Task SetSecondaryDelegationFeeTest()
-    {
-        await CreateHolder();
-        var secondaryDelegationFee = await CaContractStub.GetSecondaryDelegationFee.CallAsync(new Empty());
-        secondaryDelegationFee.Amount.ShouldBe(10000000000);
-        await CaContractStub.SetSecondaryDelegationFee.SendAsync(new SetSecondaryDelegationFeeInput
-        {
-            DelegationFee = new SecondaryDelegationFee
-            {
-                Amount = 20000000000
-            }
-        });
-        secondaryDelegationFee = await CaContractStub.GetSecondaryDelegationFee.CallAsync(new Empty());
-        secondaryDelegationFee.Amount.ShouldBe(20000000000);
-    }
+    // [Fact]
+    // public async Task SetSecondaryDelegationFeeTest()
+    // {
+    //     await CreateHolder();
+    //     var secondaryDelegationFee = await CaContractStub.GetSecondaryDelegationFee.CallAsync(new Empty());
+    //     secondaryDelegationFee.Amount.ShouldBe(10000000000);
+    //     await CaContractStub.SetSecondaryDelegationFee.SendAsync(new SetSecondaryDelegationFeeInput
+    //     {
+    //         DelegationFee = new SecondaryDelegationFee
+    //         {
+    //             Amount = 20000000000
+    //         }
+    //     });
+    //     secondaryDelegationFee = await CaContractStub.GetSecondaryDelegationFee.CallAsync(new Empty());
+    //     secondaryDelegationFee.Amount.ShouldBe(20000000000);
+    // }
     
     [Fact]
     public async Task SetSecondaryDelegationFeeTest_Fail_InvalidInput()

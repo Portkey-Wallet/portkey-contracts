@@ -62,9 +62,9 @@ public partial class CAContract
         {
             var methodName = nameof(OperationType.SetLoginAccount).ToLower();
             input.GuardiansApproved.Add(input.GuardianToSetLogin);
-            var guardianApprovedAmount = GetGuardianApprovedAmount(input.CaHash, input.GuardiansApproved, methodName);
+            var guardianApprovedCount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved, methodName);
             var holderJudgementStrategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
-            Assert(IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count, guardianApprovedAmount,
+            Assert(IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count, guardianApprovedCount,
                 holderJudgementStrategy), "JudgementStrategy validate failed");
         }
 
@@ -88,9 +88,9 @@ public partial class CAContract
         return new Empty();
     }
 
-    private int GetGuardianApprovedAmount(Hash cahHash, RepeatedField<GuardianInfo> guardianApproved, string methodName)
+    private int GetGuardianApprovedCount(Hash cahHash, RepeatedField<GuardianInfo> guardianApproved, string methodName)
     {
-        var guardianApprovedAmount = 0;
+        var guardianApprovedCount = 0;
         var guardianApprovedList = guardianApproved
             .DistinctBy(g => $"{g.Type}{g.IdentifierHash}{g.VerificationInfo.Id}")
             .ToList();
@@ -99,9 +99,9 @@ public partial class CAContract
             if (!IsGuardianExist(cahHash, guardianInfo)) continue;
             var isApproved = CheckVerifierSignatureAndDataCompatible(guardianInfo, methodName, cahHash);
             if (!isApproved) continue;
-            guardianApprovedAmount++;
+            guardianApprovedCount++;
         }
-        return guardianApprovedAmount;
+        return guardianApprovedCount;
     }
 
     // Unset a Guardian for login, if already unset, return ture
@@ -151,9 +151,9 @@ public partial class CAContract
         {
             var methodName = nameof(OperationType.UnSetLoginAccount).ToLower();
             input.GuardiansApproved.Add(input.GuardianToUnsetLogin);
-            var guardianApprovedAmount = GetGuardianApprovedAmount(input.CaHash, input.GuardiansApproved, methodName);
+            var guardianApprovedCount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved, methodName);
             var holderJudgementStrategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
-            Assert(IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count, guardianApprovedAmount,
+            Assert(IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count, guardianApprovedCount,
                 holderJudgementStrategy), "JudgementStrategy validate failed");
         }
 

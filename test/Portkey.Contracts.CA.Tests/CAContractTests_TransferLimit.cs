@@ -449,10 +449,7 @@ public partial class CAContractTests
     {
         if (_isInitialized) return;
 
-        await CaContractStub.Initialize.SendAsync(new InitializeInput
-        {
-            ContractAdmin = DefaultAddress,
-        });
+        await Initiate();
 
 
         await InitTestVerifierServer();
@@ -488,12 +485,28 @@ public partial class CAContractTests
             EndPoints = { "127.0.0.1" },
             VerifierAddressList = { VerifierAddress2 }
         });
+        await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
+        {
+            Name = VerifierName3,
+            ImageUrl = "url",
+            EndPoints = { "127.0.0.1" },
+            VerifierAddressList = { VerifierAddress3 }
+        });
+        await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
+        {
+            Name = VerifierName4,
+            ImageUrl = "url",
+            EndPoints = { "127.0.0.1" },
+            VerifierAddressList = { VerifierAddress4 }
+        });
 
         var verifierServers = await CaContractStub.GetVerifierServers.CallAsync(new Empty());
         _verifierServers = verifierServers.VerifierServers;
         _verifierId = _verifierServers[0].Id;
         _verifierId1 = _verifierServers[1].Id;
         _verifierId2 = _verifierServers[2].Id;
+        _verifierId3 = _verifierServers[3].Id;
+        _verifierId4 = _verifierServers[4].Id;
 
         await CaContractStub.AddRemovedToCurrentVerifierIdMapper.SendAsync(
             new AddRemovedToCurrentVerifierIdMapperInput()
@@ -516,6 +529,16 @@ public partial class CAContractTests
                         {
                             RemovedId = _verifierServers[2].Id,
                             CurrentId = _verifierServers[2].Id
+                        },
+                        new()
+                        {
+                            RemovedId = _verifierServers[3].Id,
+                            CurrentId = _verifierServers[3].Id
+                        },
+                        new()
+                        {
+                            RemovedId = _verifierServers[4].Id,
+                            CurrentId = _verifierServers[4].Id
                         }
                     }
                 }
