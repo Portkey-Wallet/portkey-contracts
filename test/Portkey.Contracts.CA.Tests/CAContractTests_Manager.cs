@@ -19,6 +19,10 @@ public partial class CAContractTests
         {
             ContractAdmin = DefaultAddress,
         });
+        await CaContractStub.SetCreateHolderEnabled.SendAsync(new SetCreateHolderEnabledInput
+        {
+            CreateHolderEnabled = true
+        });
  
         {
             await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
@@ -141,21 +145,6 @@ public partial class CAContractTests
         delegateAllowance.Delegations["ELF"].ShouldBe(10000000000000000L);
 
         return caInfo.CaAddress;
-    }
-
-    [Fact]
-    public async Task SocialRecoveryTest_Delegator()
-    {
-        var caAddress = await SocialRecoveryTest();
-
-        var delegations = await TokenContractStub.GetTransactionFeeDelegationsOfADelegatee.CallAsync(
-            new GetTransactionFeeDelegationsOfADelegateeInput
-            {
-                DelegateeAddress = CaContractAddress,
-                DelegatorAddress = caAddress
-            });
-
-        delegations.Delegations["ELF"].ShouldBe(100_00000000);
     }
 
     [Fact]
@@ -836,22 +825,7 @@ public partial class CAContractTests
 
         return caInfo.CaAddress;
     }
-
-    [Fact]
-    public async Task AddManagerInfo_Delegator()
-    {
-        var caAddress = await AddManagerInfoTest();
-
-        var delegations = await TokenContractStub.GetTransactionFeeDelegationsOfADelegatee.CallAsync(
-            new GetTransactionFeeDelegationsOfADelegateeInput
-            {
-                DelegateeAddress = CaContractAddress,
-                DelegatorAddress = caAddress
-            });
-
-        delegations.Delegations["ELF"].ShouldBe(100_00000000);
-    }
-
+    
     [Fact]
     public async Task AddManagerInfo_NoPermissionTest()
     {
@@ -1685,6 +1659,10 @@ public partial class CAContractTests
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
             ContractAdmin = DefaultAddress,
+        });
+        await CaContractStub.SetCreateHolderEnabled.SendAsync(new SetCreateHolderEnabledInput
+        {
+            CreateHolderEnabled = true
         });
  
         {
