@@ -49,6 +49,8 @@ public partial class CAContract
                     resource.ReadPaths.Add(GetPath(nameof(State.TokenDefaultTransferLimit),
                         transferInput.Symbol));
                     resource.ReadPaths.Add(GetPath(nameof(State.CheckChainIdInSignatureEnabled)));
+                    resource.ReadPaths.Add(GetPath(nameof(State.ForbiddenForwardCallContractMethod),
+                        args.ContractAddress.ToBase58(), args.MethodName));
                     foreach (var guardian in args.GuardiansApproved)
                     {
                         resource.WritePaths.Add(
