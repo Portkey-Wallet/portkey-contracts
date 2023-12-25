@@ -331,7 +331,7 @@ public partial class CAContract
             [CAContractConstants.ELFTokenSymbol] = State.SecondaryDelegationFee.Value.Amount
         };
         
-        var selectIndex = (int)(Math.Abs(Context.TransactionId.ToInt64()) % projectDelegateInfo.DelegateeHashList.Count);
+        var selectIndex = (int)Math.Abs(delegatorAddress.ToByteArray().ToInt64(true) % projectDelegateInfo.DelegateeHashList.Count);
         Context.SendVirtualInline(projectDelegateInfo.DelegateeHashList[selectIndex], State.TokenContract.Value,
             nameof(State.TokenContract.SetTransactionFeeDelegations), new SetTransactionFeeDelegationsInput
             {
