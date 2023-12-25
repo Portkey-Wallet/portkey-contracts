@@ -55,4 +55,5 @@ public partial class CAContractState : ContractState
     public SingletonState<bool> LoginGuardianCheckGuardianApprovedEnabled { get; set; }
 
     public MappedState<Address, string, bool> ManagerForwardCallParallelMap { get; set; }
+    public SingletonState<WhitelistTransactions> DelegateWhitelistTransactions { get; set; }
 }
