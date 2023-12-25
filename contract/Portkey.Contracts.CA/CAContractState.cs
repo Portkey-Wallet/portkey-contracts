@@ -52,4 +52,5 @@ public partial class CAContractState : ContractState
     public SingletonState<SecondaryDelegationFee> SecondaryDelegationFee { get; set; }
     public MappedState<Hash, ProjectDelegateInfo> ProjectDelegateInfo { get; set; }
     public SingletonState<Hash> CaProjectDelegateHash { get; set; }
+    public SingletonState<WhitelistTransactions> DelegateWhitelistTransactions { get; set; }
 }
