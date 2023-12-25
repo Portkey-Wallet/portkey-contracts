@@ -43,8 +43,17 @@ public partial class CAContract
         var addDelegateeHashList = new RepeatedField<Hash>();
         foreach (var salt in distinctSalt)
         {
-            addDelegateeHashList.Add(HashHelper.ConcatAndCompute(HashHelper.ComputeFrom(salt), input.ProjectHash));
+            var delegateeHash = HashHelper.ConcatAndCompute(HashHelper.ComputeFrom(salt), input.ProjectHash);
+            if (!projectDelegateInfo.DelegateeHashList.Contains(delegateeHash))
+            {
+                addDelegateeHashList.Add(delegateeHash);
+            }
         }
+        if (addDelegateeHashList.Count == 0)
+        {
+            return new Empty();
+        }
+
         projectDelegateInfo.DelegateeHashList.AddRange(addDelegateeHashList);
         return new Empty();
     }
