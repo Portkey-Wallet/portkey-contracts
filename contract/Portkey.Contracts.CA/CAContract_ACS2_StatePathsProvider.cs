@@ -57,7 +57,7 @@ public partial class CAContract
                     foreach (var guardian in args.GuardiansApproved)
                     {
                         resource.WritePaths.Add(
-                            GetPath(nameof(State.VerifierDocMap), GetVerifierSignatureId(guardian)));
+                            GetPath(nameof(State.VerifierDocMap), GetVerifierSignatureHash(guardian)));
 
                         resource.ReadPaths.Add(
                             GetPath(nameof(State.RemovedToCurrentVerifierIdMap), GetVerificationInfoId(guardian)));
@@ -238,7 +238,7 @@ public partial class CAContract
         return delegateeList;
     }
 
-    private string GetVerifierSignatureId(GuardianInfo guardianInfo)
+    private string GetVerifierSignatureHash(GuardianInfo guardianInfo)
     {
         return HashHelper.ComputeFrom(guardianInfo.VerificationInfo.Signature.ToByteArray()).ToString();
     }
