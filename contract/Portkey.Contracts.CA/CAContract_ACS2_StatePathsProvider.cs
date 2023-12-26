@@ -120,9 +120,9 @@ public partial class CAContract
             foreach (var symbol in getTransactionFeeFreeAllowancesConfigOutput.Value.Select(config => config.Symbol))
             {
                 resourceInfo.WritePaths.Add(GetPath(State.TokenContract.Value, "TransactionFeeFreeAllowances",
-                    from.ToBase58(), symbol));
+                    from.ToString(), symbol));
                 resourceInfo.WritePaths.Add(GetPath(State.TokenContract.Value,
-                    "TransactionFeeFreeAllowancesLastRefreshTimes", from.ToBase58(), symbol));
+                    "TransactionFeeFreeAllowancesLastRefreshTimes", from.ToString(), symbol));
 
                 var path = GetPath(State.TokenContract.Value, "TransactionFeeFreeAllowancesConfigMap", symbol);
                 if (!resourceInfo.ReadPaths.Contains(path))
