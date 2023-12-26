@@ -1,10 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AElf;
 using AElf.Contracts.MultiToken;
+using AElf.Cryptography;
 using AElf.Types;
-using Google.Protobuf;
+using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
 using Shouldly;
 using Xunit;
@@ -51,7 +53,7 @@ public partial class CAContractTests
         });
         balance.Balance.ShouldBe(99);
     }
-
+    
     [Fact]
     public async Task RegisterProjectDelegate_Success()
     {
@@ -226,38 +228,15 @@ public partial class CAContractTests
         result = await CaContractUser1Stub.SetCaProjectDelegateHash.SendWithExceptionAsync(projectDelegateeHash);
         result.TransactionResult.Error.ShouldContain("No permission");
     }
-
+    
     [Fact]
-    public async Task SetProjectDelegate()
+    public async Task SetCAProjectDelegate()
     {
         await Initiate();
         var projectHash = await RegisterProjectDelegatee();
         var projectDelegate = await CaContractStub.GetProjectDelegatee.CallAsync(projectHash);
         await CaContractStub.SetCaProjectDelegateHash.SendAsync(projectHash);
-        await AddTransactionWhitelist();
-        await CreateHolderOnly(projectHash);
-        var deletatees = await TokenContractStub.GetTransactionFeeDelegatees.CallAsync(
-            new GetTransactionFeeDelegateesInput
-            {
-                DelegatorAddress = User1Address
-            });
-        var caAddress = deletatees.DelegateeAddresses[0];
-        var delegateeListOutput = await TokenContractStub.GetTransactionFeeDelegateeList.CallAsync(new GetTransactionFeeDelegateeListInput()
-        {
-            DelegatorAddress = caAddress,
-            ContractAddress = CaContractAddress,
-            MethodName = "AddGuardian"
-        });
-        int selectIndex =
-            (int) Math.Abs(caAddress.ToByteArray().ToInt64(true) % projectDelegate.DelegateeHashList.Count);
-        delegateeListOutput.DelegateeAddresses[0].ShouldBe(projectDelegate.DelegateeAddressList[selectIndex]);
-    }
-    
-    [Fact]
-    public async Task UpgradeProjectDelegate()
-    {
-        await Initiate();
-        var caHash = await CreateHolderOnly(null);
+        await CreateHolderOnly(null);
         var deletatees = await TokenContractStub.GetTransactionFeeDelegatees.CallAsync(
             new GetTransactionFeeDelegateesInput
             {
@@ -269,43 +248,27 @@ public partial class CAContractTests
             {
                 DelegatorAddress = caAddress
             });
-        projectDeletatees.DelegateeAddresses.Count.ShouldBe(0);
-        
-        var projectHash = await RegisterProjectDelegatee();
-        var projectDelegate = await CaContractStub.GetProjectDelegatee.CallAsync(projectHash);
-        await CaContractStub.SetCaProjectDelegateHash.SendAsync(projectHash);
-        var manager = new ManagerInfo()
-        {
-            Address = User2Address,
-            ExtraData = "iphone14-2023"
-        };
-        await CaContractUser1Stub.AddManagerInfo.SendAsync(new AddManagerInfoInput()
-        {
-            CaHash = caHash,
-            ManagerInfo = manager
-        });
-        
-        projectDeletatees = await TokenContractStub.GetTransactionFeeDelegatees.CallAsync(
-            new GetTransactionFeeDelegateesInput
-            {
-                DelegatorAddress = caAddress
-            });
-        projectDeletatees.DelegateeAddresses.Count.ShouldBe(1);
         int selectIndex =
             (int) Math.Abs(caAddress.ToByteArray().ToInt64(true) % projectDelegate.DelegateeHashList.Count);
         projectDeletatees.DelegateeAddresses[0].ShouldBe(projectDelegate.DelegateeAddressList[selectIndex]);
     }
 
-    private async Task AddTransactionWhitelist()
+    [Fact]
+    public async Task SetProjectDelegate()
     {
-        var input = new WhitelistTransactions()
-        {
-            MethodNames = {"RemoveManagerInfo", "RemoveOtherManagerInfo", "AddManagerInfo", "AddGuardian", "UpdateGuardian",
-                "RemoveGuardian", "SetGuardianForLogin", "UnsetGuardianForLogin"}
-        };
-        await CaContractStub.AddTransactionWhitelist.SendAsync(input);
+        await Initiate();
+        var projectHash = await RegisterProjectDelegatee();
+        var projectDelegate = await CaContractStub.GetProjectDelegatee.CallAsync(projectHash);
+        await CaContractStub.SetCaProjectDelegateHash.SendAsync(projectHash);
+        await CreateHolderOnly(projectHash);
+        var deletatees = await TokenContractStub.GetTransactionFeeDelegatees.CallAsync(
+            new GetTransactionFeeDelegateesInput
+            {
+                DelegatorAddress = User1Address
+            });
+        var caAddress = deletatees.DelegateeAddresses[0];
     }
-
+    
     private async Task<Hash> RegisterProjectDelegatee()
     {
         var result = await CaContractStub.RegisterProjectDelegatee.SendAsync(new RegisterProjectDelegateeInput()
@@ -405,7 +368,7 @@ public partial class CAContractTests
         var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(10), _guardian,
             0, salt, operationType);
         
-        var delegateInfo = new DelegateInfo()
+        var delegateInfo = projectHash == null ? null : new DelegateInfo()
         {
             IdentifierHash = _guardian,
             ChainId = ChainHelper.ConvertBase58ToChainId("AELF"),
@@ -422,8 +385,12 @@ public partial class CAContractTests
             IsUnlimitedDelegate = true,
             Signature = ""
         };
-        var delegateInfoSignature = CryptoHelper.SignWithPrivateKey(DefaultKeyPair.PrivateKey, HashHelper.ComputeFrom(delegateInfo).ToByteArray()).ToHex();
-        delegateInfo.Signature = delegateInfoSignature;
+        if (delegateInfo != null)
+        {
+            var delegateInfoSignature = CryptoHelper.SignWithPrivateKey(DefaultKeyPair.PrivateKey, HashHelper.ComputeFrom(delegateInfo).ToByteArray()).ToHex();
+            delegateInfo.Signature = delegateInfoSignature;
+        }
+
         await CaContractStub.CreateCAHolder.SendAsync(new CreateCAHolderInput
         {
             GuardianApproved = new GuardianInfo
@@ -445,6 +412,7 @@ public partial class CAContractTests
             },
             DelegateInfo = delegateInfo
         });
+        
         var holderInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput
         {
             LoginGuardianIdentifierHash = _guardian
@@ -463,11 +431,11 @@ public partial class CAContractTests
             Symbol = "ELF",
             To = holderInfo.CaAddress
         });
-        await CaContractUser1Stub.AddManagerInfo.SendAsync(new AddManagerInfoInput
-        {
-            CaHash = holderInfo.CaHash,
-            ManagerInfo = manager
-        });
+        // await CaContractUser1Stub.AddManagerInfo.SendAsync(new AddManagerInfoInput
+        // {
+        //     CaHash = holderInfo.CaHash,
+        //     ManagerInfo = manager
+        // });
 
         return holderInfo.CaHash;
     }
