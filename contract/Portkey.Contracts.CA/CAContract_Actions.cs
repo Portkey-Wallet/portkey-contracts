@@ -96,7 +96,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         SetDelegator(holderId, input.ManagerInfo);
 
         var caAddress = Context.ConvertVirtualAddressToContractAddress(holderId);
-        SetProjectDelegator(caAddress);
+        SetProjectDelegatee(holderId, input.DelegateInfo);
 
         // Log Event
         Context.Fire(new CAHolderCreated

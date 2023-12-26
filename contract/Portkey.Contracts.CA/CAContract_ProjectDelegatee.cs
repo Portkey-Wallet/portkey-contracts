@@ -152,7 +152,6 @@ public partial class CAContract
 
     private void SetProjectDelegatee(Hash caHash, DelegateInfo delegateInfo)
     {
-        var holderInfo = State.HolderInfoMap[caHash];
         if (delegateInfo == null || delegateInfo.ChainId != Context.ChainId || State.GuardianMap[delegateInfo.IdentifierHash] != caHash ||
             delegateInfo.Timestamp.AddSeconds(delegateInfo.ExpirationTime) < Context.CurrentBlockTime ||
             delegateInfo.Delegations.Count == 0 || string.IsNullOrWhiteSpace(delegateInfo.Signature))

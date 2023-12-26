@@ -59,8 +59,6 @@ public partial class CAContract
         State.GuardianMap[loginGuardian.IdentifierHash] = input.CaHash;
 
         var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
-        UpgradeProjectDelegatee(caAddress, holderInfo.ManagerInfos);
-
         Context.Fire(new LoginGuardianAdded
         {
             CaHash = input.CaHash,
@@ -150,9 +148,7 @@ public partial class CAContract
                 Manager = Context.Sender
             });
         }
-
-        UpgradeProjectDelegatee(caAddress, holderInfo.ManagerInfos);
-
+        
         return new Empty();
     }
 

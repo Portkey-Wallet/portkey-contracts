@@ -122,7 +122,6 @@ public partial class CAContract
         SetDelegators(holderId, managerInfosToAdd);
 
         var caAddress = Context.ConvertVirtualAddressToContractAddress(holderId);
-        UpgradeProjectDelegatee(caAddress, holderInfo.ManagerInfos);
 
         var loginGuardiansAdded = SyncLoginGuardianAdded(transactionInput.CaHash, transactionInput.LoginGuardians);
         var loginGuardiansUnbound =

@@ -54,8 +54,6 @@ public partial class CAContract
         State.HolderInfoMap[input.CaHash].GuardianList?.Guardians.Add(guardianAdded);
 
         var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
-        UpgradeProjectDelegatee(caAddress, holderInfo.ManagerInfos);
-
         Context.Fire(new GuardianAdded
         {
             CaHash = input.CaHash,
@@ -115,7 +113,6 @@ public partial class CAContract
         }
 
         var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
-        UpgradeProjectDelegatee(caAddress, holderInfo.ManagerInfos);
 
         Context.Fire(new GuardianRemoved
         {
@@ -190,7 +187,6 @@ public partial class CAContract
         }
 
         var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
-        UpgradeProjectDelegatee(caAddress, holderInfo.ManagerInfos);
 
         Context.Fire(new GuardianUpdated
         {
