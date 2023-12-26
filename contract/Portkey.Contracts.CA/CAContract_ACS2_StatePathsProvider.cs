@@ -35,7 +35,7 @@ public partial class CAContract
                 var resource = Context.Call<ResourceInfo>(txn.From, args.ContractAddress, nameof(GetResourceInfo),
                     transaction.ToByteString());
                 // add fee path
-                AddPathForTransactionFee(resource, txn.From.ToBase58(), txn.MethodName);
+                AddPathForTransactionFee(resource, txn.From.ToString(), txn.MethodName);
                 AddPathForTransactionFeeFreeAllowance(resource, txn.From);
                 AddPathForDelegatees(resource, txn.From, txn.To, txn.MethodName);
                 // handle transfer 
@@ -43,22 +43,28 @@ public partial class CAContract
                     args.ContractAddress == State.TokenContract.Value)
                 {
                     var transferInput = TransferInput.Parser.ParseFrom(args.Args);
-                    resource.ReadPaths.Add(GetPath(nameof(State.HolderInfoMap), args.CaHash.ToHex()));
+                    resource.ReadPaths.Add(GetPath(nameof(State.HolderInfoMap), args.CaHash.ToString()));
                     resource.ReadPaths.Add(GetPath(nameof(State.TransferSecurityThresholdList)));
                     resource.ReadPaths.Add(GetPath(nameof(State.TokenInitialTransferLimit)));
                     resource.ReadPaths.Add(GetPath(nameof(State.TokenDefaultTransferLimit),
                         transferInput.Symbol));
                     resource.ReadPaths.Add(GetPath(nameof(State.CheckChainIdInSignatureEnabled)));
                     resource.ReadPaths.Add(GetPath(nameof(State.ForbiddenForwardCallContractMethod),
-                        args.ContractAddress.ToBase58(), args.MethodName));
+                        args.ContractAddress.ToString(), args.MethodName));
+                    resource.ReadPaths.Add(GetPath(nameof(State.TransferLimit),
+                        args.CaHash.ToString(), transferInput.Symbol));
+                    resource.ReadPaths.Add(GetPath(nameof(State.VerifiersServerList)));
                     foreach (var guardian in args.GuardiansApproved)
                     {
                         resource.WritePaths.Add(
                             GetPath(nameof(State.VerifierDocMap), GetVerifierId(guardian)));
+
+                        resource.ReadPaths.Add(
+                            GetPath(nameof(State.RemovedToCurrentVerifierIdMap), GetVerificationInfoId(guardian)));
                     }
 
                     resource.WritePaths.Add(
-                        GetPath(nameof(State.DailyTransferredAmountMap), args.CaHash.ToHex(), transferInput.Symbol));
+                        GetPath(nameof(State.DailyTransferredAmountMap), args.CaHash.ToString(), transferInput.Symbol));
                 }
 
                
@@ -234,7 +240,12 @@ public partial class CAContract
 
     private string GetVerifierId(GuardianInfo guardianInfo)
     {
-        return HashHelper.ComputeFrom(guardianInfo.VerificationInfo.Signature.ToByteArray()).ToHex();
+        return HashHelper.ComputeFrom(guardianInfo.VerificationInfo.Signature.ToByteArray()).ToString();
+    }
+
+    private string GetVerificationInfoId(GuardianInfo guardianInfo)
+    {
+        return guardianInfo.VerificationInfo.Id.ToString();
     }
 
 
