@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using AElf;
@@ -23,7 +24,8 @@ public partial class CAContract
         Assert(State.ProjectDelegateInfo[projectHash] == null, "Project Hash existed.");
         var projectDelegateInfo = new ProjectDelegateInfo
         {
-            ProjectController = Context.Sender
+            ProjectController = Context.Sender,
+            Signer = input.Signer
         };
         var distinctSalt = input.Salts.DistinctBy(s => s).ToList();
         foreach (var salt in distinctSalt)
@@ -165,7 +167,7 @@ public partial class CAContract
         }
 
         var cloneDelegateInfo = delegateInfo.Clone();
-        cloneDelegateInfo.Signature = null;
+        cloneDelegateInfo.Signature = "";
         var recoverPublicKey = Context.RecoverPublicKey(ByteStringHelper.FromHexString(delegateInfo.Signature).ToByteArray(),
             ByteStringHelper.FromHexString(HashHelper.ComputeFrom(cloneDelegateInfo).ToHex()).ToByteArray());
         var signer = Address.FromPublicKey(recoverPublicKey);
@@ -174,9 +176,14 @@ public partial class CAContract
             return;
         }
         
-        var selectIndex = (int)Context.ConvertVirtualAddressToContractAddress(caHash).ToByteArray().ToInt64(true) %
-                          projectDelegateInfo.DelegateeHashList.Count;
+        var selectIndex = (int)Math.Abs(Context.ConvertVirtualAddressToContractAddress(caHash).ToByteArray().ToInt64(true) %
+                          projectDelegateInfo.DelegateeHashList.Count);
         var delegateInfoList = new RepeatedField<AElf.Contracts.MultiToken.DelegateInfo>();
+        if (State.DelegateWhitelistTransactions.Value == null)
+        {
+            return;
+        }
+
         foreach (var methodName in State.DelegateWhitelistTransactions.Value.MethodNames)
         {
             delegateInfoList.Add(new AElf.Contracts.MultiToken.DelegateInfo

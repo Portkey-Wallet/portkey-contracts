@@ -34,6 +34,8 @@ public partial class CAContractTests
     private Hash _verifierId4;
     private const string ImageUrl = "https://portkey-did.s3.ap-northeast-1.amazonaws.com/img/Portkey.png";
     private const string Salt = "salt";
+    private const string MainChainId = "AELF";
+    private const int IntMainChainId = 9992731;
 
     public CAContractTests()
     {
@@ -54,7 +56,7 @@ public partial class CAContractTests
         }
 
         var data =
-            $"{type},{guardianType.ToHex()},{verificationTime},{verifierAddress.ToBase58()},{salt},{operationType}";
+            $"{type},{guardianType.ToHex()},{verificationTime},{verifierAddress.ToBase58()},{salt},{operationType},{IntMainChainId}";
         var dataHash = HashHelper.ComputeFrom(data);
         var signature = CryptoHelper.SignWithPrivateKey(verifier.PrivateKey, dataHash.ToByteArray());
         return ByteStringHelper.FromHexString(signature.ToHex());
