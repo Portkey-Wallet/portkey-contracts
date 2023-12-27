@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using AElf.Contracts.MultiToken;
+using AElf.Standards.ACS3;
 using AElf.Types;
 using Google.Protobuf;
 using Shouldly;
@@ -50,6 +51,24 @@ public class CAContractParallelTest : CAContractTestBase
             {
                 ContractAddress = TokenContractAddress,
                 MethodName = nameof(TokenContractStub.Transfer),
+                IsParallel = true
+            });
+        result.TransactionResult.Status.ShouldBe(TransactionResultStatus.Mined);
+
+        result = await CaContractStub.SetManagerForwardCallParallelInfo.SendAsync(
+            new SetManagerForwardCallParallelInfoInput
+            {
+                ContractAddress = TokenContractAddress,
+                MethodName = nameof(TokenContractStub.TransferFrom),
+                IsParallel = true
+            });
+        result.TransactionResult.Status.ShouldBe(TransactionResultStatus.Mined);
+        
+        result = await CaContractStub.SetManagerForwardCallParallelInfo.SendAsync(
+            new SetManagerForwardCallParallelInfoInput
+            {
+                ContractAddress = VerifierAddress,
+                MethodName = nameof(AuthorizationContractContainer.AuthorizationContractStub.Approve),
                 IsParallel = true
             });
         result.TransactionResult.Status.ShouldBe(TransactionResultStatus.Mined);
