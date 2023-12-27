@@ -27,7 +27,23 @@ public class CAContractParallelTest : CAContractTestBase
     public async Task SetManagerForwardCallParallel_Test()
     {
         await Init();
-        var result = await CaContractStub.SetManagerForwardCallParallelInfo.SendWithExceptionAsync(
+        await TokenContractStub.Transfer.SendAsync(new TransferInput
+        {
+            Amount = 1000000000000,
+            Symbol = "ELF",
+            To = Accounts[1].Address
+        });
+        var result = await CaContractStubManagerInfo1.SetManagerForwardCallParallelInfo.SendWithExceptionAsync(
+            new SetManagerForwardCallParallelInfoInput
+            {
+                ContractAddress = TokenContractAddress,
+                MethodName = nameof(TokenContractStub.Transfer),
+                IsParallel = true
+            });
+        ;
+        result.TransactionResult.Error.ShouldContain("No permission");
+
+        result = await CaContractStub.SetManagerForwardCallParallelInfo.SendWithExceptionAsync(
             new SetManagerForwardCallParallelInfoInput
             {
                 MethodName = "transfer"
