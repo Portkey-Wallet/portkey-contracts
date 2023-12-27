@@ -2,7 +2,6 @@ using System.Linq;
 using AElf;
 using AElf.Contracts.MultiToken;
 using AElf.Types;
-using Google.Protobuf;
 using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
 
@@ -43,8 +42,17 @@ public partial class CAContract
         var addDelegateeHashList = new RepeatedField<Hash>();
         foreach (var salt in distinctSalt)
         {
-            addDelegateeHashList.Add(HashHelper.ConcatAndCompute(HashHelper.ComputeFrom(salt), input.ProjectHash));
+            var delegateeHash = HashHelper.ConcatAndCompute(HashHelper.ComputeFrom(salt), input.ProjectHash);
+            if (!projectDelegateInfo.DelegateeHashList.Contains(delegateeHash))
+            {
+                addDelegateeHashList.Add(delegateeHash);
+            }
         }
+        if (addDelegateeHashList.Count == 0)
+        {
+            return new Empty();
+        }
+
         projectDelegateInfo.DelegateeHashList.AddRange(addDelegateeHashList);
         return new Empty();
     }
@@ -101,14 +109,13 @@ public partial class CAContract
         Assert(projectDelegateInfo != null, "ProjectDelegateInfo not existed.");
         Assert(Context.Sender == projectDelegateInfo.ProjectController, "No permission.");
         Assert(projectDelegateInfo.DelegateeHashList.FirstOrDefault(d => d == input.DelegateeHash) != null, "Delegatee hash not existed.");
-        Context.SendVirtualInline(input.DelegateeHash, State.TokenContract.Value, nameof(State.TokenContract.Transfer),
-            new TransferInput()
-            {
-                To = Context.Sender,
-                Amount = input.Amount,
-                Symbol = CAContractConstants.ELFTokenSymbol,
-                Memo = "Withdraw Project Delegatee Token"
-            }.ToByteString());
+        State.TokenContract.Transfer.VirtualSend(input.DelegateeHash, new TransferInput()
+        {
+            To = Context.Sender,
+            Amount = input.Amount,
+            Symbol = CAContractConstants.ELFTokenSymbol,
+            Memo = "Withdraw Project Delegatee Token"
+        });
         return new Empty();
     }
 
