@@ -26,7 +26,26 @@ public class CAContractParallelTest : CAContractTestBase
     public async Task SetManagerForwardCallParallel_Test()
     {
         await Init();
-        var result = await CaContractStub.SetManagerForwardCallParallelInfo.SendAsync(
+        var result = await CaContractStub.SetManagerForwardCallParallelInfo.SendWithExceptionAsync(
+            new SetManagerForwardCallParallelInfoInput
+            {
+                MethodName = "transfer"
+            });
+        result.TransactionResult.Error.ShouldContain("Invalid input.");
+        result = await CaContractStub.SetManagerForwardCallParallelInfo.SendWithExceptionAsync(
+            new SetManagerForwardCallParallelInfoInput
+            {
+                ContractAddress = TokenContractAddress,
+            });
+        result.TransactionResult.Error.ShouldContain("Invalid input.");
+        result = await CaContractStub.SetManagerForwardCallParallelInfo.SendAsync(
+            new SetManagerForwardCallParallelInfoInput
+            {
+                ContractAddress = TokenContractAddress,
+                MethodName = nameof(TokenContractStub.Transfer),
+            });
+        result.TransactionResult.Status.ShouldBe(TransactionResultStatus.Mined);
+        result = await CaContractStub.SetManagerForwardCallParallelInfo.SendAsync(
             new SetManagerForwardCallParallelInfoInput
             {
                 ContractAddress = TokenContractAddress,
