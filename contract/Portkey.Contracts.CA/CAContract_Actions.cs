@@ -153,8 +153,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
             [CAContractConstants.ELFTokenSymbol] = CAContractConstants.CADelegationAmount
         };
 
-        Context.SendVirtualInline(holderId, State.TokenContract.Value,
-            nameof(State.TokenContract.SetTransactionFeeDelegations),
+        State.TokenContract.SetTransactionFeeDelegations.VirtualSend(holderId,
             new SetTransactionFeeDelegationsInput
             {
                 DelegatorAddress = managerInfo.Address,
@@ -175,8 +174,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
 
     private void RemoveDelegator(Hash holderId, ManagerInfo managerInfo)
     {
-        Context.SendVirtualInline(holderId, State.TokenContract.Value,
-            nameof(State.TokenContract.RemoveTransactionFeeDelegator),
+        State.TokenContract.RemoveTransactionFeeDelegator.VirtualSend(holderId,
             new RemoveTransactionFeeDelegatorInput
             {
                 DelegatorAddress = managerInfo.Address
@@ -251,12 +249,9 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         {
             State.CAContractAddresses[caContractAddress.ChainId] = caContractAddress.Address;
         }
-
         return new Empty();
     }
     
-    
-
     public override Empty SetCreateHolderEnabled(SetCreateHolderEnabledInput input)
     {
         Assert(State.Admin.Value == Context.Sender, "No permission");

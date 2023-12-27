@@ -332,15 +332,15 @@ public partial class CAContract
         };
         
         var selectIndex = (int)Math.Abs(delegatorAddress.ToByteArray().ToInt64(true) % projectDelegateInfo.DelegateeHashList.Count);
-        Context.SendVirtualInline(projectDelegateInfo.DelegateeHashList[selectIndex], State.TokenContract.Value,
-            nameof(State.TokenContract.SetTransactionFeeDelegations), new SetTransactionFeeDelegationsInput
+        State.TokenContract.SetTransactionFeeDelegations.VirtualSend(projectDelegateInfo.DelegateeHashList[selectIndex],
+            new SetTransactionFeeDelegationsInput
             {
                 DelegatorAddress = delegatorAddress,
                 Delegations =
                 {
                     delegations
                 }
-            }.ToByteString());
+            });
     }
 
     private bool IfCaHasProjectDelegatee(Address delegatorAddress)
@@ -349,13 +349,7 @@ public partial class CAContract
         {
             DelegatorAddress = delegatorAddress
         });
-        foreach (var delegateeHash in State.ProjectDelegateInfo[State.CaProjectDelegateHash.Value].DelegateeHashList)
-        {
-            if (delegateeList.DelegateeAddresses.Contains(Context.ConvertVirtualAddressToContractAddress(delegateeHash)))
-            {
-                return true;
-            }
-        }
-        return false;
+        return State.ProjectDelegateInfo[State.CaProjectDelegateHash.Value].DelegateeHashList.Any(delegateeHash =>
+            delegateeList.DelegateeAddresses.Contains(Context.ConvertVirtualAddressToContractAddress(delegateeHash)));
     }
 }
