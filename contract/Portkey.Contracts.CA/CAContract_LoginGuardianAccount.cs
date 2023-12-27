@@ -46,7 +46,7 @@ public partial class CAContract
             return new Empty();
         }
 
-        Assert(isOccupied == LoginGuardianStatus.IsOccupiedByOthers,
+        Assert(isOccupied == LoginGuardianStatus.IsNotOccupied,
             "Internal error, how can it be?");
 
         var guardian = holderInfo.GuardianList!.Guardians.FirstOrDefault(t =>
