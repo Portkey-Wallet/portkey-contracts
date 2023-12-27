@@ -329,7 +329,7 @@ public partial class CAContract
         {
             [CAContractConstants.ELFTokenSymbol] = State.SecondaryDelegationFee.Value.Amount
         };
-        // Randomly select a proxy based on the address
+        // Randomly select a delegatee based on the address
         var selectIndex = (int)Math.Abs(delegatorAddress.ToByteArray().ToInt64(true) % projectDelegateInfo.DelegateeHashList.Count);
         State.TokenContract.SetTransactionFeeDelegations.VirtualSend(projectDelegateInfo.DelegateeHashList[selectIndex],
             new SetTransactionFeeDelegationsInput
