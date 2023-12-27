@@ -37,16 +37,16 @@ public partial class CAContract
 
         var isOccupied = CheckLoginGuardianIsNotOccupied(loginGuardian, input.CaHash);
 
-        Assert(isOccupied != CAContractConstants.LoginGuardianIsOccupiedByOthers,
+        Assert(isOccupied != LoginGuardianStatus.IsOccupiedByOthers,
             $"The login guardian --{loginGuardian!.IdentifierHash}-- is occupied by others!");
 
         // for idempotent
-        if (isOccupied == CAContractConstants.LoginGuardianIsYours)
+        if (isOccupied == LoginGuardianStatus.IsYours)
         {
             return new Empty();
         }
 
-        Assert(isOccupied == CAContractConstants.LoginGuardianIsNotOccupied,
+        Assert(isOccupied == LoginGuardianStatus.IsOccupiedByOthers,
             "Internal error, how can it be?");
 
         var guardian = holderInfo.GuardianList!.Guardians.FirstOrDefault(t =>
@@ -190,17 +190,17 @@ public partial class CAContract
         return new Empty();
     }
 
-    private int CheckLoginGuardianIsNotOccupied(Guardian guardian, Hash caHash)
+    private LoginGuardianStatus CheckLoginGuardianIsNotOccupied(Guardian guardian, Hash caHash)
     {
         var result = State.LoginGuardianMap[guardian.IdentifierHash][guardian.VerifierId];
         if (result == null)
         {
-            return CAContractConstants.LoginGuardianIsNotOccupied;
+            return LoginGuardianStatus.IsNotOccupied;
         }
 
         return result == caHash
-            ? CAContractConstants.LoginGuardianIsYours
-            : CAContractConstants.LoginGuardianIsOccupiedByOthers;
+            ? LoginGuardianStatus.IsYours
+            : LoginGuardianStatus.IsOccupiedByOthers;
     }
 
     public override Empty SetLoginGuardianCheckGuardianApprovedEnabled(SetLoginGuardianCheckGuardianApprovedEnabledInput input)
