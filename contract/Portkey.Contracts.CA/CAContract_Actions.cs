@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using AElf;
 using AElf.Contracts.MultiToken;
 using AElf.Sdk.CSharp;
@@ -38,6 +37,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
     /// <returns></returns>
     public override Empty CreateCAHolder(CreateCAHolderInput input)
     {
+        Assert(State.CreateHolderEnabled.Value, "Register already disable.");
         //Assert(Context.Sender == State.RegisterOrRecoveryController.Value,"No permission.");
         Assert(State.CreatorControllers.Value.Controllers.Contains(Context.Sender), "No permission");
         Assert(input != null, "Invalid input.");
@@ -97,7 +97,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         SetDelegator(holderId, input.ManagerInfo);
 
         var caAddress = Context.ConvertVirtualAddressToContractAddress(holderId);
-        SetSecondaryDelegator(caAddress);
+        SetProjectDelegator(caAddress);
 
         // Log Event
         Context.Fire(new CAHolderCreated
@@ -153,8 +153,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
             [CAContractConstants.ELFTokenSymbol] = CAContractConstants.CADelegationAmount
         };
 
-        Context.SendVirtualInline(holderId, State.TokenContract.Value,
-            nameof(State.TokenContract.SetTransactionFeeDelegations),
+        State.TokenContract.SetTransactionFeeDelegations.VirtualSend(holderId,
             new SetTransactionFeeDelegationsInput
             {
                 DelegatorAddress = managerInfo.Address,
@@ -175,8 +174,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
 
     private void RemoveDelegator(Hash holderId, ManagerInfo managerInfo)
     {
-        Context.SendVirtualInline(holderId, State.TokenContract.Value,
-            nameof(State.TokenContract.RemoveTransactionFeeDelegator),
+        State.TokenContract.RemoveTransactionFeeDelegator.VirtualSend(holderId,
             new RemoveTransactionFeeDelegatorInput
             {
                 DelegatorAddress = managerInfo.Address
@@ -190,29 +188,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
             RemoveDelegator(holderId, managerInfo);
         }
     }
-
-    private void SetSecondaryDelegator(Address delegatorAddress)
-    {
-        State.SecondaryDelegationFee.Value ??= new SecondaryDelegationFee
-        {
-            Amount = CAContractConstants.DefaultSecondaryDelegationFee
-        };
-
-        var delegations = new Dictionary<string, long>
-        {
-            [CAContractConstants.ELFTokenSymbol] = State.SecondaryDelegationFee.Value.Amount
-        };
-
-        State.TokenContract.SetTransactionFeeDelegations.Send(new SetTransactionFeeDelegationsInput
-        {
-            DelegatorAddress = delegatorAddress,
-            Delegations =
-            {
-                delegations
-            }
-        });
-    }
-
+    
     private void RemoveContractDelegators(RepeatedField<ManagerInfo> managerInfos)
     {
         foreach (var managerInfo in managerInfos)
@@ -273,7 +249,21 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         {
             State.CAContractAddresses[caContractAddress.ChainId] = caContractAddress.Address;
         }
-
         return new Empty();
+    }
+    
+    public override Empty SetCreateHolderEnabled(SetCreateHolderEnabledInput input)
+    {
+        Assert(State.Admin.Value == Context.Sender, "No permission");
+        State.CreateHolderEnabled.Value = input.CreateHolderEnabled;
+        return new Empty();
+    }
+
+    public override GetCreateHolderEnabledOutput GetCreateHolderEnabled(Empty input)
+    {
+        return new GetCreateHolderEnabledOutput()
+        {
+            CreateHolderEnabled = State.CreateHolderEnabled.Value
+        };
     }
 }

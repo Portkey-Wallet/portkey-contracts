@@ -60,11 +60,11 @@ public partial class CAContract
             "The amount of ManagerInfos out of limit");
 
         var caAddress = Context.ConvertVirtualAddressToContractAddress(caHash);
-        UpgradeSecondaryDelegatee(caAddress,holderInfo.ManagerInfos);
+        UpgradeProjectDelegatee(caAddress,holderInfo.ManagerInfos);
         
         State.HolderInfoMap[caHash].ManagerInfos.Add(input.ManagerInfo);
         SetDelegator(caHash, input.ManagerInfo);
-        
+
         Context.Fire(new ManagerInfoSocialRecovered()
         {
             CaHash = caHash,
@@ -91,7 +91,7 @@ public partial class CAContract
             "The amount of ManagerInfos out of limit");
 
         var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
-        UpgradeSecondaryDelegatee(caAddress, holderInfo.ManagerInfos);
+        UpgradeProjectDelegatee(caAddress, holderInfo.ManagerInfos);
         
         holderInfo.ManagerInfos.Add(input.ManagerInfo);
         SetDelegator(input.CaHash, input.ManagerInfo);
@@ -159,9 +159,9 @@ public partial class CAContract
         {
             return new Empty();
         }
-        
+
         var caAddress = Context.ConvertVirtualAddressToContractAddress(caHash);
-        UpgradeSecondaryDelegatee(caAddress, holderInfo.ManagerInfos);
+        UpgradeProjectDelegatee(caAddress, holderInfo.ManagerInfos);
         
         holderInfo.ManagerInfos.Remove(managerInfo);
         RemoveDelegator(caHash, managerInfo);
@@ -188,7 +188,7 @@ public partial class CAContract
         var managerInfosToUpdate = input.ManagerInfos.Distinct().ToList();
 
         var managerInfoList = holderInfo.ManagerInfos;
-        
+
         var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
 
         foreach (var manager in managerInfosToUpdate)
@@ -210,7 +210,7 @@ public partial class CAContract
             });
         }
         
-        UpgradeSecondaryDelegatee(caAddress, holderInfo.ManagerInfos);
+        UpgradeProjectDelegatee(caAddress, holderInfo.ManagerInfos);
 
         return new Empty();
     }
@@ -249,11 +249,10 @@ public partial class CAContract
             input.ContractAddress == State.TokenContract.Value)
         {
             var transferInput = TransferInput.Parser.ParseFrom(input.Args);
-            Assert(IsTransferSecurity(input.CaHash), "Low transfer security level.");
-            UpdateDailyTransferredAmount(input.CaHash, transferInput.Symbol, transferInput.Amount);
+            UpdateDailyTransferredAmount(input.CaHash, input.GuardiansApproved, transferInput.Symbol, transferInput.Amount);
         }
 
-        Context.SendVirtualInline(input.CaHash, input.ContractAddress, input.MethodName, input.Args);
+        Context.SendVirtualInline(input.CaHash, input.ContractAddress, input.MethodName, input.Args, true);
         return new Empty();
     }
 
@@ -262,8 +261,7 @@ public partial class CAContract
         Assert(input.CaHash != null, "CA hash is null.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
         Assert(input.To != null && !string.IsNullOrWhiteSpace(input.Symbol), "Invalid input.");
-        Assert(IsTransferSecurity(input.CaHash), "Low transfer security level.");
-        UpdateDailyTransferredAmount(input.CaHash, input.Symbol, input.Amount);
+        UpdateDailyTransferredAmount(input.CaHash, input.GuardiansApproved, input.Symbol, input.Amount);
         Context.SendVirtualInline(input.CaHash, State.TokenContract.Value, nameof(State.TokenContract.Transfer),
             new TransferInput
             {
@@ -271,7 +269,7 @@ public partial class CAContract
                 Amount = input.Amount,
                 Symbol = input.Symbol,
                 Memo = input.Memo
-            }.ToByteString());
+            }.ToByteString(), true);
         return new Empty();
     }
 
@@ -290,7 +288,7 @@ public partial class CAContract
                 Amount = input.Amount,
                 Symbol = input.Symbol,
                 Memo = input.Memo
-            }.ToByteString());
+            }.ToByteString(), true);
         return new Empty();
     }
 
@@ -309,7 +307,7 @@ public partial class CAContract
                 Spender = input.Spender,
                 Amount = input.Amount,
                 Symbol = input.Symbol,
-            }.ToByteString());
+            }.ToByteString(), true);
         Context.Fire(new ManagerApproved
         {
             CaHash = input.CaHash,

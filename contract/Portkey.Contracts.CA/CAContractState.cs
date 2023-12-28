@@ -11,6 +11,7 @@ public partial class CAContractState : ContractState
     // public SingletonState<Address> RegisterOrRecoveryController { get; set; }
     //
     // public SingletonState<Address> SetConfigController { get; set; }
+    public SingletonState<bool> CreateHolderEnabled { get; set; }
 
     /// <summary>
     /// Login Guardian identifier hash  -> Verifier Id -> HolderInfo Hash
@@ -66,6 +67,8 @@ public partial class CAContractState : ContractState
     public MappedState<string, TransferLimit> TokenDefaultTransferLimit { get; set; }
     public MappedState<Address, string, bool> ForbiddenForwardCallContractMethod { get; set; }
     public SingletonState<bool> CheckChainIdInSignatureEnabled { get; set; }
-    
     public SingletonState<SecondaryDelegationFee> SecondaryDelegationFee { get; set; }
+    public MappedState<Hash, ProjectDelegateInfo> ProjectDelegateInfo { get; set; }
+    public SingletonState<Hash> CaProjectDelegateHash { get; set; }
+    public SingletonState<bool> LoginGuardianCheckGuardianApprovedEnabled { get; set; }
 }

@@ -38,7 +38,6 @@
         <ContractReference Include="..\..\protobuf\association_contract.proto">
             <Link>Protobuf\Proto\association_contract.proto</Link>
         </ContractReference>
-
     </ItemGroup>
     
     <ItemGroup>

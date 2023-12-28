@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using AElf;
 using AElf.Contracts.MultiToken;
 using AElf.Types;
 using Google.Protobuf.Collections;
@@ -279,14 +280,176 @@ public partial class CAContractTests
         result.CheckChainIdInSignatureEnabled.ShouldBeTrue();
     }
 
+    [Fact]
+    public async Task UpdateDailyTransferredAmount_TransferAddGuardianApproveTest()
+    {
+        await InitTransferLimitTest();
+        await TokenContractStub.Transfer.SendAsync(new TransferInput
+        {
+            Amount = 1000000000000,
+            Symbol = "ELF",
+            To = User1Address
+        });
+        var managerForwardCallVerifyTime = DateTime.UtcNow;
+        var salt = Guid.NewGuid().ToString("N");
+        var managerForwardCallOpType = Convert.ToInt32(OperationType.GuardianApproveTransfer).ToString();
+        var managerForwardCallSign = GenerateSignature(VerifierKeyPair, VerifierAddress, managerForwardCallVerifyTime,
+            _guardian, 0, salt, managerForwardCallOpType);
+
+        var input = new ManagerForwardCallInput
+        {
+            CaHash = _transferLimitTestCaHash,
+            ContractAddress = TokenContractAddress,
+            MethodName = nameof(TokenContractContainer.TokenContractStub.Transfer),
+            Args = new TransferInput
+            {
+                To = User2Address,
+                Symbol = "ELF",
+                Amount = 10000,
+                Memo = "ca transfer."
+            }.ToBytesValue().Value,
+            GuardiansApproved =
+            {
+                new GuardianInfo
+                {
+                    IdentifierHash = _guardian,
+                    Type = GuardianType.OfEmail,
+                    VerificationInfo = new VerificationInfo
+                    {
+                        Id = _verifierServers[0].Id,
+                        Signature = managerForwardCallSign,
+                        VerificationDoc =
+                            $"{0},{_guardian.ToHex()},{managerForwardCallVerifyTime},{VerifierAddress.ToBase58()},{salt},{managerForwardCallOpType}"
+                    }
+                }
+            },
+        };
+        await CaContractStubManagerInfo1.ManagerForwardCall.SendAsync(input);
+        {
+            var balance = await TokenContractStub.GetBalance.CallAsync(new GetBalanceInput
+            {
+                Owner = User2Address,
+                Symbol = "ELF"
+            });
+            balance.Balance.ShouldBe(10000);
+        }
+    }
+
+    [Fact]
+    public async Task ManagerForwardCall_TransferTest_Failed_NotGuardianInfoList()
+    {
+        await InitTransferLimitTest();
+        await TokenContractStub.Transfer.SendAsync(new TransferInput
+        {
+            Amount = 1000000000000,
+            Symbol = "ELF",
+            To = User1Address
+        });
+
+        var executionResult = await CaContractStubManagerInfo1.ManagerForwardCall.SendWithExceptionAsync(
+            new ManagerForwardCallInput
+            {
+                CaHash = _transferLimitTestCaHash,
+                ContractAddress = TokenContractAddress,
+                MethodName = nameof(TokenContractContainer.TokenContractStub.Transfer),
+                Args = new TransferInput
+                {
+                    To = User2Address,
+                    Symbol = "ELF",
+                    Amount = 10000,
+                    Memo = "ca transfer."
+                }.ToBytesValue().Value,
+                GuardiansApproved = { },
+            });
+        executionResult.TransactionResult.Error.ShouldContain("Low transfer security level");
+    }
+
+
+    [Fact]
+    public async Task UpdateDailyTransferredAmount_ManagerTransferAddGuardianApproveTest()
+    {
+        await InitTransferLimitTest();
+        await TokenContractStub.Transfer.SendAsync(new TransferInput
+        {
+            Amount = 1000000000000,
+            Symbol = "ELF",
+            To = User1Address
+        });
+
+        var managerTransferVerifyTime = DateTime.UtcNow;
+        var salt = Guid.NewGuid().ToString("N");
+        var managerTransferOpType = Convert.ToInt32(OperationType.GuardianApproveTransfer).ToString();
+        var managerTransferSign = GenerateSignature(VerifierKeyPair, VerifierAddress, managerTransferVerifyTime,
+            _guardian, 0, salt, managerTransferOpType);
+
+        await CaContractStubManagerInfo1.ManagerTransfer.SendAsync(new ManagerTransferInput
+        {
+            CaHash = _transferLimitTestCaHash,
+            To = User2Address,
+            Symbol = "ELF",
+            Amount = 10000,
+            Memo = "ca transfer.",
+            GuardiansApproved =
+            {
+                new GuardianInfo
+                {
+                    IdentifierHash = _guardian,
+                    Type = GuardianType.OfEmail,
+                    VerificationInfo = new VerificationInfo
+                    {
+                        Id = _verifierServers[0].Id,
+                        Signature = managerTransferSign,
+                        VerificationDoc =
+                            $"{0},{_guardian.ToHex()},{managerTransferVerifyTime},{VerifierAddress.ToBase58()},{salt},{managerTransferOpType}"
+                    }
+                }
+            }
+        });
+        {
+            var balance = await TokenContractStub.GetBalance.CallAsync(new GetBalanceInput
+            {
+                Owner = User2Address,
+                Symbol = "ELF"
+            });
+            balance.Balance.ShouldBe(10000);
+        }
+    }
+
+    [Fact]
+    public async Task ManagerTransferAddGuardianApproveTest_Failed_NotGuardianInfoList()
+    {
+        await InitTransferLimitTest();
+        await TokenContractStub.Transfer.SendAsync(new TransferInput
+        {
+            Amount = 1000000000000,
+            Symbol = "ELF",
+            To = User1Address
+        });
+
+        var managerTransferVerifyTime = DateTime.UtcNow;
+        var salt = Guid.NewGuid().ToString("N");
+        var managerTransferOpType = Convert.ToInt32(OperationType.GuardianApproveTransfer).ToString();
+        var managerTransferSign = GenerateSignature(VerifierKeyPair, VerifierAddress, managerTransferVerifyTime,
+            _guardian, 0, salt, managerTransferOpType);
+
+        var executionResult = await CaContractStubManagerInfo1.ManagerTransfer.SendWithExceptionAsync(
+            new ManagerTransferInput
+            {
+                CaHash = _transferLimitTestCaHash,
+                To = User2Address,
+                Symbol = "ELF",
+                Amount = 10000,
+                Memo = "ca transfer.",
+                GuardiansApproved = { }
+            });
+        executionResult.TransactionResult.Error.ShouldContain("Low transfer security level");
+    }
+
     private async Task InitTransferLimitTest()
     {
         if (_isInitialized) return;
 
-        await CaContractStub.Initialize.SendAsync(new InitializeInput
-        {
-            ContractAdmin = DefaultAddress,
-        });
+        await Initiate();
 
 
         await InitTestVerifierServer();
@@ -322,12 +485,28 @@ public partial class CAContractTests
             EndPoints = { "127.0.0.1" },
             VerifierAddressList = { VerifierAddress2 }
         });
+        await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
+        {
+            Name = VerifierName3,
+            ImageUrl = "url",
+            EndPoints = { "127.0.0.1" },
+            VerifierAddressList = { VerifierAddress3 }
+        });
+        await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
+        {
+            Name = VerifierName4,
+            ImageUrl = "url",
+            EndPoints = { "127.0.0.1" },
+            VerifierAddressList = { VerifierAddress4 }
+        });
 
         var verifierServers = await CaContractStub.GetVerifierServers.CallAsync(new Empty());
         _verifierServers = verifierServers.VerifierServers;
         _verifierId = _verifierServers[0].Id;
         _verifierId1 = _verifierServers[1].Id;
         _verifierId2 = _verifierServers[2].Id;
+        _verifierId3 = _verifierServers[3].Id;
+        _verifierId4 = _verifierServers[4].Id;
 
         await CaContractStub.AddRemovedToCurrentVerifierIdMapper.SendAsync(
             new AddRemovedToCurrentVerifierIdMapperInput()
@@ -350,6 +529,16 @@ public partial class CAContractTests
                         {
                             RemovedId = _verifierServers[2].Id,
                             CurrentId = _verifierServers[2].Id
+                        },
+                        new()
+                        {
+                            RemovedId = _verifierServers[3].Id,
+                            CurrentId = _verifierServers[3].Id
+                        },
+                        new()
+                        {
+                            RemovedId = _verifierServers[4].Id,
+                            CurrentId = _verifierServers[4].Id
                         }
                     }
                 }

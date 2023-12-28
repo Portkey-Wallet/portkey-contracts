@@ -151,6 +151,7 @@ enum GuardianType {
   GUARDIAN_TYPE_OF_PHONE = 1;
   GUARDIAN_TYPE_OF_GOOGLE = 2;
   GUARDIAN_TYPE_OF_APPLE = 3;
+  GUARDIAN_TYPE_OF_TELEGRAM = 4;
 }
 
 message VerifierServer {
@@ -302,11 +303,15 @@ message UpdateGuardianInput{
 message SetGuardianForLoginInput {
   aelf.Hash ca_hash = 1;
   Guardian guardian = 2;
+  GuardianInfo guardian_to_set_login = 3;
+  repeated GuardianInfo guardians_approved = 4;
 }
 
 message UnsetGuardianForLoginInput {
   aelf.Hash ca_hash = 1;
   Guardian guardian = 2;
+  GuardianInfo guardian_to_unset_login = 3;
+  repeated GuardianInfo guardians_approved = 4;
 }
 
 message ManagerForwardCallInput {
@@ -314,6 +319,7 @@ message ManagerForwardCallInput {
   aelf.Address contract_address = 2;
   string method_name = 3;
   bytes args = 4;
+  repeated ca.GuardianInfo guardians_approved = 5;
 }
 
 message ManagerTransferInput{
@@ -326,6 +332,7 @@ message ManagerTransferInput{
   int64 amount = 4;
   // The memo.
   string memo = 5;
+  repeated ca.GuardianInfo guardians_approved = 6;
 }
 
 message ManagerTransferFromInput{
@@ -656,6 +663,8 @@ enum OperationType {
   SetLoginAccount = 7;
   Approve = 8;
   ModifyTransferLimit = 9;
+  GuardianApproveTransfer = 10;
+  UnSetLoginAccount = 11;
 }
 message SetCAContractAddressesInput {
   repeated CAContractAddress ca_contract_addresses = 1;
