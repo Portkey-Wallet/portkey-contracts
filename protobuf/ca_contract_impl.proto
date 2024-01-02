@@ -10,12 +10,14 @@ import "aelf/options.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 import "ca_contract.proto";
+import "zk_verifier.proto";
 
 option csharp_namespace = "Portkey.Contracts.CA";
 
 service CAContractImpl {
   option (aelf.base) = "acs12.proto";
   option (aelf.base) = "ca_contract.proto";
+    option (aelf.base) = "zk_verifier.proto";
   option (aelf.csharp_state) = "Portkey.Contracts.CA.CAContractState";
   // register disable
   rpc SetCreateHolderEnabled(SetCreateHolderEnabledInput) returns (google.protobuf.Empty) {}

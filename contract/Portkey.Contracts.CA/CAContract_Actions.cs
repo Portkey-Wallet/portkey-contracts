@@ -5,6 +5,7 @@ using AElf.Sdk.CSharp;
 using AElf.Types;
 using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
+using Groth16.Net;
 
 namespace Portkey.Contracts.CA;
 
@@ -59,6 +60,20 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         holderInfo.ManagerInfos.Add(input.ManagerInfo);
         //Check verifier signature.
         var methodName = nameof(CreateCAHolder).ToLower();
+        if (input.GuardianApproved.ZkGuardianInfo != null)
+        {
+            // Check if Zk Issuer exists
+            // Check if Zk Issuer's public key exists and is valid
+            Assert(!string.IsNullOrEmpty(input.GuardianApproved.ZkGuardianInfo.IssuerName),
+                "Issuer name cannot be empty.");
+
+            var issuerPublicKeyList = State.ZkIssuerMap[input.GuardianApproved.ZkGuardianInfo.IssuerName];
+            Assert(issuerPublicKeyList.PublicKeys.Contains(input.GuardianApproved.ZkGuardianInfo.IssuerPubkey),
+                "Issuer doesn't exist or public key is not valid.");
+            Assert(ZkHelpers.VerifyBn254(input.GuardianApproved.ZkGuardianInfo, State.ZkVerifiyingKey.Value.Value),
+                "ZkGuardianInfo is not valid.");
+        }
+
         if (!CheckVerifierSignatureAndDataCompatible(input.GuardianApproved, methodName))
         {
             return new Empty();
@@ -120,10 +135,10 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
 
         return new Empty();
     }
-    
+
     private void AssertCreateChain(HolderInfo holderInfo)
     {
-        Assert(holderInfo.GuardianList != null && holderInfo.GuardianList.Guardians != null && 
+        Assert(holderInfo.GuardianList != null && holderInfo.GuardianList.Guardians != null &&
                holderInfo.GuardianList.Guardians.Count > 0, "Not on registered chain");
         if (holderInfo.CreateChainId > 0)
         {
@@ -188,7 +203,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
             RemoveDelegator(holderId, managerInfo);
         }
     }
-    
+
     private void RemoveContractDelegators(RepeatedField<ManagerInfo> managerInfos)
     {
         foreach (var managerInfo in managerInfos)
@@ -249,9 +264,10 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         {
             State.CAContractAddresses[caContractAddress.ChainId] = caContractAddress.Address;
         }
+
         return new Empty();
     }
-    
+
     public override Empty SetCreateHolderEnabled(SetCreateHolderEnabledInput input)
     {
         Assert(State.Admin.Value == Context.Sender, "No permission");

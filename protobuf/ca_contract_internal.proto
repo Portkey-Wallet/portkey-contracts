@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package ca_internal;
+
+message ZkIssuerList {
+    repeated string issuers = 1; // zk issuer names
+}
+
+message ZkIssuerPublicKeyList {
+    repeated string public_keys = 1; // zk issuer names
+}

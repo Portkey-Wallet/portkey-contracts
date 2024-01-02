@@ -20,6 +20,11 @@
         </CommonMessage>
     </ItemGroup>
     <ItemGroup>
+        <CommonMessage Include="..\..\protobuf\ca_contract_internal.proto">
+            <Link>Protobuf\Proto\ca_contract_internal.proto</Link>
+        </CommonMessage>
+    </ItemGroup>
+    <ItemGroup>
         <ContractReference Include="..\..\protobuf\acs0.proto">
             <Link>Protobuf\Proto\acs0.proto</Link>
         </ContractReference>
@@ -39,7 +44,7 @@
             <Link>Protobuf\Proto\association_contract.proto</Link>
         </ContractReference>
     </ItemGroup>
-    
+
     <ItemGroup>
         <ContractBase Include="..\..\protobuf\acs12.proto">
             <Link>Protobuf\Proto\reference\acs12.proto</Link>
@@ -51,10 +56,17 @@
             <Link>Protobuf\Proto\ca_contract.proto</Link>
         </ContractBase>
     </ItemGroup>
-
     <ItemGroup>
-      <ContractCode Include="..\..\protobuf\ca_contract_impl.proto">
-        <Link>Protobuf\Proto\ca_contract_impl.proto</Link>
-      </ContractCode>
+        <ContractBase Include="..\..\protobuf\zk_verifier.proto">
+            <Link>Protobuf\Proto\reference\zk_verifier.proto</Link>
+        </ContractBase>
+    </ItemGroup>
+    <ItemGroup>
+        <ContractCode Include="..\..\protobuf\ca_contract_impl.proto">
+            <Link>Protobuf\Proto\ca_contract_impl.proto</Link>
+        </ContractCode>
+    </ItemGroup>
+    <ItemGroup>
+      <PackageReference Include="Groth16.Net" Version="1.0.1" />
     </ItemGroup>
 </Project>
