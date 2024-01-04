@@ -9,6 +9,20 @@ namespace Portkey.Contracts.CA;
 
 public partial class CAContract
 {
+    public override Empty WithdrawCAContractToken(WithdrawCAContractTokenInput input)
+    {
+        Assert(input.Amount > 0 && string.IsNullOrWhiteSpace(input.Symbol), "Invalid input");
+        Assert(Context.Sender == State.Admin.Value, "No permission");
+        State.TokenContract.Transfer.Send(new TransferInput()
+        {
+            Amount = input.Amount,
+            Symbol = input.Symbol,
+            To = State.Admin.Value,
+            Memo = "withdraw contract token"
+        });
+        return new Empty();
+    }
+
     public override Hash RegisterProjectDelegatee(RegisterProjectDelegateeInput input)
     {
         Assert(!string.IsNullOrWhiteSpace(input.ProjectName), "Invalid project name.");
