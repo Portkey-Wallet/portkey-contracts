@@ -22,7 +22,7 @@ public class CAContractTestBase : DAppContractTestBase<CAContractTestModule>
     internal CAContractImplContainer.CAContractImplStub CaContractUser1Stub { get; set; }
 
     // internal CAContractContainer.CAContractStub CaContractUser1Stub { get; set; }
-    internal TokenContractContainer.TokenContractStub TokenContractStub { get; set; }
+    internal TokenContractImplContainer.TokenContractImplStub TokenContractStub { get; set; }
     internal TokenContractImplContainer.TokenContractImplStub TokenContractImplStub { get; set; }
 
     internal ACS0Container.ACS0Stub ZeroContractStub { get; set; }
@@ -93,10 +93,10 @@ public class CAContractTestBase : DAppContractTestBase<CAContractTestModule>
     //     return GetTester<ParliamentContractImplContainer.ParliamentContractImplStub>(ParliamentContractAddress,
     //         keyPair);
     // }
-    internal TokenContractContainer.TokenContractStub GetTokenContractTester(
+    internal TokenContractImplContainer.TokenContractImplStub GetTokenContractTester(
         ECKeyPair keyPair)
     {
-        return GetTester<TokenContractContainer.TokenContractStub>(TokenContractAddress,
+        return GetTester<TokenContractImplContainer.TokenContractImplStub>(TokenContractAddress,
             keyPair);
     }
 
