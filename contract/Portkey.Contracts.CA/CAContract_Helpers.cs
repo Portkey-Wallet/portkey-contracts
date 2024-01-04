@@ -88,8 +88,6 @@ public partial class CAContract
         {
             return false;
         }
-
-        key = HashHelper.ComputeFrom(guardianInfo.VerificationInfo.Signature.ToByteArray());
         State.VerifierDocMap[key] = true;
         var operationTypeStr = docInfo.OperationType;
         var operationTypeName = typeof(OperationType).GetEnumName(Convert.ToInt32(operationTypeStr))?.ToLower();

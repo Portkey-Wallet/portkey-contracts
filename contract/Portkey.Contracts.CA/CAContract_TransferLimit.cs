@@ -152,13 +152,9 @@ public partial class CAContract
         {
             SingleLimit = State.TokenDefaultTransferLimit[symbol] != null
                 ? State.TokenDefaultTransferLimit[symbol].SingleLimit
-                : State.TokenInitialTransferLimit.Value > 0
-                    ? State.TokenInitialTransferLimit.Value
                     : CAContractConstants.TokenDefaultTransferLimitAmount,
             DayLimit = State.TokenDefaultTransferLimit[symbol] != null
                 ? State.TokenDefaultTransferLimit[symbol].DayLimit
-                : State.TokenInitialTransferLimit.Value > 0
-                    ? State.TokenInitialTransferLimit.Value
                     : CAContractConstants.TokenDefaultTransferLimitAmount
         };
     }
@@ -169,6 +165,7 @@ public partial class CAContract
         Assert(input.TransferSecurityThreshold != null, "Security threshold cannot be null.");
         Assert(input.TransferSecurityThreshold.BalanceThreshold > 0, "Token threshold cannot be less than 0.");
         Assert(input.TransferSecurityThreshold.GuardianThreshold > 0, "Guardian threshold cannot be less than 0.");
+        Assert(input.TransferSecurityThreshold.Symbol != null, "Symbol cannot be null.");
 
         if (State.TransferSecurityThresholdList?.Value != null)
         {

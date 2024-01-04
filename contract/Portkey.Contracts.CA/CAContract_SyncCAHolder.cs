@@ -18,7 +18,10 @@ public partial class CAContract
 
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
         ValidateLoginGuardian(input.CaHash, holderInfo, input.LoginGuardians);
-
+        
+        ValidateNotLoginGuardian(holderInfo, input.NotLoginGuardians);
+        
+        
         ValidateManager(holderInfo, input.ManagerInfos);
         AssertCreateChain(holderInfo);
         Assert(holderInfo.CreateChainId == input.CreateChainId, "Invalid input createChainId.");
@@ -27,6 +30,25 @@ public partial class CAContract
             "The amount of input.GuardianList not equals to HolderInfo's GuardianList");
         ValidateGuardianList(holderInfo.GuardianList, input.GuardianList);
         return new Empty();
+    }
+
+    private void ValidateNotLoginGuardian(HolderInfo holderInfo, RepeatedField<Hash> notLoginGuardians)
+    {
+        var notLoginGuardianList = new RepeatedField<Hash>();
+        notLoginGuardianList.AddRange(holderInfo.GuardianList.Guardians.Where(g => !g.IsLoginGuardian)
+            .Select(g => g.IdentifierHash));
+        var notLoginGuardianIdentifierHashList = notLoginGuardians.ToList();
+        Assert(notLoginGuardianList.Count == notLoginGuardianIdentifierHashList.Count,
+            "The amount of input.NotLoginGuardians not equals to HolderInfo's NotLoginGuardians");
+        var loginGuardians = new RepeatedField<Hash>();
+        loginGuardians.AddRange(holderInfo.GuardianList.Guardians.Where(g => g.IsLoginGuardian)
+            .Select(g => g.IdentifierHash));
+        foreach (var guardian in notLoginGuardianIdentifierHashList)
+        {
+            Assert(loginGuardians.Contains(guardian),
+                   
+                $"NotLoginGuardian:{guardian} is in HolderInfo's LoginGuardians");
+        }
     }
 
     private void ValidateGuardianList(GuardianList desGuardianList, GuardianList srcGuardianList)
@@ -148,8 +170,16 @@ public partial class CAContract
             holderInfo.GuardianList.Guardians.Add(guardian);
         }
 
+        var loginGuardians = GetLoginGuardians(holderInfo.GuardianList);
         foreach (var guardian in guardiansRemoved)
         {
+            if (loginGuardians.Contains(guardian))
+            {
+                var loginGuardianCount = loginGuardians.Count(g => g.IdentifierHash == guardian.IdentifierHash);
+                //   and it is the only one, refuse. If you really wanna to remove it, unset it first.
+                Assert(loginGuardianCount > 1,
+                    $"Cannot remove a Guardian for login, to remove it, unset it first. {guardian.IdentifierHash} is a guardian for login.");
+            }
             holderInfo.GuardianList.Guardians.Remove(guardian);
         }
 
