@@ -197,6 +197,7 @@ public partial class CAContractTests
         var projectHash = await RegisterProjectDelegatee();
         var projectDelegate = await CaContractStub.GetProjectDelegatee.CallAsync(projectHash);
         await CaContractStub.SetCaProjectDelegateHash.SendAsync(projectHash);
+        await AddTransactionWhitelist();
         await CreateHolderOnly(projectHash);
         var deletatees = await TokenContractStub.GetTransactionFeeDelegatees.CallAsync(
             new GetTransactionFeeDelegateesInput
@@ -204,6 +205,15 @@ public partial class CAContractTests
                 DelegatorAddress = User1Address
             });
         var caAddress = deletatees.DelegateeAddresses[0];
+        var delegateeListOutput = await TokenContractStub.GetTransactionFeeDelegateeList.CallAsync(new GetTransactionFeeDelegateeListInput()
+        {
+            DelegatorAddress = caAddress,
+            ContractAddress = CaContractAddress,
+            MethodName = "AddGuardian"
+        });
+        int selectIndex =
+            (int) Math.Abs(caAddress.ToByteArray().ToInt64(true) % projectDelegate.DelegateeHashList.Count);
+        delegateeListOutput.DelegateeAddresses[0].ShouldBe(projectDelegate.DelegateeAddressList[selectIndex]);
     }
     
     [Fact]
@@ -247,6 +257,16 @@ public partial class CAContractTests
         int selectIndex =
             (int) Math.Abs(caAddress.ToByteArray().ToInt64(true) % projectDelegate.DelegateeHashList.Count);
         projectDeletatees.DelegateeAddresses[0].ShouldBe(projectDelegate.DelegateeAddressList[selectIndex]);
+    }
+
+    private async Task AddTransactionWhitelist()
+    {
+        var input = new WhitelistTransactions()
+        {
+            MethodNames = {"RemoveManagerInfo", "RemoveOtherManagerInfo", "AddManagerInfo", "AddGuardian", "UpdateGuardian",
+                "RemoveGuardian", "SetGuardianForLogin", "UnsetGuardianForLogin"}
+        };
+        await CaContractStub.AddTransactionWhitelist.SendAsync(input);
     }
 
     private async Task<Hash> RegisterProjectDelegatee()

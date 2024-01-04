@@ -292,12 +292,13 @@ public partial class CAContract
     {
         Assert(Context.Sender == State.Admin.Value, "No permission.");
         Assert(input.MethodNames.Count > 0, "Invalid input.");
-        var addMethodNames = input.MethodNames.Except(State.DelegateWhitelistTransactions.Value.MethodNames);
+        var whitelistTransactions = State.DelegateWhitelistTransactions.Value ?? new WhitelistTransactions();
+        var addMethodNames = input.MethodNames.Except(whitelistTransactions.MethodNames);
         if (addMethodNames.Count() == 0)
         {
             return new Empty();
         }
-
+        // Todo
         State.DelegateWhitelistTransactions.Value.MethodNames.AddRange(addMethodNames);
         return new Empty();
     }
