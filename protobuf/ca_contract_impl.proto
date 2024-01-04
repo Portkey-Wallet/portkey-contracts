@@ -9,6 +9,7 @@ import "aelf/core.proto";
 import "aelf/options.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
 import "ca_contract.proto";
 
 option csharp_namespace = "Portkey.Contracts.CA";
@@ -18,8 +19,11 @@ service CAContractImpl {
   option (aelf.base) = "ca_contract.proto";
   option (aelf.csharp_state) = "Portkey.Contracts.CA.CAContractState";
   // register disable
-  rpc SetCreateHolderDisable(SetCreateHolderDisableInput) returns (google.protobuf.Empty) {}
-  rpc GetCreateHolderDisable(google.protobuf.Empty) returns (GetCreateHolderDisableOutput) {option (aelf.is_view) = true;}
+  rpc SetCreateHolderEnabled(SetCreateHolderEnabledInput) returns (google.protobuf.Empty) {}
+  rpc GetCreateHolderEnabled(google.protobuf.Empty) returns (GetCreateHolderEnabledOutput) {option (aelf.is_view) = true;}
+
+  rpc SetLoginGuardianCheckGuardianApprovedEnabled(SetLoginGuardianCheckGuardianApprovedEnabledInput) returns (google.protobuf.Empty) {}
+  rpc GetLoginGuardianCheckGuardianApprovedEnabled(google.protobuf.Empty) returns (GetLoginGuardianCheckGuardianApprovedEnabledOutput) {option (aelf.is_view) = true;}
    
   // approve
   rpc ManagerApprove(ManagerApproveInput) returns (google.protobuf.Empty) {}
@@ -39,32 +43,45 @@ service CAContractImpl {
   rpc GetTransferSecurityCheckResult(GetTransferSecurityCheckResultInput) returns (GetTransferSecurityCheckResultOutput) {option (aelf.is_view) = true;}
   
   // secondaryDelegatee
+  // register project secondary delegate info
   rpc RegisterProjectDelegatee (RegisterProjectDelegateeInput) returns (aelf.Hash) {}
-    
+  //  add delegatee hash into delegate info
   rpc AddProjectDelegateeList (AddProjectDelegateeListInput) returns (google.protobuf.Empty) {}
-  
+  // remove delegatee hash from delegate info
   rpc RemoveProjectDelegateeList (RemoveProjectDelegateeListInput) returns (google.protobuf.Empty) {}
-  
+  // set project delegate controller
   rpc SetProjectDelegateController(SetProjectDelegateControllerInput) returns (google.protobuf.Empty){}
-  
+  // set project delegate signer
   rpc SetProjectDelegateSigner(SetProjectDelegateSignerInput) returns (google.protobuf.Empty){}
-  
+  // withdraw project delegatee token
   rpc WithdrawProjectDelegateeToken(WithdrawProjectDelegateeTokenInput) returns (google.protobuf.Empty){}
-  
+  // set ca project delegate hash
   rpc SetCaProjectDelegateHash (aelf.Hash) returns (google.protobuf.Empty) {}
-
+  // get ca project delegate hash
   rpc GetCaProjectDelegateHash (google.protobuf.Empty) returns (aelf.Hash) {}
-  
+  // get project delegatee info by delegate hash
   rpc GetProjectDelegatee (aelf.Hash) returns (GetProjectDelegateInfoOutput) { option (aelf.is_view) = true; }
 
+    rpc SetManagerForwardCallParallelInfo (SetManagerForwardCallParallelInfoInput) returns (google.protobuf.Empty) {}
+
+    rpc GetManagerForwardCallParallelInfo (GetManagerForwardCallParallelInfoInput) returns (GetManagerForwardCallParallelInfoOutput) {option (aelf.is_view) = true;}
+       
 }
 
-message SetCreateHolderDisableInput {
-  bool create_holder_disable = 1;
+message SetCreateHolderEnabledInput {
+  bool create_holder_enabled = 1;
 }
 
-message GetCreateHolderDisableOutput {
-  bool create_holder_Disable = 1;
+message GetCreateHolderEnabledOutput {
+  bool create_holder_enabled = 1;
+}
+
+message SetLoginGuardianCheckGuardianApprovedEnabledInput {
+  bool login_guardian_check_guardian_approved_enabled = 1;
+}
+
+message GetLoginGuardianCheckGuardianApprovedEnabledOutput {
+  bool login_guardian_check_guardian_approved_enabled = 1;
 }
 
 message ManagerApproveInput {
@@ -220,4 +237,21 @@ message GetProjectDelegateInfoOutput {
   repeated aelf.Hash delegatee_hash_list = 2;
   aelf.Address signer = 3;
   repeated aelf.Address delegatee_address_list = 4;
+}
+
+message SetManagerForwardCallParallelInfoInput {
+    aelf.Address contract_address = 1;
+    string method_name = 2;
+    bool is_parallel = 3;
+}
+
+message GetManagerForwardCallParallelInfoInput {
+    aelf.Address contract_address = 1;
+    string method_name = 2;
+}
+
+message GetManagerForwardCallParallelInfoOutput {
+    aelf.Address contract_address = 1;
+    string method_name = 2;
+    bool is_parallel = 3;
 }

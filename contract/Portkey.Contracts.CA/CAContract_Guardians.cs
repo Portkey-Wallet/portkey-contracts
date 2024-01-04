@@ -188,7 +188,8 @@ public partial class CAContract
         {
             return new Empty();
         }
-
+        Assert(holderInfo.GuardianList.Guardians.FirstOrDefault(g => g.VerifierId == input.GuardianToUpdateNew.VerificationInfo.Id) == null,
+            "The verifier already exists");
         var preGuardian = existPreGuardian.Clone();
 
         //Check verifier id is exist.

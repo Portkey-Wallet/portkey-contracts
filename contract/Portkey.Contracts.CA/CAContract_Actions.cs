@@ -37,7 +37,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
     /// <returns></returns>
     public override Empty CreateCAHolder(CreateCAHolderInput input)
     {
-        Assert(!State.CreateHolderDisable.Value, "Register already disable.");
+        Assert(State.CreateHolderEnabled.Value, "Register already disable.");
         //Assert(Context.Sender == State.RegisterOrRecoveryController.Value,"No permission.");
         Assert(State.CreatorControllers.Value.Controllers.Contains(Context.Sender), "No permission");
         Assert(input != null, "Invalid input.");
@@ -153,8 +153,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
             [CAContractConstants.ELFTokenSymbol] = CAContractConstants.CADelegationAmount
         };
 
-        Context.SendVirtualInline(holderId, State.TokenContract.Value,
-            nameof(State.TokenContract.SetTransactionFeeDelegations),
+        State.TokenContract.SetTransactionFeeDelegations.VirtualSend(holderId,
             new SetTransactionFeeDelegationsInput
             {
                 DelegatorAddress = managerInfo.Address,
@@ -175,8 +174,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
 
     private void RemoveDelegator(Hash holderId, ManagerInfo managerInfo)
     {
-        Context.SendVirtualInline(holderId, State.TokenContract.Value,
-            nameof(State.TokenContract.RemoveTransactionFeeDelegator),
+        State.TokenContract.RemoveTransactionFeeDelegator.VirtualSend(holderId,
             new RemoveTransactionFeeDelegatorInput
             {
                 DelegatorAddress = managerInfo.Address
@@ -251,22 +249,21 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         {
             State.CAContractAddresses[caContractAddress.ChainId] = caContractAddress.Address;
         }
-
         return new Empty();
     }
-
-    public override Empty SetCreateHolderDisable(SetCreateHolderDisableInput input)
+    
+    public override Empty SetCreateHolderEnabled(SetCreateHolderEnabledInput input)
     {
         Assert(State.Admin.Value == Context.Sender, "No permission");
-        State.CreateHolderDisable.Value = input.CreateHolderDisable;
+        State.CreateHolderEnabled.Value = input.CreateHolderEnabled;
         return new Empty();
     }
 
-    public override GetCreateHolderDisableOutput GetCreateHolderDisable(Empty input)
+    public override GetCreateHolderEnabledOutput GetCreateHolderEnabled(Empty input)
     {
-        return new GetCreateHolderDisableOutput()
+        return new GetCreateHolderEnabledOutput()
         {
-            CreateHolderDisable = State.CreateHolderDisable.Value
+            CreateHolderEnabled = State.CreateHolderEnabled.Value
         };
     }
 }
