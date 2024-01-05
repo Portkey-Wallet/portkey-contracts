@@ -152,9 +152,13 @@ public partial class CAContract
         {
             SingleLimit = State.TokenDefaultTransferLimit[symbol] != null
                 ? State.TokenDefaultTransferLimit[symbol].SingleLimit
+                : State.TokenInitialTransferLimit.Value > 0
+                    ? State.TokenInitialTransferLimit.Value
                     : CAContractConstants.TokenDefaultTransferLimitAmount,
             DayLimit = State.TokenDefaultTransferLimit[symbol] != null
                 ? State.TokenDefaultTransferLimit[symbol].DayLimit
+                : State.TokenInitialTransferLimit.Value > 0
+                    ? State.TokenInitialTransferLimit.Value
                     : CAContractConstants.TokenDefaultTransferLimitAmount
         };
     }
@@ -214,6 +218,15 @@ public partial class CAContract
             IsSecurity = IsTransferSecurity(input.CaHash)
         };
     }
+    
+    public override Empty SetTokenInitialTransferLimit(
+        SetTokenInitialTransferLimitInput input)
+    {
+        Assert(Context.Sender == State.Admin.Value, "No permission.");
+        Assert(input.TokenInitialTransferLimit >= 0, "Token initial transfer limit cannot be less than 0.");
+        State.TokenInitialTransferLimit.Value = input.TokenInitialTransferLimit;
+        return new Empty();
+    }
 
     private bool IsTransferSecurity(Hash caHash)
     {
@@ -232,4 +245,8 @@ public partial class CAContract
 
         return true;
     }
+    
+    
+    
+    
 }

@@ -23,8 +23,10 @@ service CAContractImpl {
         
   rpc SetForbiddenForwardCallContractMethod(SetForbiddenForwardCallContractMethodInput) returns (google.protobuf.Empty) {}  
   
-  rpc SetTransferLimit(SetTransferLimitInput) returns (google.protobuf.Empty) {}  
-  
+  rpc SetTransferLimit(SetTransferLimitInput) returns (google.protobuf.Empty) {}
+
+  rpc SetTokenInitialTransferLimit(SetTokenInitialTransferLimitInput) returns (google.protobuf.Empty) {}
+
   rpc GetTransferLimit(GetTransferLimitInput) returns (GetTransferLimitOutput) {option (aelf.is_view) = true;}
       
   rpc SetDefaultTokenTransferLimit(SetDefaultTokenTransferLimitInput) returns (google.protobuf.Empty) {}    
@@ -209,4 +211,8 @@ message GetProjectDelegateInfoOutput {
   repeated aelf.Hash delegatee_hash_list = 2;
   aelf.Address signer = 3;
   repeated aelf.Address delegatee_address_list = 4;
+}
+
+message SetTokenInitialTransferLimitInput {
+  int64 token_initial_transfer_limit = 1;
 }

@@ -18,10 +18,10 @@ public partial class CAContract
 
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
         ValidateLoginGuardian(input.CaHash, holderInfo, input.LoginGuardians);
-        
-        ValidateNotLoginGuardian(holderInfo, input.NotLoginGuardians);
-        
-        
+
+        ValidateNotLoginGuardian(input.CaHash, holderInfo, input.NotLoginGuardians);
+
+
         ValidateManager(holderInfo, input.ManagerInfos);
         AssertCreateChain(holderInfo);
         Assert(holderInfo.CreateChainId == input.CreateChainId, "Invalid input createChainId.");
@@ -32,7 +32,7 @@ public partial class CAContract
         return new Empty();
     }
 
-    private void ValidateNotLoginGuardian(HolderInfo holderInfo, RepeatedField<Hash> notLoginGuardians)
+    private void ValidateNotLoginGuardian(Hash caHash, HolderInfo holderInfo, RepeatedField<Hash> notLoginGuardians)
     {
         var notLoginGuardianList = new RepeatedField<Hash>();
         notLoginGuardianList.AddRange(holderInfo.GuardianList.Guardians.Where(g => !g.IsLoginGuardian)
@@ -45,8 +45,8 @@ public partial class CAContract
             .Select(g => g.IdentifierHash));
         foreach (var guardian in notLoginGuardianIdentifierHashList)
         {
-            Assert(loginGuardians.Contains(guardian),
-                   
+            Assert(!loginGuardians.Contains(guardian) &&
+                   State.GuardianMap[guardian] == caHash,
                 $"NotLoginGuardian:{guardian} is in HolderInfo's LoginGuardians");
         }
     }
@@ -76,9 +76,9 @@ public partial class CAContract
         Assert(loginGuardians.Count == loginGuardianIdentifierHashList.Count,
             "The amount of LoginGuardianInput not equals to HolderInfo's LoginGuardians");
 
-        foreach (var loginGuardian in loginGuardianIdentifierHashList)
+        foreach (var loginGuardian in loginGuardians)
         {
-            Assert(loginGuardians.Contains(loginGuardian)
+            Assert(loginGuardianIdentifierHashList.Contains(loginGuardian)
                    && State.GuardianMap[loginGuardian] == caHash,
                 $"LoginGuardian:{loginGuardian} is not in HolderInfo's LoginGuardians");
         }
@@ -107,6 +107,7 @@ public partial class CAContract
         {
             SyncHolderInfo(verificationTransactionInfo);
         }
+
         return new Empty();
     }
 
@@ -128,7 +129,9 @@ public partial class CAContract
             verificationTransactionInfo.FromChainId, verificationTransactionInfo.MerklePath);
         var transactionInput =
             ValidateCAHolderInfoWithManagerInfosExistsInput.Parser.ParseFrom(originalTransaction.Params);
-
+        Assert(!State.SyncHolderInfoTransaction[originalTransactionId], "Already synced.");
+        Assert(State.SyncHolderInfoTransactionHeightMap[transactionInput.CaHash] < verificationTransactionInfo.ParentChainHeight,
+            "Already synced.");
         var holderId = transactionInput.CaHash;
         var holderInfo = State.HolderInfoMap[holderId] ?? new HolderInfo { CreatorAddress = Context.Sender };
 
@@ -139,6 +142,7 @@ public partial class CAContract
         {
             holderInfo.ManagerInfos.Remove(managerInfo);
         }
+
         RemoveDelegators(holderId, managerInfosToRemove);
         holderInfo.ManagerInfos.AddRange(managerInfosToAdd);
         SetDelegators(holderId, managerInfosToAdd);
@@ -152,6 +156,7 @@ public partial class CAContract
 
         var guardiansAdded = new RepeatedField<Guardian>();
         var guardiansRemoved = new RepeatedField<Guardian>();
+        
         holderInfo.CreateChainId = transactionInput.CreateChainId;
         if (holderInfo.GuardianList == null)
         {
@@ -180,11 +185,13 @@ public partial class CAContract
                 Assert(loginGuardianCount > 1,
                     $"Cannot remove a Guardian for login, to remove it, unset it first. {guardian.IdentifierHash} is a guardian for login.");
             }
+
             holderInfo.GuardianList.Guardians.Remove(guardian);
         }
 
         State.HolderInfoMap[holderId] = holderInfo;
-
+        State.SyncHolderInfoTransaction[originalTransactionId] = true;
+        State.SyncHolderInfoTransactionHeightMap[transactionInput.CaHash] = verificationTransactionInfo.ParentChainHeight;
         Context.Fire(new CAHolderSynced
         {
             Creator = Context.Sender,
@@ -290,7 +297,7 @@ public partial class CAContract
 
         return resultSet;
     }
-    
+
     private RepeatedField<Guardian> GuardiansExcept(RepeatedField<Guardian> src,
         RepeatedField<Guardian> destination)
     {
@@ -317,7 +324,7 @@ public partial class CAContract
 
         return resultSet;
     }
-    
+
     private void TransactionVerify(Hash transactionId, long parentChainHeight, int chainId, MerklePath merklePath)
     {
         var verificationInput = new VerifyTransactionInput
