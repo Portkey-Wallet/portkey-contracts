@@ -283,18 +283,18 @@ public partial class CAContractTests
         {
             ContractAdmin = DefaultAddress,
         });
-        var secondaryDelegationFee = await CaContractStub.GetSecondaryDelegationFee.CallAsync(new Empty());
+        var secondaryDelegationFee = await CaContractStub.GetProjectDelegationFee.CallAsync(new Empty());
         secondaryDelegationFee.Amount.ShouldBe(0);
-        await CaContractStub.SetSecondaryDelegationFee.SendAsync(new SetSecondaryDelegationFeeInput
+        await CaContractStub.SetProjectDelegationFee.SendAsync(new SetProjectDelegationFeeInput()
         {
-            DelegationFee = new SecondaryDelegationFee
+            DelegationFee = new ProjectDelegationFee()
             {
                 Amount = 10000000000
             }
         });
 
         var result =
-            await CaContractStub.SetSecondaryDelegationFee.SendWithExceptionAsync(new SetSecondaryDelegationFeeInput());
+            await CaContractStub.SetProjectDelegationFee.SendWithExceptionAsync(new SetProjectDelegationFeeInput());
         result.TransactionResult.Error.ShouldContain("Invalid input");
     }
 

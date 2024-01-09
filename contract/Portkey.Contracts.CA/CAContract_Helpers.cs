@@ -217,14 +217,14 @@ public partial class CAContract
             return;
         }
 
-        State.SecondaryDelegationFee.Value ??= new SecondaryDelegationFee
+        State.ProjectDelegationFee.Value ??= new ProjectDelegationFee()
         {
-            Amount = CAContractConstants.DefaultSecondaryDelegationFee
+            Amount = CAContractConstants.DefaultProjectDelegationFee
         };
 
         var delegations = new Dictionary<string, long>
         {
-            [CAContractConstants.ELFTokenSymbol] = State.SecondaryDelegationFee.Value.Amount
+            [CAContractConstants.ELFTokenSymbol] = State.ProjectDelegationFee.Value.Amount
         };
         // Randomly select a delegatee based on the address
         var selectIndex = (int)Math.Abs(delegatorAddress.ToByteArray().ToInt64(true) % projectDelegateInfo.DelegateeHashList.Count);

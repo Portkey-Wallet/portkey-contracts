@@ -185,21 +185,21 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         }
     }
 
-    public override Empty SetSecondaryDelegationFee(SetSecondaryDelegationFeeInput input)
+    public override Empty SetProjectDelegationFee(SetProjectDelegationFeeInput input)
     {
         Assert(State.Admin.Value == Context.Sender, "No permission");
         Assert(input != null && input.DelegationFee != null, "Invalid input");
         Assert(input.DelegationFee.Amount >= 0, "Amount can not be less than 0");
 
-        State.SecondaryDelegationFee.Value ??= new SecondaryDelegationFee();
+        State.ProjectDelegationFee.Value ??= new ProjectDelegationFee();
 
-        State.SecondaryDelegationFee.Value.Amount = input.DelegationFee.Amount;
+        State.ProjectDelegationFee.Value.Amount = input.DelegationFee.Amount;
 
         return new Empty();
     }
 
-    public override SecondaryDelegationFee GetSecondaryDelegationFee(Empty input)
+    public override ProjectDelegationFee GetProjectDelegationFee(Empty input)
     {
-        return State.SecondaryDelegationFee.Value;
+        return State.ProjectDelegationFee.Value;
     }
 }

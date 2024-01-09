@@ -109,6 +109,14 @@ public partial class CAContract
 
         var holderId = transactionInput.CaHash;
         var holderInfo = State.HolderInfoMap[holderId] ?? new HolderInfo { CreatorAddress = Context.Sender };
+        holderInfo.CreateChainId = transactionInput.CreateChainId;
+        if (holderInfo.GuardianList == null)
+        {
+            holderInfo.GuardianList = new GuardianList
+            {
+                Guardians = { }
+            };
+        }
 
         var managerInfosToAdd = ManagerInfosExcept(transactionInput.ManagerInfos, holderInfo.ManagerInfos);
         var managerInfosToRemove = ManagerInfosExcept(holderInfo.ManagerInfos, transactionInput.ManagerInfos);
@@ -130,14 +138,6 @@ public partial class CAContract
 
         var guardiansAdded = new RepeatedField<Guardian>();
         var guardiansRemoved = new RepeatedField<Guardian>();
-        holderInfo.CreateChainId = transactionInput.CreateChainId;
-        if (holderInfo.GuardianList == null)
-        {
-            holderInfo.GuardianList = new GuardianList
-            {
-                Guardians = { }
-            };
-        }
 
         guardiansAdded =
             GuardiansExcept(transactionInput.GuardianList.Guardians, holderInfo.GuardianList.Guardians);

@@ -95,6 +95,15 @@ public partial class CAContract
             Assert(loginGuardianCount > 1,
                 $"Cannot remove a Guardian for login, to remove it, unset it first. {input.GuardianToRemove?.IdentifierHash} is a guardian for login.");
         }
+        
+        foreach (var guardian in input.GuardiansApproved)
+        {
+            Assert(
+                !(guardian.Type == toRemoveGuardian.Type &&
+                  guardian.IdentifierHash == toRemoveGuardian.IdentifierHash &&
+                  guardian.VerificationInfo.Id == toRemoveGuardian.VerifierId),
+                "Guardian approved list contains to removed guardian.");
+        }
 
         var guardianApprovedCount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved,
             nameof(OperationType.RemoveGuardian).ToLower());
@@ -169,6 +178,15 @@ public partial class CAContract
         //Check verifier id is exist.
         Assert(State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(v =>
             v.Id == input.GuardianToUpdateNew.VerificationInfo.Id) != null, "Verifier is not exist.");
+
+        foreach (var guardian in input.GuardiansApproved)
+        {
+            Assert(
+                !(guardian.Type == existPreGuardian.Type &&
+                  guardian.IdentifierHash == existPreGuardian.IdentifierHash &&
+                  guardian.VerificationInfo.Id == existPreGuardian.VerifierId),
+                "Guardian approved list contains to updated guardian.");
+        }
 
         var guardianApprovedCount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved,
             nameof(OperationType.UpdateGuardian).ToLower());

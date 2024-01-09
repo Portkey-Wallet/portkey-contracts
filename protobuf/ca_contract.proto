@@ -102,9 +102,9 @@ service CAContract {
   
   rpc GetAdmin (google.protobuf.Empty) returns (AdminOutput) {option (aelf.is_view) = true;}
 
-  rpc SetSecondaryDelegationFee (SetSecondaryDelegationFeeInput) returns (google.protobuf.Empty) {}
+  rpc SetProjectDelegationFee (SetProjectDelegationFeeInput) returns (google.protobuf.Empty) {}
 
-  rpc GetSecondaryDelegationFee (google.protobuf.Empty) returns (SecondaryDelegationFee) { option (aelf.is_view) = true; }
+  rpc GetProjectDelegationFee (google.protobuf.Empty) returns (ProjectDelegationFee) { option (aelf.is_view) = true; }
 
 }
 
@@ -432,12 +432,12 @@ message ValidateStrategyOutput {
   StrategyNode strategy_output = 3;
 }
 
-message SecondaryDelegationFee {
+message ProjectDelegationFee {
   int64 amount = 1;
 }
 
-message SetSecondaryDelegationFeeInput {
-  SecondaryDelegationFee delegation_fee = 1;
+message SetProjectDelegationFeeInput {
+  ProjectDelegationFee delegation_fee = 1;
 }
 
 // LogEvent

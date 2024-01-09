@@ -11,7 +11,7 @@ public static class CAContractConstants
     public const string ELFTokenSymbol = "ELF";
     public const long CADelegationAmount = 10000000000000000;
 
-    public const long DefaultSecondaryDelegationFee = 100_00000000;
+    public const long DefaultProjectDelegationFee = 100_00000000;
 
     public const int ManagerMaxCount = 70;
 
