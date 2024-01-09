@@ -11,7 +11,7 @@ public partial class CAContract
 {
     public override Empty WithdrawCAContractToken(WithdrawCAContractTokenInput input)
     {
-        Assert(input.Amount > 0 && string.IsNullOrWhiteSpace(input.Symbol), "Invalid input");
+        Assert(input.Amount > 0 && !string.IsNullOrWhiteSpace(input.Symbol), "Invalid input");
         Assert(Context.Sender == State.Admin.Value, "No permission");
         State.TokenContract.Transfer.Send(new TransferInput()
         {
