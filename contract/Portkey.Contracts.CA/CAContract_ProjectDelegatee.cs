@@ -26,7 +26,6 @@ public partial class CAContract
         {
             projectDelegateInfo.DelegateeHashList.Add(HashHelper.ConcatAndCompute(HashHelper.ComputeFrom(salt), projectHash));
         }
-
         State.ProjectDelegateInfo[projectHash] = projectDelegateInfo;
         Context.Fire(new ProjectDelegateRegistered
         {
