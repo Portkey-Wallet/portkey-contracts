@@ -31,13 +31,13 @@ public partial class CAContractTests
             Symbol = "ELF",
             Memo = "TEST"
         });
-        var result = await CaContractUser1Stub.WithdrawCAContractToken.SendWithExceptionAsync(new WithdrawCAContractTokenInput()
+        var result = await CaContractUser1Stub.WithdrawDelegationFeeToken.SendWithExceptionAsync(new WithdrawDelegationFeeTokenInput()
         {
             Amount = 1,
             Symbol = "ELF"
         });
         result.TransactionResult.Error.ShouldContain("No permission");
-        result = await CaContractStub.WithdrawCAContractToken.SendAsync(new WithdrawCAContractTokenInput()
+        result = await CaContractStub.WithdrawDelegationFeeToken.SendAsync(new WithdrawDelegationFeeTokenInput()
         {
             Amount = 1,
             Symbol = "ELF"
