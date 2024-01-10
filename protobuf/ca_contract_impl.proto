@@ -61,6 +61,8 @@ service CAContractImpl {
   rpc GetCaProjectDelegateHash (google.protobuf.Empty) returns (aelf.Hash) {}
   // get project delegatee info by delegate hash
   rpc GetProjectDelegatee (aelf.Hash) returns (GetProjectDelegateInfoOutput) { option (aelf.is_view) = true; }
+  
+  rpc WithdrawDelegationFeeToken (WithdrawDelegationFeeTokenInput) returns (google.protobuf.Empty) {}
 
     rpc SetManagerForwardCallParallelInfo (SetManagerForwardCallParallelInfoInput) returns (google.protobuf.Empty) {}
 
@@ -237,6 +239,11 @@ message GetProjectDelegateInfoOutput {
   repeated aelf.Hash delegatee_hash_list = 2;
   aelf.Address signer = 3;
   repeated aelf.Address delegatee_address_list = 4;
+}
+
+message WithdrawDelegationFeeTokenInput {
+  string symbol = 1;
+  int64 amount = 2;
 }
 
 message SetManagerForwardCallParallelInfoInput {

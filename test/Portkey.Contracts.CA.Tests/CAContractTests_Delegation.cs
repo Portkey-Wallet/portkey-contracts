@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using AElf;
 using AElf.Contracts.MultiToken;
 using AElf.Types;
+using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using Shouldly;
 using Xunit;
@@ -12,6 +13,45 @@ namespace Portkey.Contracts.CA;
 
 public partial class CAContractTests
 {
+    [Fact]
+    public async Task WithDraw_Test()
+    {
+        await Initiate();
+        await TokenContractStub.Transfer.SendAsync(new TransferInput()
+        {
+            To = CaContractAddress,
+            Amount = 100,
+            Symbol = "ELF",
+            Memo = "TEST"
+        });
+        await TokenContractStub.Transfer.SendAsync(new TransferInput()
+        {
+            To = User1Address,
+            Amount = 1000000000,
+            Symbol = "ELF",
+            Memo = "TEST"
+        });
+        var result = await CaContractUser1Stub.WithdrawDelegationFeeToken.SendWithExceptionAsync(new WithdrawDelegationFeeTokenInput()
+        {
+            Amount = 1,
+            Symbol = "ELF"
+        });
+        result.TransactionResult.Error.ShouldContain("No permission");
+        result = await CaContractStub.WithdrawDelegationFeeToken.SendAsync(new WithdrawDelegationFeeTokenInput()
+        {
+            Amount = 1,
+            Symbol = "ELF"
+        });
+        var transferred = result.TransactionResult.Logs.FirstOrDefault(t => t.Name == nameof(Transferred));
+        transferred.ShouldNotBeNull();
+        var balance = await TokenContractStub.GetBalance.CallAsync(new GetBalanceInput()
+        {
+            Owner = CaContractAddress,
+            Symbol = "ELF"
+        });
+        balance.Balance.ShouldBe(99);
+    }
+
     [Fact]
     public async Task RegisterProjectDelegate_Success()
     {
