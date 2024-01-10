@@ -12,7 +12,7 @@ public static class ZkHelpers
     {
         // Prepare public input
         var identifier = zkGuardianInfo.IdentifierHash.ToByteArray().Select(x => x.ToString());
-        var salt = HexStringToByteArray(zkGuardianInfo.Salt).Select(x => x.ToString());
+        var salt = HexStringToByteArray16(zkGuardianInfo.Salt).Select(x => x.ToString());
         var pubKey = zkGuardianInfo.IssuerPubkey.HexToChunkedBytes(121, 17).Select(x => x.HexToBigInt());
 
         var publicInputs = identifier.Concat(pubKey).Concat(salt).ToList();
@@ -20,12 +20,11 @@ public static class ZkHelpers
         return Verifier.VerifyBn254(verifyingKey, publicInputs, zkGuardianInfo.Proof.ToHex());
     }
 
-    static byte[] HexStringToByteArray(string hex)
+    static byte[] HexStringToByteArray16(string hex)
     {
-        var length = hex.Length;
-        var byteArray = new byte[length / 2];
+        var byteArray = new byte[16];
 
-        for (var i = 0; i < length; i += 2)
+        for (var i = 0; i < 16; i += 2)
         {
             byteArray[i / 2] = Convert.ToByte(hex.Substring(i, 2), 16);
         }
