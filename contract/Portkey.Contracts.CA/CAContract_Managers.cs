@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using AElf;
 using AElf.Contracts.MultiToken;
@@ -31,22 +30,10 @@ public partial class CAContract
 
         Assert(input.GuardiansApproved.Count > 0, "invalid input Guardians Approved");
 
-        var guardianApprovedAmount = 0;
-        var guardianApprovedList = input.GuardiansApproved
-            .DistinctBy(g => $"{g.Type}{g.IdentifierHash}{g.VerificationInfo.Id}")
-            .ToList();
-        var methodName = nameof(OperationType.SocialRecovery).ToLower();
-        foreach (var guardian in guardianApprovedList)
-        {
-            //Whether the guardian exists in the holder info.
-            if (!IsGuardianExist(caHash, guardian)) continue;
-            //Check the verifier signature and data of the guardian to be approved.
-            var isApproved = CheckVerifierSignatureAndDataCompatible(guardian, methodName);
-            if (!isApproved) continue;
-            guardianApprovedAmount++;
-        }
+        var guardianApprovedCount = GetGuardianApprovedCount(caHash, input.GuardiansApproved,
+            nameof(OperationType.SocialRecovery).ToLower());
 
-        var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(guardians.Count, guardianApprovedAmount,
+        var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(guardians.Count, guardianApprovedCount,
             holderInfo.JudgementStrategy);
         if (!isJudgementStrategySatisfied)
         {
@@ -60,8 +47,8 @@ public partial class CAContract
             "The amount of ManagerInfos out of limit");
 
         var caAddress = Context.ConvertVirtualAddressToContractAddress(caHash);
-        UpgradeProjectDelegatee(caAddress,holderInfo.ManagerInfos);
-        
+        UpgradeProjectDelegatee(caAddress);
+
         State.HolderInfoMap[caHash].ManagerInfos.Add(input.ManagerInfo);
         SetDelegator(caHash, input.ManagerInfo);
 
@@ -91,8 +78,8 @@ public partial class CAContract
             "The amount of ManagerInfos out of limit");
 
         var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
-        UpgradeProjectDelegatee(caAddress, holderInfo.ManagerInfos);
-        
+        UpgradeProjectDelegatee(caAddress);
+
         holderInfo.ManagerInfos.Add(input.ManagerInfo);
         SetDelegator(input.CaHash, input.ManagerInfo);
 
@@ -127,24 +114,12 @@ public partial class CAContract
 
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
 
-        var guardianApprovedAmount = 0;
-        var guardianApprovedList = input.GuardiansApproved!
-            .DistinctBy(g => $"{g.Type}{g.IdentifierHash}{g.VerificationInfo.Id}")
-            .ToList();
-        var methodName = nameof(OperationType.RemoveOtherManagerInfo).ToLower();
-        foreach (var guardian in guardianApprovedList)
-        {
-            //Whether the guardian exists in the holder info.
-            if (!IsGuardianExist(input.CaHash, guardian)) continue;
-            //Check the verifier signature and data of the guardian to be approved.
-            var isApproved = CheckVerifierSignatureAndDataCompatible(guardian, methodName);
-            if (!isApproved) continue;
-            guardianApprovedAmount++;
-        }
+        var guardianApprovedCount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved,
+            nameof(OperationType.RemoveOtherManagerInfo).ToLower());
 
         //Whether the approved guardians count is satisfied.
         var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count,
-            guardianApprovedAmount, holderInfo.JudgementStrategy);
+            guardianApprovedCount, holderInfo.JudgementStrategy);
         return !isJudgementStrategySatisfied ? new Empty() : RemoveManager(input.CaHash, input.ManagerInfo.Address);
     }
 
@@ -161,8 +136,8 @@ public partial class CAContract
         }
 
         var caAddress = Context.ConvertVirtualAddressToContractAddress(caHash);
-        UpgradeProjectDelegatee(caAddress, holderInfo.ManagerInfos);
-        
+        UpgradeProjectDelegatee(caAddress);
+
         holderInfo.ManagerInfos.Remove(managerInfo);
         RemoveDelegator(caHash, managerInfo);
 
@@ -209,8 +184,8 @@ public partial class CAContract
                 ExtraData = managerToUpdate.ExtraData
             });
         }
-        
-        UpgradeProjectDelegatee(caAddress, holderInfo.ManagerInfos);
+
+        UpgradeProjectDelegatee(caAddress);
 
         return new Empty();
     }
@@ -249,7 +224,8 @@ public partial class CAContract
             input.ContractAddress == State.TokenContract.Value)
         {
             var transferInput = TransferInput.Parser.ParseFrom(input.Args);
-            UpdateDailyTransferredAmount(input.CaHash, input.GuardiansApproved, transferInput.Symbol, transferInput.Amount);
+            UpdateDailyTransferredAmount(input.CaHash, input.GuardiansApproved, transferInput.Symbol,
+                transferInput.Amount);
         }
 
         Context.SendVirtualInline(input.CaHash, input.ContractAddress, input.MethodName, input.Args, true);

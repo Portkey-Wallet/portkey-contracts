@@ -75,7 +75,7 @@ public partial class CAContract
         State.GuardianMap[loginGuardian.IdentifierHash] = input.CaHash;
         
         var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
-        UpgradeProjectDelegatee(caAddress, holderInfo.ManagerInfos);
+        UpgradeProjectDelegatee(caAddress);
         
         Context.Fire(new LoginGuardianAdded
         {
@@ -97,7 +97,7 @@ public partial class CAContract
         foreach (var guardianInfo in guardianApprovedList)
         {
             if (!IsGuardianExist(cahHash, guardianInfo)) continue;
-            var isApproved = CheckVerifierSignatureAndDataCompatible(guardianInfo, methodName, cahHash);
+            var isApproved = CheckVerifierSignatureAndData(guardianInfo, methodName, cahHash);
             if (!isApproved) continue;
             guardianApprovedCount++;
         }
@@ -185,7 +185,7 @@ public partial class CAContract
             });
         }
         
-        UpgradeProjectDelegatee(caAddress, holderInfo.ManagerInfos);
+        UpgradeProjectDelegatee(caAddress);
         
         return new Empty();
     }

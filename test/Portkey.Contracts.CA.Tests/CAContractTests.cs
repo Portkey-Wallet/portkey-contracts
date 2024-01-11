@@ -18,10 +18,6 @@ public partial class CAContractTests : CAContractTestBase
         {
             ContractAdmin = DefaultAddress,
         });
-        await CaContractStub.SetCreateHolderEnabled.SendAsync(new SetCreateHolderEnabledInput
-        {
-            CreateHolderEnabled = true
-        });
         {
             await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
             {
@@ -62,7 +58,7 @@ public partial class CAContractTests : CAContractTestBase
                     Id = id,
                     Signature = signature,
                     VerificationDoc =
-                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType}"
+                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType},{MainChainId}"
                 }
             },
             ManagerInfo = new ManagerInfo
@@ -218,7 +214,7 @@ public partial class CAContractTests : CAContractTestBase
                     Id = _verifierId,
                     Signature = signature1,
                     VerificationDoc =
-                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType}"
+                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType},{MainChainId}"
                 }
             },
             ManagerInfo = new ManagerInfo
@@ -274,7 +270,7 @@ public partial class CAContractTests : CAContractTestBase
                     Id = new Hash(),
                     Signature = signature,
                     VerificationDoc =
-                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType}"
+                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType},{MainChainId}"
                 }
             },
             ManagerInfo = new ManagerInfo

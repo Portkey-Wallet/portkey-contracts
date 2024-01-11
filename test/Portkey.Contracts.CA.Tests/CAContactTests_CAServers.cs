@@ -13,22 +13,12 @@ public partial class CAContractTests
 
     public async Task AddCAServerTest()
     {
-        await Initiate();
+        //set admin
+        await CaContractStub.Initialize.SendAsync(new InitializeInput()
+        {
+            ContractAdmin = DefaultAccount.Address,
+        });
 
-        var caContractAddresses = new List<CAContractAddress>
-        {
-            new CAContractAddress()
-            {
-                Address = CaContractAddress,
-                ChainId = 123456
-            }
-        };
-        var input = new SetCAContractAddressesInput
-        {
-            CaContractAddresses = {caContractAddresses}
-        };
-        await CaContractStub.SetCAContractAddresses.SendAsync(input);
-  
         var output = await CaContractStub.GetCAServers.CallAsync(new Empty());
         output.CaServers.Count.ShouldBe(0);
         //success

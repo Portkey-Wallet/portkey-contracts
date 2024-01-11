@@ -18,13 +18,10 @@ service CAContractImpl {
   option (aelf.base) = "acs12.proto";
   option (aelf.base) = "ca_contract.proto";
   option (aelf.csharp_state) = "Portkey.Contracts.CA.CAContractState";
-  // register disable
-  rpc SetCreateHolderEnabled(SetCreateHolderEnabledInput) returns (google.protobuf.Empty) {}
-  rpc GetCreateHolderEnabled(google.protobuf.Empty) returns (GetCreateHolderEnabledOutput) {option (aelf.is_view) = true;}
 
   rpc SetLoginGuardianCheckGuardianApprovedEnabled(SetLoginGuardianCheckGuardianApprovedEnabledInput) returns (google.protobuf.Empty) {}
   rpc GetLoginGuardianCheckGuardianApprovedEnabled(google.protobuf.Empty) returns (GetLoginGuardianCheckGuardianApprovedEnabledOutput) {option (aelf.is_view) = true;}
-   
+    
   // approve
   rpc ManagerApprove(ManagerApproveInput) returns (google.protobuf.Empty) {}
         
@@ -66,14 +63,6 @@ service CAContractImpl {
 
     rpc GetManagerForwardCallParallelInfo (GetManagerForwardCallParallelInfoInput) returns (GetManagerForwardCallParallelInfoOutput) {option (aelf.is_view) = true;}
        
-}
-
-message SetCreateHolderEnabledInput {
-  bool create_holder_enabled = 1;
-}
-
-message GetCreateHolderEnabledOutput {
-  bool create_holder_enabled = 1;
 }
 
 message SetLoginGuardianCheckGuardianApprovedEnabledInput {
@@ -255,3 +244,21 @@ message GetManagerForwardCallParallelInfoOutput {
     string method_name = 2;
     bool is_parallel = 3;
 }
+
+message DelegateeHashList {
+  repeated aelf.Hash hash_list = 1;
+}
+
+message DelegateeAddressList {
+  repeated aelf.Address address_list = 1;
+}
+
+// LogEvent
+message ProjectDelegateRegistered {
+  option (aelf.is_event) = true;
+  aelf.Hash project_delegate_hash = 1 [(aelf.is_indexed) = true];
+  aelf.Address controller = 2 [(aelf.is_indexed) = true];
+  DelegateeHashList delegatee_hash_list = 3 [(aelf.is_indexed) = true];
+  DelegateeAddressList delegatee_address_list = 4 [(aelf.is_indexed) = true];
+}
+
