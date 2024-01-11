@@ -1,6 +1,7 @@
 using System.Linq;
 using AElf;
 using AElf.Contracts.MultiToken;
+using AElf.Sdk.CSharp;
 using AElf.Types;
 using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
@@ -39,8 +40,20 @@ public partial class CAContract
         {
             projectDelegateInfo.DelegateeHashList.Add(HashHelper.ConcatAndCompute(HashHelper.ComputeFrom(salt), projectHash));
         }
-
         State.ProjectDelegateInfo[projectHash] = projectDelegateInfo;
+        Context.Fire(new ProjectDelegateRegistered
+        {
+            ProjectDelegateHash = projectHash,
+            Controller = Context.Sender,
+            DelegateeHashList = new DelegateeHashList
+            {
+                HashList = { projectDelegateInfo.DelegateeHashList }
+            },
+            DelegateeAddressList = new DelegateeAddressList
+            {
+                AddressList = { projectDelegateInfo.DelegateeHashList.Select(t => Context.ConvertVirtualAddressToContractAddress(t)) }
+            }
+        });
         return projectHash;
     }
 

@@ -44,7 +44,7 @@ public partial class CAContractTests
                         Id = _verifierServers[0].Id,
                         Signature = setLimitSign,
                         VerificationDoc =
-                            $"{0},{_guardian.ToHex()},{setLimitVerifyTime},{VerifierAddress.ToBase58()},{salt},{setLimitOpType}"
+                            $"{0},{_guardian.ToHex()},{setLimitVerifyTime},{VerifierAddress.ToBase58()},{salt},{setLimitOpType},{MainChainId}"
                     }
                 }
             },
@@ -84,7 +84,7 @@ public partial class CAContractTests
                         Id = _verifierServers[0].Id,
                         Signature = setLimitSign,
                         VerificationDoc =
-                            $"{0},{_guardian.ToHex()},{setLimitVerifyTime},{VerifierAddress.ToBase58()},{salt},{setLimitOpType}"
+                            $"{0},{_guardian.ToHex()},{setLimitVerifyTime},{VerifierAddress.ToBase58()},{salt},{setLimitOpType},{MainChainId}"
                     }
                 }
             },
@@ -118,7 +118,7 @@ public partial class CAContractTests
                         Id = _verifierServers[0].Id,
                         Signature = setLimitSign,
                         VerificationDoc =
-                            $"{0},{_guardian.ToHex()},{setLimitVerifyTime},{VerifierAddress.ToBase58()},{salt},{setLimitOpType}"
+                            $"{0},{_guardian.ToHex()},{setLimitVerifyTime},{VerifierAddress.ToBase58()},{salt},{setLimitOpType},{MainChainId}"
                     }
                 }
             },
@@ -161,7 +161,7 @@ public partial class CAContractTests
                         Id = _verifierServers[0].Id,
                         Signature = setLimitSign,
                         VerificationDoc =
-                            $"{0},{_guardian.ToHex()},{setLimitVerifyTime},{VerifierAddress.ToBase58()},{salt},{setLimitOpType}"
+                            $"{0},{_guardian.ToHex()},{setLimitVerifyTime},{VerifierAddress.ToBase58()},{salt},{setLimitOpType},{MainChainId}"
                     }
                 }
             },
@@ -196,7 +196,7 @@ public partial class CAContractTests
                             Id = _verifierServers[0].Id,
                             Signature = setLimitSign,
                             VerificationDoc =
-                                $"{0},{_guardian.ToHex()},{setLimitVerifyTime},{VerifierAddress.ToBase58()},{salt},{setLimitOpType}"
+                                $"{0},{_guardian.ToHex()},{setLimitVerifyTime},{VerifierAddress.ToBase58()},{salt},{setLimitOpType},{MainChainId}"
                         }
                     }
                 },
@@ -253,34 +253,6 @@ public partial class CAContractTests
     }
 
     [Fact]
-    public async Task SetCheckCreateIdInSignatureEnabledTest()
-    {
-        var result = await CaContractStub.GetCheckChainIdInSignatureEnabled.CallAsync(
-            new Empty());
-        result.CheckChainIdInSignatureEnabled.ShouldBeFalse();
-        await Initiate();
-        await TokenContractStub.Transfer.SendAsync(new TransferInput
-        {
-            Amount = 1000000000000,
-            Symbol = "ELF",
-            To = User1Address
-        });
-        var setResult = await CaContractUser1Stub.SetCheckChainIdInSignatureEnabled.SendWithExceptionAsync(
-            new SetCheckChainIdInSignatureEnabledInput
-            {
-                CheckChainIdInSignatureEnabled = true
-            });
-        setResult.TransactionResult.Error.ShouldContain("No permission");
-        await CaContractStub.SetCheckChainIdInSignatureEnabled.SendAsync(new SetCheckChainIdInSignatureEnabledInput
-        {
-            CheckChainIdInSignatureEnabled = true
-        });
-        result = await CaContractStub.GetCheckChainIdInSignatureEnabled.CallAsync(
-            new Empty());
-        result.CheckChainIdInSignatureEnabled.ShouldBeTrue();
-    }
-
-    [Fact]
     public async Task UpdateDailyTransferredAmount_TransferAddGuardianApproveTest()
     {
         await InitTransferLimitTest();
@@ -319,7 +291,7 @@ public partial class CAContractTests
                         Id = _verifierServers[0].Id,
                         Signature = managerForwardCallSign,
                         VerificationDoc =
-                            $"{0},{_guardian.ToHex()},{managerForwardCallVerifyTime},{VerifierAddress.ToBase58()},{salt},{managerForwardCallOpType}"
+                            $"{0},{_guardian.ToHex()},{managerForwardCallVerifyTime},{VerifierAddress.ToBase58()},{salt},{managerForwardCallOpType},{MainChainId}"
                     }
                 }
             },
@@ -400,7 +372,7 @@ public partial class CAContractTests
                         Id = _verifierServers[0].Id,
                         Signature = managerTransferSign,
                         VerificationDoc =
-                            $"{0},{_guardian.ToHex()},{managerTransferVerifyTime},{VerifierAddress.ToBase58()},{salt},{managerTransferOpType}"
+                            $"{0},{_guardian.ToHex()},{managerTransferVerifyTime},{VerifierAddress.ToBase58()},{salt},{managerTransferOpType},{MainChainId}"
                     }
                 }
             }
@@ -507,42 +479,6 @@ public partial class CAContractTests
         _verifierId2 = _verifierServers[2].Id;
         _verifierId3 = _verifierServers[3].Id;
         _verifierId4 = _verifierServers[4].Id;
-
-        await CaContractStub.AddRemovedToCurrentVerifierIdMapper.SendAsync(
-            new AddRemovedToCurrentVerifierIdMapperInput()
-            {
-                Mappers =
-                {
-                    new RemovedToCurrentVerifierIdMapperInfo[]
-                    {
-                        new()
-                        {
-                            RemovedId = _verifierServers[0].Id,
-                            CurrentId = _verifierServers[0].Id
-                        },
-                        new()
-                        {
-                            RemovedId = _verifierServers[1].Id,
-                            CurrentId = _verifierServers[1].Id
-                        },
-                        new()
-                        {
-                            RemovedId = _verifierServers[2].Id,
-                            CurrentId = _verifierServers[2].Id
-                        },
-                        new()
-                        {
-                            RemovedId = _verifierServers[3].Id,
-                            CurrentId = _verifierServers[3].Id
-                        },
-                        new()
-                        {
-                            RemovedId = _verifierServers[4].Id,
-                            CurrentId = _verifierServers[4].Id
-                        }
-                    }
-                }
-            });
     }
 
     private async Task InitTestTransferLimitCaHolder()
@@ -571,7 +507,7 @@ public partial class CAContractTests
                     Id = id,
                     Signature = signature,
                     VerificationDoc =
-                        $"{0},{_guardian.ToHex()},{verifyTime},{VerifierAddress.ToBase58()},{salt},{opType}"
+                        $"{0},{_guardian.ToHex()},{verifyTime},{VerifierAddress.ToBase58()},{salt},{opType},{MainChainId}"
                 }
             },
             ManagerInfo = manager

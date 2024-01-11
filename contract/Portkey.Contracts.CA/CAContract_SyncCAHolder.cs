@@ -21,18 +21,11 @@ public partial class CAContract
 
         ValidateManager(holderInfo, input.ManagerInfos);
         AssertCreateChain(holderInfo);
-        if (State.CheckChainIdInSignatureEnabled.Value)
-        {
-            if (holderInfo.CreateChainId == 0)
-            {
-                holderInfo.CreateChainId = Context.ChainId;
-            }
-            Assert(holderInfo.CreateChainId == input.CreateChainId, "Invalid input createChainId.");
-            Assert(input.GuardianList?.Guardians?.Count > 0, "Input guardianList is empty.");
-            Assert(holderInfo.GuardianList.Guardians.Count == input.GuardianList.Guardians.Count, 
-                "The amount of input.GuardianList not equals to HolderInfo's GuardianList");
-            ValidateGuardianList(holderInfo.GuardianList, input.GuardianList);
-        }
+        Assert(holderInfo.CreateChainId == input.CreateChainId, "Invalid input createChainId.");
+        Assert(input.GuardianList?.Guardians?.Count > 0, "Input guardianList is empty.");
+        Assert(holderInfo.GuardianList.Guardians.Count == input.GuardianList.Guardians.Count,
+            "The amount of input.GuardianList not equals to HolderInfo's GuardianList");
+        ValidateGuardianList(holderInfo.GuardianList, input.GuardianList);
         return new Empty();
     }
 
@@ -116,6 +109,14 @@ public partial class CAContract
 
         var holderId = transactionInput.CaHash;
         var holderInfo = State.HolderInfoMap[holderId] ?? new HolderInfo { CreatorAddress = Context.Sender };
+        holderInfo.CreateChainId = transactionInput.CreateChainId;
+        if (holderInfo.GuardianList == null)
+        {
+            holderInfo.GuardianList = new GuardianList
+            {
+                Guardians = { }
+            };
+        }
 
         var managerInfosToAdd = ManagerInfosExcept(transactionInput.ManagerInfos, holderInfo.ManagerInfos);
         var managerInfosToRemove = ManagerInfosExcept(holderInfo.ManagerInfos, transactionInput.ManagerInfos);
@@ -129,7 +130,7 @@ public partial class CAContract
         SetDelegators(holderId, managerInfosToAdd);
 
         var caAddress = Context.ConvertVirtualAddressToContractAddress(holderId);
-        UpgradeProjectDelegatee(caAddress, holderInfo.ManagerInfos);
+        UpgradeProjectDelegatee(caAddress);
 
         var loginGuardiansAdded = SyncLoginGuardianAdded(transactionInput.CaHash, transactionInput.LoginGuardians);
         var loginGuardiansUnbound =
@@ -137,30 +138,19 @@ public partial class CAContract
 
         var guardiansAdded = new RepeatedField<Guardian>();
         var guardiansRemoved = new RepeatedField<Guardian>();
-        if (State.CheckChainIdInSignatureEnabled.Value)
+
+        guardiansAdded =
+            GuardiansExcept(transactionInput.GuardianList.Guardians, holderInfo.GuardianList.Guardians);
+        guardiansRemoved =
+            GuardiansExcept(holderInfo.GuardianList.Guardians, transactionInput.GuardianList.Guardians);
+        foreach (var guardian in guardiansAdded)
         {
-            holderInfo.CreateChainId = transactionInput.CreateChainId;
-            if (holderInfo.GuardianList == null)
-            {
-                holderInfo.GuardianList = new GuardianList
-                {
-                    Guardians = { }
-                };
-            }
+            holderInfo.GuardianList.Guardians.Add(guardian);
+        }
 
-            guardiansAdded =
-                GuardiansExcept(transactionInput.GuardianList.Guardians, holderInfo.GuardianList.Guardians);
-            guardiansRemoved =
-                GuardiansExcept(holderInfo.GuardianList.Guardians, transactionInput.GuardianList.Guardians);
-            foreach (var guardian in guardiansAdded)
-            {
-                holderInfo.GuardianList.Guardians.Add(guardian);
-            }
-
-            foreach (var guardian in guardiansRemoved)
-            {
-                holderInfo.GuardianList.Guardians.Remove(guardian);
-            }
+        foreach (var guardian in guardiansRemoved)
+        {
+            holderInfo.GuardianList.Guardians.Remove(guardian);
         }
 
         State.HolderInfoMap[holderId] = holderInfo;
@@ -202,9 +192,7 @@ public partial class CAContract
     private void AssertCrossChainTransaction(Transaction originalTransaction,
         string validMethodName, int fromChainId)
     {
-        var validateResult = originalTransaction.MethodName == validMethodName
-                             && originalTransaction.To == State.CAContractAddresses[fromChainId];
-        Assert(validateResult, "Invalid transaction.");
+        Assert(originalTransaction.MethodName == validMethodName, "Invalid transaction.");
     }
 
 
@@ -299,16 +287,7 @@ public partial class CAContract
 
         return resultSet;
     }
-
-    private Transaction MethodNameVerify(VerificationTransactionInfo info, string methodNameExpected)
-    {
-        var originalTransaction = Transaction.Parser.ParseFrom(info.TransactionBytes);
-        Assert(originalTransaction.MethodName == methodNameExpected, $"Invalid transaction method.");
-
-        return originalTransaction;
-    }
-
-
+    
     private void TransactionVerify(Hash transactionId, long parentChainHeight, int chainId, MerklePath merklePath)
     {
         var verificationInput = new VerifyTransactionInput

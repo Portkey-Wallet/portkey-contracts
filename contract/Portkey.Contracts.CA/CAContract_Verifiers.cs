@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Linq;
 using AElf;
 using AElf.Sdk.CSharp;
-using AElf.Types;
 using Google.Protobuf.WellKnownTypes;
 
 namespace Portkey.Contracts.CA;
@@ -11,8 +10,6 @@ public partial class CAContract
 {
     public override Empty AddVerifierServerEndPoints(AddVerifierServerEndPointsInput input)
     {
-        // Assert(Context.Sender.Equals(State.Admin.Value),
-        //     "Only Admin has permission to add VerifierServerEndPoints");
         Assert(State.ServerControllers.Value.Controllers.Contains(Context.Sender), "No permission");
         Assert(input != null, "invalid input");
         Assert(!string.IsNullOrWhiteSpace(input!.Name), "invalid input name");
@@ -97,8 +94,6 @@ public partial class CAContract
 
     public override Empty RemoveVerifierServerEndPoints(RemoveVerifierServerEndPointsInput input)
     {
-        // Assert(Context.Sender.Equals(State.Admin.Value),
-        //     "Only Admin has permission to remove VerifierServerEndPoints");
         Assert(State.ServerControllers.Value.Controllers.Contains(Context.Sender), "No permission");
         Assert(input != null, "invalid input");
         Assert(IsValidHash(input!.Id), "invalid input id");
@@ -139,8 +134,6 @@ public partial class CAContract
 
     public override Empty RemoveVerifierServer(RemoveVerifierServerInput input)
     {
-        // Assert(Context.Sender.Equals(State.Admin.Value),
-        //     "Only Admin has permission to remove VerifierServer");
         Assert(State.ServerControllers.Value.Controllers.Contains(Context.Sender), "No permission");
         Assert(input != null, "invalid input");
         Assert(IsValidHash(input!.Id), "invalid input id");
@@ -173,36 +166,5 @@ public partial class CAContract
             output.VerifierServers.Add(verifierServerList.VerifierServers);
         }
         return output;
-    }
-    
-    public override Empty AddRemovedToCurrentVerifierIdMapper(AddRemovedToCurrentVerifierIdMapperInput input)
-    {
-        Assert(State.Admin.Value == Context.Sender, "No permission");
-        Assert(input.Mappers.Count > 0, "Invalid input");
-        foreach (var mapper in input.Mappers)
-        {
-            State.RemovedToCurrentVerifierIdMap[mapper.RemovedId] = mapper.CurrentId;
-        }
-        Context.Fire(new RemovedToCurrentVerifierIdMapperAdded
-        {
-            MapperList = new RemovedToCurrentVerifierIdMapperInfoList
-            {
-                Mappers = { input.Mappers }
-            }
-        });
-        return new Empty();
-    }
-
-    public override GetRemovedToCurrentVerifierIdMapperOutput GetRemovedToCurrentVerifierIdMapper(Hash input)
-    {
-        var currentVerifierId = State.RemovedToCurrentVerifierIdMap[input];
-        return new GetRemovedToCurrentVerifierIdMapperOutput
-        {
-            Mapper = new RemovedToCurrentVerifierIdMapperInfo()
-            {
-                RemovedId = input,
-                CurrentId = currentVerifierId
-            }
-        };
     }
 }

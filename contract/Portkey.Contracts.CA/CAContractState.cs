@@ -1,17 +1,11 @@
 using AElf.Sdk.CSharp.State;
 using AElf.Types;
-using Google.Protobuf.Collections;
 
 namespace Portkey.Contracts.CA;
 
 public partial class CAContractState : ContractState
 {
     public SingletonState<bool> Initialized { get; set; }
-
-    // public SingletonState<Address> RegisterOrRecoveryController { get; set; }
-    //
-    // public SingletonState<Address> SetConfigController { get; set; }
-    public SingletonState<bool> CreateHolderEnabled { get; set; }
 
     /// <summary>
     /// Login Guardian identifier hash  -> Verifier Id -> HolderInfo Hash
@@ -24,11 +18,6 @@ public partial class CAContractState : ContractState
     /// multiple Login Guardian to one HolderInfo Hash
     /// </summary>
     public MappedState<Hash, Hash> GuardianMap { get; set; }
-
-    /// <summary>
-    /// removedId -> currentId
-    /// </summary>
-    public MappedState<Hash, Hash> RemovedToCurrentVerifierIdMap { get; set; }
 
     /// <summary>
     /// HolderInfo Hash -> HolderInfo
@@ -51,14 +40,8 @@ public partial class CAContractState : ContractState
     /// </summary>
     public SingletonState<CAServerList> CaServerList { get; set; }
 
-    // public SingletonState<AuthorityInfo> MethodFeeController { get; set; }
-    // public MappedState<string, MethodFees> TransactionFees { get; set; }
-    public SingletonState<ContractDelegationFee> ContractDelegationFee { get; set; }
-
     //
     public MappedState<Hash, bool> VerifierDocMap { get; set; }
-
-    public MappedState<int, Address> CAContractAddresses { get; set; }
 
     public SingletonState<long> TokenInitialTransferLimit { get; set; }
     public SingletonState<TransferSecurityThresholdList> TransferSecurityThresholdList { get; set; }
@@ -66,8 +49,7 @@ public partial class CAContractState : ContractState
     public MappedState<Hash, string, TransferredAmount> DailyTransferredAmountMap { get; set; }
     public MappedState<string, TransferLimit> TokenDefaultTransferLimit { get; set; }
     public MappedState<Address, string, bool> ForbiddenForwardCallContractMethod { get; set; }
-    public SingletonState<bool> CheckChainIdInSignatureEnabled { get; set; }
-    public SingletonState<SecondaryDelegationFee> SecondaryDelegationFee { get; set; }
+    public SingletonState<ProjectDelegationFee> ProjectDelegationFee { get; set; }
     public MappedState<Hash, ProjectDelegateInfo> ProjectDelegateInfo { get; set; }
     public SingletonState<Hash> CaProjectDelegateHash { get; set; }
     public SingletonState<bool> LoginGuardianCheckGuardianApprovedEnabled { get; set; }

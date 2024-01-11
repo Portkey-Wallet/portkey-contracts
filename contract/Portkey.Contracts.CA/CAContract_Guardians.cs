@@ -1,8 +1,6 @@
 using System.Linq;
-using AElf;
 using AElf.CSharp.Core;
 using AElf.Sdk.CSharp;
-using AElf.Types;
 using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
 
@@ -17,28 +15,20 @@ public partial class CAContract
             "Invalid input.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
-        Assert(holderInfo.GuardianList.Guardians.FirstOrDefault(g => g.VerifierId == input.GuardianToAdd.VerificationInfo.Id) == null,
+        Assert(
+            holderInfo.GuardianList.Guardians.FirstOrDefault(g =>
+                g.VerifierId == input.GuardianToAdd.VerificationInfo.Id) == null,
             "The verifier already exists");
-        Assert(holderInfo.GuardianList.Guardians.FirstOrDefault(g => g.Type == input.GuardianToAdd.Type && g.IdentifierHash == input.GuardianToAdd.IdentifierHash) == null,
+        Assert(
+            holderInfo.GuardianList.Guardians.FirstOrDefault(g =>
+                g.Type == input.GuardianToAdd.Type && g.IdentifierHash == input.GuardianToAdd.IdentifierHash) == null,
             "The account already exists");
 
         var methodName = nameof(OperationType.AddGuardian).ToLower();
         //Check the verifier signature and data of the guardian to be added.
-        var guardianApprovedAmount = 0;
-        var guardianApprovedList = input.GuardiansApproved
-            .DistinctBy(g => $"{g.Type}{g.IdentifierHash}{g.VerificationInfo.Id}")
-            .ToList();
-        foreach (var guardian in guardianApprovedList)
-        {
-            //Whether the guardian exists in the holder info.
-            if (!IsGuardianExist(input.CaHash, guardian)) continue;
-            //Check the verifier signature and data of the guardian to be approved.
-            var isApproved = CheckVerifierSignatureAndDataCompatible(guardian, methodName, input.CaHash);
-            if (!isApproved) continue;
-            guardianApprovedAmount++;
-        }
+        var guardianApprovedAmount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved, methodName);
 
-        if (!CheckVerifierSignatureAndDataCompatible(input.GuardianToAdd, methodName, input.CaHash))
+        if (!CheckVerifierSignatureAndData(input.GuardianToAdd, methodName, input.CaHash))
         {
             return new Empty();
         }
@@ -64,8 +54,8 @@ public partial class CAContract
         State.HolderInfoMap[input.CaHash].GuardianList?.Guardians.Add(guardianAdded);
 
         var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
-        UpgradeProjectDelegatee(caAddress, holderInfo.ManagerInfos);
-        
+        UpgradeProjectDelegatee(caAddress);
+
         Context.Fire(new GuardianAdded
         {
             CaHash = input.CaHash,
@@ -105,30 +95,22 @@ public partial class CAContract
             Assert(loginGuardianCount > 1,
                 $"Cannot remove a Guardian for login, to remove it, unset it first. {input.GuardianToRemove?.IdentifierHash} is a guardian for login.");
         }
-
-        var guardianApprovedAmount = 0;
-        var guardianApprovedList = input.GuardiansApproved
-            .DistinctBy(g => $"{g.Type}{g.IdentifierHash}{g.VerificationInfo.Id}")
-            .ToList();
-        var methodName = nameof(OperationType.RemoveGuardian).ToLower();
-        foreach (var guardian in guardianApprovedList)
+        
+        foreach (var guardian in input.GuardiansApproved)
         {
             Assert(
                 !(guardian.Type == toRemoveGuardian.Type &&
                   guardian.IdentifierHash == toRemoveGuardian.IdentifierHash &&
                   guardian.VerificationInfo.Id == toRemoveGuardian.VerifierId),
                 "Guardian approved list contains to removed guardian.");
-            //Whether the guardian exists in the holder info.
-            if (!IsGuardianExist(input.CaHash, guardian)) continue;
-            //Check the verifier signature and data of the guardian to be approved.
-            var isApproved = CheckVerifierSignatureAndDataCompatible(guardian, methodName);
-            if (!isApproved) continue;
-            guardianApprovedAmount++;
         }
+
+        var guardianApprovedCount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved,
+            nameof(OperationType.RemoveGuardian).ToLower());
 
         //Whether the approved guardians count is satisfied.
         var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count.Sub(1),
-            guardianApprovedAmount, holderInfo.JudgementStrategy);
+            guardianApprovedCount, holderInfo.JudgementStrategy);
         if (!isJudgementStrategySatisfied)
         {
             return new Empty();
@@ -140,8 +122,9 @@ public partial class CAContract
         {
             State.LoginGuardianMap[toRemoveGuardian.IdentifierHash].Remove(toRemoveGuardian.VerifierId);
         }
+
         var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
-        UpgradeProjectDelegatee(caAddress, holderInfo.ManagerInfos);
+        UpgradeProjectDelegatee(caAddress);
 
         Context.Fire(new GuardianRemoved
         {
@@ -196,29 +179,21 @@ public partial class CAContract
         Assert(State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(v =>
             v.Id == input.GuardianToUpdateNew.VerificationInfo.Id) != null, "Verifier is not exist.");
 
-        var guardianApprovedAmount = 0;
-        var guardianApprovedList = input.GuardiansApproved
-            .DistinctBy(g => $"{g.Type}{g.IdentifierHash}{g.VerificationInfo.Id}")
-            .ToList();
-        var methodName = nameof(OperationType.UpdateGuardian).ToLower();
-        foreach (var guardian in guardianApprovedList)
+        foreach (var guardian in input.GuardiansApproved)
         {
             Assert(
                 !(guardian.Type == existPreGuardian.Type &&
                   guardian.IdentifierHash == existPreGuardian.IdentifierHash &&
                   guardian.VerificationInfo.Id == existPreGuardian.VerifierId),
                 "Guardian approved list contains to updated guardian.");
-            //Whether the guardian exists in the holder info.
-            if (!IsGuardianExist(input.CaHash, guardian)) continue;
-            //Check the verifier signature and data of the guardian to be approved.
-            var isApproved = CheckVerifierSignatureAndDataCompatible(guardian, methodName);
-            if (!isApproved) continue;
-            guardianApprovedAmount++;
         }
+
+        var guardianApprovedCount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved,
+            nameof(OperationType.UpdateGuardian).ToLower());
 
         //Whether the approved guardians count is satisfied.
         var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count.Sub(1),
-            guardianApprovedAmount, holderInfo.JudgementStrategy);
+            guardianApprovedCount, holderInfo.JudgementStrategy);
         if (!isJudgementStrategySatisfied)
         {
             return new Empty();
@@ -233,8 +208,8 @@ public partial class CAContract
         }
 
         var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
-        UpgradeProjectDelegatee(caAddress, holderInfo.ManagerInfos);
-        
+        UpgradeProjectDelegatee(caAddress);
+
         Context.Fire(new GuardianUpdated
         {
             CaHash = input.CaHash,

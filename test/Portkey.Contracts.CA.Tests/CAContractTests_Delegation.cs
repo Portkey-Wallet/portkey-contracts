@@ -315,61 +315,7 @@ public partial class CAContractTests
         projectDelegate.DelegateeHashList.Count.ShouldBe(1);
         return projectDelegateHash;
     }
-
-    [Fact]
-    public async Task SetContractDelegationFeeTest()
-    {
-        await CreateHolder();
-        var contractDelegationFee = await CaContractStub.GetContractDelegationFee.CallAsync(new Empty());
-        contractDelegationFee.DelegationFee.ShouldBeNull();
-        await CaContractStub.SetContractDelegationFee.SendAsync(new SetContractDelegationFeeInput
-        {
-            DelegationFee = new ContractDelegationFee
-            {
-                Amount = 20000000000
-            }
-        });
-        contractDelegationFee = await CaContractStub.GetContractDelegationFee.CallAsync(new Empty());
-        contractDelegationFee.DelegationFee.Amount.ShouldBe(20000000000);
-    }
-
-    [Fact]
-    public async Task SetContractDelegationFeeTest_Fail_InvalidInput()
-    {
-        await CaContractStub.Initialize.SendAsync(new InitializeInput
-        {
-            ContractAdmin = DefaultAddress,
-        });
-        await CaContractStub.SetContractDelegationFee.SendAsync(new SetContractDelegationFeeInput
-        {
-            DelegationFee = new ContractDelegationFee
-            {
-                Amount = 10000000000
-            }
-        });
-
-        var result =
-            await CaContractStub.SetContractDelegationFee.SendWithExceptionAsync(new SetContractDelegationFeeInput());
-        result.TransactionResult.Error.ShouldContain("invalid input");
-    }
-
-    // [Fact]
-    // public async Task SetSecondaryDelegationFeeTest()
-    // {
-    //     await CreateHolder();
-    //     var secondaryDelegationFee = await CaContractStub.GetSecondaryDelegationFee.CallAsync(new Empty());
-    //     secondaryDelegationFee.Amount.ShouldBe(10000000000);
-    //     await CaContractStub.SetSecondaryDelegationFee.SendAsync(new SetSecondaryDelegationFeeInput
-    //     {
-    //         DelegationFee = new SecondaryDelegationFee
-    //         {
-    //             Amount = 20000000000
-    //         }
-    //     });
-    //     secondaryDelegationFee = await CaContractStub.GetSecondaryDelegationFee.CallAsync(new Empty());
-    //     secondaryDelegationFee.Amount.ShouldBe(20000000000);
-    // }
-
+    
     [Fact]
     public async Task SetSecondaryDelegationFeeTest_Fail_InvalidInput()
     {
@@ -377,28 +323,24 @@ public partial class CAContractTests
         {
             ContractAdmin = DefaultAddress,
         });
-        var secondaryDelegationFee = await CaContractStub.GetSecondaryDelegationFee.CallAsync(new Empty());
+        var secondaryDelegationFee = await CaContractStub.GetProjectDelegationFee.CallAsync(new Empty());
         secondaryDelegationFee.Amount.ShouldBe(0);
-        await CaContractStub.SetSecondaryDelegationFee.SendAsync(new SetSecondaryDelegationFeeInput
+        await CaContractStub.SetProjectDelegationFee.SendAsync(new SetProjectDelegationFeeInput()
         {
-            DelegationFee = new SecondaryDelegationFee
+            DelegationFee = new ProjectDelegationFee()
             {
                 Amount = 10000000000
             }
         });
 
         var result =
-            await CaContractStub.SetSecondaryDelegationFee.SendWithExceptionAsync(new SetSecondaryDelegationFeeInput());
+            await CaContractStub.SetProjectDelegationFee.SendWithExceptionAsync(new SetProjectDelegationFeeInput());
         result.TransactionResult.Error.ShouldContain("Invalid input");
     }
 
     private async Task<Hash> CreateHolderOnly()
     {
         var verificationTime = DateTime.UtcNow;
-        await CaContractStub.SetCreateHolderEnabled.SendAsync(new SetCreateHolderEnabledInput
-        {
-            CreateHolderEnabled = true
-        });
         {
             await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
             {
@@ -459,7 +401,7 @@ public partial class CAContractTests
                     Id = _verifierId,
                     Signature = signature,
                     VerificationDoc =
-                        $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(10)},{VerifierAddress.ToBase58()},{salt},{operationType}"
+                        $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(10)},{VerifierAddress.ToBase58()},{salt},{operationType},{MainChainId}"
                 }
             },
             ManagerInfo = new ManagerInfo

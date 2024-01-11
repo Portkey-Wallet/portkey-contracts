@@ -48,7 +48,6 @@ public partial class CAContract
                     resource.ReadPaths.Add(GetPath(nameof(State.TokenInitialTransferLimit)));
                     resource.ReadPaths.Add(GetPath(nameof(State.TokenDefaultTransferLimit),
                         transferInput.Symbol));
-                    resource.ReadPaths.Add(GetPath(nameof(State.CheckChainIdInSignatureEnabled)));
                     resource.ReadPaths.Add(GetPath(nameof(State.ForbiddenForwardCallContractMethod),
                         args.ContractAddress.ToString(), args.MethodName));
                     resource.ReadPaths.Add(GetPath(nameof(State.TransferLimit),
@@ -58,9 +57,6 @@ public partial class CAContract
                     {
                         resource.WritePaths.Add(
                             GetPath(nameof(State.VerifierDocMap), GetVerifierSignatureHash(guardian)));
-
-                        resource.ReadPaths.Add(
-                            GetPath(nameof(State.RemovedToCurrentVerifierIdMap), GetVerificationInfoId(guardian)));
                     }
 
                     resource.WritePaths.Add(

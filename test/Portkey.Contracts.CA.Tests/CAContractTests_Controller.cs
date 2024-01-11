@@ -17,10 +17,6 @@ public partial class CAContractTests
         {
             ContractAdmin = DefaultAddress,
         });
-        await CaContractStub.SetCreateHolderEnabled.SendAsync(new SetCreateHolderEnabledInput
-        {
-            CreateHolderEnabled = true
-        });
     }
 
     [Fact]
