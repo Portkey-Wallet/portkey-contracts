@@ -17,10 +17,6 @@ public static class CAContractConstants
 
     public const long TokenDefaultTransferLimitAmount = 100000000000000000;
     public const int DelegateeListMaxCount = 10;
-
-    public const int MainChainId = 9992731;
-    
-    
 }
 
 enum LoginGuardianStatus
