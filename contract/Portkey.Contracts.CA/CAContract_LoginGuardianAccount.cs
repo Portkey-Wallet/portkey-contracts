@@ -161,16 +161,18 @@ public partial class CAContract
 
         State.LoginGuardianMap[loginGuardian.IdentifierHash].Remove(loginGuardian.VerifierId);
 
+        State.LoginGuardianMap[loginGuardian.IdentifierHash].Remove(loginGuardian.VerificationInfo.Id);
+        var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
         Context.Fire(new LoginGuardianRemoved
         {
             CaHash = input.CaHash,
-            CaAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash),
+            CaAddress = caAddress,
             LoginGuardian = guardian,
             Manager = Context.Sender
         });
 
-        var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
         
+
         // not found, or removed and be registered by others later, quit to be idempotent
         if (holderInfo.GuardianList.Guardians.Where(g =>
                 g.IdentifierHash == loginGuardian.IdentifierHash).All(g => !g.IsLoginGuardian))

@@ -45,6 +45,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         Assert(
             input.GuardianApproved!.VerificationInfo != null, "invalid verification");
         Assert(input.ManagerInfo != null, "invalid input managerInfo");
+        Assert(input.ManagerInfo?.Address != null, "invalid input managerInfo address");
         var guardianIdentifierHash = input.GuardianApproved.IdentifierHash;
         var holderId = State.GuardianMap[guardianIdentifierHash];
 
@@ -103,7 +104,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         {
             Creator = Context.Sender,
             CaHash = holderId,
-            CaAddress = Context.ConvertVirtualAddressToContractAddress(holderId),
+            CaAddress = caAddress,
             Manager = input.ManagerInfo!.Address,
             ExtraData = input.ManagerInfo.ExtraData
         });
