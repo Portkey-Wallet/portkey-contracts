@@ -202,19 +202,4 @@ public partial class CAContract
             ? LoginGuardianStatus.IsYours
             : LoginGuardianStatus.IsOccupiedByOthers;
     }
-
-    public override Empty SetLoginGuardianCheckGuardianApprovedEnabled(SetLoginGuardianCheckGuardianApprovedEnabledInput input)
-    {
-        Assert(Context.Sender == State.Admin.Value, "No permission.");
-        State.LoginGuardianCheckGuardianApprovedEnabled.Value = input.LoginGuardianCheckGuardianApprovedEnabled;
-        return new Empty();
-    }
-
-    public override GetLoginGuardianCheckGuardianApprovedEnabledOutput GetLoginGuardianCheckGuardianApprovedEnabled(Empty input)
-    {
-        return new GetLoginGuardianCheckGuardianApprovedEnabledOutput
-        {
-            LoginGuardianCheckGuardianApprovedEnabled = State.LoginGuardianCheckGuardianApprovedEnabled.Value
-        };
-    }
 }

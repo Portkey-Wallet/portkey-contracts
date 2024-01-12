@@ -26,7 +26,7 @@ public partial class CAContract
 
         var methodName = nameof(OperationType.AddGuardian).ToLower();
         //Check the verifier signature and data of the guardian to be added.
-        var guardianApprovedAmount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved, methodName);
+        var guardianApprovedCount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved, methodName);
 
         if (!CheckVerifierSignatureAndData(input.GuardianToAdd, methodName, input.CaHash))
         {
@@ -36,7 +36,7 @@ public partial class CAContract
         //Whether the approved guardians count is satisfied.
         var holderJudgementStrategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
         var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count,
-            guardianApprovedAmount, holderJudgementStrategy);
+            guardianApprovedCount, holderJudgementStrategy);
         if (!isJudgementStrategySatisfied)
         {
             return new Empty();
