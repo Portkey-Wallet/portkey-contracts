@@ -161,7 +161,6 @@ public partial class CAContract
 
         State.LoginGuardianMap[loginGuardian.IdentifierHash].Remove(loginGuardian.VerifierId);
 
-        State.LoginGuardianMap[loginGuardian.IdentifierHash].Remove(loginGuardian.VerificationInfo.Id);
         var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
         Context.Fire(new LoginGuardianRemoved
         {
