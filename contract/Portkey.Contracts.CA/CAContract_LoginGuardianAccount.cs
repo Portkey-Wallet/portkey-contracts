@@ -16,12 +16,6 @@ public partial class CAContract
         // Guardian should be valid, not null, and be with non-null Value
         Assert(input.GuardianToSetLogin != null, "GuardianToSetLogin should not be null");
         Assert(input.GuardiansApproved.Count > 0, "GuardiansApproved should not be empty.");
-        // var loginGuardian = new Guardian
-        // {
-        //     IdentifierHash = input.GuardianToSetLogin.IdentifierHash,
-        //     VerifierId = input.GuardianToSetLogin.VerificationInfo.Id,
-        //     Type = input.GuardianToSetLogin.Type
-        // };
         Assert(IsValidHash(input.GuardianToSetLogin.IdentifierHash), "Guardian IdentifierHash should not be null");
 
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
