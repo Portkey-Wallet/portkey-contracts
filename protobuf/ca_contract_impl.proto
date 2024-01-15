@@ -61,14 +61,6 @@ service CAContractImpl {
        
 }
 
-message SetLoginGuardianCheckGuardianApprovedEnabledInput {
-  bool login_guardian_check_guardian_approved_enabled = 1;
-}
-
-message GetLoginGuardianCheckGuardianApprovedEnabledOutput {
-  bool login_guardian_check_guardian_approved_enabled = 1;
-}
-
 message ManagerApproveInput {
     aelf.Hash ca_hash = 1;
     aelf.Address spender = 2;
