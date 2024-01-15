@@ -212,7 +212,7 @@ public partial class CAContractTests
     }
     
     [Fact]
-    public async Task UpgradeProjectDelegate()
+    public async Task SetProjectDelegate_UnRegister()
     {
         await Initiate();
         var caHash = await CreateHolderOnly();
@@ -228,30 +228,6 @@ public partial class CAContractTests
                 DelegatorAddress = caAddress
             });
         projectDeletatees.DelegateeAddresses.Count.ShouldBe(0);
-        
-        var projectHash = await RegisterProjectDelegatee();
-        var projectDelegate = await CaContractStub.GetProjectDelegatee.CallAsync(projectHash);
-        await CaContractStub.SetCaProjectDelegateHash.SendAsync(projectHash);
-        var manager = new ManagerInfo()
-        {
-            Address = User2Address,
-            ExtraData = "iphone14-2023"
-        };
-        await CaContractUser1Stub.AddManagerInfo.SendAsync(new AddManagerInfoInput()
-        {
-            CaHash = caHash,
-            ManagerInfo = manager
-        });
-        
-        projectDeletatees = await TokenContractStub.GetTransactionFeeDelegatees.CallAsync(
-            new GetTransactionFeeDelegateesInput
-            {
-                DelegatorAddress = caAddress
-            });
-        projectDeletatees.DelegateeAddresses.Count.ShouldBe(1);
-        int selectIndex =
-            (int) Math.Abs(caAddress.ToByteArray().ToInt64(true) % projectDelegate.DelegateeHashList.Count);
-        projectDeletatees.DelegateeAddresses[0].ShouldBe(projectDelegate.DelegateeAddressList[selectIndex]);
     }
 
     private async Task<Hash> RegisterProjectDelegatee()

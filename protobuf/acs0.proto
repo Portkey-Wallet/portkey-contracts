@@ -80,6 +80,16 @@ message ContractInfo
 message ContractDeploymentInput {
     sint32 category = 1;
     bytes code = 2;
+    ContractOperation contract_operation = 3;
+}
+
+message ContractOperation{
+    int32 chain_id = 1;
+    aelf.Hash code_hash = 2;
+    aelf.Address deployer = 3;
+    aelf.Hash salt = 4;
+    int32 version = 5;
+    bytes signature = 10000;
 }
 
 message SystemContractDeploymentInput {

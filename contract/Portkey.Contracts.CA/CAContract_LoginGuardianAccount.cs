@@ -14,7 +14,7 @@ public partial class CAContract
         Assert(input != null, "input should not be null");
         Assert(input!.CaHash != null, "CaHash should not be null");
         // Guardian should be valid, not null, and be with non-null Value
-        var checkGuardiansApproved = State.LoginGuardianCheckGuardianApprovedEnabled.Value || input.GuardianToSetLogin != null;
+        var checkGuardiansApproved = input.GuardianToSetLogin != null;
         if (checkGuardiansApproved)
         {
             Assert(input.GuardiansApproved.Count > 0, "GuardiansApproved should not be empty.");
@@ -75,7 +75,6 @@ public partial class CAContract
         State.GuardianMap[loginGuardian.IdentifierHash] = input.CaHash;
         
         var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
-        UpgradeProjectDelegatee(caAddress);
         
         Context.Fire(new LoginGuardianAdded
         {
@@ -110,7 +109,7 @@ public partial class CAContract
         Assert(input != null, "Invalid input");
         Assert(input!.CaHash != null, "CaHash can not be null");
         // Guardian should be valid, not null, and be with non-null Value
-        var checkGuardiansApproved = State.LoginGuardianCheckGuardianApprovedEnabled.Value || input.GuardianToUnsetLogin != null;
+        var checkGuardiansApproved = input.GuardianToUnsetLogin != null;
         if (checkGuardiansApproved)
         {
             Assert(input.GuardiansApproved.Count > 0, "GuardiansApproved should not be empty.");
@@ -184,8 +183,6 @@ public partial class CAContract
                 Manager = Context.Sender
             });
         }
-        
-        UpgradeProjectDelegatee(caAddress);
         
         return new Empty();
     }

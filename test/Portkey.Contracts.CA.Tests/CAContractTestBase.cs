@@ -62,7 +62,11 @@ public class CAContractTestBase : DAppContractTestBase<CAContractTestModule>
             {
                 Category = KernelConstants.CodeCoverageRunnerCategory,
                 Code = ByteString.CopyFrom(
-                    File.ReadAllBytes(typeof(CAContract).Assembly.Location))
+                    File.ReadAllBytes(typeof(CAContract).Assembly.Location)),
+                ContractOperation = new ContractOperation
+                {
+                    Deployer = DefaultAddress
+                }
             }));
 
         CaContractAddress = Address.Parser.ParseFrom(result.TransactionResult.ReturnValue);
