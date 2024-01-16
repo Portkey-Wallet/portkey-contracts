@@ -47,7 +47,6 @@ public partial class CAContract
             "The amount of ManagerInfos out of limit");
 
         var caAddress = Context.ConvertVirtualAddressToContractAddress(caHash);
-        UpgradeProjectDelegatee(caAddress);
 
         State.HolderInfoMap[caHash].ManagerInfos.Add(input.ManagerInfo);
         SetDelegator(caHash, input.ManagerInfo);
@@ -78,7 +77,6 @@ public partial class CAContract
             "The amount of ManagerInfos out of limit");
 
         var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
-        UpgradeProjectDelegatee(caAddress);
 
         holderInfo.ManagerInfos.Add(input.ManagerInfo);
         SetDelegator(input.CaHash, input.ManagerInfo);
@@ -136,7 +134,6 @@ public partial class CAContract
         }
 
         var caAddress = Context.ConvertVirtualAddressToContractAddress(caHash);
-        UpgradeProjectDelegatee(caAddress);
 
         holderInfo.ManagerInfos.Remove(managerInfo);
         RemoveDelegator(caHash, managerInfo);
@@ -184,8 +181,6 @@ public partial class CAContract
                 ExtraData = managerToUpdate.ExtraData
             });
         }
-
-        UpgradeProjectDelegatee(caAddress);
 
         return new Empty();
     }

@@ -14,12 +14,9 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
     {
         Assert(!State.Initialized.Value, "Already initialized.");
         // The main chain uses the audit deployment, does not verify the Author
-        if (Context.ChainId != CAContractConstants.MainChainId)
-        {
-            State.GenesisContract.Value = Context.GetZeroSmartContractAddress();
-            var author = State.GenesisContract.GetContractAuthor.Call(Context.Self);
-            Assert(author == Context.Sender, "No permission.");
-        }
+        State.GenesisContract.Value = Context.GetZeroSmartContractAddress();
+        var contractInfo = State.GenesisContract.GetContractInfo.Call(Context.Self);
+        Assert(contractInfo.Deployer == Context.Sender, "No permission");
 
         State.Admin.Value = input.ContractAdmin ?? Context.Sender;
         State.CreatorControllers.Value = new ControllerList { Controllers = { input.ContractAdmin ?? Context.Sender } };
@@ -103,7 +100,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         {
             Creator = Context.Sender,
             CaHash = holderId,
-            CaAddress = Context.ConvertVirtualAddressToContractAddress(holderId),
+            CaAddress = caAddress,
             Manager = input.ManagerInfo!.Address,
             ExtraData = input.ManagerInfo.ExtraData
         });
@@ -122,8 +119,6 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
 
     private void AssertCreateChain(HolderInfo holderInfo)
     {
-        Assert(holderInfo.GuardianList != null && holderInfo.GuardianList.Guardians != null &&
-               holderInfo.GuardianList.Guardians.Count > 0, "Not on registered chain");
         Assert(holderInfo.CreateChainId == Context.ChainId, "Not on registered chain");
     }
 

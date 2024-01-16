@@ -10,20 +10,6 @@ namespace Portkey.Contracts.CA;
 
 public partial class CAContract
 {
-    public override Empty WithdrawDelegationFeeToken(WithdrawDelegationFeeTokenInput input)
-    {
-        Assert(input.Amount > 0 && !string.IsNullOrWhiteSpace(input.Symbol), "Invalid input");
-        Assert(Context.Sender == State.Admin.Value, "No permission");
-        State.TokenContract.Transfer.Send(new TransferInput()
-        {
-            Amount = input.Amount,
-            Symbol = input.Symbol,
-            To = State.Admin.Value,
-            Memo = "withdraw delegation fee"
-        });
-        return new Empty();
-    }
-
     public override Hash RegisterProjectDelegatee(RegisterProjectDelegateeInput input)
     {
         Assert(!string.IsNullOrWhiteSpace(input.ProjectName), "Invalid project name.");
@@ -41,7 +27,7 @@ public partial class CAContract
             projectDelegateInfo.DelegateeHashList.Add(HashHelper.ConcatAndCompute(HashHelper.ComputeFrom(salt), projectHash));
         }
         State.ProjectDelegateInfo[projectHash] = projectDelegateInfo;
-        Context.Fire(new ProjectDelegateRegistered
+        Context.Fire(new ProjectDelegateeRegistered
         {
             ProjectDelegateHash = projectHash,
             Controller = Context.Sender,
@@ -75,10 +61,7 @@ public partial class CAContract
                 addDelegateeHashList.Add(delegateeHash);
             }
         }
-        if (addDelegateeHashList.Count == 0)
-        {
-            return new Empty();
-        }
+        Assert(addDelegateeHashList.Count > 0, "Input salts already existed");
 
         projectDelegateInfo.DelegateeHashList.AddRange(addDelegateeHashList);
         return new Empty();

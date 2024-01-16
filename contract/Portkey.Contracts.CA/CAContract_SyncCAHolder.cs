@@ -98,7 +98,7 @@ public partial class CAContract
     {
         var originalTransaction = Transaction.Parser.ParseFrom(verificationTransactionInfo.TransactionBytes);
         AssertCrossChainTransaction(originalTransaction,
-            nameof(ValidateCAHolderInfoWithManagerInfosExists), verificationTransactionInfo.FromChainId);
+            nameof(ValidateCAHolderInfoWithManagerInfosExists));
 
         var originalTransactionId = originalTransaction.GetHash();
 
@@ -110,12 +110,15 @@ public partial class CAContract
         var holderId = transactionInput.CaHash;
         var holderInfo = State.HolderInfoMap[holderId] ?? new HolderInfo { CreatorAddress = Context.Sender };
         holderInfo.CreateChainId = transactionInput.CreateChainId;
+        
+        var caAddress = Context.ConvertVirtualAddressToContractAddress(holderId);
         if (holderInfo.GuardianList == null)
         {
             holderInfo.GuardianList = new GuardianList
             {
                 Guardians = { }
             };
+            SetProjectDelegator(caAddress);
         }
 
         var managerInfosToAdd = ManagerInfosExcept(transactionInput.ManagerInfos, holderInfo.ManagerInfos);
@@ -128,9 +131,6 @@ public partial class CAContract
         RemoveDelegators(holderId, managerInfosToRemove);
         holderInfo.ManagerInfos.AddRange(managerInfosToAdd);
         SetDelegators(holderId, managerInfosToAdd);
-
-        var caAddress = Context.ConvertVirtualAddressToContractAddress(holderId);
-        UpgradeProjectDelegatee(caAddress);
 
         var loginGuardiansAdded = SyncLoginGuardianAdded(transactionInput.CaHash, transactionInput.LoginGuardians);
         var loginGuardiansUnbound =
@@ -190,9 +190,9 @@ public partial class CAContract
 
 
     private void AssertCrossChainTransaction(Transaction originalTransaction,
-        string validMethodName, int fromChainId)
+        string validMethodName)
     {
-        Assert(originalTransaction.MethodName == validMethodName, "Invalid transaction.");
+        Assert(originalTransaction.MethodName == validMethodName && originalTransaction.To == Context.Self, "Invalid transaction.");
     }
 
 
