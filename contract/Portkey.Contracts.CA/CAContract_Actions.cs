@@ -113,8 +113,25 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
             Manager = input.ManagerInfo.Address,
             IsCreateHolder = true
         });
-
+        var isValidReferralCode = IsValidInviteCode(input.ReferralCode);
+        var isValidProjectCode = IsValidInviteCode(input.ProjectCode);
+        if (isValidProjectCode || isValidReferralCode)
+        {
+            Context.Fire(new Invited
+            {
+                CaHash = holderId,
+                ContractAddress = Context.Self,
+                MethodName = nameof(CreateCAHolder),
+                ProjectCode = isValidProjectCode ? input.ProjectCode : "",
+                ReferralCode = isValidReferralCode ? input.ReferralCode : ""
+            });
+        }
         return new Empty();
+    }
+
+    private bool IsValidInviteCode(string code)
+    {
+        return !string.IsNullOrWhiteSpace(code) && code.Length <= CAContractConstants.ReferralCodeLength;
     }
 
     private void AssertCreateChain(HolderInfo holderInfo)

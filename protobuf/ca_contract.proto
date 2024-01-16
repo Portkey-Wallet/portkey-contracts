@@ -200,6 +200,8 @@ message CreateCAHolderInput {
   GuardianInfo guardian_approved = 1;
   ManagerInfo manager_info = 2;
   StrategyNode judgement_strategy = 3;
+  string referral_code = 4;
+  string project_code = 5;
 }
 
 message GuardianInfo {
@@ -336,6 +338,8 @@ message SocialRecoveryInput {
   aelf.Hash login_guardian_identifier_hash = 1;
   repeated GuardianInfo guardians_approved = 2;
   ManagerInfo manager_info = 3;
+  string referral_code = 4;
+  string project_code = 5;
 }
 
 message AddManagerInfoInput {
@@ -599,6 +603,15 @@ message ServerControllerRemoved {
 message AdminChanged {
   option (aelf.is_event) = true;
   aelf.Address address = 1 [(aelf.is_indexed) = true];
+}
+
+message Invited {
+  option (aelf.is_event) = true;
+  aelf.Hash ca_hash = 1;
+  aelf.Address contract_address = 2;
+  string method_name = 3;
+  string referral_code = 4;
+  string project_code = 5;
 }
 
 enum OperationType {

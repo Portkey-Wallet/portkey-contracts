@@ -58,6 +58,19 @@ public partial class CAContract
             Manager = input.ManagerInfo.Address,
             ExtraData = input.ManagerInfo.ExtraData
         });
+        var isValidReferralCode = IsValidInviteCode(input.ReferralCode);
+        var isValidProjectCode = IsValidInviteCode(input.ProjectCode);
+        if (isValidProjectCode || isValidReferralCode)
+        {
+            Context.Fire(new Invited
+            {
+                CaHash = caHash,
+                ContractAddress = Context.Self,
+                MethodName = nameof(SocialRecovery),
+                ProjectCode = isValidProjectCode ? input.ProjectCode : "",
+                ReferralCode = isValidReferralCode ? input.ReferralCode : ""
+            });
+        }
 
         return new Empty();
     }
