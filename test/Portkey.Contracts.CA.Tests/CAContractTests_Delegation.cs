@@ -38,6 +38,13 @@ public partial class CAContractTests
         projectDelegate.DelegateeAddressList.Count.ShouldBe(3);
         projectDelegate.DelegateeHashList[2]
             .ShouldBe(HashHelper.ConcatAndCompute(HashHelper.ComputeFrom("3"), projectDelegateHash));
+        
+        var projectResult = await CaContractStub.AddProjectDelegateeList.SendWithExceptionAsync(new AddProjectDelegateeListInput
+        {
+            ProjectHash = projectDelegateHash,
+            Salts = {"3"}
+        });
+        projectResult.TransactionResult.Error.ShouldContain("Input salts already existed");
 
         await CaContractStub.RemoveProjectDelegateeList.SendAsync(new RemoveProjectDelegateeListInput()
         {
