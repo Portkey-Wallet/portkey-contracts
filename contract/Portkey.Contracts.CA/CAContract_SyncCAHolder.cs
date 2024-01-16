@@ -110,12 +110,15 @@ public partial class CAContract
         var holderId = transactionInput.CaHash;
         var holderInfo = State.HolderInfoMap[holderId] ?? new HolderInfo { CreatorAddress = Context.Sender };
         holderInfo.CreateChainId = transactionInput.CreateChainId;
+        
+        var caAddress = Context.ConvertVirtualAddressToContractAddress(holderId);
         if (holderInfo.GuardianList == null)
         {
             holderInfo.GuardianList = new GuardianList
             {
                 Guardians = { }
             };
+            SetProjectDelegator(caAddress);
         }
 
         var managerInfosToAdd = ManagerInfosExcept(transactionInput.ManagerInfos, holderInfo.ManagerInfos);
@@ -128,12 +131,6 @@ public partial class CAContract
         RemoveDelegators(holderId, managerInfosToRemove);
         holderInfo.ManagerInfos.AddRange(managerInfosToAdd);
         SetDelegators(holderId, managerInfosToAdd);
-
-        var caAddress = Context.ConvertVirtualAddressToContractAddress(holderId);
-        if (State.HolderInfoMap[holderId] == null)
-        {
-            SetProjectDelegator(caAddress);
-        }
 
         var loginGuardiansAdded = SyncLoginGuardianAdded(transactionInput.CaHash, transactionInput.LoginGuardians);
         var loginGuardiansUnbound =

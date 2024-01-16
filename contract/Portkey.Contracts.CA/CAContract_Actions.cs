@@ -100,7 +100,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         {
             Creator = Context.Sender,
             CaHash = holderId,
-            CaAddress = Context.ConvertVirtualAddressToContractAddress(holderId),
+            CaAddress = caAddress,
             Manager = input.ManagerInfo!.Address,
             ExtraData = input.ManagerInfo.ExtraData
         });

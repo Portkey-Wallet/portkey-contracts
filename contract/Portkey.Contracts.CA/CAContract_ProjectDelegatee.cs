@@ -61,10 +61,7 @@ public partial class CAContract
                 addDelegateeHashList.Add(delegateeHash);
             }
         }
-        if (addDelegateeHashList.Count == 0)
-        {
-            return new Empty();
-        }
+        Assert(addDelegateeHashList.Count > 0, "Input salts already existed");
 
         projectDelegateInfo.DelegateeHashList.AddRange(addDelegateeHashList);
         return new Empty();

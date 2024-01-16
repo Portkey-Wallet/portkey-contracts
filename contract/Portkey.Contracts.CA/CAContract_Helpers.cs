@@ -40,11 +40,6 @@ public partial class CAContract
 
         var verifierDoc = verificationDoc.Split(",");
 
-        if (verifierDoc.Length != 7)
-        {
-            return false;
-        }
-
         var docInfo = GetVerificationDoc(verificationDoc);
 
         if (docInfo.OperationType == "0")
