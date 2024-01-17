@@ -227,8 +227,7 @@ public partial class CAContract
         var projectDelegateInfo = State.ProjectDelegateInfo[input.ProjectHash];
         Assert(projectDelegateInfo != null && projectDelegateInfo.DelegateeHashList.Count > 0, "Project delegate not existed.");
         Assert(Context.Sender == projectDelegateInfo.Signer, "No permission.");
-        var selectIndex = (int)input.CaAddress.ToByteArray().ToInt64(true) %
-                          projectDelegateInfo.DelegateeHashList.Count;
+        var selectIndex = (int)Math.Abs(input.CaAddress.ToByteArray().ToInt64(true) % projectDelegateInfo.DelegateeHashList.Count);
         var delegateInfoList = new RepeatedField<AElf.Contracts.MultiToken.DelegateInfo>();
         foreach (var assignDelegateInfo in input.AssignDelegateInfos)
         {
@@ -315,8 +314,8 @@ public partial class CAContract
         {
             return new Empty();
         }
-        // Todo
-        State.DelegateWhitelistTransactions.Value.MethodNames.AddRange(addMethodNames);
+        whitelistTransactions.MethodNames.AddRange(addMethodNames);
+        State.DelegateWhitelistTransactions.Value = whitelistTransactions;
         return new Empty();
     }
 
