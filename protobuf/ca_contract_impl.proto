@@ -18,10 +18,6 @@ service CAContractImpl {
   option (aelf.base) = "acs12.proto";
   option (aelf.base) = "ca_contract.proto";
   option (aelf.csharp_state) = "Portkey.Contracts.CA.CAContractState";
-
-  rpc SetLoginGuardianCheckGuardianApprovedEnabled(SetLoginGuardianCheckGuardianApprovedEnabledInput) returns (google.protobuf.Empty) {}
-  rpc GetLoginGuardianCheckGuardianApprovedEnabled(google.protobuf.Empty) returns (GetLoginGuardianCheckGuardianApprovedEnabledOutput) {option (aelf.is_view) = true;}
-    
   // approve
   rpc ManagerApprove(ManagerApproveInput) returns (google.protobuf.Empty) {}
         
@@ -59,8 +55,6 @@ service CAContractImpl {
   // get project delegatee info by delegate hash
   rpc GetProjectDelegatee (aelf.Hash) returns (GetProjectDelegateInfoOutput) { option (aelf.is_view) = true; }
   
-  rpc WithdrawDelegationFeeToken (WithdrawDelegationFeeTokenInput) returns (google.protobuf.Empty) {}
-
   rpc SetManagerForwardCallParallelInfo (SetManagerForwardCallParallelInfoInput) returns (google.protobuf.Empty) {}
 
   rpc GetManagerForwardCallParallelInfo (GetManagerForwardCallParallelInfoInput) returns (GetManagerForwardCallParallelInfoOutput) {option (aelf.is_view) = true;}
@@ -72,14 +66,6 @@ service CAContractImpl {
   rpc AddTransactionWhitelist (WhitelistTransactions) returns (google.protobuf.Empty){}
   rpc RemoveTransactionWhitelist (WhitelistTransactions) returns (google.protobuf.Empty){}
   rpc GetTransactionWhitelist (google.protobuf.Empty) returns (WhitelistTransactions) {option (aelf.is_view) = true;}
-}
-
-message SetLoginGuardianCheckGuardianApprovedEnabledInput {
-  bool login_guardian_check_guardian_approved_enabled = 1;
-}
-
-message GetLoginGuardianCheckGuardianApprovedEnabledOutput {
-  bool login_guardian_check_guardian_approved_enabled = 1;
 }
 
 message ManagerApproveInput {
@@ -238,11 +224,6 @@ message GetProjectDelegateInfoOutput {
   repeated aelf.Address delegatee_address_list = 4;
 }
 
-message WithdrawDelegationFeeTokenInput {
-  string symbol = 1;
-  int64 amount = 2;
-}
-
 message SetManagerForwardCallParallelInfoInput {
     aelf.Address contract_address = 1;
     string method_name = 2;
@@ -299,10 +280,11 @@ message WhitelistTransactions {
 }
 
 // LogEvent
-message ProjectDelegateRegistered {
+message ProjectDelegateeRegistered {
   option (aelf.is_event) = true;
   aelf.Hash project_delegate_hash = 1 [(aelf.is_indexed) = true];
   aelf.Address controller = 2 [(aelf.is_indexed) = true];
   DelegateeHashList delegatee_hash_list = 3 [(aelf.is_indexed) = true];
   DelegateeAddressList delegatee_address_list = 4 [(aelf.is_indexed) = true];
 }
+

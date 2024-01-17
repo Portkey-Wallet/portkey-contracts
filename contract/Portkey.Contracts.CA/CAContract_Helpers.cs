@@ -40,11 +40,6 @@ public partial class CAContract
 
         var verifierDoc = verificationDoc.Split(",");
 
-        if (verifierDoc.Length != 7)
-        {
-            return false;
-        }
-
         var docInfo = GetVerificationDoc(verificationDoc);
 
         if (docInfo.OperationType == "0")
@@ -193,17 +188,6 @@ public partial class CAContract
         });
     }
 
-    private void UpgradeProjectDelegatee(Address caAddress)
-    {
-        if (!IsValidHash(State.CaProjectDelegateHash.Value) || State.ProjectDelegateInfo[State.CaProjectDelegateHash.Value] == null ||
-            State.ProjectDelegateInfo[State.CaProjectDelegateHash.Value].DelegateeHashList.Count == 0)
-        {
-            return;
-        }
-        if (IfCaHasProjectDelegatee(caAddress)) return;
-        SetProjectDelegator(caAddress);
-    }
-
     private void SetProjectDelegator(Address delegatorAddress)
     {
         if (!IsValidHash(State.CaProjectDelegateHash.Value))
@@ -237,15 +221,5 @@ public partial class CAContract
                     delegations
                 }
             });
-    }
-
-    private bool IfCaHasProjectDelegatee(Address delegatorAddress)
-    {
-        var delegateeList = State.TokenContract.GetTransactionFeeDelegatees.Call(new GetTransactionFeeDelegateesInput
-        {
-            DelegatorAddress = delegatorAddress
-        });
-        return State.ProjectDelegateInfo[State.CaProjectDelegateHash.Value].DelegateeHashList.Any(delegateeHash =>
-            delegateeList.DelegateeAddresses.Contains(Context.ConvertVirtualAddressToContractAddress(delegateeHash)));
     }
 }

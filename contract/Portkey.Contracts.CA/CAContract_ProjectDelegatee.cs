@@ -13,20 +13,6 @@ namespace Portkey.Contracts.CA;
 
 public partial class CAContract
 {
-    public override Empty WithdrawDelegationFeeToken(WithdrawDelegationFeeTokenInput input)
-    {
-        Assert(input.Amount > 0 && !string.IsNullOrWhiteSpace(input.Symbol), "Invalid input");
-        Assert(Context.Sender == State.Admin.Value, "No permission");
-        State.TokenContract.Transfer.Send(new TransferInput()
-        {
-            Amount = input.Amount,
-            Symbol = input.Symbol,
-            To = State.Admin.Value,
-            Memo = "withdraw delegation fee"
-        });
-        return new Empty();
-    }
-
     public override Hash RegisterProjectDelegatee(RegisterProjectDelegateeInput input)
     {
         Assert(!string.IsNullOrWhiteSpace(input.ProjectName), "Invalid project name.");
@@ -46,7 +32,7 @@ public partial class CAContract
             projectDelegateInfo.DelegateeHashList.Add(HashHelper.ConcatAndCompute(HashHelper.ComputeFrom(salt), projectHash));
         }
         State.ProjectDelegateInfo[projectHash] = projectDelegateInfo;
-        Context.Fire(new ProjectDelegateRegistered
+        Context.Fire(new ProjectDelegateeRegistered
         {
             ProjectDelegateHash = projectHash,
             Controller = Context.Sender,
@@ -80,10 +66,7 @@ public partial class CAContract
                 addDelegateeHashList.Add(delegateeHash);
             }
         }
-        if (addDelegateeHashList.Count == 0)
-        {
-            return new Empty();
-        }
+        Assert(addDelegateeHashList.Count > 0, "Input salts already existed");
 
         projectDelegateInfo.DelegateeHashList.AddRange(addDelegateeHashList);
         return new Empty();
@@ -185,18 +168,18 @@ public partial class CAContract
         return State.CaProjectDelegateHash.Value;
     }
 
-    private void SetProjectDelegatee(Hash caHash, DelegateInfo delegateInfo)
+    private bool SetProjectDelegatee(Hash caHash, DelegateInfo delegateInfo)
     {
         if (delegateInfo == null || delegateInfo.ChainId != Context.ChainId || State.GuardianMap[delegateInfo.IdentifierHash] != caHash ||
             delegateInfo.Timestamp.AddSeconds(delegateInfo.ExpirationTime) < Context.CurrentBlockTime ||
             delegateInfo.Delegations.Count == 0 || string.IsNullOrWhiteSpace(delegateInfo.Signature))
         {
-            return;
+            return false;
         }
         var projectDelegateInfo = State.ProjectDelegateInfo[delegateInfo.ProjectHash];
         if (projectDelegateInfo == null || projectDelegateInfo.DelegateeHashList.Count == 0)
         {
-            return;
+            return false;
         }
 
         var cloneDelegateInfo = delegateInfo.Clone();
@@ -206,7 +189,7 @@ public partial class CAContract
         var signer = Address.FromPublicKey(recoverPublicKey);
         if (signer != projectDelegateInfo.Signer)
         {
-            return;
+            return false;
         }
         
         var selectIndex = (int)Math.Abs(Context.ConvertVirtualAddressToContractAddress(caHash).ToByteArray().ToInt64(true) %
@@ -214,7 +197,7 @@ public partial class CAContract
         var delegateInfoList = new RepeatedField<AElf.Contracts.MultiToken.DelegateInfo>();
         if (State.DelegateWhitelistTransactions.Value == null)
         {
-            return;
+            return false;
         }
 
         foreach (var methodName in State.DelegateWhitelistTransactions.Value.MethodNames)
@@ -234,6 +217,7 @@ public partial class CAContract
                 DelegatorAddress = Context.ConvertVirtualAddressToContractAddress(caHash),
                 DelegateInfoList = { delegateInfoList }
             });
+        return true;
     }
 
     public override Empty AssignProjectDelegatee(AssignProjectDelegateeInput input)
