@@ -49,6 +49,12 @@ public partial class CAContract
                    State.GuardianMap[guardian] == caHash,
                 $"NotLoginGuardian:{guardian} is in HolderInfo's LoginGuardians");
         }
+
+        foreach (var guardian in notLoginGuardianList)
+        {
+            Assert(notLoginGuardianIdentifierHashList.Contains(guardian),
+                $"Guardian:{guardian} is not in HolderInfo's Guardians");
+        }
     }
 
     private void ValidateGuardianList(GuardianList desGuardianList, GuardianList srcGuardianList)
