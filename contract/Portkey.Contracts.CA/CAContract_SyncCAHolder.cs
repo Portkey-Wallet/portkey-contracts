@@ -21,7 +21,6 @@ public partial class CAContract
 
         ValidateNotLoginGuardian(input.CaHash, holderInfo, input.NotLoginGuardians);
 
-
         ValidateManager(holderInfo, input.ManagerInfos);
         AssertCreateChain(holderInfo);
         Assert(holderInfo.CreateChainId == input.CreateChainId, "Invalid input createChainId.");
@@ -50,11 +49,8 @@ public partial class CAContract
                 $"NotLoginGuardian:{guardian} is in HolderInfo's LoginGuardians");
         }
 
-        foreach (var guardian in notLoginGuardianList)
-        {
-            Assert(notLoginGuardianIdentifierHashList.Contains(guardian),
-                $"Guardian:{guardian} is not in HolderInfo's Guardians");
-        }
+        var list = notLoginGuardianIdentifierHashList.Except(notLoginGuardianList).ToList();
+        Assert(list.Count == 0, $"NotLoginGuardian:{list[0]} is not in HolderInfo's NotLoginGuardians");
     }
 
     private void ValidateGuardianList(GuardianList desGuardianList, GuardianList srcGuardianList)
@@ -65,7 +61,7 @@ public partial class CAContract
                 g => g.IdentifierHash == guardianInfo.IdentifierHash && g.Type == guardianInfo.Type &&
                      g.VerifierId == guardianInfo.VerifierId
             );
-            Assert(searchGuardian != null, $"Guardian:{guardianInfo.VerifierId} is not in input GuardianList");
+            Assert(searchGuardian != null, $"Guardian:{guardianInfo.VerifierId} is not in CAHolder GuardianList");
         }
     }
 
@@ -88,6 +84,9 @@ public partial class CAContract
                    && State.GuardianMap[loginGuardian] == caHash,
                 $"LoginGuardian:{loginGuardian} is not in HolderInfo's LoginGuardians");
         }
+        var list = loginGuardians.Except(loginGuardianIdentifierHashList).ToList();
+        Assert(list.Count == 0, $"LoginGuardian:{list[0]} is not in HolderInfo's LoginGuardians");
+        
     }
 
     private void ValidateManager(HolderInfo holderInfo, RepeatedField<ManagerInfo> managerInfoInput)
