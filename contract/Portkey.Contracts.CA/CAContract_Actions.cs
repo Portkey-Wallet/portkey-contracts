@@ -93,7 +93,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         SetDelegator(holderId, input.ManagerInfo);
 
         var caAddress = Context.ConvertVirtualAddressToContractAddress(holderId);
-        if (!SetProjectDelegatee(holderId, input.DelegateInfo))
+        if (!SetProjectDelegateInfo(holderId, input.DelegateInfo))
         {
             SetProjectDelegator(caAddress);
         }

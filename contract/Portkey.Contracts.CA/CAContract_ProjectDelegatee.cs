@@ -168,7 +168,7 @@ public partial class CAContract
         return State.CaProjectDelegateHash.Value;
     }
 
-    private bool SetProjectDelegatee(Hash caHash, DelegateInfo delegateInfo)
+    private bool SetProjectDelegateInfo(Hash caHash, DelegateInfo delegateInfo)
     {
         if (delegateInfo == null || delegateInfo.ChainId != Context.ChainId || State.GuardianMap[delegateInfo.IdentifierHash] != caHash ||
             delegateInfo.Timestamp.AddSeconds(delegateInfo.ExpirationTime) < Context.CurrentBlockTime ||
