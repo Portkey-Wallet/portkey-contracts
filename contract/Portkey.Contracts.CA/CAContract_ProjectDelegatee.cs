@@ -274,8 +274,11 @@ public partial class CAContract
             {
                 if (delegateesOutput.DelegateeAddresses.Contains(Context.ConvertVirtualAddressToContractAddress(projectDelegateeHash)))
                 {
-                    var transactionList = delegateeTransactionListMap[projectDelegateeHash] ??
-                                          new RepeatedField<DelegateTransaction>();
+                    delegateeTransactionListMap.TryGetValue(projectDelegateeHash, out var transactionList);
+                    if (transactionList == null)
+                    {
+                        transactionList = new RepeatedField<DelegateTransaction>();
+                    }
                     transactionList.Add(delegateTransaction);
                     delegateeTransactionListMap[projectDelegateeHash] = transactionList;
                 }
