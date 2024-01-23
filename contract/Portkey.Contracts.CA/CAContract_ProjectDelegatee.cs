@@ -188,15 +188,15 @@ public partial class CAContract
         delegateInfo.Signature = "";
         var recoverPublicKey = Context.RecoverPublicKey(ByteStringHelper.FromHexString(signature).ToByteArray(),
             ByteStringHelper.FromHexString(HashHelper.ComputeFrom(delegateInfo).ToHex()).ToByteArray());
+        delegateInfo.Signature = signature;
         var signer = Address.FromPublicKey(recoverPublicKey);
         if (signer != projectDelegateInfo.Signer)
         {
             return false;
         }
-        delegateInfo.Signature = signature;
-        
+
         var selectIndex = (int)Math.Abs(Context.ConvertVirtualAddressToContractAddress(caHash).ToByteArray().ToInt64(true) %
-                          projectDelegateInfo.DelegateeHashList.Count);
+                                        projectDelegateInfo.DelegateeHashList.Count);
         var delegateInfoList = new RepeatedField<AElf.Contracts.MultiToken.DelegateInfo>();
         if (State.DelegateWhitelistTransactions.Value == null)
         {
