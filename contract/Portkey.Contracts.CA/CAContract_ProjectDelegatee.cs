@@ -210,12 +210,13 @@ public partial class CAContract
                 IsUnlimitedDelegate = delegateInfo.IsUnlimitedDelegate
             });
         }
-        
-        Context.SendVirtualInline(projectDelegateInfo.DelegateeHashList[selectIndex], State.TokenContract.Value,
-            nameof(State.TokenContract.SetTransactionFeeDelegateInfos), new SetTransactionFeeDelegateInfosInput
+
+        State.TokenContract.SetTransactionFeeDelegateInfos.VirtualSend(
+            projectDelegateInfo.DelegateeHashList[selectIndex],
+            new SetTransactionFeeDelegateInfosInput
             {
                 DelegatorAddress = Context.ConvertVirtualAddressToContractAddress(caHash),
-                DelegateInfoList = { delegateInfoList }
+                DelegateInfoList = {delegateInfoList}
             });
         return true;
     }
@@ -239,8 +240,8 @@ public partial class CAContract
                 IsUnlimitedDelegate = assignDelegateInfo.IsUnlimitedDelegate
             });
         }
-        Context.SendVirtualInline(projectDelegateInfo.DelegateeHashList[selectIndex], State.TokenContract.Value,
-            nameof(State.TokenContract.SetTransactionFeeDelegateInfos), new SetTransactionFeeDelegateInfosInput
+        State.TokenContract.SetTransactionFeeDelegateInfos.VirtualSend(projectDelegateInfo.DelegateeHashList[selectIndex],
+            new SetTransactionFeeDelegateInfosInput
             {
                 DelegatorAddress = input.CaAddress,
                 DelegateInfoList = { delegateInfoList }
@@ -293,7 +294,7 @@ public partial class CAContract
         foreach (var delegateeTransactionListPair in delegateeTransactionListMap)
         {
             
-            Context.SendVirtualInline(delegateeTransactionListPair.Key, State.TokenContract.Value, nameof(State.TokenContract.RemoveTransactionFeeDelegatorInfos),
+            State.TokenContract.RemoveTransactionFeeDelegatorInfos.VirtualSend(delegateeTransactionListPair.Key,
                 new RemoveTransactionFeeDelegatorInfosInput()
                 {
                     DelegatorAddress = input.CaAddress,
