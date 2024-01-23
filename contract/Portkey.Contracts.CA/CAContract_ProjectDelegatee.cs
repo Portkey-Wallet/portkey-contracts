@@ -170,27 +170,30 @@ public partial class CAContract
 
     private bool SetProjectDelegateInfo(Hash caHash, DelegateInfo delegateInfo)
     {
-        if (delegateInfo == null || delegateInfo.ChainId != Context.ChainId || State.GuardianMap[delegateInfo.IdentifierHash] != caHash ||
-            delegateInfo.Timestamp.AddSeconds(delegateInfo.ExpirationTime) < Context.CurrentBlockTime ||
-            delegateInfo.Delegations.Count == 0 || string.IsNullOrWhiteSpace(delegateInfo.Signature))
+        if (delegateInfo == null || delegateInfo.ChainId != Context.ChainId || !IsValidHash(delegateInfo.ProjectHash) ||
+            !IsValidHash(delegateInfo.IdentifierHash) || State.GuardianMap[delegateInfo.IdentifierHash] != caHash ||
+            delegateInfo.Timestamp == null || delegateInfo.Timestamp.AddSeconds(delegateInfo.ExpirationTime) < Context.CurrentBlockTime ||
+            string.IsNullOrWhiteSpace(delegateInfo.Signature))
         {
             return false;
         }
+
         var projectDelegateInfo = State.ProjectDelegateInfo[delegateInfo.ProjectHash];
         if (projectDelegateInfo == null || projectDelegateInfo.DelegateeHashList.Count == 0)
         {
             return false;
         }
-
-        var cloneDelegateInfo = delegateInfo.Clone();
-        cloneDelegateInfo.Signature = "";
-        var recoverPublicKey = Context.RecoverPublicKey(ByteStringHelper.FromHexString(delegateInfo.Signature).ToByteArray(),
-            ByteStringHelper.FromHexString(HashHelper.ComputeFrom(cloneDelegateInfo).ToHex()).ToByteArray());
+        
+        var signature = delegateInfo.Signature;
+        delegateInfo.Signature = "";
+        var recoverPublicKey = Context.RecoverPublicKey(ByteStringHelper.FromHexString(signature).ToByteArray(),
+            ByteStringHelper.FromHexString(HashHelper.ComputeFrom(delegateInfo).ToHex()).ToByteArray());
         var signer = Address.FromPublicKey(recoverPublicKey);
         if (signer != projectDelegateInfo.Signer)
         {
             return false;
         }
+        delegateInfo.Signature = signature;
         
         var selectIndex = (int)Math.Abs(Context.ConvertVirtualAddressToContractAddress(caHash).ToByteArray().ToInt64(true) %
                           projectDelegateInfo.DelegateeHashList.Count);
