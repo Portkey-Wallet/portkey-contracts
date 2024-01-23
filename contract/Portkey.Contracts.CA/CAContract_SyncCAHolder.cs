@@ -169,15 +169,6 @@ public partial class CAContract
 
         var guardiansAdded = new RepeatedField<Guardian>();
         var guardiansRemoved = new RepeatedField<Guardian>();
-        
-        holderInfo.CreateChainId = transactionInput.CreateChainId;
-        if (holderInfo.GuardianList == null)
-        {
-            holderInfo.GuardianList = new GuardianList
-            {
-                Guardians = { }
-            };
-        }
 
         guardiansAdded =
             GuardiansExcept(transactionInput.GuardianList.Guardians, holderInfo.GuardianList.Guardians);
