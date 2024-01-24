@@ -116,25 +116,25 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
             Manager = input.ManagerInfo.Address,
             IsCreateHolder = true
         });
-        var isValidReferralCode = IsValidInviteCode(input.ReferralCode);
-        var isValidProjectCode = IsValidInviteCode(input.ProjectCode);
+        FireInvitedLogEvent(holderId, nameof(CreateCAHolder), input.ReferralCode, input.ProjectCode);
+        return new Empty();
+    }
+
+    private void FireInvitedLogEvent(Hash caHash, string methodName, string referralCode, string projectCode)
+    {
+        var isValidReferralCode = IsValidInviteCode(referralCode);
+        var isValidProjectCode = IsValidInviteCode(projectCode);
         if (isValidProjectCode || isValidReferralCode)
         {
             Context.Fire(new Invited
             {
-                CaHash = holderId,
+                CaHash = caHash,
                 ContractAddress = Context.Self,
-                MethodName = nameof(CreateCAHolder),
-                ProjectCode = isValidProjectCode ? input.ProjectCode : "",
-                ReferralCode = isValidReferralCode ? input.ReferralCode : ""
+                MethodName = methodName,
+                ProjectCode = isValidProjectCode ? projectCode : "",
+                ReferralCode = isValidReferralCode ? referralCode : ""
             });
         }
-        return new Empty();
-    }
-
-    private bool IsValidInviteCode(string code)
-    {
-        return !string.IsNullOrWhiteSpace(code) && code.Length <= CAContractConstants.ReferralCodeLength;
     }
 
     private void AssertCreateChain(HolderInfo holderInfo)

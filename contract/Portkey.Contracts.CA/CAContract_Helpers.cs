@@ -222,4 +222,9 @@ public partial class CAContract
                 }
             });
     }
+    
+    private bool IsValidInviteCode(string code)
+    {
+        return !string.IsNullOrWhiteSpace(code) && code.Length <= CAContractConstants.ReferralCodeLength;
+    }
 }
