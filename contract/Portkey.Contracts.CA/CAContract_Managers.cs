@@ -47,7 +47,6 @@ public partial class CAContract
             "The amount of ManagerInfos out of limit");
 
         var caAddress = Context.ConvertVirtualAddressToContractAddress(caHash);
-        UpgradeProjectDelegatee(caAddress);
 
         State.HolderInfoMap[caHash].ManagerInfos.Add(input.ManagerInfo);
         SetDelegator(caHash, input.ManagerInfo);
@@ -59,6 +58,19 @@ public partial class CAContract
             Manager = input.ManagerInfo.Address,
             ExtraData = input.ManagerInfo.ExtraData
         });
+        var isValidReferralCode = IsValidInviteCode(input.ReferralCode);
+        var isValidProjectCode = IsValidInviteCode(input.ProjectCode);
+        if (isValidProjectCode || isValidReferralCode)
+        {
+            Context.Fire(new Invited
+            {
+                CaHash = caHash,
+                ContractAddress = Context.Self,
+                MethodName = nameof(SocialRecovery),
+                ProjectCode = isValidProjectCode ? input.ProjectCode : "",
+                ReferralCode = isValidReferralCode ? input.ReferralCode : ""
+            });
+        }
 
         return new Empty();
     }
@@ -78,7 +90,6 @@ public partial class CAContract
             "The amount of ManagerInfos out of limit");
 
         var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
-        UpgradeProjectDelegatee(caAddress);
 
         holderInfo.ManagerInfos.Add(input.ManagerInfo);
         SetDelegator(input.CaHash, input.ManagerInfo);
@@ -136,7 +147,6 @@ public partial class CAContract
         }
 
         var caAddress = Context.ConvertVirtualAddressToContractAddress(caHash);
-        UpgradeProjectDelegatee(caAddress);
 
         holderInfo.ManagerInfos.Remove(managerInfo);
         RemoveDelegator(caHash, managerInfo);
@@ -184,8 +194,6 @@ public partial class CAContract
                 ExtraData = managerToUpdate.ExtraData
             });
         }
-
-        UpgradeProjectDelegatee(caAddress);
 
         return new Empty();
     }

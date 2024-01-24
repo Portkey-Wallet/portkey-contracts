@@ -52,12 +52,12 @@ public partial class CAContractState : ContractState
     public SingletonState<ProjectDelegationFee> ProjectDelegationFee { get; set; }
     public MappedState<Hash, ProjectDelegateInfo> ProjectDelegateInfo { get; set; }
     public SingletonState<Hash> CaProjectDelegateHash { get; set; }
-    public SingletonState<bool> LoginGuardianCheckGuardianApprovedEnabled { get; set; }
-
     public MappedState<Address, string, bool> ManagerForwardCallParallelMap { get; set; }
-    
+
     public MappedState<Hash,bool> SyncHolderInfoTransaction { get; set; }
     
     public MappedState<Hash,long> SyncHolderInfoTransactionHeightMap{ get; set; }
+
+    public SingletonState<WhitelistTransactions> DelegateWhitelistTransactions { get; set; }
 
 }

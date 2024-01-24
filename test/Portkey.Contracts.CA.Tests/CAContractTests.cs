@@ -191,18 +191,9 @@ public partial class CAContractTests : CAContractTestBase
 
         GetLoginGuardianCount(guardianList).ShouldBe(1);
 
-        var guardian = new Guardian
-        {
-            IdentifierHash = _guardian,
-            Type = GuardianType.OfEmail,
-            VerifierId = _verifierId
-        };
-        getHolderInfoOutput = await SetGuardianForLogin_AndGetHolderInfo_Helper(caHash, guardian);
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
         var operationType = Convert.ToInt32(OperationType.CreateCaholder).ToString();
-        var signature1 = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0, salt,
-            operationType);
         await CaContractStub.CreateCAHolder.SendAsync(new CreateCAHolderInput
         {
             GuardianApproved = new GuardianInfo
@@ -212,7 +203,8 @@ public partial class CAContractTests : CAContractTestBase
                 VerificationInfo = new VerificationInfo
                 {
                     Id = _verifierId,
-                    Signature = signature1,
+                    Signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0, salt,
+                        operationType),
                     VerificationDoc =
                         $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType},{MainChainId}"
                 }
