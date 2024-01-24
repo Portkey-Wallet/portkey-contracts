@@ -288,7 +288,7 @@ public partial class CAContract
                 }
             }
         }
-        Assert(delegateeTransactionListMap.Count > 0, "There are no delegatee to delete");
+        Assert(delegateeTransactionListMap.Count > 0, "There are no delegatee to remove");
         
         foreach (var delegateeTransactionListPair in delegateeTransactionListMap)
         {
