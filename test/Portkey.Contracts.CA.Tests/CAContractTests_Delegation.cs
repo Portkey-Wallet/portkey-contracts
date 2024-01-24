@@ -340,7 +340,7 @@ public partial class CAContractTests
             MethodName = "AddManagerInfo"
         });
         output.DelegateeAddresses.Count.ShouldBe(1);
-        await CaContractStub.RemoveCAProjectDelegatee.SendAsync(new RemoveCAProjectDelegateeInput()
+        await CaContractStub.RemoveProjectDelegatee.SendAsync(new RemoveProjectDelegateeInput()
         {
             ProjectHash = projectHash,
             CaAddress = caAddress,

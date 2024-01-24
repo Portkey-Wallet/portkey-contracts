@@ -61,7 +61,7 @@ service CAContractImpl {
 
   rpc AssignProjectDelegatee (AssignProjectDelegateeInput) returns (google.protobuf.Empty) {}
 
-  rpc RemoveCAProjectDelegatee (RemoveCAProjectDelegateeInput) returns (google.protobuf.Empty) {}
+  rpc RemoveProjectDelegatee (RemoveProjectDelegateeInput) returns (google.protobuf.Empty) {}
 
   rpc AddTransactionWhitelist (WhitelistTransactions) returns (google.protobuf.Empty){}
   rpc RemoveTransactionWhitelist (WhitelistTransactions) returns (google.protobuf.Empty){}
@@ -264,7 +264,7 @@ message AssignDelegateInfo{
   bool isUnlimitedDelegate = 4;
 }
 
-message RemoveCAProjectDelegateeInput{
+message RemoveProjectDelegateeInput{
   aelf.Hash project_hash = 1;
   aelf.Address ca_address = 2;
   repeated DelegateTransaction delegate_transaction_list = 3;

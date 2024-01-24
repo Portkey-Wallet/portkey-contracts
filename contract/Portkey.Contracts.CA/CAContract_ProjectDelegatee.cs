@@ -252,7 +252,7 @@ public partial class CAContract
         return new Empty();
     }
 
-    public override Empty RemoveCAProjectDelegatee(RemoveCAProjectDelegateeInput input)
+    public override Empty RemoveProjectDelegatee(RemoveProjectDelegateeInput input)
     {
         Assert(input != null, "Invalid input.");
         Assert(IsValidHash(input.ProjectHash), "Invalid project hash.");
