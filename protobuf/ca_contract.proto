@@ -126,7 +126,7 @@ message DelegateInfo {
   // symbol -> delegate fee
   map<string, int64> delegations = 6;
   //Whether to pay transaction fee continuously
-  bool isUnlimitedDelegate = 7;
+  bool is_unlimited_delegate = 7;
   string signature = 1000;
 }
 
