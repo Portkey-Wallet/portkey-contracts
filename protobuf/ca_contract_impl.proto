@@ -261,7 +261,7 @@ message AssignDelegateInfo{
   aelf.Address contract_address = 2;
   string method_name = 3;
   //Whether to pay transaction fee continuously
-  bool isUnlimitedDelegate = 4;
+  bool is_unlimited_delegate = 4;
 }
 
 message RemoveProjectDelegateeInput{
