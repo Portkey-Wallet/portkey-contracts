@@ -29,6 +29,9 @@
         <ContractReference Include="..\..\protobuf\acs7.proto">
             <Link>Protobuf\Proto\acs7.proto</Link>
         </ContractReference>
+        <ContractReference Include="..\..\protobuf\transaction_fee.proto">
+            <Link>Protobuf\Proto\transaction_fee.proto</Link>
+        </ContractReference>
         <ContractReference Include="..\..\protobuf\token_contract.proto">
             <Link>Protobuf\Proto\reference\token_contract.proto</Link>
         </ContractReference>
@@ -69,5 +72,8 @@
       <ContractCode Include="..\..\protobuf\ca_contract_impl.proto">
         <Link>Protobuf\Proto\ca_contract_impl.proto</Link>
       </ContractCode>
+        <ContractReference Include="..\..\protobuf\token_contract_impl.proto">
+            <Link>Protobuf\Proto\reference\token_contract_impl.proto</Link>
+        </ContractReference>
     </ItemGroup>
 </Project>

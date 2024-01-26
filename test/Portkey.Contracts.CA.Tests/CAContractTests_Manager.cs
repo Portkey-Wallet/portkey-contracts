@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using AElf;
 using AElf.Contracts.MultiToken;
@@ -114,7 +115,7 @@ public partial class CAContractTests
             }
         };
 
-        await CaContractStub.SocialRecovery.SendAsync(new SocialRecoveryInput
+        var result = await CaContractStub.SocialRecovery.SendAsync(new SocialRecoveryInput
         {
             ManagerInfo = new ManagerInfo
             {
@@ -122,7 +123,8 @@ public partial class CAContractTests
                 ExtraData = "567"
             },
             LoginGuardianIdentifierHash = _guardian,
-            GuardiansApproved = { guardianApprove }
+            GuardiansApproved = { guardianApprove },
+            ProjectCode = "123"
         });
 
         var caInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput
@@ -131,6 +133,12 @@ public partial class CAContractTests
         });
         caInfo.ManagerInfos.Count.ShouldBe(2);
         caInfo.GuardianList.Guardians.Count.ShouldBe(1);
+        var invited = Invited.Parser.ParseFrom(result.TransactionResult.Logs.First(e => e.Name == nameof(Invited)).NonIndexed);
+        invited.CaHash.ShouldBe(caInfo.CaHash);
+        invited.ContractAddress.ShouldBe(CaContractAddress);
+        invited.ProjectCode.ShouldBe("123");
+        invited.ReferralCode.ShouldBeEmpty();
+        invited.MethodName.ShouldBe("SocialRecovery");
 
         var delegateAllowance = await TokenContractStub.GetTransactionFeeDelegationsOfADelegatee.CallAsync(
             new GetTransactionFeeDelegationsOfADelegateeInput()

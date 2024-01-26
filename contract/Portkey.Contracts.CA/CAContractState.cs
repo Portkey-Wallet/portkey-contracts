@@ -53,4 +53,5 @@ public partial class CAContractState : ContractState
     public MappedState<Hash, ProjectDelegateInfo> ProjectDelegateInfo { get; set; }
     public SingletonState<Hash> CaProjectDelegateHash { get; set; }
     public MappedState<Address, string, bool> ManagerForwardCallParallelMap { get; set; }
+    public SingletonState<WhitelistTransactions> DelegateWhitelistTransactions { get; set; }
 }

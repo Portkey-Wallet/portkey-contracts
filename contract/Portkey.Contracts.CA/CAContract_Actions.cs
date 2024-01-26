@@ -93,7 +93,10 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         SetDelegator(holderId, input.ManagerInfo);
 
         var caAddress = Context.ConvertVirtualAddressToContractAddress(holderId);
-        SetProjectDelegator(caAddress);
+        if (!SetProjectDelegateInfo(holderId, input.DelegateInfo))
+        {
+            SetProjectDelegator(caAddress);
+        }
 
         // Log Event
         Context.Fire(new CAHolderCreated
@@ -113,8 +116,25 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
             Manager = input.ManagerInfo.Address,
             IsCreateHolder = true
         });
-
+        FireInvitedLogEvent(holderId, nameof(CreateCAHolder), input.ReferralCode, input.ProjectCode);
         return new Empty();
+    }
+
+    private void FireInvitedLogEvent(Hash caHash, string methodName, string referralCode, string projectCode)
+    {
+        var isValidReferralCode = IsValidInviteCode(referralCode);
+        var isValidProjectCode = IsValidInviteCode(projectCode);
+        if (isValidProjectCode || isValidReferralCode)
+        {
+            Context.Fire(new Invited
+            {
+                CaHash = caHash,
+                ContractAddress = Context.Self,
+                MethodName = methodName,
+                ProjectCode = isValidProjectCode ? projectCode : "",
+                ReferralCode = isValidReferralCode ? referralCode : ""
+            });
+        }
     }
 
     private void AssertCreateChain(HolderInfo holderInfo)
