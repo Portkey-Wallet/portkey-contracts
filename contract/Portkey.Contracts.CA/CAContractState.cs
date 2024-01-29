@@ -53,4 +53,13 @@ public partial class CAContractState : ContractState
     public MappedState<Hash, ProjectDelegateInfo> ProjectDelegateInfo { get; set; }
     public SingletonState<Hash> CaProjectDelegateHash { get; set; }
     public MappedState<Address, string, bool> ManagerForwardCallParallelMap { get; set; }
+    
+    public SingletonState<bool> CheckOperationDetailsInSignatureEnabled { get; set; }
+    
+    /// <summary>
+    /// The Guardian is added directly to the non-registered chain.
+    /// identifier hash  -> HolderInfo Hash
+    /// </summary>
+    public MappedState<Hash, Hash> AcceleratedRegistration { get; set; }
+    
 }

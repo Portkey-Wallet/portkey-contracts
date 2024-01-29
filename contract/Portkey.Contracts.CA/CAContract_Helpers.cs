@@ -5,14 +5,14 @@ using AElf;
 using AElf.Contracts.MultiToken;
 using AElf.CSharp.Core.Extension;
 using AElf.Types;
-using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
 
 namespace Portkey.Contracts.CA;
 
 public partial class CAContract
 {
-    private bool CheckVerifierSignatureAndData(GuardianInfo guardianInfo, string methodName, Hash caHash = null)
+    private bool CheckVerifierSignatureAndData(GuardianInfo guardianInfo, string methodName, Hash caHash = null,
+        string operationDetails = null)
     {
         var verificationDoc = guardianInfo.VerificationInfo.VerificationDoc;
         if (verificationDoc == null || string.IsNullOrWhiteSpace(verificationDoc))
@@ -23,13 +23,13 @@ public partial class CAContract
         var verifierDoc = verificationDoc.Split(",");
         return verifierDoc.Length switch
         {
-            7 => CheckVerifierSignatureAndDataWithCreateChainId(guardianInfo, methodName, caHash),
+            7 => CheckVerifierSignatureAndDataWithCreateChainId(guardianInfo, methodName, caHash, operationDetails),
             _ => false
         };
     }
 
     private bool CheckVerifierSignatureAndDataWithCreateChainId(GuardianInfo guardianInfo, string methodName,
-        Hash caHash)
+        Hash caHash, string operationDetails = null)
     {
         //[type,guardianIdentifierHash,verificationTime,verifierAddress,salt,operationType,createChainId]
         var verificationDoc = guardianInfo.VerificationInfo.VerificationDoc;
@@ -53,7 +53,6 @@ public partial class CAContract
             return false;
         }
 
-
         //Check expired time 1h.
         var verificationTime = DateTime.SpecifyKind(Convert.ToDateTime(docInfo.VerificationTime), DateTimeKind.Utc);
         if (verificationTime.ToTimestamp().AddHours(1) <= Context.CurrentBlockTime ||
@@ -64,27 +63,6 @@ public partial class CAContract
             return false;
         }
 
-        //Check verifier address and data.
-        var verifierAddress = docInfo.VerifierAddress;
-        var verificationInfo = guardianInfo.VerificationInfo;
-        var verifierServer =
-            State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(v => v.Id == verificationInfo.Id);
-
-        //Recovery verifier address.
-        var data = HashHelper.ComputeFrom(verificationInfo.VerificationDoc);
-        var publicKey = Context.RecoverPublicKey(verificationInfo.Signature.ToByteArray(),
-            data.ToByteArray());
-        var verifierAddressFromPublicKey = Address.FromPublicKey(publicKey);
-
-
-        if (verifierServer == null || verifierAddressFromPublicKey != verifierAddress ||
-            !verifierServer.VerifierAddresses.Contains(verifierAddress))
-        {
-            return false;
-        }
-
-        key = HashHelper.ComputeFrom(guardianInfo.VerificationInfo.Signature.ToByteArray());
-        State.VerifierDocMap[key] = true;
         var operationTypeStr = docInfo.OperationType;
         var operationTypeName = typeof(OperationType).GetEnumName(Convert.ToInt32(operationTypeStr))?.ToLower();
         if (operationTypeName != methodName)
@@ -92,8 +70,64 @@ public partial class CAContract
             return false;
         }
 
+        //Check verifier address and data.
+        var verifierAddress = docInfo.VerifierAddress;
+        var verificationInfo = guardianInfo.VerificationInfo;
+        var verifierServer =
+            State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(v => v.Id == verificationInfo.Id);
+        if (verifierServer == null || !verifierServer.VerifierAddresses.Contains(verifierAddress))
+        {
+            return false;
+        }
+
+        //State.CheckOperationDetailsInSignatureEnabled==true,
+        //registration and social recovery must verify the content of the operation.
+        Address verifierAddressFromPublicKey;
+        if (State.CheckOperationDetailsInSignatureEnabled.Value &&
+            (operationTypeName == nameof(OperationType.CreateCaholder).ToLower() ||
+             operationTypeName == nameof(OperationType.SocialRecovery).ToLower()))
+        {
+            var realVerificationDoc = $"{verificationInfo.VerificationDoc},{operationDetails}";
+            var data = HashHelper.ComputeFrom(realVerificationDoc);
+            var publicKey = Context.RecoverPublicKey(verificationInfo.Signature.ToByteArray(),
+                data.ToByteArray());
+            verifierAddressFromPublicKey = Address.FromPublicKey(publicKey);
+        }
+        else
+        {
+            var realVerificationDoc = verificationInfo.VerificationDoc;
+            var data = HashHelper.ComputeFrom(realVerificationDoc);
+            var publicKey = Context.RecoverPublicKey(verificationInfo.Signature.ToByteArray(),
+                data.ToByteArray());
+            verifierAddressFromPublicKey = Address.FromPublicKey(publicKey);
+            if (verifierAddressFromPublicKey != verifierAddress)
+            {
+                realVerificationDoc = $"{verificationInfo.VerificationDoc},{operationDetails}";
+                data = HashHelper.ComputeFrom(realVerificationDoc);
+                publicKey = Context.RecoverPublicKey(verificationInfo.Signature.ToByteArray(),
+                    data.ToByteArray());
+                verifierAddressFromPublicKey = Address.FromPublicKey(publicKey);
+            }
+        }
+
+        if (verifierAddressFromPublicKey != verifierAddress)
+        {
+            return false;
+        }
+
+        key = HashHelper.ComputeFrom(guardianInfo.VerificationInfo.Signature.ToByteArray());
+        State.VerifierDocMap[key] = true;
+
         if (operationTypeName == nameof(OperationType.AddGuardian).ToLower() &&
             !CheckOnCreateChain(State.HolderInfoMap[caHash]))
+        {
+            return true;
+        }
+
+        //After verifying the contents of the operation,it is not necessary to verify the 'ChainId'
+        if (State.CheckOperationDetailsInSignatureEnabled.Value &&
+            ((operationTypeName == nameof(OperationType.CreateCaholder).ToLower() && caHash != null) ||
+             operationTypeName == nameof(OperationType.SocialRecovery).ToLower()))
         {
             return true;
         }

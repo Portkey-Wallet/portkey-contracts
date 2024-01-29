@@ -25,13 +25,18 @@ public partial class CAContract
         Assert(caHash != null, "CA Holder does not exist.");
 
         var holderInfo = GetHolderInfoByCaHash(caHash);
-        AssertCreateChain(holderInfo);
+        if (!State.CheckOperationDetailsInSignatureEnabled.Value)
+        {
+            AssertCreateChain(holderInfo);
+        }
+
         var guardians = holderInfo.GuardianList!.Guardians;
 
         Assert(input.GuardiansApproved.Count > 0, "invalid input Guardians Approved");
 
+        var operationDetails = input.ManagerInfo.Address.ToBase58();
         var guardianApprovedCount = GetGuardianApprovedCount(caHash, input.GuardiansApproved,
-            nameof(OperationType.SocialRecovery).ToLower());
+            nameof(OperationType.SocialRecovery).ToLower(), operationDetails);
 
         var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(guardians.Count, guardianApprovedCount,
             holderInfo.JudgementStrategy);
@@ -69,7 +74,7 @@ public partial class CAContract
         //Assert(Context.Sender.Equals(input.ManagerInfo.Address), "No permission to add");
 
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
-        AssertCreateChain(holderInfo);
+
         // ManagerInfo exists
         var managerInfo = FindManagerInfo(holderInfo.ManagerInfos, input.ManagerInfo.Address);
         Assert(managerInfo == null, $"ManagerInfo address exists");
