@@ -63,7 +63,7 @@ public partial class CAContract
             Manager = input.ManagerInfo.Address,
             ExtraData = input.ManagerInfo.ExtraData
         });
-
+        FireInvitedLogEvent(caHash, nameof(SocialRecovery), input.ReferralCode, input.ProjectCode);
         return new Empty();
     }
 

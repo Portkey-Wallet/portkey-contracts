@@ -123,6 +123,19 @@ message HolderInfo {
   int32 create_chain_id = 5;
 }
 
+message DelegateInfo {
+  int32 chain_id = 1;
+  aelf.Hash project_hash = 2;
+  aelf.Hash identifier_hash = 3;
+  google.protobuf.Timestamp timestamp = 4;
+  int32 expiration_time = 5;
+  // symbol -> delegate fee
+  map<string, int64> delegations = 6;
+  //Whether to pay transaction fee continuously
+  bool is_unlimited_delegate = 7;
+  string signature = 1000;
+}
+
 message ManagerInfo {
   aelf.Address address = 1;
   string extra_data = 2;
@@ -208,6 +221,9 @@ message CreateCAHolderInput {
   GuardianInfo guardian_approved = 1;
   ManagerInfo manager_info = 2;
   StrategyNode judgement_strategy = 3;
+  string referral_code = 4;
+  string project_code = 5;
+  DelegateInfo delegate_info = 6;
 }
 
 message CreateCAHolderOnNonCreateChainInput {
@@ -352,6 +368,8 @@ message SocialRecoveryInput {
   aelf.Hash login_guardian_identifier_hash = 1;
   repeated GuardianInfo guardians_approved = 2;
   ManagerInfo manager_info = 3;
+  string referral_code = 4;
+  string project_code = 5;
 }
 
 message AddManagerInfoInput {
@@ -633,6 +651,15 @@ message ServerControllerRemoved {
 message AdminChanged {
   option (aelf.is_event) = true;
   aelf.Address address = 1 [(aelf.is_indexed) = true];
+}
+
+message Invited {
+  option (aelf.is_event) = true;
+  aelf.Hash ca_hash = 1;
+  aelf.Address contract_address = 2;
+  string method_name = 3;
+  string referral_code = 4;
+  string project_code = 5;
 }
 
 enum OperationType {

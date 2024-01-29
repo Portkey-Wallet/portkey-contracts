@@ -81,8 +81,25 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
             Manager = input.ManagerInfo.Address,
             IsCreateHolder = true
         });
-
+        FireInvitedLogEvent(holderId, nameof(CreateCAHolder), input.ReferralCode, input.ProjectCode);
         return new Empty();
+    }
+
+    private void FireInvitedLogEvent(Hash caHash, string methodName, string referralCode, string projectCode)
+    {
+        var isValidReferralCode = IsValidInviteCode(referralCode);
+        var isValidProjectCode = IsValidInviteCode(projectCode);
+        if (isValidProjectCode || isValidReferralCode)
+        {
+            Context.Fire(new Invited
+            {
+                CaHash = caHash,
+                ContractAddress = Context.Self,
+                MethodName = methodName,
+                ProjectCode = isValidProjectCode ? projectCode : "",
+                ReferralCode = isValidReferralCode ? referralCode : ""
+            });
+        }
     }
 
     public override Empty CreateCAHolderOnNonCreateChain(CreateCAHolderOnNonCreateChainInput input)
@@ -180,7 +197,10 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         SetDelegator(holderId, managerInfo);
 
         caAddress = Context.ConvertVirtualAddressToContractAddress(holderId);
-        SetProjectDelegator(caAddress);
+        if (!SetProjectDelegateInfo(holderId, input.DelegateInfo))
+        {
+            SetProjectDelegator(caAddress);
+        }
 
         return true;
     }
