@@ -54,11 +54,17 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
             State.HolderInfoMap.Remove(holderId);
         }
 
+        holderId = HashHelper.ConcatAndCompute(Context.TransactionId, Context.PreviousBlockHash);
         if (!CreateCaHolderInfoWithCaHashAndCreateChainId(input.ManagerInfo, input.GuardianApproved,
                 input.JudgementStrategy,
-                null, Context.ChainId, out var guardian, out var caAddress))
+                holderId, Context.ChainId, out var guardian, out var caAddress))
         {
             return new Empty();
+        }
+
+        if (!SetProjectDelegateInfo(holderId, input.DelegateInfo))
+        {
+            SetProjectDelegator(caAddress);
         }
 
         State.AcceleratedRegistration.Remove(guardianIdentifierHash);
@@ -69,7 +75,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
             Creator = Context.Sender,
             CaHash = holderId,
             CaAddress = caAddress,
-            Manager = input.ManagerInfo!.Address,
+            Manager = input.ManagerInfo.Address,
             ExtraData = input.ManagerInfo.ExtraData
         });
 
@@ -129,6 +135,8 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
             return new Empty();
         }
 
+        SetProjectDelegator(caAddress);
+
         State.AcceleratedRegistration[guardianIdentifierHash] = input.CaHash;
 
         Context.Fire(new NonCreateChainCAHolderCreated
@@ -149,7 +157,8 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         //Check verifier signature.
         var methodName = nameof(CreateCAHolder).ToLower();
         var operationDetail = managerInfo.Address.ToBase58();
-        if (!CheckVerifierSignatureAndData(guardianApproved, methodName, holderId, operationDetail))
+        if (!CheckVerifierSignatureAndData(guardianApproved, methodName, chainId == Context.ChainId ? null : holderId,
+                operationDetail))
         {
             guardian = null;
             caAddress = null;
@@ -157,7 +166,6 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         }
 
         var guardianIdentifierHash = guardianApproved.IdentifierHash;
-        holderId ??= HashHelper.ConcatAndCompute(Context.TransactionId, Context.PreviousBlockHash);
         var holderInfo = new HolderInfo();
         holderInfo.CreatorAddress = Context.Sender;
         holderInfo.CreateChainId = chainId;
@@ -197,10 +205,6 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         SetDelegator(holderId, managerInfo);
 
         caAddress = Context.ConvertVirtualAddressToContractAddress(holderId);
-        if (!SetProjectDelegateInfo(holderId, input.DelegateInfo))
-        {
-            SetProjectDelegator(caAddress);
-        }
 
         return true;
     }
