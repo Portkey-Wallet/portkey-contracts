@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AElf;
+using AElf.Cryptography;
 using AElf.CSharp.Core;
 using AElf.Types;
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using JetBrains.Annotations;
+using Newtonsoft.Json;
 using Shouldly;
 using Xunit;
 
@@ -200,7 +202,7 @@ public partial class CAContractTests : CAContractTestBase
                 Address = User1Address,
                 ExtraData = "123"
             },
-            CaHash = Hash.Empty,
+            CaHash = null,
             CreateChainId = SideChianId
         };
         var result = await CaContractStub.CreateCAHolderOnNonCreateChain.SendWithExceptionAsync(
@@ -224,7 +226,7 @@ public partial class CAContractTests : CAContractTestBase
         caInfo.GuardianList.Guardians.Count.ShouldBe(1);
         caInfo.CaHash.ShouldBe(_specificCaHash);
         caInfo.CreateChainId.ShouldBe(SideChianId);
-        
+
         await CreateHolderOnNonCreateChain(User2Address.ToBase58(), true, MainChainId, User2Address);
         caInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput()
         {
@@ -233,7 +235,7 @@ public partial class CAContractTests : CAContractTestBase
         caInfo.ManagerInfos.Count.ShouldBe(1);
         caInfo.ManagerInfos.First().Address.ShouldBe(User1Address);
     }
-    
+
     [Fact]
     public async Task CreateHolderTest_WhenAccelerateFailed()
     {
@@ -254,7 +256,7 @@ public partial class CAContractTests : CAContractTestBase
         });
         caInfo.ManagerInfos.Count.ShouldBe(1);
         caInfo.ManagerInfos.First().Address.ShouldBe(User2Address);
-        
+
         var result = await CaContractStub.GetHolderInfo.SendWithExceptionAsync(new GetHolderInfoInput()
         {
             CaHash = _specificCaHash
@@ -279,7 +281,7 @@ public partial class CAContractTests : CAContractTestBase
         caInfo.CaHash.ShouldBe(_specificCaHash);
         caInfo.CreateChainId.ShouldBe(SideChianId);
     }
-    
+
     [Fact]
     public async Task AccelerateSocialRecoveryTest_Fail_CloseCheckOperationDetails()
     {
@@ -311,7 +313,8 @@ public partial class CAContractTests : CAContractTestBase
     }
 
     [ItemCanBeNull]
-    private async Task<IExecutionResult<Empty>> CreateHolderOnNonCreateChain(string operationDetails, bool success, int chainId = 0, Address mananger = null)
+    private async Task<IExecutionResult<Empty>> CreateHolderOnNonCreateChain(string operationDetails, bool success,
+        int chainId = 0, Address mananger = null)
     {
         chainId = chainId == 0 ? SideChianId : chainId;
         mananger = mananger == null ? User1Address : mananger;
@@ -353,7 +356,8 @@ public partial class CAContractTests : CAContractTestBase
         return await CaContractStub.CreateCAHolderOnNonCreateChain.SendAsync(createCaHolderOnNonCreateChainInput);
     }
 
-    private async Task<IExecutionResult<Empty>> AccelerateSocialRecovery(string operationDetails, bool success, int chainId = 0)
+    private async Task<IExecutionResult<Empty>> AccelerateSocialRecovery(string operationDetails, bool success,
+        int chainId = 0)
     {
         chainId = chainId == 0 ? SideChianId : chainId;
         var verificationTime = DateTime.UtcNow;
@@ -395,5 +399,72 @@ public partial class CAContractTests : CAContractTestBase
         }
 
         return await CaContractStub.SocialRecovery.SendAsync(socialRecoveryInput);
+    }
+
+    [Fact]
+    public async Task SignatureTest()
+    {
+        var guardianInfo = new GuardianInfo
+        {
+            Type = GuardianType.OfGoogle,
+            IdentifierHash = HashHelper.ComputeFrom("107025214944261598742"),
+            VerificationInfo = new VerificationInfo
+            {
+                Id = Hash.Empty,
+                Signature = ByteStringHelper.FromHexString(
+                    "54c956fc3b1a578360356cc5e1488361214e26836cb05cf37aa33d541ba8b8f3769453f0fa8c1945ca09c6fd62363c1fa5e90e147c6b5014528ed1be3ce7db7500"),
+                VerificationDoc =
+                    "2,445d490722d306d86d86661b6fc70e81a4ebc7da81951ea9d848e148f96dd77f,2024/01/29 14:42:55.930,2XyMGfQ6sPY8bArZDsj8yDcH23xiqui4euKcygpa1dyjG1GWKx,93667de1357e204ca5841fd365cce68c,1,9992731"
+            }
+        };
+        var verifierAddress = "2XyMGfQ6sPY8bArZDsj8yDcH23xiqui4euKcygpa1dyjG1GWKx";
+        var operationDetails = "jhm5fRei4Wsamw5TmS47CspQ5geVjhp2eKnMqt6YKLPo1LhT6";
+
+        var result = CheckVerifierSignature(guardianInfo, verifierAddress, false, operationDetails);
+        result.ShouldBeTrue();
+
+        guardianInfo.VerificationInfo.Signature = ByteStringHelper.FromHexString(
+            "070fc10ff4fbd9659d4f5646c6967199450fea30b82271d4d3b1d03a227e1ad36941701198b04640ae2b42b85090c1d18ba45bd56464876c73d8bd81e4a5541501");
+        guardianInfo.VerificationInfo.VerificationDoc =
+            "2,445d490722d306d86d86661b6fc70e81a4ebc7da81951ea9d848e148f96dd77f,2024/01/29 15:17:50.850,2XyMGfQ6sPY8bArZDsj8yDcH23xiqui4euKcygpa1dyjG1GWKx,93667de1357e204ca5841fd365cce68c,1,9992731";
+        result = CheckVerifierSignature(guardianInfo, verifierAddress, false, operationDetails);
+        result.ShouldBeFalse();
+        result = CheckVerifierSignature(guardianInfo, verifierAddress, true, operationDetails);
+        result.ShouldBeTrue();
+    }
+
+    private bool CheckVerifierSignature(GuardianInfo guardianInfo, string verifierAddress, bool hasOperationDetails,
+        string operationDetails)
+    {
+        var verificationDoc = guardianInfo.VerificationInfo.VerificationDoc;
+        if (verificationDoc == null || string.IsNullOrWhiteSpace(verificationDoc))
+        {
+            return false;
+        }
+
+        string realVerificationDoc;
+        if (hasOperationDetails)
+        {
+            realVerificationDoc = $"{guardianInfo.VerificationInfo.VerificationDoc},{operationDetails}";
+        }
+        else
+        {
+            realVerificationDoc = guardianInfo.VerificationInfo.VerificationDoc;
+        }
+
+        var data = HashHelper.ComputeFrom(realVerificationDoc);
+        if (!CryptoHelper.RecoverPublicKey(guardianInfo.VerificationInfo.Signature.ToByteArray(), data.ToByteArray(),
+                out var publicKey))
+        {
+            return false;
+        }
+
+        var verifierAddressFromPublicKey = Address.FromPublicKey(publicKey);
+        if (verifierAddressFromPublicKey.ToBase58() != verifierAddress)
+        {
+            return false;
+        }
+
+        return true;
     }
 }

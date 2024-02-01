@@ -38,8 +38,9 @@ public partial class CAContract
         var guardianApprovedCount = GetGuardianApprovedCount(caHash, input.GuardiansApproved,
             nameof(OperationType.SocialRecovery).ToLower(), operationDetails);
 
+        var strategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
         var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(guardians.Count, guardianApprovedCount,
-            holderInfo.JudgementStrategy);
+            strategy);
         if (!isJudgementStrategySatisfied)
         {
             return new Empty();

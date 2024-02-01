@@ -119,7 +119,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
             input.GuardianApproved!.VerificationInfo != null, "invalid verification");
         Assert(input.ManagerInfo != null, "invalid input managerInfo");
         Assert(input.CreateChainId != 0 && input.CreateChainId != Context.ChainId, "Invalid input CreateChainId");
-        Assert(input.CaHash != null && input.CaHash != Hash.Empty, "Invalid input CaHash");
+        Assert(IsValidHash(input.CaHash), "Invalid input CaHash");
 
         var guardianIdentifierHash = input.GuardianApproved.IdentifierHash;
         var holderId = State.GuardianMap[guardianIdentifierHash];
@@ -145,7 +145,8 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
             CaHash = input.CaHash,
             CaAddress = caAddress,
             Manager = input.ManagerInfo!.Address,
-            ExtraData = input.ManagerInfo.ExtraData
+            ExtraData = input.ManagerInfo.ExtraData,
+            CreateChainId = input.CreateChainId
         });
 
         return new Empty();
