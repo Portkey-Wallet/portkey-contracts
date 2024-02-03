@@ -75,7 +75,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
             Creator = Context.Sender,
             CaHash = holderId,
             CaAddress = caAddress,
-            Manager = input.ManagerInfo.Address,
+            Manager = input.ManagerInfo!.Address,
             ExtraData = input.ManagerInfo.ExtraData
         });
 
