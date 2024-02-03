@@ -1,8 +1,5 @@
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Threading.Tasks;
-using Google.Protobuf;
-using Google.Protobuf.Collections;
 using Shouldly;
 using Xunit;
 
@@ -109,12 +106,4 @@ public partial class CAContractTests
         res.ShouldBeTrue();
         
     }
-
-    private async Task ValidateStrategyShouldBe(bool expected, ValidateStrategyInput input)
-    {
-        var output = await CaContractStub.ValidateStrategy.SendAsync(input);
-        output.Output.BoolResult.ShouldBe(expected);
-    }
-    
-    
 }
