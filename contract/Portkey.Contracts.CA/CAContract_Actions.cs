@@ -295,10 +295,9 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         SetCheckOperationDetailsInSignatureEnabledInput input)
     {
         Assert(State.Admin.Value == Context.Sender, "No permission");
-        if (input.CheckOperationDetailsEnabled != State.CheckOperationDetailsInSignatureEnabled.Value)
-        {
-            State.CheckOperationDetailsInSignatureEnabled.Value = input.CheckOperationDetailsEnabled;
-        }
+        Assert(State.CheckOperationDetailsInSignatureEnabled.Value != input.CheckOperationDetailsEnabled,
+            $"It is already {input.CheckOperationDetailsEnabled}");
+        State.CheckOperationDetailsInSignatureEnabled.Value = input.CheckOperationDetailsEnabled;
 
         return new Empty();
     }
