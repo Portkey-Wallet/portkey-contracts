@@ -118,6 +118,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         Assert(
             input.GuardianApproved!.VerificationInfo != null, "invalid verification");
         Assert(input.ManagerInfo != null, "invalid input managerInfo");
+        Assert(input.ManagerInfo?.Address != null, "invalid input managerInfo address");
         Assert(input.CreateChainId != 0 && input.CreateChainId != Context.ChainId, "Invalid input CreateChainId");
         Assert(IsValidHash(input.CaHash), "Invalid input CaHash");
 
