@@ -65,7 +65,6 @@ public partial class CAContractTests : CAContractTestBase
     public async Task CreateHolderOnNonCreateChainTest_Fail_CloseCheckOperationDetails()
     {
         await CreateHolderOnNonCreateChainTest_Init();
-        await SetCheckOperationDetailsInSignatureEnabled(false);
         var result = await CreateHolderOnNonCreateChain(null, false);
         result.ShouldNotBeNull();
         result.TransactionResult.Error.ShouldContain("Not supported");
