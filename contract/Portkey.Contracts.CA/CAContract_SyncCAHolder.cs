@@ -158,7 +158,7 @@ public partial class CAContract
         var guardians = holderInfo.GuardianList.Guardians;
         foreach (var guardian in guardians)
         {
-            State.AcceleratedRegistration.Remove(guardian.IdentifierHash);
+            State.PreCrossChainSyncHolderInfoMarks.Remove(guardian.IdentifierHash);
         }
 
         Context.Fire(new CAHolderSynced

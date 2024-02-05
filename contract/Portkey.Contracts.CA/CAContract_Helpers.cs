@@ -5,6 +5,7 @@ using AElf;
 using AElf.Contracts.MultiToken;
 using AElf.CSharp.Core.Extension;
 using AElf.Types;
+using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 
 namespace Portkey.Contracts.CA;
@@ -87,26 +88,19 @@ public partial class CAContract
             (operationTypeName == nameof(OperationType.CreateCaholder).ToLower() ||
              operationTypeName == nameof(OperationType.SocialRecovery).ToLower()))
         {
-            var realVerificationDoc = $"{verificationInfo.VerificationDoc},{operationDetails}";
-            var data = HashHelper.ComputeFrom(realVerificationDoc);
-            var publicKey = Context.RecoverPublicKey(verificationInfo.Signature.ToByteArray(),
-                data.ToByteArray());
-            verifierAddressFromPublicKey = Address.FromPublicKey(publicKey);
+            verifierAddressFromPublicKey =
+                RecoverVerifierAddress($"{verificationInfo.VerificationDoc},{operationDetails}",
+                    verificationInfo.Signature);
         }
         else
         {
-            var realVerificationDoc = verificationInfo.VerificationDoc;
-            var data = HashHelper.ComputeFrom(realVerificationDoc);
-            var publicKey = Context.RecoverPublicKey(verificationInfo.Signature.ToByteArray(),
-                data.ToByteArray());
-            verifierAddressFromPublicKey = Address.FromPublicKey(publicKey);
+            verifierAddressFromPublicKey =
+                RecoverVerifierAddress(verificationInfo.VerificationDoc, verificationInfo.Signature);
             if (verifierAddressFromPublicKey != verifierAddress)
             {
-                realVerificationDoc = $"{verificationInfo.VerificationDoc},{operationDetails}";
-                data = HashHelper.ComputeFrom(realVerificationDoc);
-                publicKey = Context.RecoverPublicKey(verificationInfo.Signature.ToByteArray(),
-                    data.ToByteArray());
-                verifierAddressFromPublicKey = Address.FromPublicKey(publicKey);
+                verifierAddressFromPublicKey =
+                    RecoverVerifierAddress($"{verificationInfo.VerificationDoc},{operationDetails}",
+                        verificationInfo.Signature);
             }
         }
 
@@ -245,7 +239,8 @@ public partial class CAContract
             [CAContractConstants.ELFTokenSymbol] = State.ProjectDelegationFee.Value.Amount
         };
         // Randomly select a delegatee based on the address
-        var selectIndex = (int)Math.Abs(delegatorAddress.ToByteArray().ToInt64(true) % projectDelegateInfo.DelegateeHashList.Count);
+        var selectIndex = (int)Math.Abs(delegatorAddress.ToByteArray().ToInt64(true) %
+                                        projectDelegateInfo.DelegateeHashList.Count);
         State.TokenContract.SetTransactionFeeDelegations.VirtualSend(projectDelegateInfo.DelegateeHashList[selectIndex],
             new SetTransactionFeeDelegationsInput
             {
@@ -256,9 +251,17 @@ public partial class CAContract
                 }
             });
     }
-    
+
     private bool IsValidInviteCode(string code)
     {
         return !string.IsNullOrWhiteSpace(code) && code.Length <= CAContractConstants.ReferralCodeLength;
+    }
+
+    private Address RecoverVerifierAddress(string verificationDoc, ByteString signature)
+    {
+        var data = HashHelper.ComputeFrom(verificationDoc);
+        var publicKey = Context.RecoverPublicKey(signature.ToByteArray(),
+            data.ToByteArray());
+        return Address.FromPublicKey(publicKey);
     }
 }

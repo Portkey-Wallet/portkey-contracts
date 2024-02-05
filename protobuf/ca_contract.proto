@@ -23,7 +23,7 @@ service CAContract {
   rpc CreateCAHolder (CreateCAHolderInput) returns (google.protobuf.Empty) {}
 
   // If the Guardian has CAHolder and Manager, meaning CAHolder created before, return true
-  rpc CreateCAHolderOnNonCreateChain (CreateCAHolderOnNonCreateChainInput) returns (google.protobuf.Empty) {}
+  rpc ReportPreCrossChainSyncHolderInfo (ReportPreCrossChainSyncHolderInfoInput) returns (google.protobuf.Empty) {}
 
   // If Guardian is already added, return ture
   rpc AddGuardian (AddGuardianInput) returns (google.protobuf.Empty) {}
@@ -226,7 +226,7 @@ message CreateCAHolderInput {
   DelegateInfo delegate_info = 6;
 }
 
-message CreateCAHolderOnNonCreateChainInput {
+message ReportPreCrossChainSyncHolderInfoInput {
   GuardianInfo guardian_approved = 1;
   ManagerInfo manager_info = 2;
   StrategyNode judgement_strategy = 3;
@@ -493,7 +493,7 @@ message CAHolderCreated {
   string extra_data = 5;
 }
 
-message NonCreateChainCAHolderCreated {
+message PreCrossChainSyncHolderInfoCreated {
   option (aelf.is_event) = true;
   aelf.Address creator = 1 [(aelf.is_indexed) = true];
   aelf.Hash ca_hash = 2 [(aelf.is_indexed) = true];
