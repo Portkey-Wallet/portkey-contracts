@@ -155,6 +155,12 @@ public partial class CAContract
 
         State.HolderInfoMap[holderId] = holderInfo;
 
+        var guardians = holderInfo.GuardianList.Guardians;
+        foreach (var guardian in guardians)
+        {
+            State.PreCrossChainSyncHolderInfoMarks.Remove(guardian.IdentifierHash);
+        }
+
         Context.Fire(new CAHolderSynced
         {
             Creator = Context.Sender,

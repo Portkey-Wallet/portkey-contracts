@@ -54,4 +54,17 @@ public partial class CAContractState : ContractState
     public SingletonState<Hash> CaProjectDelegateHash { get; set; }
     public MappedState<Address, string, bool> ManagerForwardCallParallelMap { get; set; }
     public SingletonState<WhitelistTransactions> DelegateWhitelistTransactions { get; set; }
+    
+    /// <summary>
+    /// Check if the switch for operation details exists in 'Signature',
+    /// it will be removed in the next version.
+    /// </summary>
+    public SingletonState<bool> CheckOperationDetailsInSignatureEnabled { get; set; }
+    
+    /// <summary>
+    /// The mark for the pre cross chain 'CAHolder'
+    /// identifier hash  -> caHash
+    /// </summary>
+    public MappedState<Hash, Hash> PreCrossChainSyncHolderInfoMarks { get; set; }
+    
 }

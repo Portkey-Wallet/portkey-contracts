@@ -761,6 +761,53 @@ public partial class CAContractTests
     }
 
     [Fact]
+    public async Task SocialRecoveryTest_Signature()
+    {
+        await CreateHolderDefault();
+        var verificationTime = DateTime.UtcNow;
+        var salt = Guid.NewGuid().ToString("N");
+        var operationType = Convert.ToInt32(OperationType.SocialRecovery).ToString();
+        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(5), _guardian,
+            0, salt, operationType, SideChianId);
+        var verifierServer = await CaContractStub.GetVerifierServers.CallAsync(new Empty());
+        var id = verifierServer.VerifierServers[0].Id;
+        var guardianApprove = new List<GuardianInfo>
+        {
+            new()
+            {
+                IdentifierHash = _guardian,
+                Type = GuardianType.OfEmail,
+                VerificationInfo = new VerificationInfo
+                {
+                    Id = id,
+                    Signature = signature,
+                    VerificationDoc =
+                        $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(5)},{VerifierAddress.ToBase58()},{salt},{operationType},{SideChianId}"
+                }
+            }
+        };
+
+        await CaContractStub.SocialRecovery.SendAsync(new SocialRecoveryInput
+        {
+            ManagerInfo = new ManagerInfo
+            {
+                Address = User2Address,
+                ExtraData = "567"
+            },
+            LoginGuardianIdentifierHash = _guardian,
+            GuardiansApproved = { guardianApprove }
+        });
+
+        var caInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput
+        {
+            LoginGuardianIdentifierHash = _guardian
+        });
+        caInfo.ManagerInfos.Count.ShouldBe(1);
+        caInfo.ManagerInfos.First().Address.ShouldNotBe(User2Address);
+        caInfo.GuardianList.Guardians.Count.ShouldBe(1);
+    }
+
+    [Fact]
     public async Task<Address> AddManagerInfoTest()
     {
         await CreateHolderDefault();
@@ -829,7 +876,7 @@ public partial class CAContractTests
 
         return caInfo.CaAddress;
     }
-    
+
     [Fact]
     public async Task AddManagerInfo_NoPermissionTest()
     {
