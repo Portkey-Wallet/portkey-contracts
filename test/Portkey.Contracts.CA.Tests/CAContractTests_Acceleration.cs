@@ -19,7 +19,7 @@ public partial class CAContractTests : CAContractTestBase
 {
     private readonly Hash _specificCaHash = HashHelper.ComputeFrom("12345");
 
-    private async Task CreateHolderOnNonCreateChainTest_Init()
+    private async Task ReportPreCrossChainSyncHolderInfoTest_Init()
     {
         await Initiate();
         await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
@@ -46,11 +46,11 @@ public partial class CAContractTests : CAContractTestBase
     }
 
     [Fact]
-    public async Task CreateHolderOnNonCreateChainTest()
+    public async Task ReportPreCrossChainSyncHolderInfoTest()
     {
-        await CreateHolderOnNonCreateChainTest_Init();
+        await ReportPreCrossChainSyncHolderInfoTest_Init();
         await SetCheckOperationDetailsInSignatureEnabled(true);
-        await CreateHolderOnNonCreateChain(User1Address.ToBase58(), true);
+        await ReportPreCrossChainSyncHolderInfo(User1Address.ToBase58(), true);
         var caInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput()
         {
             LoginGuardianIdentifierHash = _guardian
@@ -62,20 +62,20 @@ public partial class CAContractTests : CAContractTestBase
     }
 
     [Fact]
-    public async Task CreateHolderOnNonCreateChainTest_Fail_CloseCheckOperationDetails()
+    public async Task ReportPreCrossChainSyncHolderInfoTest_Fail_CloseCheckOperationDetails()
     {
-        await CreateHolderOnNonCreateChainTest_Init();
-        var result = await CreateHolderOnNonCreateChain(null, false);
+        await ReportPreCrossChainSyncHolderInfoTest_Init();
+        var result = await ReportPreCrossChainSyncHolderInfo(null, false);
         result.ShouldNotBeNull();
         result.TransactionResult.Error.ShouldContain("Not supported");
     }
 
     [Fact]
-    public async Task CreateHolderOnNonCreateChainTest_Fail_OperationDetailsIsNull()
+    public async Task ReportPreCrossChainSyncHolderInfoTest_Fail_OperationDetailsIsNull()
     {
-        await CreateHolderOnNonCreateChainTest_Init();
+        await ReportPreCrossChainSyncHolderInfoTest_Init();
         await SetCheckOperationDetailsInSignatureEnabled(true);
-        await CreateHolderOnNonCreateChain(null, true);
+        await ReportPreCrossChainSyncHolderInfo(null, true);
         var result = await CaContractStub.GetHolderInfo.SendWithExceptionAsync(new GetHolderInfoInput()
         {
             LoginGuardianIdentifierHash = _guardian
@@ -85,7 +85,7 @@ public partial class CAContractTests : CAContractTestBase
     }
 
     [Fact]
-    public async Task CreateHolderOnNonCreateChainTest_Fail_NoPermission()
+    public async Task ReportPreCrossChainSyncHolderInfoTest_Fail_NoPermission()
     {
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
@@ -104,31 +104,31 @@ public partial class CAContractTests : CAContractTestBase
         {
             Address = User1Address
         });
-        var createCaHolderOnNonCreateChainInput = new ReportPreCrossChainSyncHolderInfoInput();
+        var reportPreCrossChainSyncHolderInfoInput = new ReportPreCrossChainSyncHolderInfoInput();
         var result = await CaContractStub.ReportPreCrossChainSyncHolderInfo.SendWithExceptionAsync(
-            createCaHolderOnNonCreateChainInput);
+            reportPreCrossChainSyncHolderInfoInput);
         result.ShouldNotBeNull();
         result.TransactionResult.Error.ShouldContain("No permission");
     }
 
     [Fact]
-    public async Task CreateHolderOnNonCreateChainTest_Fail_GuardianApproveIsNull()
+    public async Task ReportPreCrossChainSyncHolderInfoTest_Fail_GuardianApproveIsNull()
     {
-        await CreateHolderOnNonCreateChainTest_Init();
+        await ReportPreCrossChainSyncHolderInfoTest_Init();
         await SetCheckOperationDetailsInSignatureEnabled(true);
-        var createCaHolderOnNonCreateChainInput = new ReportPreCrossChainSyncHolderInfoInput();
+        var reportPreCrossChainSyncHolderInfoInput = new ReportPreCrossChainSyncHolderInfoInput();
         IExecutionResult<Empty> result = await CaContractStub.ReportPreCrossChainSyncHolderInfo.SendWithExceptionAsync(
-            createCaHolderOnNonCreateChainInput);
+            reportPreCrossChainSyncHolderInfoInput);
         result.ShouldNotBeNull();
         result.TransactionResult.Error.ShouldContain("invalid input guardian");
     }
 
     [Fact]
-    public async Task CreateHolderOnNonCreateChainTest_Fail_ManagerIsNull()
+    public async Task ReportPreCrossChainSyncHolderInfoTest_Fail_ManagerIsNull()
     {
-        await CreateHolderOnNonCreateChainTest_Init();
+        await ReportPreCrossChainSyncHolderInfoTest_Init();
         await SetCheckOperationDetailsInSignatureEnabled(true);
-        var createCaHolderOnNonCreateChainInput = new ReportPreCrossChainSyncHolderInfoInput
+        var reportPreCrossChainSyncHolderInfoInput = new ReportPreCrossChainSyncHolderInfoInput
         {
             GuardianApproved = new GuardianInfo
             {
@@ -143,17 +143,17 @@ public partial class CAContractTests : CAContractTestBase
             }
         };
         var result = await CaContractStub.ReportPreCrossChainSyncHolderInfo.SendWithExceptionAsync(
-            createCaHolderOnNonCreateChainInput);
+            reportPreCrossChainSyncHolderInfoInput);
         result.ShouldNotBeNull();
         result.TransactionResult.Error.ShouldContain("invalid input managerInfo");
     }
 
     [Fact]
-    public async Task CreateHolderOnNonCreateChainTest_Fail_CreateChainId()
+    public async Task ReportPreCrossChainSyncHolderInfoTest_Fail_CreateChainId()
     {
-        await CreateHolderOnNonCreateChainTest_Init();
+        await ReportPreCrossChainSyncHolderInfoTest_Init();
         await SetCheckOperationDetailsInSignatureEnabled(true);
-        var createCaHolderOnNonCreateChainInput = new ReportPreCrossChainSyncHolderInfoInput
+        var reportPreCrossChainSyncHolderInfoInput = new ReportPreCrossChainSyncHolderInfoInput
         {
             GuardianApproved = new GuardianInfo
             {
@@ -173,17 +173,17 @@ public partial class CAContractTests : CAContractTestBase
             }
         };
         IExecutionResult<Empty> result = await CaContractStub.ReportPreCrossChainSyncHolderInfo.SendWithExceptionAsync(
-            createCaHolderOnNonCreateChainInput);
+            reportPreCrossChainSyncHolderInfoInput);
         result.ShouldNotBeNull();
         result.TransactionResult.Error.ShouldContain("Invalid input CreateChainId");
     }
 
     [Fact]
-    public async Task CreateHolderOnNonCreateChainTest_Fail_CaHashIsNull()
+    public async Task ReportPreCrossChainSyncHolderInfoTest_Fail_CaHashIsNull()
     {
-        await CreateHolderOnNonCreateChainTest_Init();
+        await ReportPreCrossChainSyncHolderInfoTest_Init();
         await SetCheckOperationDetailsInSignatureEnabled(true);
-        var createCaHolderOnNonCreateChainInput = new ReportPreCrossChainSyncHolderInfoInput
+        var reportPreCrossChainSyncHolderInfoInput = new ReportPreCrossChainSyncHolderInfoInput
         {
             GuardianApproved = new GuardianInfo
             {
@@ -205,17 +205,17 @@ public partial class CAContractTests : CAContractTestBase
             CreateChainId = SideChianId
         };
         var result = await CaContractStub.ReportPreCrossChainSyncHolderInfo.SendWithExceptionAsync(
-            createCaHolderOnNonCreateChainInput);
+            reportPreCrossChainSyncHolderInfoInput);
         result.ShouldNotBeNull();
         result.TransactionResult.Error.ShouldContain("Invalid input CaHash");
     }
 
     [Fact]
-    public async Task CreateHolderOnNonCreateChainTest_Fail_HolderInfoExist()
+    public async Task ReportPreCrossChainSyncHolderInfoTest_Fail_HolderInfoExist()
     {
-        await CreateHolderOnNonCreateChainTest_Init();
+        await ReportPreCrossChainSyncHolderInfoTest_Init();
         await SetCheckOperationDetailsInSignatureEnabled(true);
-        await CreateHolderOnNonCreateChain(User1Address.ToBase58(), true, MainChainId);
+        await ReportPreCrossChainSyncHolderInfo(User1Address.ToBase58(), true, MainChainId);
         var caInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput()
         {
             LoginGuardianIdentifierHash = _guardian
@@ -226,7 +226,7 @@ public partial class CAContractTests : CAContractTestBase
         caInfo.CaHash.ShouldBe(_specificCaHash);
         caInfo.CreateChainId.ShouldBe(SideChianId);
 
-        await CreateHolderOnNonCreateChain(User2Address.ToBase58(), true, MainChainId, User2Address);
+        await ReportPreCrossChainSyncHolderInfo(User2Address.ToBase58(), true, MainChainId, User2Address);
         caInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput()
         {
             LoginGuardianIdentifierHash = _guardian
@@ -238,9 +238,9 @@ public partial class CAContractTests : CAContractTestBase
     [Fact]
     public async Task CreateHolderTest_WhenAccelerateFailed()
     {
-        await CreateHolderOnNonCreateChainTest_Init();
+        await ReportPreCrossChainSyncHolderInfoTest_Init();
         await SetCheckOperationDetailsInSignatureEnabled(true);
-        await CreateHolderOnNonCreateChain(User1Address.ToBase58(), true, MainChainId);
+        await ReportPreCrossChainSyncHolderInfo(User1Address.ToBase58(), true, MainChainId);
         var caInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput()
         {
             CaHash = _specificCaHash
@@ -267,9 +267,9 @@ public partial class CAContractTests : CAContractTestBase
     [Fact]
     public async Task AccelerateSocialRecoveryTest()
     {
-        await CreateHolderOnNonCreateChainTest_Init();
+        await ReportPreCrossChainSyncHolderInfoTest_Init();
         await SetCheckOperationDetailsInSignatureEnabled(true);
-        await CreateHolderOnNonCreateChain(User1Address.ToBase58(), true);
+        await ReportPreCrossChainSyncHolderInfo(User1Address.ToBase58(), true);
         await AccelerateSocialRecovery(User2Address.ToBase58(), true);
         var caInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput()
         {
@@ -284,9 +284,9 @@ public partial class CAContractTests : CAContractTestBase
     [Fact]
     public async Task AccelerateSocialRecoveryTest_Fail_CloseCheckOperationDetails()
     {
-        await CreateHolderOnNonCreateChainTest_Init();
+        await ReportPreCrossChainSyncHolderInfoTest_Init();
         await SetCheckOperationDetailsInSignatureEnabled(true);
-        await CreateHolderOnNonCreateChain(User1Address.ToBase58(), true);
+        await ReportPreCrossChainSyncHolderInfo(User1Address.ToBase58(), true);
         await SetCheckOperationDetailsInSignatureEnabled(false);
         var result = await AccelerateSocialRecovery(User2Address.ToBase58(), false);
         result.ShouldNotBeNull();
@@ -296,9 +296,9 @@ public partial class CAContractTests : CAContractTestBase
     [Fact]
     public async Task AccelerateSocialRecoveryTest_Fail_OperationDetailIsNull()
     {
-        await CreateHolderOnNonCreateChainTest_Init();
+        await ReportPreCrossChainSyncHolderInfoTest_Init();
         await SetCheckOperationDetailsInSignatureEnabled(true);
-        await CreateHolderOnNonCreateChain(User1Address.ToBase58(), true);
+        await ReportPreCrossChainSyncHolderInfo(User1Address.ToBase58(), true);
         var result = await AccelerateSocialRecovery(null, true);
         var caInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput()
         {
@@ -312,7 +312,7 @@ public partial class CAContractTests : CAContractTestBase
     }
 
     [ItemCanBeNull]
-    private async Task<IExecutionResult<Empty>> CreateHolderOnNonCreateChain(string operationDetails, bool success,
+    private async Task<IExecutionResult<Empty>> ReportPreCrossChainSyncHolderInfo(string operationDetails, bool success,
         int chainId = 0, Address mananger = null)
     {
         chainId = chainId == 0 ? SideChianId : chainId;
@@ -324,7 +324,7 @@ public partial class CAContractTests : CAContractTestBase
             operationType, chainId, operationDetails);
         var verifierServer = await CaContractStub.GetVerifierServers.CallAsync(new Empty());
         var id = verifierServer.VerifierServers[0].Id;
-        var createCaHolderOnNonCreateChainInput = new ReportPreCrossChainSyncHolderInfoInput()
+        var reportPreCrossChainSyncHolderInfoInput = new ReportPreCrossChainSyncHolderInfoInput()
         {
             GuardianApproved = new GuardianInfo
             {
@@ -349,10 +349,10 @@ public partial class CAContractTests : CAContractTestBase
         if (!success)
         {
             return await CaContractStub.ReportPreCrossChainSyncHolderInfo.SendWithExceptionAsync(
-                createCaHolderOnNonCreateChainInput);
+                reportPreCrossChainSyncHolderInfoInput);
         }
 
-        return await CaContractStub.ReportPreCrossChainSyncHolderInfo.SendAsync(createCaHolderOnNonCreateChainInput);
+        return await CaContractStub.ReportPreCrossChainSyncHolderInfo.SendAsync(reportPreCrossChainSyncHolderInfoInput);
     }
 
     private async Task<IExecutionResult<Empty>> AccelerateSocialRecovery(string operationDetails, bool success,
