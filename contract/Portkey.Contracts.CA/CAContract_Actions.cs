@@ -45,10 +45,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         var guardianIdentifierHash = input.GuardianApproved.IdentifierHash;
         var holderId = State.GuardianMap[guardianIdentifierHash];
 
-        // if CAHolder exists
-        // 'State.AcceleratedRegistration[guardianIdentifierHash] == holderId' means that the HolderInfo was created through the 'ReportPreCrossChainSyncHolderInfo' method.
-        // it is determined to allow the execution of a 'CreateCAHolder' transaction on the outside of the 'CreateChain'
-        // even if the 'CreateChain' transaction fails but the the outside of the 'CreateChain' 'ReportPreCrossChainSyncHolderInfo' transaction is successful
+        // if CAHolder exists and there is no pre cross chain synchronization mark
         if (holderId != null && State.PreCrossChainSyncHolderInfoMarks[guardianIdentifierHash] != holderId)
             return new Empty();
 

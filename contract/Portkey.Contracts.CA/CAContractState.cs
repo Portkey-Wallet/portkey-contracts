@@ -62,8 +62,8 @@ public partial class CAContractState : ContractState
     public SingletonState<bool> CheckOperationDetailsInSignatureEnabled { get; set; }
     
     /// <summary>
-    /// The Guardian is added directly to the non-registered chain.
-    /// identifier hash  -> HolderInfo Hash
+    /// The mark for the pre cross chain 'CAHolder'
+    /// identifier hash  -> caHash
     /// </summary>
     public MappedState<Hash, Hash> PreCrossChainSyncHolderInfoMarks { get; set; }
     
