@@ -241,7 +241,7 @@ message ZkGuardianInfo {
     string salt = 2;
     string issuer_name = 3;
     string issuer_pubkey = 4;
-    bytes proof = 5;
+    string proof = 5;
 }
 
 enum StrategyValueType {

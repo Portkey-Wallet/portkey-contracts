@@ -17,14 +17,14 @@ public static class ZkHelpers
 
         var publicInputs = identifier.Concat(pubKey).Concat(salt).ToList();
 
-        return Verifier.VerifyBn254(verifyingKey, publicInputs, zkGuardianInfo.Proof.ToHex());
+        return Verifier.VerifyBn254(verifyingKey, publicInputs, zkGuardianInfo.Proof);
     }
 
     static byte[] HexStringToByteArray16(string hex)
     {
         var byteArray = new byte[16];
 
-        for (var i = 0; i < 16; i += 2)
+        for (var i = 0; i < 32; i += 2)
         {
             byteArray[i / 2] = Convert.ToByte(hex.Substring(i, 2), 16);
         }

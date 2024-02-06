@@ -13,14 +13,19 @@
         <None Pack="true" PackagePath="build\" Include="*.targets;" />
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="AElf.CSharp.CodeOps" Version="1.6.1-groth16-1" />
-        <PackageReference Include="AElf.Runtime.CSharp.Core" Version="1.6.1-groth16-1" />
-        <PackageReference Include="AElf.Types" Version="1.6.1-groth16-1" />
+        <PackageReference Include="AElf.CSharp.CodeOps" Version="1.6.1-groth16-4" />
+        <PackageReference Include="AElf.Runtime.CSharp.Core" Version="1.6.1-groth16-4" />
+        <PackageReference Include="AElf.Types" Version="1.6.1-groth16-4" />
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="CommandLineParser" Version="2.8.0" />
-        <PackageReference Include="Groth16.Net" Version="1.0.1" />
+        <PackageReference Include="Groth16.Net" Version="1.0.4" />
         <PackageReference Include="Volo.Abp.Core" Version="7.0.0" />
+    </ItemGroup>
+    <ItemGroup>
+      <Reference Include="Forest.Contracts.SymbolRegistrar">
+        <HintPath>..\..\..\..\..\temp\Contract.dll</HintPath>
+      </Reference>
     </ItemGroup>
 
     <Target Name="CopyDlls" AfterTargets="AfterBuild">

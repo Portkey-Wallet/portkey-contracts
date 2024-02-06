@@ -67,6 +67,6 @@
         </ContractCode>
     </ItemGroup>
     <ItemGroup>
-      <PackageReference Include="Groth16.Net" Version="1.0.1" />
+      <PackageReference Include="Groth16.Net" Version="1.0.10" />
     </ItemGroup>
 </Project>

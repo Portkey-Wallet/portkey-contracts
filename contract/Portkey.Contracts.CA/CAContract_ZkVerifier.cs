@@ -13,8 +13,9 @@ public partial class CAContract
         Assert(!string.IsNullOrEmpty(input.IssuerPubkey), "Issuer public key cannot be empty.");
         var existing = State.ZkIssuerMap[input.IssuerName];
         Assert(existing == null, "Issuer already exists.");
-        var issuerList = State.ZkIssuerList.Value;
+        var issuerList = State.ZkIssuerList.Value ?? new ZkIssuerList();
         issuerList.Issuers.Add(input.IssuerName);
+        State.ZkIssuerList.Value = issuerList;
         State.ZkIssuerMap[input.IssuerName] = new ZkIssuerPublicKeyList
         {
             PublicKeys = { input.IssuerPubkey }
@@ -61,5 +62,28 @@ public partial class CAContract
         // IMPORTANT TODO: This is only for POC, production use needs to have permission control.
         State.ZkVerifiyingKey.Value = input;
         return new Empty();
+    }
+
+    public override PublicKeyList GetZkIssuerPublicKeyList(StringValue input)
+    {
+        var publicKeyList = State.ZkIssuerMap[input.Value] ?? new ZkIssuerPublicKeyList();
+        return new PublicKeyList
+        {
+            PublicKeys = { publicKeyList.PublicKeys }
+        };
+    }
+
+    public override StringValue GetZkVerifiyingKey(Empty input)
+    {
+        return State.ZkVerifiyingKey.Value;
+    }
+
+    public override IssuerList GetIssuerList(Empty input)
+    {
+        var issuerList = State.ZkIssuerList.Value ?? new ZkIssuerList();
+        return new IssuerList
+        {
+            Issuers = { issuerList.Issuers }
+        };
     }
 }

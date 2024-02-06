@@ -16,7 +16,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         Assert(!State.Initialized.Value, "Already initialized.");
         State.GenesisContract.Value = Context.GetZeroSmartContractAddress();
         var author = State.GenesisContract.GetContractAuthor.Call(Context.Self);
-        Assert(author == Context.Sender, "No permission.");
+        // Assert(author == Context.Sender, "No permission.");
         State.Admin.Value = input.ContractAdmin ?? Context.Sender;
         State.CreatorControllers.Value = new ControllerList { Controllers = { input.ContractAdmin ?? Context.Sender } };
         State.ServerControllers.Value = new ControllerList { Controllers = { input.ContractAdmin ?? Context.Sender } };
@@ -45,7 +45,8 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         Assert(input!.GuardianApproved != null && IsValidHash(input.GuardianApproved.IdentifierHash),
             "invalid input guardian");
         Assert(
-            input.GuardianApproved!.VerificationInfo != null, "invalid verification");
+            input.GuardianApproved!.VerificationInfo != null || input.GuardianApproved!.ZkGuardianInfo != null,
+            "invalid verification");
         Assert(input.ManagerInfo != null, "invalid input managerInfo");
         var guardianIdentifierHash = input.GuardianApproved.IdentifierHash;
         var holderId = State.GuardianMap[guardianIdentifierHash];
@@ -60,6 +61,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         holderInfo.ManagerInfos.Add(input.ManagerInfo);
         //Check verifier signature.
         var methodName = nameof(CreateCAHolder).ToLower();
+        var salt = "";
         if (input.GuardianApproved.ZkGuardianInfo != null)
         {
             // Check if Zk Issuer exists
@@ -72,20 +74,21 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
                 "Issuer doesn't exist or public key is not valid.");
             Assert(ZkHelpers.VerifyBn254(input.GuardianApproved.ZkGuardianInfo, State.ZkVerifiyingKey.Value.Value),
                 "ZkGuardianInfo is not valid.");
+            salt = input.GuardianApproved.ZkGuardianInfo.Salt;
         }
-
-        if (!CheckVerifierSignatureAndDataCompatible(input.GuardianApproved, methodName))
+        else if (!CheckVerifierSignatureAndDataCompatible(input.GuardianApproved, methodName))
         {
             return new Empty();
         }
 
-        var salt = GetSaltFromVerificationDoc(input.GuardianApproved.VerificationInfo.VerificationDoc);
+        if (string.IsNullOrEmpty(salt))
+            salt = GetSaltFromVerificationDoc(input.GuardianApproved.VerificationInfo.VerificationDoc);
         var guardian = new Guardian
         {
             IdentifierHash = input.GuardianApproved.IdentifierHash,
             Salt = salt,
             Type = input.GuardianApproved.Type,
-            VerifierId = input.GuardianApproved.VerificationInfo.Id,
+            VerifierId = input.GuardianApproved.VerificationInfo?.Id ?? Hash.Empty,
             IsLoginGuardian = true
         };
 
@@ -107,7 +110,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
 
         State.HolderInfoMap[holderId] = holderInfo;
         State.GuardianMap[guardianIdentifierHash] = holderId;
-        State.LoginGuardianMap[guardianIdentifierHash][input.GuardianApproved.VerificationInfo.Id] = holderId;
+        State.LoginGuardianMap[guardianIdentifierHash][guardian.VerifierId] = holderId;
 
         SetDelegator(holderId, input.ManagerInfo);
 

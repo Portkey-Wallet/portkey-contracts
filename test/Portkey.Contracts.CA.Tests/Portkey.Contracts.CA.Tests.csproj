@@ -46,6 +46,9 @@
         </CommonMessage>
     </ItemGroup>
     <ItemGroup>
+        <ContractBase Include="..\..\protobuf\zk_verifier.proto">
+          <Link>Protobuf\Proto\base\zk_verifier.proto</Link>
+        </ContractBase>
         <ContractStub Include="..\..\protobuf\ca_contract.proto">
             <Link>Protobuf\Proto\ca_contract.proto</Link>
         </ContractStub>
