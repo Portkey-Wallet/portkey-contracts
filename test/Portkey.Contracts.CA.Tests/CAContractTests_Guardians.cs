@@ -65,7 +65,7 @@ public partial class CAContractTests
         else
         {
             data =
-                $"{type},{guardianType.ToHex()},{verificationTime},{verifierAddress.ToBase58()},{salt},{operationType},{targetChainId},{operationDetails}";
+                $"{type},{guardianType.ToHex()},{verificationTime},{verifierAddress.ToBase58()},{salt},{operationType},{targetChainId},{HashHelper.ComputeFrom(operationDetails).ToHex()}";
         }
 
         var dataHash = HashHelper.ComputeFrom(data);

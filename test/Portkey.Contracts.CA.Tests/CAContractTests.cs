@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using AElf;
 using AElf.Contracts.MultiToken;
 using AElf.Types;
 using Google.Protobuf.WellKnownTypes;
@@ -188,6 +189,20 @@ public partial class CAContractTests : CAContractTestBase
         caInfo.GuardianList.Guardians.Count.ShouldBe(1);
         caInfo.CaAddress.ShouldNotBeNull();
     }
+    
+    [Fact]
+    public async Task CreateHolderTest_CloseCheckOperationDetails_OperationDetailsNull()
+    {
+        await Initiate();
+        await CreateHolderWithOperationDetails(User1Address.ToBase58());
+        var caInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput()
+        {
+            LoginGuardianIdentifierHash = _guardian
+        });
+        caInfo.ManagerInfos.Count.ShouldBe(1);
+        caInfo.GuardianList.Guardians.Count.ShouldBe(1);
+        caInfo.CaAddress.ShouldNotBeNull();
+    }
 
     [Fact]
     public async Task CreateHolderTest_OpenCheckOperationDetails()
@@ -205,7 +220,7 @@ public partial class CAContractTests : CAContractTestBase
     }
 
     [Fact]
-    public async Task CreateHolder_Failed_OperationDetails_Null()
+    public async Task CreateHolder_Failed_OpenCheckOperationDetails_OperationDetailsNull()
     {
         await Initiate();
         await SetCheckOperationDetailsInSignatureEnabled(true);
@@ -445,8 +460,9 @@ public partial class CAContractTests : CAContractTestBase
                 {
                     Id = id,
                     Signature = signature,
-                    VerificationDoc =
-                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType},{MainChainId}"
+                    VerificationDoc = string.IsNullOrWhiteSpace(operationDetails)
+                        ? $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType},{MainChainId}"
+                        : $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType},{MainChainId},{HashHelper.ComputeFrom(operationDetails).ToHex()}"
                 }
             },
             ManagerInfo = new ManagerInfo

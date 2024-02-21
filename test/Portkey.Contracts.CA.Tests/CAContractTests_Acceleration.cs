@@ -62,6 +62,21 @@ public partial class CAContractTests : CAContractTestBase
     }
 
     [Fact]
+    public async Task ReportPreCrossChainSyncHolderInfoTest_CloseCheckOperationDetails()
+    {
+        await ReportPreCrossChainSyncHolderInfoTest_Init();
+        await ReportPreCrossChainSyncHolderInfo(User1Address.ToBase58(), true);
+        var caInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput()
+        {
+            LoginGuardianIdentifierHash = _guardian
+        });
+        caInfo.ManagerInfos.Count.ShouldBe(1);
+        caInfo.GuardianList.Guardians.Count.ShouldBe(1);
+        caInfo.CaHash.ShouldBe(_specificCaHash);
+        caInfo.CreateChainId.ShouldBe(SideChianId);
+    }
+
+    [Fact]
     public async Task ReportPreCrossChainSyncHolderInfoTest_Fail_CloseCheckOperationDetails()
     {
         await ReportPreCrossChainSyncHolderInfoTest_Init();
@@ -75,13 +90,9 @@ public partial class CAContractTests : CAContractTestBase
     {
         await ReportPreCrossChainSyncHolderInfoTest_Init();
         await SetCheckOperationDetailsInSignatureEnabled(true);
-        await ReportPreCrossChainSyncHolderInfo(null, true);
-        var result = await CaContractStub.GetHolderInfo.SendWithExceptionAsync(new GetHolderInfoInput()
-        {
-            LoginGuardianIdentifierHash = _guardian
-        });
+        var result = await ReportPreCrossChainSyncHolderInfo(null, false);
         result.ShouldNotBeNull();
-        result.TransactionResult.Error.ShouldContain("Not found ca_hash by a the loginGuardianIdentifierHash");
+        result.TransactionResult.Error.ShouldContain("Not supported");
     }
 
     [Fact]
@@ -115,7 +126,6 @@ public partial class CAContractTests : CAContractTestBase
     public async Task ReportPreCrossChainSyncHolderInfoTest_Fail_GuardianApproveIsNull()
     {
         await ReportPreCrossChainSyncHolderInfoTest_Init();
-        await SetCheckOperationDetailsInSignatureEnabled(true);
         var reportPreCrossChainSyncHolderInfoInput = new ReportPreCrossChainSyncHolderInfoInput();
         IExecutionResult<Empty> result = await CaContractStub.ReportPreCrossChainSyncHolderInfo.SendWithExceptionAsync(
             reportPreCrossChainSyncHolderInfoInput);
@@ -127,7 +137,6 @@ public partial class CAContractTests : CAContractTestBase
     public async Task ReportPreCrossChainSyncHolderInfoTest_Fail_ManagerIsNull()
     {
         await ReportPreCrossChainSyncHolderInfoTest_Init();
-        await SetCheckOperationDetailsInSignatureEnabled(true);
         var reportPreCrossChainSyncHolderInfoInput = new ReportPreCrossChainSyncHolderInfoInput
         {
             GuardianApproved = new GuardianInfo
@@ -138,7 +147,7 @@ public partial class CAContractTests : CAContractTestBase
                 {
                     Id = Hash.Empty,
                     Signature = ByteString.Empty,
-                    VerificationDoc = "111"
+                    VerificationDoc = "1,2,3,4,5,6,7,8"
                 }
             }
         };
@@ -163,7 +172,7 @@ public partial class CAContractTests : CAContractTestBase
                 {
                     Id = Hash.Empty,
                     Signature = ByteString.Empty,
-                    VerificationDoc = "111"
+                    VerificationDoc = "1,2,3,4,5,6,7,8"
                 }
             },
             ManagerInfo = new ManagerInfo
@@ -182,7 +191,6 @@ public partial class CAContractTests : CAContractTestBase
     public async Task ReportPreCrossChainSyncHolderInfoTest_Fail_CaHashIsNull()
     {
         await ReportPreCrossChainSyncHolderInfoTest_Init();
-        await SetCheckOperationDetailsInSignatureEnabled(true);
         var reportPreCrossChainSyncHolderInfoInput = new ReportPreCrossChainSyncHolderInfoInput
         {
             GuardianApproved = new GuardianInfo
@@ -193,7 +201,7 @@ public partial class CAContractTests : CAContractTestBase
                 {
                     Id = Hash.Empty,
                     Signature = ByteString.Empty,
-                    VerificationDoc = "111"
+                    VerificationDoc = "1,2,3,4,5,6,7,8"
                 }
             },
             ManagerInfo = new ManagerInfo
@@ -214,7 +222,6 @@ public partial class CAContractTests : CAContractTestBase
     public async Task ReportPreCrossChainSyncHolderInfoTest_Fail_HolderInfoExist()
     {
         await ReportPreCrossChainSyncHolderInfoTest_Init();
-        await SetCheckOperationDetailsInSignatureEnabled(true);
         await ReportPreCrossChainSyncHolderInfo(User1Address.ToBase58(), true, MainChainId);
         var caInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput()
         {
@@ -280,35 +287,32 @@ public partial class CAContractTests : CAContractTestBase
         caInfo.CaHash.ShouldBe(_specificCaHash);
         caInfo.CreateChainId.ShouldBe(SideChianId);
     }
-
+    
     [Fact]
-    public async Task AccelerateSocialRecoveryTest_Fail_CloseCheckOperationDetails()
+    public async Task AccelerateSocialRecoveryTest_CloseCheckOperationDetails()
     {
         await ReportPreCrossChainSyncHolderInfoTest_Init();
-        await SetCheckOperationDetailsInSignatureEnabled(true);
         await ReportPreCrossChainSyncHolderInfo(User1Address.ToBase58(), true);
-        await SetCheckOperationDetailsInSignatureEnabled(false);
-        var result = await AccelerateSocialRecovery(User2Address.ToBase58(), false);
-        result.ShouldNotBeNull();
-        result.TransactionResult.Error.ShouldContain("Not on registered chain");
-    }
-
-    [Fact]
-    public async Task AccelerateSocialRecoveryTest_Fail_OperationDetailIsNull()
-    {
-        await ReportPreCrossChainSyncHolderInfoTest_Init();
-        await SetCheckOperationDetailsInSignatureEnabled(true);
-        await ReportPreCrossChainSyncHolderInfo(User1Address.ToBase58(), true);
-        var result = await AccelerateSocialRecovery(null, true);
+        await AccelerateSocialRecovery(User2Address.ToBase58(), true);
         var caInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput()
         {
             LoginGuardianIdentifierHash = _guardian
         });
-        caInfo.ManagerInfos.Count.ShouldBe(1);
-        caInfo.ManagerInfos.First().Address.ShouldNotBe(User2Address);
+        caInfo.ManagerInfos.Count.ShouldBe(2);
         caInfo.GuardianList.Guardians.Count.ShouldBe(1);
         caInfo.CaHash.ShouldBe(_specificCaHash);
         caInfo.CreateChainId.ShouldBe(SideChianId);
+    }
+    
+    [Fact]
+    public async Task AccelerateSocialRecoveryTest_Fail_OperationDetailIsNull()
+    {
+        await ReportPreCrossChainSyncHolderInfoTest_Init();
+        await ReportPreCrossChainSyncHolderInfo(User1Address.ToBase58(), true);
+        IExecutionResult<Empty> result = await AccelerateSocialRecovery(null, false);
+        result.ShouldNotBeNull();
+        result.TransactionResult.Error.ShouldContain("Not on registered chain");
+        
     }
 
     [ItemCanBeNull]
@@ -334,8 +338,9 @@ public partial class CAContractTests : CAContractTestBase
                 {
                     Id = id,
                     Signature = signature,
-                    VerificationDoc =
-                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType},{chainId}"
+                    VerificationDoc = string.IsNullOrWhiteSpace(operationDetails)
+                        ? $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType},{chainId}"
+                        : $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType},{chainId},{HashHelper.ComputeFrom(operationDetails).ToHex()}"
                 }
             },
             ManagerInfo = new ManagerInfo
@@ -376,8 +381,9 @@ public partial class CAContractTests : CAContractTestBase
                 {
                     Id = id,
                     Signature = signature,
-                    VerificationDoc =
-                        $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(5)},{VerifierAddress.ToBase58()},{salt},{operationType},{chainId}"
+                    VerificationDoc = string.IsNullOrWhiteSpace(operationDetails)
+                        ? $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(5)},{VerifierAddress.ToBase58()},{salt},{operationType},{chainId}"
+                        : $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(5)},{VerifierAddress.ToBase58()},{salt},{operationType},{chainId},{HashHelper.ComputeFrom(operationDetails).ToHex()}"
                 }
             }
         };

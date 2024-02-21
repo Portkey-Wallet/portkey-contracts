@@ -25,11 +25,12 @@ public partial class CAContract
         Assert(caHash != null, "CA Holder does not exist.");
 
         var holderInfo = GetHolderInfoByCaHash(caHash);
-        if (!State.CheckOperationDetailsInSignatureEnabled.Value)
+        
+        if (NeedToCheckCreateChain(input.GuardiansApproved))
         {
             AssertCreateChain(holderInfo);
         }
-
+        
         var guardians = holderInfo.GuardianList!.Guardians;
 
         Assert(input.GuardiansApproved.Count > 0, "invalid input Guardians Approved");
@@ -319,5 +320,30 @@ public partial class CAContract
     private ManagerInfo FindManagerInfo(RepeatedField<ManagerInfo> managerInfos, Address address)
     {
         return managerInfos.FirstOrDefault(s => s.Address == address);
+    }
+    
+    /// <summary>
+    /// When all 'VerificationDoc.Length >= 8', there is no need to verify the 'CreateChain'.
+    /// </summary>
+    /// <param name="guardianApproved"></param>
+    /// <returns></returns>
+    private bool NeedToCheckCreateChain(RepeatedField<GuardianInfo> guardianApproved)
+    {
+        if (guardianApproved == null)
+        {
+            return true;
+        }
+
+        foreach (var guardianInfo in guardianApproved)
+        {
+            if (guardianInfo?.VerificationInfo == null ||
+                string.IsNullOrWhiteSpace(guardianInfo.VerificationInfo.VerificationDoc) ||
+                GetVerificationDocLength(guardianInfo.VerificationInfo.VerificationDoc) < 8)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
