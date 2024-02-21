@@ -81,6 +81,12 @@ public partial class CAContract
             RecoverVerifierAddress(verificationInfo.VerificationDoc, verificationInfo.Signature);
         if (verifierAddressFromPublicKey != verifierAddress)
         {
+            verifierAddressFromPublicKey =
+                RecoverVerifierAddress($"{verificationInfo.VerificationDoc},{operationDetails}",
+                    verificationInfo.Signature);
+        }
+        if (verifierAddressFromPublicKey != verifierAddress)
+        {
             return false;
         }
 
