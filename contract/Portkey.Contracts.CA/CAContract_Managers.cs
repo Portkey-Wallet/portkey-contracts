@@ -329,7 +329,7 @@ public partial class CAContract
     /// <returns></returns>
     private bool NeedToCheckCreateChain(RepeatedField<GuardianInfo> guardianApproved)
     {
-        if (guardianApproved == null)
+        if (guardianApproved.Count == 0)
         {
             return true;
         }

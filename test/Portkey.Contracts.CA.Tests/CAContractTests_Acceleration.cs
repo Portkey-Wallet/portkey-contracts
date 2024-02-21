@@ -9,7 +9,6 @@ using AElf.Types;
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using JetBrains.Annotations;
-using Newtonsoft.Json;
 using Shouldly;
 using Xunit;
 
@@ -156,6 +155,35 @@ public partial class CAContractTests : CAContractTestBase
         result.ShouldNotBeNull();
         result.TransactionResult.Error.ShouldContain("invalid input managerInfo");
     }
+    
+    [Fact]
+    public async Task ReportPreCrossChainSyncHolderInfoTest_Fail_ManagerAddressIsNull()
+    {
+        await ReportPreCrossChainSyncHolderInfoTest_Init();
+        var reportPreCrossChainSyncHolderInfoInput = new ReportPreCrossChainSyncHolderInfoInput
+        {
+            GuardianApproved = new GuardianInfo
+            {
+                Type = GuardianType.OfEmail,
+                IdentifierHash = _guardian,
+                VerificationInfo = new VerificationInfo
+                {
+                    Id = Hash.Empty,
+                    Signature = ByteString.Empty,
+                    VerificationDoc = "1,2,3,4,5,6,7,8"
+                }
+            },
+            ManagerInfo = new ManagerInfo
+            {
+                Address = null,
+                ExtraData = "123"
+            }
+        };
+        var result = await CaContractStub.ReportPreCrossChainSyncHolderInfo.SendWithExceptionAsync(
+            reportPreCrossChainSyncHolderInfoInput);
+        result.ShouldNotBeNull();
+        result.TransactionResult.Error.ShouldContain("invalid input managerInfo");
+    }
 
     [Fact]
     public async Task ReportPreCrossChainSyncHolderInfoTest_Fail_CreateChainId()
@@ -241,6 +269,19 @@ public partial class CAContractTests : CAContractTestBase
         caInfo.ManagerInfos.Count.ShouldBe(1);
         caInfo.ManagerInfos.First().Address.ShouldBe(User1Address);
     }
+    
+    [Fact]
+    public async Task ReportPreCrossChainSyncHolderInfoTest_Fail_GuardianApproveFail()
+    {
+        await ReportPreCrossChainSyncHolderInfoTest_Init();
+        await ReportPreCrossChainSyncHolderInfo(User2Address.ToBase58(), true, MainChainId);
+        var caInfo = await CaContractStub.GetHolderInfo.CallWithExceptionAsync(new GetHolderInfoInput()
+        {
+            LoginGuardianIdentifierHash = _guardian
+        });
+        caInfo.ShouldNotBeNull();
+        caInfo.Value.ShouldContain("Not found ca_hash by a the loginGuardianIdentifierHash");
+    }
 
     [Fact]
     public async Task CreateHolderTest_WhenAccelerateFailed()
@@ -313,6 +354,53 @@ public partial class CAContractTests : CAContractTestBase
         result.ShouldNotBeNull();
         result.TransactionResult.Error.ShouldContain("Not on registered chain");
         
+    }
+    
+    [Fact]
+    public async Task SocialRecoveryTest_Fail_GuardianApprovedIsNull()
+    {
+        await ReportPreCrossChainSyncHolderInfoTest_Init();
+        await ReportPreCrossChainSyncHolderInfo(User1Address.ToBase58(), true);
+        var result = await CaContractStub.SocialRecovery.SendWithExceptionAsync(new SocialRecoveryInput
+        {
+            ManagerInfo = new ManagerInfo
+            {
+                Address = User2Address,
+                ExtraData = "567"
+            },
+            LoginGuardianIdentifierHash = _guardian
+        });
+        result.ShouldNotBeNull();
+        result.TransactionResult.Error.ShouldContain("Not on registered chain");
+    }
+    
+    [Fact]
+    public async Task SocialRecoveryTest_Fail_VerificationInfoIsNull()
+    {
+        await ReportPreCrossChainSyncHolderInfoTest_Init();
+        await ReportPreCrossChainSyncHolderInfo(User1Address.ToBase58(), true);
+        var guardianApprove = new List<GuardianInfo>
+        {
+            new()
+            {
+                IdentifierHash = _guardian,
+                Type = GuardianType.OfEmail,
+                VerificationInfo = null
+            }
+        };
+
+        var result = await CaContractStub.SocialRecovery.SendWithExceptionAsync(new SocialRecoveryInput
+        {
+            ManagerInfo = new ManagerInfo
+            {
+                Address = User2Address,
+                ExtraData = "567"
+            },
+            LoginGuardianIdentifierHash = _guardian,
+            GuardiansApproved = { guardianApprove }
+        });
+        result.ShouldNotBeNull();
+        result.TransactionResult.Error.ShouldContain("Not on registered chain");
     }
 
     [ItemCanBeNull]
