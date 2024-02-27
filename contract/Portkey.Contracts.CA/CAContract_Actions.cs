@@ -118,13 +118,14 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
     /// <returns></returns>
     public override Empty ReportPreCrossChainSyncHolderInfo(ReportPreCrossChainSyncHolderInfoInput input)
     {
-        Assert(State.CheckOperationDetailsInSignatureEnabled.Value, "Not supported");
         Assert(State.CreatorControllers.Value.Controllers.Contains(Context.Sender), "No permission");
         Assert(input != null, "Invalid input.");
         Assert(input!.GuardianApproved != null && IsValidHash(input.GuardianApproved.IdentifierHash),
             "invalid input guardian");
         Assert(
             input.GuardianApproved!.VerificationInfo != null, "invalid verification");
+        Assert(GetVerificationDocLength(input.GuardianApproved!.VerificationInfo!.VerificationDoc) >= 8,
+            "Not supported");
         Assert(input.ManagerInfo != null, "invalid input managerInfo");
         Assert(input.ManagerInfo?.Address != null, "invalid input managerInfo address");
         Assert(input.CreateChainId != 0 && input.CreateChainId != Context.ChainId, "Invalid input CreateChainId");

@@ -15,24 +15,20 @@ public partial class CAContract
     private bool CheckVerifierSignatureAndData(GuardianInfo guardianInfo, string methodName, Hash caHash = null,
         string operationDetails = null)
     {
-        var verificationDoc = guardianInfo.VerificationInfo.VerificationDoc;
-        if (verificationDoc == null || string.IsNullOrWhiteSpace(verificationDoc))
+        var verifierDocLength = GetVerificationDocLength(guardianInfo.VerificationInfo.VerificationDoc);
+
+        if (verifierDocLength != 7 && verifierDocLength != 8)
         {
             return false;
         }
 
-        var verifierDoc = verificationDoc.Split(",");
-        return verifierDoc.Length switch
-        {
-            7 => CheckVerifierSignatureAndDataWithCreateChainId(guardianInfo, methodName, caHash, operationDetails),
-            _ => false
-        };
+        return CheckVerifierSignatureAndDataWithCreateChainId(guardianInfo, methodName, caHash, operationDetails);
     }
 
     private bool CheckVerifierSignatureAndDataWithCreateChainId(GuardianInfo guardianInfo, string methodName,
         Hash caHash, string operationDetails = null)
     {
-        //[type,guardianIdentifierHash,verificationTime,verifierAddress,salt,operationType,createChainId]
+        //[type,guardianIdentifierHash,verificationTime,verifierAddress,salt,operationType,createChainId<,operationHash>]
         var verificationDoc = guardianInfo.VerificationInfo.VerificationDoc;
         if (verificationDoc == null || string.IsNullOrWhiteSpace(verificationDoc))
         {
@@ -81,30 +77,20 @@ public partial class CAContract
             return false;
         }
 
-        //State.CheckOperationDetailsInSignatureEnabled==true,
-        //registration and social recovery must verify the content of the operation.
-        Address verifierAddressFromPublicKey;
-        if (State.CheckOperationDetailsInSignatureEnabled.Value &&
-            (operationTypeName == nameof(OperationType.CreateCaholder).ToLower() ||
-             operationTypeName == nameof(OperationType.SocialRecovery).ToLower()))
+        var verifierAddressFromPublicKey =
+            RecoverVerifierAddress(verificationInfo.VerificationDoc, verificationInfo.Signature);
+        if (verifierAddressFromPublicKey != verifierAddress)
         {
             verifierAddressFromPublicKey =
                 RecoverVerifierAddress($"{verificationInfo.VerificationDoc},{operationDetails}",
                     verificationInfo.Signature);
         }
-        else
+        if (verifierAddressFromPublicKey != verifierAddress)
         {
-            verifierAddressFromPublicKey =
-                RecoverVerifierAddress(verificationInfo.VerificationDoc, verificationInfo.Signature);
-            if (verifierAddressFromPublicKey != verifierAddress)
-            {
-                verifierAddressFromPublicKey =
-                    RecoverVerifierAddress($"{verificationInfo.VerificationDoc},{operationDetails}",
-                        verificationInfo.Signature);
-            }
+            return false;
         }
 
-        if (verifierAddressFromPublicKey != verifierAddress)
+        if (!CheckVerifierSignatureOperationDetail(operationTypeName, verifierDoc, operationDetails))
         {
             return false;
         }
@@ -119,7 +105,7 @@ public partial class CAContract
         }
 
         //After verifying the contents of the operation,it is not necessary to verify the 'ChainId'
-        if (State.CheckOperationDetailsInSignatureEnabled.Value &&
+        if (verifierDoc.Length >= 8 &&
             ((operationTypeName == nameof(OperationType.CreateCaholder).ToLower() && caHash != null) ||
              operationTypeName == nameof(OperationType.SocialRecovery).ToLower()))
         {
@@ -177,7 +163,6 @@ public partial class CAContract
             OperationType = docs[5]
         };
     }
-
 
     private HolderInfo GetHolderInfoByCaHash(Hash caHash)
     {
@@ -263,5 +248,38 @@ public partial class CAContract
         var publicKey = Context.RecoverPublicKey(signature.ToByteArray(),
             data.ToByteArray());
         return Address.FromPublicKey(publicKey);
+    }
+
+    private int GetVerificationDocLength(string verificationDoc)
+    {
+        return string.IsNullOrWhiteSpace(verificationDoc) ? 0 : verificationDoc.Split(",").Length;
+    }
+
+    /// <summary>
+    /// State.CheckOperationDetailsInSignatureEnabled==true: must verify the Hash value of operationDetails
+    /// verifierDoc.Length >= 8: only verify registration and social recovery
+    /// </summary>
+    /// <param name="operationTypeName"></param>
+    /// <param name="verifierDoc"></param>
+    /// <param name="operationDetails"></param>
+    /// <returns></returns>
+    private bool CheckVerifierSignatureOperationDetail(string operationTypeName, string[] verifierDoc,
+        string operationDetails)
+    {
+        if (State.CheckOperationDetailsInSignatureEnabled.Value
+            || (verifierDoc.Length >= 8 &&
+                (operationTypeName == nameof(OperationType.CreateCaholder).ToLower() ||
+                 operationTypeName == nameof(OperationType.SocialRecovery).ToLower())))
+        {
+            if (verifierDoc.Length < 8 || string.IsNullOrWhiteSpace(verifierDoc[7]) ||
+                string.IsNullOrWhiteSpace(operationDetails))
+            {
+                return false;
+            }
+
+            return verifierDoc[7] == HashHelper.ComputeFrom(operationDetails).ToHex();
+        }
+
+        return true;
     }
 }
