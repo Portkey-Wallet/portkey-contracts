@@ -50,7 +50,8 @@ public partial class CAContract
         }
 
         var list = notLoginGuardianIdentifierHashList.Except(notLoginGuardianList).ToList();
-        Assert(list.Count == 0, $"NotLoginGuardian:{list} is not in HolderInfo's NotLoginGuardians");
+        var loginGuardiansNotIn = list.Count> 0 ? list[0] : null;
+        Assert(list.Count == 0, $"NotLoginGuardian:{loginGuardiansNotIn} is not in HolderInfo's NotLoginGuardians");
     }
 
     private void ValidateGuardianList(GuardianList desGuardianList, GuardianList srcGuardianList)
@@ -85,7 +86,8 @@ public partial class CAContract
                 $"LoginGuardian:{loginGuardian} is not in HolderInfo's LoginGuardians");
         }
         var list = loginGuardians.Except(loginGuardianIdentifierHashList).ToList();
-        Assert(list.Count == 0, $"LoginGuardian:{list} is not in HolderInfo's LoginGuardians");
+        var loginGuardiansNotIn = list.Count> 0 ? list[0] : null;
+        Assert(list.Count == 0, $"LoginGuardian:{loginGuardiansNotIn} is not in HolderInfo's LoginGuardians");
         
     }
 
