@@ -72,7 +72,8 @@ public partial class CAContract
         return new Empty();
     }
 
-    private int GetGuardianApprovedCount(Hash cahHash, RepeatedField<GuardianInfo> guardianApproved, string methodName)
+    private int GetGuardianApprovedCount(Hash cahHash, RepeatedField<GuardianInfo> guardianApproved, string methodName,
+        string operationDetails = null)
     {
         var guardianApprovedCount = 0;
         var guardianApprovedList = guardianApproved
@@ -81,10 +82,11 @@ public partial class CAContract
         foreach (var guardianInfo in guardianApprovedList)
         {
             if (!IsGuardianExist(cahHash, guardianInfo)) continue;
-            var isApproved = CheckVerifierSignatureAndData(guardianInfo, methodName, cahHash);
+            var isApproved = CheckVerifierSignatureAndData(guardianInfo, methodName, cahHash, operationDetails);
             if (!isApproved) continue;
             guardianApprovedCount++;
         }
+
         return guardianApprovedCount;
     }
 

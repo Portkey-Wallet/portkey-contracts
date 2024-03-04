@@ -196,6 +196,13 @@ public partial class CAContract
         State.HolderInfoMap[holderId] = holderInfo;
         State.SyncHolderInfoTransaction[originalTransactionId] = true;
         State.SyncHolderInfoTransactionHeightMap[transactionInput.CaHash] = verificationTransactionInfo.ParentChainHeight;
+
+        var guardians = holderInfo.GuardianList.Guardians;
+        foreach (var guardian in guardians)
+        {
+            State.PreCrossChainSyncHolderInfoMarks.Remove(guardian.IdentifierHash);
+        }
+
         Context.Fire(new CAHolderSynced
         {
             Creator = Context.Sender,

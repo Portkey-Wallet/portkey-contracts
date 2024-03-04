@@ -252,7 +252,7 @@ public partial class CAContract
         return new Empty();
     }
 
-    public override Empty RemoveCAProjectDelegatee(RemoveCAProjectDelegateeInput input)
+    public override Empty RemoveProjectDelegatee(RemoveProjectDelegateeInput input)
     {
         Assert(input != null, "Invalid input.");
         Assert(IsValidHash(input.ProjectHash), "Invalid project hash.");
@@ -288,12 +288,8 @@ public partial class CAContract
                 }
             }
         }
-
-        if (delegateeTransactionListMap.Count == 0)
-        {
-            return new Empty();
-        }
-
+        Assert(delegateeTransactionListMap.Count > 0, "There are no delegatee to remove");
+        
         foreach (var delegateeTransactionListPair in delegateeTransactionListMap)
         {
             
