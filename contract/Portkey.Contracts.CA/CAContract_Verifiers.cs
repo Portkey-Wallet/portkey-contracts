@@ -36,6 +36,7 @@ public partial class CAContract
             {
                 Assert(!isSpecifyVerifierId, "verifierServer name existed");
                 serverId = server.Id;
+                server.ImageUrl = input.ImageUrl;
             }
         }
 
@@ -98,7 +99,7 @@ public partial class CAContract
         Assert(input != null, "invalid input");
         Assert(IsValidHash(input!.Id), "invalid input id");
         Assert(input.EndPoints != null && input.EndPoints.Count > 0, "invalid input endPoints");
-        if (State.VerifiersServerList.Value == null) return new Empty();
+        if (State.VerifiersServerList.Value == null || State.VerifiersServerList.Value.VerifierServers.Count == 0) return new Empty();
 
         var server = State.VerifiersServerList.Value.VerifierServers
             .FirstOrDefault(server => server.Id == input.Id);
