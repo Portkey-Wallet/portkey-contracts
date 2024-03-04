@@ -78,9 +78,9 @@ public partial class CAContract
         Assert(loginGuardians.Count == loginGuardianIdentifierHashList.Count,
             "The amount of LoginGuardianInput not equals to HolderInfo's LoginGuardians");
 
-        foreach (var loginGuardian in loginGuardians)
+        foreach (var loginGuardian in loginGuardianIdentifierHashList)
         {
-            Assert(loginGuardianIdentifierHashList.Contains(loginGuardian)
+            Assert(loginGuardians.Contains(loginGuardian)
                    && State.GuardianMap[loginGuardian] == caHash,
                 $"LoginGuardian:{loginGuardian} is not in HolderInfo's LoginGuardians");
         }
