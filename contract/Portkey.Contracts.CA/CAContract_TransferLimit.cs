@@ -169,6 +169,7 @@ public partial class CAContract
         Assert(input.TransferSecurityThreshold != null, "Security threshold cannot be null.");
         Assert(input.TransferSecurityThreshold.BalanceThreshold > 0, "Token threshold cannot be less than 0.");
         Assert(input.TransferSecurityThreshold.GuardianThreshold > 0, "Guardian threshold cannot be less than 0.");
+        Assert(input.TransferSecurityThreshold.Symbol != null, "Symbol cannot be null.");
 
         if (State.TransferSecurityThresholdList?.Value != null)
         {
@@ -217,6 +218,15 @@ public partial class CAContract
             IsSecurity = IsTransferSecurity(input.CaHash)
         };
     }
+    
+    public override Empty SetTokenInitialTransferLimit(
+        SetTokenInitialTransferLimitInput input)
+    {
+        Assert(Context.Sender == State.Admin.Value, "No permission.");
+        Assert(input.TokenInitialTransferLimit >= 0, "Token initial transfer limit cannot be less than 0.");
+        State.TokenInitialTransferLimit.Value = input.TokenInitialTransferLimit;
+        return new Empty();
+    }
 
     private bool IsTransferSecurity(Hash caHash)
     {
@@ -235,4 +245,8 @@ public partial class CAContract
 
         return true;
     }
+    
+    
+    
+    
 }

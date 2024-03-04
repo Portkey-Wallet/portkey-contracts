@@ -22,6 +22,9 @@ service CAContract {
   // If the Guardian has CAHolder and Manager, meaning CAHolder created before, return true
   rpc CreateCAHolder (CreateCAHolderInput) returns (google.protobuf.Empty) {}
 
+  // If the Guardian has CAHolder and Manager, meaning CAHolder created before, return true
+  rpc ReportPreCrossChainSyncHolderInfo (ReportPreCrossChainSyncHolderInfoInput) returns (google.protobuf.Empty) {}
+
   // If Guardian is already added, return ture
   rpc AddGuardian (AddGuardianInput) returns (google.protobuf.Empty) {}
 
@@ -106,6 +109,9 @@ service CAContract {
 
   rpc GetProjectDelegationFee (google.protobuf.Empty) returns (ProjectDelegationFee) { option (aelf.is_view) = true; }
 
+  rpc SetCheckOperationDetailsInSignatureEnabled (SetCheckOperationDetailsInSignatureEnabledInput) returns (google.protobuf.Empty) {}
+
+  rpc GetCheckOperationDetailsInSignatureEnabled (google.protobuf.Empty) returns (GetCheckOperationDetailsInSignatureEnabledOutput) {option (aelf.is_view) = true;}
 }
 
 //Data structure
@@ -115,6 +121,19 @@ message HolderInfo {
   GuardianList guardian_list = 3;
   StrategyNode judgement_strategy = 4;
   int32 create_chain_id = 5;
+}
+
+message DelegateInfo {
+  int32 chain_id = 1;
+  aelf.Hash project_hash = 2;
+  aelf.Hash identifier_hash = 3;
+  google.protobuf.Timestamp timestamp = 4;
+  int32 expiration_time = 5;
+  // symbol -> delegate fee
+  map<string, int64> delegations = 6;
+  //Whether to pay transaction fee continuously
+  bool is_unlimited_delegate = 7;
+  string signature = 1000;
 }
 
 message ManagerInfo {
@@ -140,6 +159,8 @@ enum GuardianType {
   GUARDIAN_TYPE_OF_GOOGLE = 2;
   GUARDIAN_TYPE_OF_APPLE = 3;
   GUARDIAN_TYPE_OF_TELEGRAM = 4;
+  GUARDIAN_TYPE_OF_FACEBOOK = 5;
+  GUARDIAN_TYPE_OF_TWITTER = 6;
 }
 
 message VerifierServer {
@@ -200,6 +221,17 @@ message CreateCAHolderInput {
   GuardianInfo guardian_approved = 1;
   ManagerInfo manager_info = 2;
   StrategyNode judgement_strategy = 3;
+  string referral_code = 4;
+  string project_code = 5;
+  DelegateInfo delegate_info = 6;
+}
+
+message ReportPreCrossChainSyncHolderInfoInput {
+  GuardianInfo guardian_approved = 1;
+  ManagerInfo manager_info = 2;
+  StrategyNode judgement_strategy = 3;
+  aelf.Hash ca_hash = 4;
+  int32 create_chain_id = 5;
 }
 
 message GuardianInfo {
@@ -336,6 +368,8 @@ message SocialRecoveryInput {
   aelf.Hash login_guardian_identifier_hash = 1;
   repeated GuardianInfo guardians_approved = 2;
   ManagerInfo manager_info = 3;
+  string referral_code = 4;
+  string project_code = 5;
 }
 
 message AddManagerInfoInput {
@@ -440,6 +474,14 @@ message SetProjectDelegationFeeInput {
   ProjectDelegationFee delegation_fee = 1;
 }
 
+message SetCheckOperationDetailsInSignatureEnabledInput {
+  bool check_operation_details_enabled = 1;
+}
+
+message GetCheckOperationDetailsInSignatureEnabledOutput {
+  bool check_operation_details_enabled = 1;
+}
+
 // LogEvent
 // CAHolder created
 message CAHolderCreated {
@@ -449,6 +491,16 @@ message CAHolderCreated {
   aelf.Address ca_address = 3 [(aelf.is_indexed) = true];
   aelf.Address manager = 4 [(aelf.is_indexed) = true];
   string extra_data = 5;
+}
+
+message PreCrossChainSyncHolderInfoCreated {
+  option (aelf.is_event) = true;
+  aelf.Address creator = 1 [(aelf.is_indexed) = true];
+  aelf.Hash ca_hash = 2 [(aelf.is_indexed) = true];
+  aelf.Address ca_address = 3 [(aelf.is_indexed) = true];
+  aelf.Address manager = 4 [(aelf.is_indexed) = true];
+  string extra_data = 5;
+  int32 create_chain_id = 6 [(aelf.is_indexed) = true];
 }
 
 //Guardian added
@@ -599,6 +651,15 @@ message ServerControllerRemoved {
 message AdminChanged {
   option (aelf.is_event) = true;
   aelf.Address address = 1 [(aelf.is_indexed) = true];
+}
+
+message Invited {
+  option (aelf.is_event) = true;
+  aelf.Hash ca_hash = 1;
+  aelf.Address contract_address = 2;
+  string method_name = 3;
+  string referral_code = 4;
+  string project_code = 5;
 }
 
 enum OperationType {

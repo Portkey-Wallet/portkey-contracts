@@ -23,8 +23,10 @@ service CAContractImpl {
         
   rpc SetForbiddenForwardCallContractMethod(SetForbiddenForwardCallContractMethodInput) returns (google.protobuf.Empty) {}  
   
-  rpc SetTransferLimit(SetTransferLimitInput) returns (google.protobuf.Empty) {}  
-  
+  rpc SetTransferLimit(SetTransferLimitInput) returns (google.protobuf.Empty) {}
+
+  rpc SetTokenInitialTransferLimit(SetTokenInitialTransferLimitInput) returns (google.protobuf.Empty) {}
+
   rpc GetTransferLimit(GetTransferLimitInput) returns (GetTransferLimitOutput) {option (aelf.is_view) = true;}
       
   rpc SetDefaultTokenTransferLimit(SetDefaultTokenTransferLimitInput) returns (google.protobuf.Empty) {}    
@@ -55,10 +57,17 @@ service CAContractImpl {
   // get project delegatee info by delegate hash
   rpc GetProjectDelegatee (aelf.Hash) returns (GetProjectDelegateInfoOutput) { option (aelf.is_view) = true; }
   
-    rpc SetManagerForwardCallParallelInfo (SetManagerForwardCallParallelInfoInput) returns (google.protobuf.Empty) {}
+  rpc SetManagerForwardCallParallelInfo (SetManagerForwardCallParallelInfoInput) returns (google.protobuf.Empty) {}
 
-    rpc GetManagerForwardCallParallelInfo (GetManagerForwardCallParallelInfoInput) returns (GetManagerForwardCallParallelInfoOutput) {option (aelf.is_view) = true;}
-       
+  rpc GetManagerForwardCallParallelInfo (GetManagerForwardCallParallelInfoInput) returns (GetManagerForwardCallParallelInfoOutput) {option (aelf.is_view) = true;}
+
+  rpc AssignProjectDelegatee (AssignProjectDelegateeInput) returns (google.protobuf.Empty) {}
+
+  rpc RemoveProjectDelegatee (RemoveProjectDelegateeInput) returns (google.protobuf.Empty) {}
+
+  rpc AddTransactionWhitelist (WhitelistTransactions) returns (google.protobuf.Empty){}
+  rpc RemoveTransactionWhitelist (WhitelistTransactions) returns (google.protobuf.Empty){}
+  rpc GetTransactionWhitelist (google.protobuf.Empty) returns (WhitelistTransactions) {option (aelf.is_view) = true;}
 }
 
 message ManagerApproveInput {
@@ -175,6 +184,7 @@ message TransferSecurityThresholdChanged{
 message RegisterProjectDelegateeInput {
   string project_name = 1;
   repeated string salts = 2;
+  aelf.Address signer = 3;
 }
 
 message AddProjectDelegateeListInput{
@@ -241,6 +251,36 @@ message DelegateeAddressList {
   repeated aelf.Address address_list = 1;
 }
 
+message AssignProjectDelegateeInput{
+  aelf.Hash project_hash = 1;
+  aelf.Address ca_address = 2;
+  repeated AssignDelegateInfo assign_delegate_infos = 3;
+}
+
+message AssignDelegateInfo{
+  //symbol->amount
+  map<string, int64> delegations = 1;
+  aelf.Address contract_address = 2;
+  string method_name = 3;
+  //Whether to pay transaction fee continuously
+  bool is_unlimited_delegate = 4;
+}
+
+message RemoveProjectDelegateeInput{
+  aelf.Hash project_hash = 1;
+  aelf.Address ca_address = 2;
+  repeated DelegateTransaction delegate_transaction_list = 3;
+}
+
+message DelegateTransaction{
+  aelf.Address contract_address = 1;
+  string method_name = 2;
+}
+
+message WhitelistTransactions {
+  repeated string method_names = 1;
+}
+
 // LogEvent
 message ProjectDelegateeRegistered {
   option (aelf.is_event) = true;
@@ -250,3 +290,7 @@ message ProjectDelegateeRegistered {
   DelegateeAddressList delegatee_address_list = 4 [(aelf.is_indexed) = true];
 }
 
+
+message SetTokenInitialTransferLimitInput {
+  int64 token_initial_transfer_limit = 1;
+}

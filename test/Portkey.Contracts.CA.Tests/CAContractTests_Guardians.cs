@@ -35,6 +35,7 @@ public partial class CAContractTests
     private const string ImageUrl = "https://portkey-did.s3.ap-northeast-1.amazonaws.com/img/Portkey.png";
     private const string Salt = "salt";
     public const int MainChainId = 9992731;
+    public const int SideChianId = 1866392;
 
     public CAContractTests()
     {
@@ -47,15 +48,26 @@ public partial class CAContractTests
     }
 
     private ByteString GenerateSignature(ECKeyPair verifier, Address verifierAddress,
-        DateTime verificationTime, Hash guardianType, int type, string salt, string operationType, int targetChainId = MainChainId)
+        DateTime verificationTime, Hash guardianType, int type, string salt, string operationType,
+        int targetChainId = MainChainId, string operationDetails = null)
     {
         if (string.IsNullOrWhiteSpace(salt))
         {
             salt = Salt;
         }
 
-        var data =
-            $"{type},{guardianType.ToHex()},{verificationTime},{verifierAddress.ToBase58()},{salt},{operationType},{targetChainId}";
+        string data;
+        if (string.IsNullOrWhiteSpace(operationDetails))
+        {
+            data =
+                $"{type},{guardianType.ToHex()},{verificationTime},{verifierAddress.ToBase58()},{salt},{operationType},{targetChainId}";
+        }
+        else
+        {
+            data =
+                $"{type},{guardianType.ToHex()},{verificationTime},{verifierAddress.ToBase58()},{salt},{operationType},{targetChainId},{HashHelper.ComputeFrom(operationDetails).ToHex()}";
+        }
+
         var dataHash = HashHelper.ComputeFrom(data);
         var signature = CryptoHelper.SignWithPrivateKey(verifier.PrivateKey, dataHash.ToByteArray());
         return ByteStringHelper.FromHexString(signature.ToHex());

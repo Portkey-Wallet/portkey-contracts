@@ -25,16 +25,23 @@ public partial class CAContract
         Assert(caHash != null, "CA Holder does not exist.");
 
         var holderInfo = GetHolderInfoByCaHash(caHash);
-        AssertCreateChain(holderInfo);
+        
+        if (NeedToCheckCreateChain(input.GuardiansApproved))
+        {
+            AssertCreateChain(holderInfo);
+        }
+        
         var guardians = holderInfo.GuardianList!.Guardians;
 
         Assert(input.GuardiansApproved.Count > 0, "invalid input Guardians Approved");
 
+        var operationDetails = input.ManagerInfo.Address.ToBase58();
         var guardianApprovedCount = GetGuardianApprovedCount(caHash, input.GuardiansApproved,
-            nameof(OperationType.SocialRecovery).ToLower());
+            nameof(OperationType.SocialRecovery).ToLower(), operationDetails);
 
+        var strategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
         var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(guardians.Count, guardianApprovedCount,
-            holderInfo.JudgementStrategy);
+            strategy);
         if (!isJudgementStrategySatisfied)
         {
             return new Empty();
@@ -58,7 +65,7 @@ public partial class CAContract
             Manager = input.ManagerInfo.Address,
             ExtraData = input.ManagerInfo.ExtraData
         });
-
+        FireInvitedLogEvent(caHash, nameof(SocialRecovery), input.ReferralCode, input.ProjectCode);
         return new Empty();
     }
 
@@ -69,7 +76,7 @@ public partial class CAContract
         //Assert(Context.Sender.Equals(input.ManagerInfo.Address), "No permission to add");
 
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
-        AssertCreateChain(holderInfo);
+
         // ManagerInfo exists
         var managerInfo = FindManagerInfo(holderInfo.ManagerInfos, input.ManagerInfo.Address);
         Assert(managerInfo == null, $"ManagerInfo address exists");
@@ -267,6 +274,7 @@ public partial class CAContract
     {
         Assert(input != null, "invalid input");
         Assert(input.CaHash != null, "CA hash is null.");
+        Assert(input.Symbol != null, "symbol is null.");
         Assert(input.Spender != null && !input.Spender.Value.IsNullOrEmpty(), "Invalid input address.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
         GuardianApprovedCheck(input.CaHash, input.GuardiansApproved, OperationType.Approve,
@@ -313,5 +321,30 @@ public partial class CAContract
     private ManagerInfo FindManagerInfo(RepeatedField<ManagerInfo> managerInfos, Address address)
     {
         return managerInfos.FirstOrDefault(s => s.Address == address);
+    }
+    
+    /// <summary>
+    /// When all 'VerificationDoc.Length >= 8', there is no need to verify the 'CreateChain'.
+    /// </summary>
+    /// <param name="guardianApproved"></param>
+    /// <returns></returns>
+    private bool NeedToCheckCreateChain(RepeatedField<GuardianInfo> guardianApproved)
+    {
+        if (guardianApproved.Count == 0)
+        {
+            return true;
+        }
+
+        foreach (var guardianInfo in guardianApproved)
+        {
+            if (guardianInfo?.VerificationInfo == null ||
+                string.IsNullOrWhiteSpace(guardianInfo.VerificationInfo.VerificationDoc) ||
+                GetVerificationDocLength(guardianInfo.VerificationInfo.VerificationDoc) < 8)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

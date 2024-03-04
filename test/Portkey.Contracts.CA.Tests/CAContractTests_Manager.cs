@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using AElf;
 using AElf.Contracts.MultiToken;
@@ -114,7 +115,7 @@ public partial class CAContractTests
             }
         };
 
-        await CaContractStub.SocialRecovery.SendAsync(new SocialRecoveryInput
+        var result = await CaContractStub.SocialRecovery.SendAsync(new SocialRecoveryInput
         {
             ManagerInfo = new ManagerInfo
             {
@@ -122,7 +123,8 @@ public partial class CAContractTests
                 ExtraData = "567"
             },
             LoginGuardianIdentifierHash = _guardian,
-            GuardiansApproved = { guardianApprove }
+            GuardiansApproved = { guardianApprove },
+            ProjectCode = "123"
         });
 
         var caInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput
@@ -131,6 +133,12 @@ public partial class CAContractTests
         });
         caInfo.ManagerInfos.Count.ShouldBe(2);
         caInfo.GuardianList.Guardians.Count.ShouldBe(1);
+        var invited = Invited.Parser.ParseFrom(result.TransactionResult.Logs.First(e => e.Name == nameof(Invited)).NonIndexed);
+        invited.CaHash.ShouldBe(caInfo.CaHash);
+        invited.ContractAddress.ShouldBe(CaContractAddress);
+        invited.ProjectCode.ShouldBe("123");
+        invited.ReferralCode.ShouldBeEmpty();
+        invited.MethodName.ShouldBe("SocialRecovery");
 
         var delegateAllowance = await TokenContractStub.GetTransactionFeeDelegationsOfADelegatee.CallAsync(
             new GetTransactionFeeDelegationsOfADelegateeInput()
@@ -753,6 +761,149 @@ public partial class CAContractTests
     }
 
     [Fact]
+    public async Task SocialRecoveryTest_Signature()
+    {
+        await CreateHolderDefault();
+        var verificationTime = DateTime.UtcNow;
+        var salt = Guid.NewGuid().ToString("N");
+        var operationType = Convert.ToInt32(OperationType.SocialRecovery).ToString();
+        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(5), _guardian,
+            0, salt, operationType, SideChianId);
+        var verifierServer = await CaContractStub.GetVerifierServers.CallAsync(new Empty());
+        var id = verifierServer.VerifierServers[0].Id;
+        var guardianApprove = new List<GuardianInfo>
+        {
+            new()
+            {
+                IdentifierHash = _guardian,
+                Type = GuardianType.OfEmail,
+                VerificationInfo = new VerificationInfo
+                {
+                    Id = id,
+                    Signature = signature,
+                    VerificationDoc =
+                        $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(5)},{VerifierAddress.ToBase58()},{salt},{operationType},{SideChianId}"
+                }
+            }
+        };
+
+        await CaContractStub.SocialRecovery.SendAsync(new SocialRecoveryInput
+        {
+            ManagerInfo = new ManagerInfo
+            {
+                Address = User2Address,
+                ExtraData = "567"
+            },
+            LoginGuardianIdentifierHash = _guardian,
+            GuardiansApproved = { guardianApprove }
+        });
+
+        var caInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput
+        {
+            LoginGuardianIdentifierHash = _guardian
+        });
+        caInfo.ManagerInfos.Count.ShouldBe(1);
+        caInfo.ManagerInfos.First().Address.ShouldNotBe(User2Address);
+        caInfo.GuardianList.Guardians.Count.ShouldBe(1);
+    }
+    
+    [Fact]
+    public async Task SocialRecoveryTest_OpenCheckOperationDetail()
+    {
+        await CreateHolderDefault();
+        await SetCheckOperationDetailsInSignatureEnabled(true);
+        var verificationTime = DateTime.UtcNow;
+        var salt = Guid.NewGuid().ToString("N");
+        var operationType = Convert.ToInt32(OperationType.SocialRecovery).ToString();
+        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(5), _guardian,
+            0, salt, operationType, SideChianId, User2Address.ToBase58());
+        var verifierServer = await CaContractStub.GetVerifierServers.CallAsync(new Empty());
+        var id = verifierServer.VerifierServers[0].Id;
+        var guardianApprove = new List<GuardianInfo>
+        {
+            new()
+            {
+                IdentifierHash = _guardian,
+                Type = GuardianType.OfEmail,
+                VerificationInfo = new VerificationInfo
+                {
+                    Id = id,
+                    Signature = signature,
+                    VerificationDoc =
+                        $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(5)},{VerifierAddress.ToBase58()},{salt},{operationType},{SideChianId},{HashHelper.ComputeFrom(User2Address.ToBase58()).ToHex()}"
+                }
+            }
+        };
+
+        await CaContractStub.SocialRecovery.SendAsync(new SocialRecoveryInput
+        {
+            ManagerInfo = new ManagerInfo
+            {
+                Address = User2Address,
+                ExtraData = "567"
+            },
+            LoginGuardianIdentifierHash = _guardian,
+            GuardiansApproved = { guardianApprove }
+        });
+
+        var caInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput
+        {
+            LoginGuardianIdentifierHash = _guardian
+        });
+        caInfo.ManagerInfos.Count.ShouldBe(2);
+        caInfo.ManagerInfos.Last().Address.ShouldBe(User2Address);
+        caInfo.GuardianList.Guardians.Count.ShouldBe(1);
+    }
+    
+    [Fact]
+    public async Task SocialRecoveryTest_Fail_OpenCheckOperationDetail()
+    {
+        await CreateHolderDefault();
+        await SetCheckOperationDetailsInSignatureEnabled(true);
+        var verificationTime = DateTime.UtcNow;
+        var salt = Guid.NewGuid().ToString("N");
+        var operationType = Convert.ToInt32(OperationType.SocialRecovery).ToString();
+        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(5), _guardian,
+            0, salt, operationType, SideChianId);
+        var verifierServer = await CaContractStub.GetVerifierServers.CallAsync(new Empty());
+        var id = verifierServer.VerifierServers[0].Id;
+        var guardianApprove = new List<GuardianInfo>
+        {
+            new()
+            {
+                IdentifierHash = _guardian,
+                Type = GuardianType.OfEmail,
+                VerificationInfo = new VerificationInfo
+                {
+                    Id = id,
+                    Signature = signature,
+                    VerificationDoc =
+                        $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(5)},{VerifierAddress.ToBase58()},{salt},{operationType},{SideChianId}"
+                }
+            }
+        };
+
+        await CaContractStub.SocialRecovery.SendAsync(new SocialRecoveryInput
+        {
+            ManagerInfo = new ManagerInfo
+            {
+                Address = User2Address,
+                ExtraData = "567"
+            },
+            LoginGuardianIdentifierHash = _guardian,
+            GuardiansApproved = { guardianApprove }
+        });
+
+        var caInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput
+        {
+            LoginGuardianIdentifierHash = _guardian
+        });
+        caInfo.ManagerInfos.Count.ShouldBe(1);
+        caInfo.ManagerInfos.First().Address.ShouldNotBe(User2Address);
+        caInfo.GuardianList.Guardians.Count.ShouldBe(1);
+    }
+
+    [Fact]
     public async Task<Address> AddManagerInfoTest()
     {
         await CreateHolderDefault();
@@ -821,7 +972,7 @@ public partial class CAContractTests
 
         return caInfo.CaAddress;
     }
-    
+
     [Fact]
     public async Task AddManagerInfo_NoPermissionTest()
     {

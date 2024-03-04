@@ -122,6 +122,12 @@ public partial class CAContract
             State.LoginGuardianMap[toRemoveGuardian.IdentifierHash].Remove(toRemoveGuardian.VerifierId);
         }
 
+        if (State.GuardianMap[toRemoveGuardian.IdentifierHash] != null)
+        {
+            State.GuardianMap.Remove(toRemoveGuardian.IdentifierHash);
+        }
+
+
         var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
 
         Context.Fire(new GuardianRemoved
@@ -169,7 +175,10 @@ public partial class CAContract
         {
             return new Empty();
         }
-        Assert(holderInfo.GuardianList.Guardians.FirstOrDefault(g => g.VerifierId == input.GuardianToUpdateNew.VerificationInfo.Id) == null,
+
+        Assert(
+            holderInfo.GuardianList.Guardians.FirstOrDefault(g =>
+                g.VerifierId == input.GuardianToUpdateNew.VerificationInfo.Id) == null,
             "The verifier already exists");
         var preGuardian = existPreGuardian.Clone();
 
