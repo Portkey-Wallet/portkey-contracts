@@ -274,6 +274,7 @@ public partial class CAContract
     {
         Assert(input != null, "invalid input");
         Assert(input.CaHash != null, "CA hash is null.");
+        Assert(input.Symbol != null, "symbol is null.");
         Assert(input.Spender != null && !input.Spender.Value.IsNullOrEmpty(), "Invalid input address.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
         GuardianApprovedCheck(input.CaHash, input.GuardiansApproved, OperationType.Approve,

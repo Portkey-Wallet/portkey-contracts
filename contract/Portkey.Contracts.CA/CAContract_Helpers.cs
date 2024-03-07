@@ -94,8 +94,6 @@ public partial class CAContract
         {
             return false;
         }
-
-        key = HashHelper.ComputeFrom(guardianInfo.VerificationInfo.Signature.ToByteArray());
         State.VerifierDocMap[key] = true;
 
         if (operationTypeName == nameof(OperationType.AddGuardian).ToLower() &&
