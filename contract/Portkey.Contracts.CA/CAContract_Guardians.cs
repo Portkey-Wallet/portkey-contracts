@@ -122,7 +122,7 @@ public partial class CAContract
             State.LoginGuardianMap[toRemoveGuardian.IdentifierHash].Remove(toRemoveGuardian.VerifierId);
         }
 
-        if (State.GuardianMap[toRemoveGuardian.IdentifierHash] != null)
+        if (toRemoveGuardian.IsLoginGuardian && State.GuardianMap[toRemoveGuardian.IdentifierHash] != null)
         {
             State.GuardianMap.Remove(toRemoveGuardian.IdentifierHash);
         }
