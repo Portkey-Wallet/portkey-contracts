@@ -44,8 +44,7 @@ public partial class CAContract
             .Select(g => g.IdentifierHash));
         foreach (var guardian in notLoginGuardianIdentifierHashList)
         {
-            Assert(!loginGuardians.Contains(guardian) &&
-                   State.GuardianMap[guardian] == caHash,
+            Assert(!loginGuardians.Contains(guardian),
                 $"NotLoginGuardian:{guardian} is in HolderInfo's LoginGuardians");
         }
 
