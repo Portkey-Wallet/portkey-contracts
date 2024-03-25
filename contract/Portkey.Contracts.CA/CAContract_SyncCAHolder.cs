@@ -180,20 +180,13 @@ public partial class CAContract
             holderInfo.GuardianList.Guardians.Add(guardian);
         }
 
-        var loginGuardians = GetLoginGuardians(holderInfo.GuardianList);
         foreach (var guardian in guardiansRemoved)
         {
-            if (loginGuardians.Contains(guardian))
-            {
-                var loginGuardianCount = loginGuardians.Count(g => g.IdentifierHash == guardian.IdentifierHash);
-                //   and it is the only one, refuse. If you really wanna to remove it, unset it first.
-                Assert(loginGuardianCount > 1,
-                    $"Cannot remove a Guardian for login, to remove it, unset it first. {guardian.IdentifierHash} is a guardian for login.");
-            }
-
             holderInfo.GuardianList.Guardians.Remove(guardian);
         }
 
+        SyncLoginGuardians(holderInfo,transactionInput.GuardianList.Guardians, holderInfo.GuardianList.Guardians);
+        
         State.HolderInfoMap[holderId] = holderInfo;
         State.SyncHolderInfoTransaction[originalTransactionId] = true;
         State.SyncHolderInfoTransactionHeightMap[transactionInput.CaHash] = verificationTransactionInfo.ParentChainHeight;
@@ -235,6 +228,28 @@ public partial class CAContract
             },
             CreateChainId = transactionInput.CreateChainId
         });
+    }
+
+    private void SyncLoginGuardians(HolderInfo holderInfo, RepeatedField<Guardian> destination, RepeatedField<Guardian> src)
+    {
+        var resultSet = new RepeatedField<Guardian>();
+        
+        foreach (var srcGuardian in src)
+        {
+            foreach (var desGuardian in destination)
+            {
+                if (srcGuardian.IdentifierHash != desGuardian.IdentifierHash ||
+                    srcGuardian.VerifierId != desGuardian.VerifierId || srcGuardian.Type != desGuardian.Type ||
+                    srcGuardian.IsLoginGuardian == desGuardian.IsLoginGuardian) continue;
+                srcGuardian.IsLoginGuardian = desGuardian.IsLoginGuardian;
+                resultSet.Add(srcGuardian);
+            }
+        }
+        
+        foreach (var guardian in resultSet)
+        {
+            holderInfo.GuardianList.Guardians.Add(guardian);
+        }
     }
 
 
@@ -287,11 +302,11 @@ public partial class CAContract
     private RepeatedField<ManagerInfo> ManagerInfosExcept(RepeatedField<ManagerInfo> set1,
         RepeatedField<ManagerInfo> set2)
     {
-        RepeatedField<ManagerInfo> resultSet = new RepeatedField<ManagerInfo>();
+        var resultSet = new RepeatedField<ManagerInfo>();
 
         foreach (var managerInfo1 in set1)
         {
-            bool theSame = false;
+            var theSame = false;
             foreach (var managerInfo2 in set2)
             {
                 if (managerInfo1.Address == managerInfo2.Address && managerInfo1.ExtraData == managerInfo2.ExtraData)
@@ -313,11 +328,11 @@ public partial class CAContract
     private RepeatedField<Guardian> GuardiansExcept(RepeatedField<Guardian> src,
         RepeatedField<Guardian> destination)
     {
-        RepeatedField<Guardian> resultSet = new RepeatedField<Guardian>();
+        var resultSet = new RepeatedField<Guardian>();
 
         foreach (var srcGuardian in src)
         {
-            bool theSame = false;
+            var theSame = false;
             foreach (var desGuardian in destination)
             {
                 if (srcGuardian.IdentifierHash == desGuardian.IdentifierHash &&
