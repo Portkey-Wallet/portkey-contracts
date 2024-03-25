@@ -233,17 +233,18 @@ public partial class CAContract
     private void SyncLoginGuardians(HolderInfo holderInfo, RepeatedField<Guardian> destination, RepeatedField<Guardian> src)
     {
         var resultSet = new RepeatedField<Guardian>();
-        
         foreach (var srcGuardian in src)
         {
             foreach (var desGuardian in destination)
             {
                 if (srcGuardian.IdentifierHash != desGuardian.IdentifierHash ||
                     srcGuardian.VerifierId != desGuardian.VerifierId || srcGuardian.Type != desGuardian.Type ||
-                    srcGuardian.IsLoginGuardian == desGuardian.IsLoginGuardian) continue;
-                srcGuardian.IsLoginGuardian = desGuardian.IsLoginGuardian;
-                resultSet.Add(srcGuardian);
+                    srcGuardian.IsLoginGuardian != desGuardian.IsLoginGuardian)
+                {
+                    srcGuardian.IsLoginGuardian = desGuardian.IsLoginGuardian;
+                }
             }
+            resultSet.Add(srcGuardian);
         }
         
         foreach (var guardian in resultSet)
