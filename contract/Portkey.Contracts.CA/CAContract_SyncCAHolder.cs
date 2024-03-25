@@ -185,7 +185,7 @@ public partial class CAContract
             holderInfo.GuardianList.Guardians.Remove(guardian);
         }
 
-        SyncLoginGuardians(holderInfo,transactionInput.GuardianList.Guardians, holderInfo.GuardianList.Guardians);
+        SyncLoginGuardians(transactionInput.GuardianList.Guardians, holderInfo.GuardianList.Guardians);
         
         State.HolderInfoMap[holderId] = holderInfo;
         State.SyncHolderInfoTransaction[originalTransactionId] = true;
@@ -230,30 +230,22 @@ public partial class CAContract
         });
     }
 
-    private void SyncLoginGuardians(HolderInfo holderInfo, RepeatedField<Guardian> destination, RepeatedField<Guardian> src)
+    private void SyncLoginGuardians(RepeatedField<Guardian> destination, RepeatedField<Guardian> src)
     {
-        var resultSet = new RepeatedField<Guardian>();
         foreach (var srcGuardian in src)
         {
             foreach (var desGuardian in destination)
             {
-                if (srcGuardian.IdentifierHash != desGuardian.IdentifierHash ||
-                    srcGuardian.VerifierId != desGuardian.VerifierId || srcGuardian.Type != desGuardian.Type ||
+                if (srcGuardian.IdentifierHash == desGuardian.IdentifierHash &&
+                    srcGuardian.VerifierId == desGuardian.VerifierId && srcGuardian.Type == desGuardian.Type &&
                     srcGuardian.IsLoginGuardian != desGuardian.IsLoginGuardian)
                 {
                     srcGuardian.IsLoginGuardian = desGuardian.IsLoginGuardian;
                 }
             }
-            resultSet.Add(srcGuardian);
-        }
-        
-        foreach (var guardian in resultSet)
-        {
-            holderInfo.GuardianList.Guardians.Add(guardian);
         }
     }
-
-
+    
     private void AssertCrossChainTransaction(Transaction originalTransaction,
         string validMethodName)
     {
