@@ -230,17 +230,17 @@ public partial class CAContract
         });
     }
 
-    private void SyncLoginGuardians(RepeatedField<Guardian> destination, RepeatedField<Guardian> src)
+    private void SyncLoginGuardians(RepeatedField<Guardian> src, RepeatedField<Guardian> destinations)
     {
-        foreach (var srcGuardian in src)
+        foreach (var desGuardian in destinations)
         {
-            foreach (var desGuardian in destination)
+            foreach (var srcGuardian in src)
             {
                 if (srcGuardian.IdentifierHash == desGuardian.IdentifierHash &&
                     srcGuardian.VerifierId == desGuardian.VerifierId && srcGuardian.Type == desGuardian.Type &&
                     srcGuardian.IsLoginGuardian != desGuardian.IsLoginGuardian)
                 {
-                    srcGuardian.IsLoginGuardian = desGuardian.IsLoginGuardian;
+                    desGuardian.IsLoginGuardian = srcGuardian.IsLoginGuardian;
                 }
             }
         }
