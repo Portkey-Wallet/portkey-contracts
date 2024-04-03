@@ -997,12 +997,12 @@ public async Task SetLoginGuardian_RegisterByOthers()
             CaHash = caHash,
             GuardianToAdd = new GuardianInfo
             {
-                Type = GuardianType.OfPhone,
+                Type = GuardianType.OfFacebook,
                 IdentifierHash = _guardian,
                 VerificationInfo = new VerificationInfo
                 {
                     Id = _verifierId2,
-                    Signature = GenerateSignature(VerifierKeyPair2, VerifierAddress2, verificationTime.AddSeconds(31), _guardian, 1,salt,operationType),
+                    Signature = GenerateSignature(VerifierKeyPair2, VerifierAddress2, verificationTime.AddSeconds(31), _guardian, 5,salt,operationType),
                     VerificationDoc =
                         $"{1},{_guardian.ToHex()},{verificationTime.AddSeconds(31)},{VerifierAddress2.ToBase58()},{salt},{operationType},{MainChainId}"
                 }
@@ -1038,12 +1038,12 @@ public async Task SetLoginGuardian_RegisterByOthers()
             },
             new()
             {
-                Type = GuardianType.OfPhone,
+                Type = GuardianType.OfFacebook,
                 IdentifierHash = _guardian,
                 VerificationInfo = new VerificationInfo
                 {
                     Id = _verifierId2,
-                    Signature = GenerateSignature(VerifierKeyPair2, VerifierAddress2, verificationTime.AddSeconds(25), _guardian, 1,salt,operationType),
+                    Signature = GenerateSignature(VerifierKeyPair2, VerifierAddress2, verificationTime.AddSeconds(25), _guardian, 5,salt,operationType),
                     VerificationDoc =
                         $"{1},{_guardian.ToHex()},{verificationTime.AddSeconds(25)},{VerifierAddress2.ToBase58()},{salt},{operationType},{MainChainId}"
                 }
@@ -1054,12 +1054,12 @@ public async Task SetLoginGuardian_RegisterByOthers()
             CaHash = caHash,
             GuardianToAdd = new GuardianInfo
             {
-                Type = GuardianType.OfPhone,
+                Type = GuardianType.OfTwitter,
                 IdentifierHash = _guardian1,
                 VerificationInfo = new VerificationInfo
                 {
                     Id = _verifierId3,
-                    Signature = GenerateSignature(VerifierKeyPair3, VerifierAddress3, verificationTime.AddSeconds(25), _guardian1, 1,salt,operationType),
+                    Signature = GenerateSignature(VerifierKeyPair3, VerifierAddress3, verificationTime.AddSeconds(25), _guardian1, 6,salt,operationType),
                     VerificationDoc =
                         $"{1},{_guardian.ToHex()},{verificationTime.AddSeconds(25)},{VerifierAddress3.ToBase58()},{salt},{operationType},{MainChainId}"
                 }

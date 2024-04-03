@@ -614,15 +614,15 @@ public partial class CAContractTests
             CaHash = caHash,
             GuardianToAdd = new GuardianInfo
             {
-                Type = GuardianType.OfPhone,
+                Type = GuardianType.OfEmail,
                 IdentifierHash = _guardian2,
                 VerificationInfo = new VerificationInfo
                 {
                     Id = _verifierId4,
-                    Signature = GenerateSignature(VerifierKeyPair4, VerifierAddress4, verificationTime.AddSeconds(500), _guardian2, 1, salt,
+                    Signature = GenerateSignature(VerifierKeyPair4, VerifierAddress4, verificationTime.AddSeconds(500), _guardian2, 0, salt,
                         operationType),
                     VerificationDoc =
-                        $"{1},{_guardian2.ToHex()},{verificationTime.AddSeconds(500)},{VerifierAddress4.ToBase58()},{salt},{operationType},{MainChainId}"
+                        $"{0},{_guardian2.ToHex()},{verificationTime.AddSeconds(500)},{VerifierAddress4.ToBase58()},{salt},{operationType},{MainChainId}"
                 }
             },
             GuardiansApproved = { guardianApprove }
@@ -1864,14 +1864,14 @@ public partial class CAContractTests
             GuardianToAdd = new GuardianInfo
             {
                 IdentifierHash = _guardian1,
-                Type = GuardianType.OfPhone,
+                Type = GuardianType.OfFacebook,
                 VerificationInfo = new VerificationInfo
                 {
                     Id = _verifierId2,
                     Signature = GenerateSignature(VerifierKeyPair2, VerifierAddress2, verificationTime.AddSeconds(15),
-                        _guardian1, 1, salt, operationType),
+                        _guardian1, 5, salt, operationType),
                     VerificationDoc =
-                        $"{1},{_guardian1.ToHex()},{verificationTime.AddSeconds(15)},{VerifierAddress2.ToBase58()},{salt},{operationType},{MainChainId}"
+                        $"{5},{_guardian1.ToHex()},{verificationTime.AddSeconds(15)},{VerifierAddress2.ToBase58()},{salt},{operationType},{MainChainId}"
                 }
             },
             GuardiansApproved = { guardianApprove }
@@ -1964,7 +1964,7 @@ public partial class CAContractTests
             CaHash = caHash,
             GuardianToUpdatePre = new GuardianInfo
             {
-                Type = GuardianType.OfPhone,
+                Type = GuardianType.OfFacebook,
                 IdentifierHash = _guardian1,
                 VerificationInfo = new VerificationInfo
                 {
@@ -1973,7 +1973,7 @@ public partial class CAContractTests
             },
             GuardianToUpdateNew = new GuardianInfo
             {
-                Type = GuardianType.OfPhone,
+                Type = GuardianType.OfFacebook,
                 IdentifierHash = _guardian1,
                 VerificationInfo = new VerificationInfo
                 {
@@ -2049,14 +2049,14 @@ public partial class CAContractTests
             GuardianToAdd = new GuardianInfo
             {
                 IdentifierHash = _guardian1,
-                Type = GuardianType.OfPhone,
+                Type = GuardianType.OfFacebook,
                 VerificationInfo = new VerificationInfo
                 {
                     Id = _verifierId2,
                     Signature = GenerateSignature(VerifierKeyPair2, VerifierAddress2, verificationTime.AddSeconds(1), _guardian1,
-                        1, salt, addOperationType),
+                        5, salt, addOperationType),
                     VerificationDoc =
-                        $"{1},{_guardian1.ToHex()},{verificationTime.AddSeconds(1)},{VerifierAddress2.ToBase58()},{salt},{addOperationType},{MainChainId}"
+                        $"{5},{_guardian1.ToHex()},{verificationTime.AddSeconds(1)},{VerifierAddress2.ToBase58()},{salt},{addOperationType},{MainChainId}"
                 }
             },
             GuardiansApproved = { guardianApprove }
@@ -2110,7 +2110,7 @@ public partial class CAContractTests
             CaHash = caHash,
             GuardianToUpdatePre = new GuardianInfo
             {
-                Type = GuardianType.OfPhone,
+                Type = GuardianType.OfFacebook,
                 IdentifierHash = _guardian1,
                 VerificationInfo = new VerificationInfo
                 {
@@ -2119,7 +2119,7 @@ public partial class CAContractTests
             },
             GuardianToUpdateNew = new GuardianInfo
             {
-                Type = GuardianType.OfPhone,
+                Type = GuardianType.OfFacebook,
                 IdentifierHash = _guardian1,
                 VerificationInfo = new VerificationInfo
                 {
