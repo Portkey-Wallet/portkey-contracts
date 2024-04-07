@@ -417,6 +417,35 @@ public partial class CAContractTests
         executionResult.TransactionResult.Error.ShouldContain("Low transfer security level");
     }
 
+    [Fact]
+    public async Task GetTransferSecurityCheckResult_Test()
+    {
+        await InitTransferLimitTest();
+        var result = await CaContractStub.GetTransferSecurityCheckResult.SendAsync(new GetTransferSecurityCheckResultInput
+        {
+            CaHash = _transferLimitTestCaHash
+        });
+        
+        result.Output.IsSecurity.ShouldBe(false);
+    }
+    
+    [Fact]
+    public async Task SetTokenInitialTransferLimit_Test()
+    {
+        await InitTransferLimitTest();
+        await CaContractStub.SetTokenInitialTransferLimit.SendAsync(new SetTokenInitialTransferLimitInput
+        {
+           TokenInitialTransferLimit = 10
+        });
+        
+        var result = await CaContractStub.SetTokenInitialTransferLimit.SendWithExceptionAsync(new SetTokenInitialTransferLimitInput
+        {
+            TokenInitialTransferLimit = -1
+        });
+        result.TransactionResult.Error.ShouldContain("Token initial transfer limit cannot be less than 0.");
+    }
+
+
     private async Task InitTransferLimitTest()
     {
         if (_isInitialized) return;
@@ -428,6 +457,8 @@ public partial class CAContractTests
         await InitTestTransferLimitCaHolder();
         await InitDefaultTransferTokenLimit();
         await InitTransferSecurityBalanceThreshold();
+        await InitTransferSecurityBalanceThreshold();
+
 
         _isInitialized = true;
     }
