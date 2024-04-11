@@ -168,7 +168,8 @@ public partial class CAContract
         Assert(Context.Sender == State.Admin.Value, "No permission.");
         Assert(input.TransferSecurityThreshold != null, "Security threshold cannot be null.");
         Assert(input.TransferSecurityThreshold.BalanceThreshold > 0, "Token threshold cannot be less than 0.");
-        Assert(input.TransferSecurityThreshold.GuardianThreshold > 0, "Guardian threshold cannot be less than 0.");
+        Assert(input.TransferSecurityThreshold.GuardianThreshold > 0 &&
+               input.TransferSecurityThreshold.GuardianThreshold < State.VerifiersServerList?.Value?.VerifierServers?.Count, "Guardian threshold cannot be less than 0 and greater than verifier servers's count.");
         Assert(input.TransferSecurityThreshold.Symbol != null, "Symbol cannot be null.");
 
         if (State.TransferSecurityThresholdList?.Value != null)
