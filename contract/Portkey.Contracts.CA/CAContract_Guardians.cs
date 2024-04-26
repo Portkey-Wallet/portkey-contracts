@@ -26,13 +26,14 @@ public partial class CAContract
 
         var methodName = nameof(OperationType.AddGuardian).ToLower();
         //Check the verifier signature and data of the guardian to be added.
-        var guardianApprovedCount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved, methodName);
+        var operateDetails = $"{input.GuardianToAdd.IdentifierHash.ToHex()}_{input.GuardianToAdd.Type}_{input.GuardianToAdd.VerificationInfo.Id.ToHex()}";
+        var guardianApprovedCount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved, methodName, operateDetails);
 
         if (!CheckVerifierSignatureAndData(input.GuardianToAdd, methodName, input.CaHash))
         {
             return new Empty();
         }
-
+        
         //Whether the approved guardians count is satisfied.
         var holderJudgementStrategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
         var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count,
@@ -104,8 +105,9 @@ public partial class CAContract
                 "Guardian approved list contains to removed guardian.");
         }
 
+        var operateDetails = $"{input.GuardianToRemove.IdentifierHash.ToHex()}_{input.GuardianToRemove.Type}_{input.GuardianToRemove.VerificationInfo.Id.ToHex()}";
         var guardianApprovedCount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved,
-            nameof(OperationType.RemoveGuardian).ToLower());
+            nameof(OperationType.RemoveGuardian).ToLower(), operateDetails);
 
         //Whether the approved guardians count is satisfied.
         var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count.Sub(1),
@@ -195,8 +197,10 @@ public partial class CAContract
                 "Guardian approved list contains to updated guardian.");
         }
 
+        var operateDetails = $"{input.GuardianToUpdatePre.IdentifierHash.ToHex()}_{input.GuardianToUpdatePre.Type}_" +
+                             $"{input.GuardianToUpdatePre.VerificationInfo.Id.ToHex()}_{input.GuardianToUpdateNew.VerificationInfo.Id.ToHex()}";
         var guardianApprovedCount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved,
-            nameof(OperationType.UpdateGuardian).ToLower());
+            nameof(OperationType.UpdateGuardian).ToLower(), operateDetails);
 
         //Whether the approved guardians count is satisfied.
         var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count.Sub(1),

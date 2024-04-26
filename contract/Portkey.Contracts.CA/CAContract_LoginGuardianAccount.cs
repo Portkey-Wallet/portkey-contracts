@@ -48,7 +48,10 @@ public partial class CAContract
 
         var methodName = nameof(OperationType.SetLoginAccount).ToLower();
         input.GuardiansApproved.Add(input.GuardianToSetLogin);
-        var guardianApprovedCount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved, methodName);
+        
+        var operateDetails = $"{input.GuardianToSetLogin.IdentifierHash.ToHex()}_{input.GuardianToSetLogin.Type}_" +
+                             $"{input.GuardianToSetLogin.VerificationInfo.Id.ToHex()}";
+        var guardianApprovedCount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved, methodName, operateDetails);
         var holderJudgementStrategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
         Assert(IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count, guardianApprovedCount,
             holderJudgementStrategy), "JudgementStrategy validate failed");
@@ -118,7 +121,9 @@ public partial class CAContract
 
         var methodName = nameof(OperationType.UnSetLoginAccount).ToLower();
         input.GuardiansApproved.Add(input.GuardianToUnsetLogin);
-        var guardianApprovedCount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved, methodName);
+        var operateDetails = $"{input.GuardianToUnsetLogin.IdentifierHash.ToHex()}_{input.GuardianToUnsetLogin.Type}_" +
+                             $"{input.GuardianToUnsetLogin.VerificationInfo.Id.ToHex()}";
+        var guardianApprovedCount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved, methodName, operateDetails);
         var holderJudgementStrategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
         Assert(IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count, guardianApprovedCount,
             holderJudgementStrategy), "JudgementStrategy validate failed");

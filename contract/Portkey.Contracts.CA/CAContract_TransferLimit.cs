@@ -12,8 +12,9 @@ public partial class CAContract
     {
         Assert(input != null, "invalid input");
         Assert(!string.IsNullOrEmpty(input.Symbol), "Invalid symbol.");
+        var operateDetails = $"{input.Symbol}_{input.SingleLimit}_{input.DailyLimit}";
         GuardianApprovedCheck(input.CaHash, input.GuardiansApproved, OperationType.ModifyTransferLimit,
-            nameof(OperationType.ModifyTransferLimit).ToLower());
+            nameof(OperationType.ModifyTransferLimit).ToLower(), operateDetails);
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
         if (input.SingleLimit <= 0 || input.DailyLimit <= 0)
             Assert(input.SingleLimit == -1 && input.DailyLimit == -1, "Invalid transfer limit");
@@ -93,14 +94,14 @@ public partial class CAContract
     }
 
     private void GuardianApprovedCheck(Hash caHash, RepeatedField<GuardianInfo> guardiansApproved,
-        OperationType operationType, string methodName)
+        OperationType operationType, string methodName, string operateDetails = null)
     {
         Assert(IsValidHash(caHash), "invalid input CaHash");
         Assert(guardiansApproved.Count > 0, "invalid input Guardians Approved");
         var holderInfo = State.HolderInfoMap[caHash];
         Assert(State.HolderInfoMap[caHash] != null, $"CA holder is null.CA hash:{caHash}");
         Assert(holderInfo.GuardianList?.Guardians?.Count > 0, "Processing on the chain...");
-        var guardianApprovedCount = GetGuardianApprovedCount(caHash, guardiansApproved, methodName);
+        var guardianApprovedCount = GetGuardianApprovedCount(caHash, guardiansApproved, methodName, operateDetails);
 
         var holderJudgementStrategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
         var onSyncChain = holderInfo.CreateChainId != 0 && holderInfo.CreateChainId != Context.ChainId;
@@ -110,7 +111,7 @@ public partial class CAContract
     }
 
     private void UpdateDailyTransferredAmount(Hash caHash, RepeatedField<GuardianInfo> guardiansApproved, string symbol,
-        long amount)
+        long amount, Address to)
     {
         Assert(amount > 0, "Invalid amount.");
         var transferredAmount = State.DailyTransferredAmountMap[caHash][symbol] ??
@@ -121,8 +122,9 @@ public partial class CAContract
             : transferredAmount.DailyTransfered;
         if (guardiansApproved.Count > 0)
         {
+            var operateDetails = $"{to.ToBase58()}_{symbol}_{amount}";
             GuardianApprovedCheck(caHash, guardiansApproved, OperationType.GuardianApproveTransfer,
-                nameof(OperationType.GuardianApproveTransfer).ToLower());
+                nameof(OperationType.GuardianApproveTransfer).ToLower(), operateDetails);
         }
         else
         {
