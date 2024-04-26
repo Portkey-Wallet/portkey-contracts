@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using AElf;
 using AElf.Contracts.MultiToken;
 using AElf.Types;
 using Google.Protobuf.WellKnownTypes;
@@ -11,16 +12,12 @@ namespace Portkey.Contracts.CA;
 public partial class CAContractTests : CAContractTestBase
 {
     [Fact]
-    public async Task CreateHolderTest()
+    public async Task<Address> CreateHolderTest()
     {
         var verificationTime = DateTime.UtcNow;
         await CaContractStub.Initialize.SendAsync(new InitializeInput
         {
             ContractAdmin = DefaultAddress,
-        });
-        await CaContractStub.ChangeOperationTypeInSignatureEnabled.SendAsync(new OperationTypeInSignatureEnabledInput()
-        {
-            OperationTypeInSignatureEnabled = true
         });
         {
             await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
@@ -62,7 +59,7 @@ public partial class CAContractTests : CAContractTestBase
                     Id = id,
                     Signature = signature,
                     VerificationDoc =
-                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType}"
+                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType},{MainChainId}"
                 }
             },
             ManagerInfo = new ManagerInfo
@@ -175,6 +172,65 @@ public partial class CAContractTests : CAContractTestBase
             holderInfo.GuardianList.Guardians.Count.ShouldBe(2);
             holderInfo.GuardianList.Guardians.Last().GuardianType.GuardianType_.ShouldBe(GuardianType1);
         }*/
+
+        return caInfo.CaAddress;
+    }
+
+    [Fact]
+    public async Task CreateHolderTest_CloseCheckOperationDetails()
+    {
+        await Initiate();
+        await CreateHolderWithOperationDetails(User1Address.ToBase58());
+        var caInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput()
+        {
+            LoginGuardianIdentifierHash = _guardian
+        });
+        caInfo.ManagerInfos.Count.ShouldBe(1);
+        caInfo.GuardianList.Guardians.Count.ShouldBe(1);
+        caInfo.CaAddress.ShouldNotBeNull();
+    }
+    
+    [Fact]
+    public async Task CreateHolderTest_CloseCheckOperationDetails_OperationDetailsNull()
+    {
+        await Initiate();
+        await CreateHolderWithOperationDetails(User1Address.ToBase58());
+        var caInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput()
+        {
+            LoginGuardianIdentifierHash = _guardian
+        });
+        caInfo.ManagerInfos.Count.ShouldBe(1);
+        caInfo.GuardianList.Guardians.Count.ShouldBe(1);
+        caInfo.CaAddress.ShouldNotBeNull();
+    }
+
+    [Fact]
+    public async Task CreateHolderTest_OpenCheckOperationDetails()
+    {
+        await Initiate();
+        await SetCheckOperationDetailsInSignatureEnabled(true);
+        await CreateHolderWithOperationDetails(User1Address.ToBase58());
+        var caInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput()
+        {
+            LoginGuardianIdentifierHash = _guardian
+        });
+        caInfo.ManagerInfos.Count.ShouldBe(1);
+        caInfo.GuardianList.Guardians.Count.ShouldBe(1);
+        caInfo.CaAddress.ShouldNotBeNull();
+    }
+
+    [Fact]
+    public async Task CreateHolder_Failed_OpenCheckOperationDetails_OperationDetailsNull()
+    {
+        await Initiate();
+        await SetCheckOperationDetailsInSignatureEnabled(true);
+        await CreateHolderWithOperationDetails(null);
+        var result = await CaContractStub.GetHolderInfo.SendWithExceptionAsync(new GetHolderInfoInput()
+        {
+            LoginGuardianIdentifierHash = _guardian
+        });
+        result.ShouldNotBeNull();
+        result.TransactionResult?.Error.ShouldContain("Not found ca_hash by a the loginGuardianIdentifierHash");
     }
 
     [Fact]
@@ -193,18 +249,9 @@ public partial class CAContractTests : CAContractTestBase
 
         GetLoginGuardianCount(guardianList).ShouldBe(1);
 
-        var guardian = new Guardian
-        {
-            IdentifierHash = _guardian,
-            Type = GuardianType.OfEmail,
-            VerifierId = _verifierId
-        };
-        getHolderInfoOutput = await SetGuardianForLogin_AndGetHolderInfo_Helper(caHash, guardian);
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
         var operationType = Convert.ToInt32(OperationType.CreateCaholder).ToString();
-        var signature1 = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0, salt,
-            operationType);
         await CaContractStub.CreateCAHolder.SendAsync(new CreateCAHolderInput
         {
             GuardianApproved = new GuardianInfo
@@ -214,9 +261,11 @@ public partial class CAContractTests : CAContractTestBase
                 VerificationInfo = new VerificationInfo
                 {
                     Id = _verifierId,
-                    Signature = signature1,
+                    Signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0,
+                        salt,
+                        operationType),
                     VerificationDoc =
-                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType}"
+                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType},{MainChainId}"
                 }
             },
             ManagerInfo = new ManagerInfo
@@ -239,14 +288,8 @@ public partial class CAContractTests : CAContractTestBase
     [Fact]
     public async Task CreateHolderTest_Fail_GuardianApproved_Null()
     {
-        await CaContractStub.Initialize.SendAsync(new InitializeInput
-        {
-            ContractAdmin = DefaultAddress,
-        });
-        await CaContractStub.ChangeOperationTypeInSignatureEnabled.SendAsync(new OperationTypeInSignatureEnabledInput()
-        {
-            OperationTypeInSignatureEnabled = true
-        });
+        await Initiate();
+
         var executionResult = await CaContractStub.CreateCAHolder.SendWithExceptionAsync(new CreateCAHolderInput
         {
             GuardianApproved = null,
@@ -262,14 +305,7 @@ public partial class CAContractTests : CAContractTestBase
     [Fact]
     public async Task CreateHolderTest_Fail_GuardianType_Null()
     {
-        await CaContractStub.Initialize.SendAsync(new InitializeInput
-        {
-            ContractAdmin = DefaultAddress,
-        });
-        await CaContractStub.ChangeOperationTypeInSignatureEnabled.SendAsync(new OperationTypeInSignatureEnabledInput()
-        {
-            OperationTypeInSignatureEnabled = true
-        });
+        await Initiate();
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
         var operationType = Convert.ToInt32(OperationType.CreateCaholder).ToString();
@@ -285,7 +321,7 @@ public partial class CAContractTests : CAContractTestBase
                     Id = new Hash(),
                     Signature = signature,
                     VerificationDoc =
-                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType}"
+                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType},{MainChainId}"
                 }
             },
             ManagerInfo = new ManagerInfo
@@ -300,14 +336,7 @@ public partial class CAContractTests : CAContractTestBase
     [Fact]
     public async Task CreateHolderTest_Fail_ManagerInfo_Null()
     {
-        await CaContractStub.Initialize.SendAsync(new InitializeInput
-        {
-            ContractAdmin = DefaultAddress,
-        });
-        await CaContractStub.ChangeOperationTypeInSignatureEnabled.SendAsync(new OperationTypeInSignatureEnabledInput()
-        {
-            OperationTypeInSignatureEnabled = true
-        });
+        await Initiate();
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
         var operationType = Convert.ToInt32(OperationType.CreateCaholder).ToString();
@@ -332,146 +361,6 @@ public partial class CAContractTests : CAContractTestBase
         executionResult.TransactionResult.Error.ShouldContain("invalid input manager");
     }
 
-    /*[Fact]
-    public async Task CreateHolder_fail_invalid_guardian()
-    {
-        // createCaHolder
-        var verificationTime = DateTime.UtcNow;
-        await CaContractStub.Initialize.SendAsync(new InitializeInput
-        {
-            ContractAdmin = DefaultAddress
-        });
-        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, GuardianType, 0);
-        await CaContractStub.CreateCAHolder.SendAsync(new CreateCAHolderInput
-        {
-            GuardianApproved = new Guardian
-            {
-                GuardianType = new GuardianType
-                {
-                    GuardianType_ = GuardianType,
-                    Type = 0
-                },
-                Verifier = new Verifier
-                {
-                    Name = VerifierName,
-                    Signature = signature,
-                    VerificationDoc = $"{0},{GuardianType},{verificationTime},{VerifierAddress.ToBase58()}"
-                }
-            },
-            ManagerInfo = new ManagerInfo
-            {
-                Address = User1Address,
-                ExtraData = "123"
-            }
-        });
-        var holderInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput
-        {
-            LoginGuardianType = GuardianType
-        });
-        holderInfo.GuardianList.Guardians.First().GuardianType.GuardianType_.ShouldBe(GuardianType);
-        var caHash = holderInfo.CaHash;
-        // AddGuardian
-        // await AddGuardian();
-        var guardianApprove = new List<Guardian>
-        {
-            new Guardian
-            {
-                GuardianType = new GuardianType
-                {
-                    GuardianType_ = GuardianType,
-                    Type = 0
-                },
-                Verifier = new Verifier
-                {
-                    Name = VerifierName,
-                    Signature = signature,
-                    VerificationDoc = $"{0},{GuardianType},{verificationTime},{VerifierAddress.ToBase58()}"
-                }
-            },
-            
-        };
-        var input = new AddGuardianInput
-        {
-            CaHash = caHash,
-            GuardianToAdd = new Guardian
-            {
-                GuardianType = new GuardianType
-                {
-                    GuardianType_ = GuardianType2,
-                    Type = 0
-                },
-                Verifier = new Verifier
-                {
-                    Name = VerifierName,
-                    Signature = signature,
-                    VerificationDoc = $"{0},{GuardianType2},{verificationTime},{VerifierAddress.ToBase58()}"
-                }
-            },
-            GuardiansApproved = {guardianApprove}
-        };
-        await CaContractStub.AddGuardian.SendAsync(input);
-        
-        // setLoginTypeForGuardian 
-        // await SetLoginGuardianType_Succeed_Test();
-        await CaContractStub.SetGuardianForLogin.SendAsync(new SetGuardianForLoginInput
-        {
-            CaHash = caHash,
-            GuardianType =  new GuardianType
-            {
-                Type = GuardianTypeType.GuardianTypeOfEmail,
-                GuardianType_ = GuardianType1
-            }
-        });
-
-        await CaContractStub.CreateCAHolder.SendAsync(new CreateCAHolderInput
-        {
-            
-            GuardianApproved = new Guardian
-            {
-                GuardianType = new GuardianType
-                {
-                    GuardianType_ = "1@google.com",
-                    Type = 0
-                }
-            },
-            ManagerInfo = new ManagerInfo
-            {
-                Address = User1Address,
-                ExtraData = "123"
-            }
-        });
-        
-
-    }*/
-
-    [Fact]
-    public async Task CreateHolderTest_Delegator()
-    {
-        await CreateHolderTest();
-
-        var delegations = await TokenContractStub.GetTransactionFeeDelegationsOfADelegatee.CallAsync(
-            new GetTransactionFeeDelegationsOfADelegateeInput
-            {
-                DelegateeAddress = CaContractAddress,
-                DelegatorAddress = User1Address
-            });
-
-        delegations.Delegations["ELF"].ShouldBe(100_00000000);
-    }
-
-    private async Task<TransactionFeeDelegations> GetDelegator_ByCaHash_Helper(Hash caHash)
-    {
-        var hashCode = caHash.ToString();
-        TransactionFeeDelegations delegations =
-            await TokenContractStub.GetTransactionFeeDelegationsOfADelegatee.CallAsync(
-                new GetTransactionFeeDelegationsOfADelegateeInput
-                {
-                    DelegateeAddress = Address.FromBase58(hashCode),
-                    DelegatorAddress = null
-                });
-        return delegations;
-    }
-
     [Fact]
     public async Task InitializeTest()
     {
@@ -479,11 +368,7 @@ public partial class CAContractTests : CAContractTestBase
         {
             ContractAdmin = DefaultAddress,
         });
-        await CaContractStub.ChangeOperationTypeInSignatureEnabled.SendAsync(new OperationTypeInSignatureEnabledInput()
-        {
-            OperationTypeInSignatureEnabled = true
-        });
-        
+
         var result = await CaContractStub.Initialize.SendWithExceptionAsync(new InitializeInput
         {
             ContractAdmin = DefaultAddress
@@ -502,5 +387,89 @@ public partial class CAContractTests : CAContractTestBase
         //     ZeroSmartAddress = Address.FromBase58(CAContractConstants.ZeroSmartAddress)
         // });
         result.TransactionResult.Error.ShouldBe("");
+    }
+
+    [Fact]
+    public async Task CheckOperationDetailsInSignatureEnabledTest()
+    {
+        await Initiate();
+
+        await SetCheckOperationDetailsInSignatureEnabled(true);
+
+        var callAsync = await CaContractStub.GetCheckOperationDetailsInSignatureEnabled.CallAsync(new Empty());
+        callAsync.ShouldNotBeNull();
+        callAsync.CheckOperationDetailsEnabled.ShouldBeTrue();
+
+        await SetCheckOperationDetailsInSignatureEnabled(false);
+
+        callAsync = await CaContractStub.GetCheckOperationDetailsInSignatureEnabled.CallAsync(new Empty());
+        callAsync.ShouldNotBeNull();
+        callAsync.CheckOperationDetailsEnabled.ShouldBeFalse();
+    }
+
+    private async Task SetCheckOperationDetailsInSignatureEnabled(bool enable)
+    {
+        await CaContractStub.SetCheckOperationDetailsInSignatureEnabled.SendAsync(
+            new SetCheckOperationDetailsInSignatureEnabledInput
+            {
+                CheckOperationDetailsEnabled = enable
+            });
+    }
+
+    private async Task CreateHolderWithOperationDetails(string operationDetails, Address manager = null)
+    {
+        manager = manager == null ? User1Address : manager;
+        var verificationTime = DateTime.UtcNow;
+
+        {
+            await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
+            {
+                Name = VerifierName,
+                EndPoints = { "127.0.0.1" },
+                ImageUrl = "url",
+                VerifierAddressList = { VerifierAddress }
+            });
+            await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
+            {
+                Name = VerifierName1,
+                EndPoints = { "127.0.0.1" },
+                ImageUrl = "url",
+                VerifierAddressList = { VerifierAddress1 }
+            });
+            await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
+            {
+                Name = VerifierName2,
+                EndPoints = { "127.0.0.1" },
+                ImageUrl = "url",
+                VerifierAddressList = { VerifierAddress2 }
+            });
+        }
+        var salt = Guid.NewGuid().ToString("N");
+        var operationType = Convert.ToInt32(OperationType.CreateCaholder).ToString();
+        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0, salt,
+            operationType, MainChainId, operationDetails);
+        var verifierServer = await CaContractStub.GetVerifierServers.CallAsync(new Empty());
+        var id = verifierServer.VerifierServers[0].Id;
+        await CaContractStub.CreateCAHolder.SendAsync(new CreateCAHolderInput
+        {
+            GuardianApproved = new GuardianInfo
+            {
+                Type = GuardianType.OfEmail,
+                IdentifierHash = _guardian,
+                VerificationInfo = new VerificationInfo
+                {
+                    Id = id,
+                    Signature = signature,
+                    VerificationDoc = string.IsNullOrWhiteSpace(operationDetails)
+                        ? $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType},{MainChainId}"
+                        : $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType},{MainChainId},{HashHelper.ComputeFrom(operationDetails).ToHex()}"
+                }
+            },
+            ManagerInfo = new ManagerInfo
+            {
+                Address = manager,
+                ExtraData = "123"
+            }
+        });
     }
 }

@@ -17,12 +17,52 @@ public partial class CAContract
         Assert(input.ManagerInfos != null, "input.ManagerInfos is null");
 
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
-
         ValidateLoginGuardian(input.CaHash, holderInfo, input.LoginGuardians);
 
-        ValidateManager(holderInfo, input.ManagerInfos);
+        ValidateNotLoginGuardian(input.CaHash, holderInfo, input.NotLoginGuardians);
 
+        ValidateManager(holderInfo, input.ManagerInfos);
+        AssertCreateChain(holderInfo);
+        Assert(holderInfo.CreateChainId == input.CreateChainId, "Invalid input createChainId.");
+        Assert(input.GuardianList?.Guardians?.Count > 0, "Input guardianList is empty.");
+        Assert(holderInfo.GuardianList.Guardians.Count == input.GuardianList.Guardians.Count,
+            "The amount of input.GuardianList not equals to HolderInfo's GuardianList");
+        ValidateGuardianList(holderInfo.GuardianList, input.GuardianList);
         return new Empty();
+    }
+
+    private void ValidateNotLoginGuardian(Hash caHash, HolderInfo holderInfo, RepeatedField<Hash> notLoginGuardians)
+    {
+        var notLoginGuardianList = new RepeatedField<Hash>();
+        notLoginGuardianList.AddRange(holderInfo.GuardianList.Guardians.Where(g => !g.IsLoginGuardian)
+            .Select(g => g.IdentifierHash));
+        var notLoginGuardianIdentifierHashList = notLoginGuardians.ToList();
+        Assert(notLoginGuardianList.Count == notLoginGuardianIdentifierHashList.Count,
+            "The amount of input.NotLoginGuardians not equals to HolderInfo's NotLoginGuardians");
+        var loginGuardians = new RepeatedField<Hash>();
+        loginGuardians.AddRange(holderInfo.GuardianList.Guardians.Where(g => g.IsLoginGuardian)
+            .Select(g => g.IdentifierHash));
+        foreach (var guardian in notLoginGuardianIdentifierHashList)
+        {
+            Assert(!loginGuardians.Contains(guardian),
+                $"NotLoginGuardian:{guardian} is in HolderInfo's LoginGuardians");
+        }
+
+        var list = notLoginGuardianIdentifierHashList.Except(notLoginGuardianList).ToList();
+        var loginGuardiansNotIn = list.Count> 0 ? list[0] : null;
+        Assert(list.Count == 0, $"NotLoginGuardian:{loginGuardiansNotIn} is not in HolderInfo's NotLoginGuardians");
+    }
+
+    private void ValidateGuardianList(GuardianList desGuardianList, GuardianList srcGuardianList)
+    {
+        foreach (var guardianInfo in desGuardianList.Guardians)
+        {
+            var searchGuardian = srcGuardianList.Guardians.FirstOrDefault(
+                g => g.IdentifierHash == guardianInfo.IdentifierHash && g.Type == guardianInfo.Type &&
+                     g.VerifierId == guardianInfo.VerifierId
+            );
+            Assert(searchGuardian != null, $"Guardian:{guardianInfo.VerifierId} is not in CAHolder GuardianList");
+        }
     }
 
     private void ValidateLoginGuardian(Hash caHash, HolderInfo holderInfo,
@@ -44,6 +84,10 @@ public partial class CAContract
                    && State.GuardianMap[loginGuardian] == caHash,
                 $"LoginGuardian:{loginGuardian} is not in HolderInfo's LoginGuardians");
         }
+        var list = loginGuardians.Except(loginGuardianIdentifierHashList).ToList();
+        var loginGuardiansNotIn = list.Count> 0 ? list[0] : null;
+        Assert(list.Count == 0, $"LoginGuardian:{loginGuardiansNotIn} is not in HolderInfo's LoginGuardians");
+        
     }
 
     private void ValidateManager(HolderInfo holderInfo, RepeatedField<ManagerInfo> managerInfoInput)
@@ -63,52 +107,101 @@ public partial class CAContract
         }
     }
 
+    public override Empty SyncHolderInfos(SyncHolderInfosInput input)
+    {
+        foreach (var verificationTransactionInfo in input.VerificationTransactionInfos)
+        {
+            SyncHolderInfo(verificationTransactionInfo);
+        }
+
+        return new Empty();
+    }
+
     public override Empty SyncHolderInfo(SyncHolderInfoInput input)
     {
-        var originalTransaction = Transaction.Parser.ParseFrom(input.VerificationTransactionInfo.TransactionBytes);
+        SyncHolderInfo(input.VerificationTransactionInfo);
+        return new Empty();
+    }
+
+    private void SyncHolderInfo(VerificationTransactionInfo verificationTransactionInfo)
+    {
+        var originalTransaction = Transaction.Parser.ParseFrom(verificationTransactionInfo.TransactionBytes);
         AssertCrossChainTransaction(originalTransaction,
-            nameof(ValidateCAHolderInfoWithManagerInfosExists), input.VerificationTransactionInfo.FromChainId);
+            nameof(ValidateCAHolderInfoWithManagerInfosExists));
 
         var originalTransactionId = originalTransaction.GetHash();
 
-        TransactionVerify(originalTransactionId, input.VerificationTransactionInfo.ParentChainHeight,
-            input.VerificationTransactionInfo.FromChainId, input.VerificationTransactionInfo.MerklePath);
+        TransactionVerify(originalTransactionId, verificationTransactionInfo.ParentChainHeight,
+            verificationTransactionInfo.FromChainId, verificationTransactionInfo.MerklePath);
         var transactionInput =
             ValidateCAHolderInfoWithManagerInfosExistsInput.Parser.ParseFrom(originalTransaction.Params);
-
+        Assert(!State.SyncHolderInfoTransaction[originalTransactionId], "Already synced.");
+        Assert(State.SyncHolderInfoTransactionHeightMap[transactionInput.CaHash] < verificationTransactionInfo.ParentChainHeight,
+            "Already synced.");
         var holderId = transactionInput.CaHash;
         var holderInfo = State.HolderInfoMap[holderId] ?? new HolderInfo { CreatorAddress = Context.Sender };
+        holderInfo.CreateChainId = transactionInput.CreateChainId;
+        
+        var caAddress = Context.ConvertVirtualAddressToContractAddress(holderId);
+        if (holderInfo.GuardianList == null)
+        {
+            holderInfo.GuardianList = new GuardianList
+            {
+                Guardians = { }
+            };
+            SetProjectDelegator(caAddress);
+        }
 
         var managerInfosToAdd = ManagerInfosExcept(transactionInput.ManagerInfos, holderInfo.ManagerInfos);
         var managerInfosToRemove = ManagerInfosExcept(holderInfo.ManagerInfos, transactionInput.ManagerInfos);
 
-        holderInfo.ManagerInfos.AddRange(managerInfosToAdd);
-        SetDelegators(holderId, managerInfosToAdd);
-
-        foreach (var managerInfo in managerInfosToAdd)
-        {
-            SetContractDelegator(managerInfo);
-        }
-
         foreach (var managerInfo in managerInfosToRemove)
         {
             holderInfo.ManagerInfos.Remove(managerInfo);
-            RemoveContractDelegator(managerInfo);
         }
 
         RemoveDelegators(holderId, managerInfosToRemove);
+        holderInfo.ManagerInfos.AddRange(managerInfosToAdd);
+        SetDelegators(holderId, managerInfosToAdd);
 
         var loginGuardiansAdded = SyncLoginGuardianAdded(transactionInput.CaHash, transactionInput.LoginGuardians);
         var loginGuardiansUnbound =
             SyncLoginGuardianUnbound(transactionInput.CaHash, transactionInput.NotLoginGuardians);
 
+        var guardiansAdded = new RepeatedField<Guardian>();
+        var guardiansRemoved = new RepeatedField<Guardian>();
+
+        guardiansAdded =
+            GuardiansExcept(transactionInput.GuardianList.Guardians, holderInfo.GuardianList.Guardians);
+        guardiansRemoved =
+            GuardiansExcept(holderInfo.GuardianList.Guardians, transactionInput.GuardianList.Guardians);
+        foreach (var guardian in guardiansAdded)
+        {
+            holderInfo.GuardianList.Guardians.Add(guardian);
+        }
+
+        foreach (var guardian in guardiansRemoved)
+        {
+            holderInfo.GuardianList.Guardians.Remove(guardian);
+        }
+
+        SyncLoginGuardians(transactionInput.GuardianList.Guardians, holderInfo.GuardianList.Guardians);
+        
         State.HolderInfoMap[holderId] = holderInfo;
+        State.SyncHolderInfoTransaction[originalTransactionId] = true;
+        State.SyncHolderInfoTransactionHeightMap[transactionInput.CaHash] = verificationTransactionInfo.ParentChainHeight;
+
+        var guardians = holderInfo.GuardianList.Guardians;
+        foreach (var guardian in guardians)
+        {
+            State.PreCrossChainSyncHolderInfoMarks.Remove(guardian.IdentifierHash);
+        }
 
         Context.Fire(new CAHolderSynced
         {
             Creator = Context.Sender,
             CaHash = holderId,
-            CaAddress = Context.ConvertVirtualAddressToContractAddress(holderId),
+            CaAddress = caAddress,
             ManagerInfosAdded = new ManagerInfoList
             {
                 ManagerInfos = { managerInfosToAdd }
@@ -124,19 +217,39 @@ public partial class CAContract
             LoginGuardiansUnbound = new LoginGuardianList
             {
                 LoginGuardians = { loginGuardiansUnbound }
-            }
+            },
+            GuardiansAdded = new GuardianList
+            {
+                Guardians = { guardiansAdded }
+            },
+            GuardiansRemoved = new GuardianList
+            {
+                Guardians = { guardiansRemoved }
+            },
+            CreateChainId = transactionInput.CreateChainId
         });
-
-        return new Empty();
     }
 
-
-    private void AssertCrossChainTransaction(Transaction originalTransaction,
-        string validMethodName, int fromChainId)
+    private void SyncLoginGuardians(RepeatedField<Guardian> src, RepeatedField<Guardian> destinations)
     {
-        var validateResult = originalTransaction.MethodName == validMethodName
-                             && originalTransaction.To == State.CAContractAddresses[fromChainId];
-        Assert(validateResult, "Invalid transaction.");
+        foreach (var desGuardian in destinations)
+        {
+            foreach (var srcGuardian in src)
+            {
+                if (srcGuardian.IdentifierHash == desGuardian.IdentifierHash &&
+                    srcGuardian.VerifierId == desGuardian.VerifierId && srcGuardian.Type == desGuardian.Type &&
+                    srcGuardian.IsLoginGuardian != desGuardian.IsLoginGuardian)
+                {
+                    desGuardian.IsLoginGuardian = srcGuardian.IsLoginGuardian;
+                }
+            }
+        }
+    }
+    
+    private void AssertCrossChainTransaction(Transaction originalTransaction,
+        string validMethodName)
+    {
+        Assert(originalTransaction.MethodName == validMethodName && originalTransaction.To == Context.Self, "Invalid transaction.");
     }
 
 
@@ -182,11 +295,11 @@ public partial class CAContract
     private RepeatedField<ManagerInfo> ManagerInfosExcept(RepeatedField<ManagerInfo> set1,
         RepeatedField<ManagerInfo> set2)
     {
-        RepeatedField<ManagerInfo> resultSet = new RepeatedField<ManagerInfo>();
+        var resultSet = new RepeatedField<ManagerInfo>();
 
         foreach (var managerInfo1 in set1)
         {
-            bool theSame = false;
+            var theSame = false;
             foreach (var managerInfo2 in set2)
             {
                 if (managerInfo1.Address == managerInfo2.Address && managerInfo1.ExtraData == managerInfo2.ExtraData)
@@ -205,14 +318,32 @@ public partial class CAContract
         return resultSet;
     }
 
-    private Transaction MethodNameVerify(VerificationTransactionInfo info, string methodNameExpected)
+    private RepeatedField<Guardian> GuardiansExcept(RepeatedField<Guardian> src,
+        RepeatedField<Guardian> destination)
     {
-        var originalTransaction = Transaction.Parser.ParseFrom(info.TransactionBytes);
-        Assert(originalTransaction.MethodName == methodNameExpected, $"Invalid transaction method.");
+        var resultSet = new RepeatedField<Guardian>();
 
-        return originalTransaction;
+        foreach (var srcGuardian in src)
+        {
+            var theSame = false;
+            foreach (var desGuardian in destination)
+            {
+                if (srcGuardian.IdentifierHash == desGuardian.IdentifierHash &&
+                    srcGuardian.VerifierId == desGuardian.VerifierId && srcGuardian.Type == desGuardian.Type)
+                {
+                    theSame = true;
+                    break;
+                }
+            }
+
+            if (!theSame)
+            {
+                resultSet.Add(srcGuardian);
+            }
+        }
+
+        return resultSet;
     }
-
 
     private void TransactionVerify(Hash transactionId, long parentChainHeight, int chainId, MerklePath merklePath)
     {

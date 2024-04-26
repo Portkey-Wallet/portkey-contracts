@@ -7,10 +7,6 @@ public partial class CAContractState : ContractState
 {
     public SingletonState<bool> Initialized { get; set; }
 
-    // public SingletonState<Address> RegisterOrRecoveryController { get; set; }
-    //
-    // public SingletonState<Address> SetConfigController { get; set; }
-
     /// <summary>
     /// Login Guardian identifier hash  -> Verifier Id -> HolderInfo Hash
     /// multiple Login Guardian to one HolderInfo Hash
@@ -44,14 +40,37 @@ public partial class CAContractState : ContractState
     /// </summary>
     public SingletonState<CAServerList> CaServerList { get; set; }
 
-    // public SingletonState<AuthorityInfo> MethodFeeController { get; set; }
-    // public MappedState<string, MethodFees> TransactionFees { get; set; }
-    public SingletonState<ContractDelegationFee> ContractDelegationFee { get; set; }
-
     //
     public MappedState<Hash, bool> VerifierDocMap { get; set; }
 
-    public SingletonState<bool> OperationTypeInSignatureEnabled { get; set; }
+    public SingletonState<long> TokenInitialTransferLimit { get; set; }
+    public SingletonState<TransferSecurityThresholdList> TransferSecurityThresholdList { get; set; }
+    public MappedState<Hash, string, TransferLimit> TransferLimit { get; set; }
+    public MappedState<Hash, string, TransferredAmount> DailyTransferredAmountMap { get; set; }
+    public MappedState<string, TransferLimit> TokenDefaultTransferLimit { get; set; }
+    public MappedState<Address, string, bool> ForbiddenForwardCallContractMethod { get; set; }
+    public SingletonState<ProjectDelegationFee> ProjectDelegationFee { get; set; }
+    public MappedState<Hash, ProjectDelegateInfo> ProjectDelegateInfo { get; set; }
+    public SingletonState<Hash> CaProjectDelegateHash { get; set; }
+    public MappedState<Address, string, bool> ManagerForwardCallParallelMap { get; set; }
 
-    public MappedState<int, Address> CAContractAddresses { get; set; }
+    public MappedState<Hash,bool> SyncHolderInfoTransaction { get; set; }
+    
+    public MappedState<Hash,long> SyncHolderInfoTransactionHeightMap{ get; set; }
+
+    public SingletonState<WhitelistTransactions> DelegateWhitelistTransactions { get; set; }
+    
+    /// <summary>
+    /// Check if the switch for operation details exists in 'Signature',
+    /// it will be removed in the next version.
+    /// </summary>
+    public SingletonState<bool> CheckOperationDetailsInSignatureEnabled { get; set; }
+    
+    /// <summary>
+    /// The mark for the pre cross chain 'CAHolder'
+    /// identifier hash  -> caHash
+    /// </summary>
+    public MappedState<Hash, Hash> PreCrossChainSyncHolderInfoMarks { get; set; }
+    
+
 }

@@ -1,40 +1,34 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using AElf;
+using AElf.Contracts.MultiToken;
 using AElf.CSharp.Core.Extension;
 using AElf.Types;
+using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 
 namespace Portkey.Contracts.CA;
 
 public partial class CAContract
 {
-    private bool CheckVerifierSignatureAndDataCompatible(GuardianInfo guardianInfo, string methodName)
+    private bool CheckVerifierSignatureAndData(GuardianInfo guardianInfo, string methodName, Hash caHash = null,
+        string operationDetails = null)
     {
-        if (State.OperationTypeInSignatureEnabled.Value)
-        {
-            return CheckVerifierSignatureAndData(guardianInfo, methodName);
-        }
+        var verifierDocLength = GetVerificationDocLength(guardianInfo.VerificationInfo.VerificationDoc);
 
-        var verificationDoc = guardianInfo.VerificationInfo.VerificationDoc;
-        if (verificationDoc == null || string.IsNullOrWhiteSpace(verificationDoc))
+        if (verifierDocLength != 7 && verifierDocLength != 8)
         {
             return false;
         }
 
-        var verifierDoc = verificationDoc.Split(",");
-        return verifierDoc.Length switch
-        {
-            5 => CheckVerifierSignatureAndData(guardianInfo),
-            6 => CheckVerifierSignatureAndData(guardianInfo, methodName),
-            _ => false
-        };
+        return CheckVerifierSignatureAndDataWithCreateChainId(guardianInfo, methodName, caHash, operationDetails);
     }
 
-
-    private bool CheckVerifierSignatureAndData(GuardianInfo guardianInfo, string methodName)
+    private bool CheckVerifierSignatureAndDataWithCreateChainId(GuardianInfo guardianInfo, string methodName,
+        Hash caHash, string operationDetails = null)
     {
-        //[type,guardianIdentifierHash,verificationTime,verifierAddress,salt,operationType]
+        //[type,guardianIdentifierHash,verificationTime,verifierAddress,salt,operationType,createChainId<,operationHash>]
         var verificationDoc = guardianInfo.VerificationInfo.VerificationDoc;
         if (verificationDoc == null || string.IsNullOrWhiteSpace(verificationDoc))
         {
@@ -42,11 +36,6 @@ public partial class CAContract
         }
 
         var verifierDoc = verificationDoc.Split(",");
-
-        if (verifierDoc.Length != 6)
-        {
-            return false;
-        }
 
         var docInfo = GetVerificationDoc(verificationDoc);
 
@@ -61,7 +50,6 @@ public partial class CAContract
             return false;
         }
 
-
         //Check expired time 1h.
         var verificationTime = DateTime.SpecifyKind(Convert.ToDateTime(docInfo.VerificationTime), DateTimeKind.Utc);
         if (verificationTime.ToTimestamp().AddHours(1) <= Context.CurrentBlockTime ||
@@ -72,74 +60,69 @@ public partial class CAContract
             return false;
         }
 
+        var operationTypeStr = docInfo.OperationType;
+        var operationTypeName = typeof(OperationType).GetEnumName(Convert.ToInt32(operationTypeStr))?.ToLower();
+        if (operationTypeName != methodName)
+        {
+            return false;
+        }
+
         //Check verifier address and data.
         var verifierAddress = docInfo.VerifierAddress;
         var verificationInfo = guardianInfo.VerificationInfo;
         var verifierServer =
             State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(v => v.Id == verificationInfo.Id);
-
-        //Recovery verifier address.
-        var data = HashHelper.ComputeFrom(verificationInfo.VerificationDoc);
-        var publicKey = Context.RecoverPublicKey(verificationInfo.Signature.ToByteArray(),
-            data.ToByteArray());
-        var verifierAddressFromPublicKey = Address.FromPublicKey(publicKey);
-
-
-        if (verifierServer == null || verifierAddressFromPublicKey != verifierAddress ||
-            !verifierServer.VerifierAddresses.Contains(verifierAddress))
+        if (verifierServer == null || !verifierServer.VerifierAddresses.Contains(verifierAddress))
         {
             return false;
         }
 
-        key = HashHelper.ComputeFrom(guardianInfo.VerificationInfo.Signature.ToByteArray());
+        var verifierAddressFromPublicKey =
+            RecoverVerifierAddress(verificationInfo.VerificationDoc, verificationInfo.Signature);
+        if (verifierAddressFromPublicKey != verifierAddress)
+        {
+            verifierAddressFromPublicKey =
+                RecoverVerifierAddress($"{verificationInfo.VerificationDoc},{operationDetails}",
+                    verificationInfo.Signature);
+        }
+        if (verifierAddressFromPublicKey != verifierAddress)
+        {
+            return false;
+        }
+
+        if (!CheckVerifierSignatureOperationDetail(operationTypeName, verifierDoc, operationDetails))
+        {
+            return false;
+        }
         State.VerifierDocMap[key] = true;
-        var operationTypeStr = docInfo.OperationType;
-        var operationTypeName = typeof(OperationType).GetEnumName(Convert.ToInt32(operationTypeStr))?.ToLower();
-        return operationTypeName == methodName;
+
+        if (operationTypeName == nameof(OperationType.AddGuardian).ToLower() &&
+            !CheckOnCreateChain(State.HolderInfoMap[caHash]))
+        {
+            return true;
+        }
+
+        //After verifying the contents of the operation,it is not necessary to verify the 'ChainId'
+        if (verifierDoc.Length >= 8 &&
+            ((operationTypeName == nameof(OperationType.CreateCaholder).ToLower() && caHash != null) ||
+             operationTypeName == nameof(OperationType.SocialRecovery).ToLower()))
+        {
+            return true;
+        }
+
+        return int.Parse(verifierDoc[6]) == Context.ChainId;
     }
 
-
-    private bool CheckVerifierSignatureAndData(GuardianInfo guardianInfo)
+    private bool CheckOnCreateChain(HolderInfo holderInfo)
     {
-        //[type,guardianIdentifierHash,verificationTime,verifierAddress,salt]
-        var verificationDoc = guardianInfo.VerificationInfo.VerificationDoc;
-        if (verificationDoc == null || string.IsNullOrWhiteSpace(verificationDoc))
+        if (holderInfo.GuardianList == null || holderInfo.GuardianList.Guardians == null ||
+            holderInfo.GuardianList.Guardians.Count == 0)
         {
             return false;
         }
 
-        var verifierDoc = verificationDoc.Split(",");
-        if (verifierDoc.Length != 5)
-        {
-            return false;
-        }
-
-        //Check expired time 1h.
-        var verificationTime = DateTime.SpecifyKind(Convert.ToDateTime(verifierDoc[2]), DateTimeKind.Utc);
-        if (verificationTime.ToTimestamp().AddHours(1) <= Context.CurrentBlockTime ||
-            !int.TryParse(verifierDoc[0], out var type) ||
-            (int)guardianInfo.Type != type ||
-            guardianInfo.IdentifierHash != Hash.LoadFromHex(verifierDoc[1]))
-        {
-            return false;
-        }
-
-        //Check verifier address and data.
-        var verifierAddress = Address.FromBase58(verifierDoc[3]);
-        var verificationInfo = guardianInfo.VerificationInfo;
-        var verifierServer =
-            State.VerifiersServerList.Value.VerifierServers.FirstOrDefault(v => v.Id == verificationInfo.Id);
-
-        //Recovery verifier address.
-        var data = HashHelper.ComputeFrom(verificationInfo.VerificationDoc);
-        var publicKey = Context.RecoverPublicKey(verificationInfo.Signature.ToByteArray(),
-            data.ToByteArray());
-        var verifierAddressFromPublicKey = Address.FromPublicKey(publicKey);
-
-        return verifierServer != null && verifierAddressFromPublicKey == verifierAddress &&
-               verifierServer.VerifierAddresses.Contains(verifierAddress);
+        return holderInfo.CreateChainId == Context.ChainId || holderInfo.CreateChainId == 0;
     }
-
 
     private bool IsGuardianExist(Hash caHash, GuardianInfo guardianInfo)
     {
@@ -179,7 +162,6 @@ public partial class CAContract
         };
     }
 
-
     private HolderInfo GetHolderInfoByCaHash(Hash caHash)
     {
         var holderInfo = State.HolderInfoMap[caHash];
@@ -192,5 +174,110 @@ public partial class CAContract
     private string GetSaltFromVerificationDoc(string verificationDoc)
     {
         return verificationDoc.Split(",")[4];
+    }
+
+    private static bool IsOverDay(Timestamp lastDayTime, Timestamp nowDayTime)
+    {
+        return lastDayTime == null || DateTime.Parse(lastDayTime.ToDateTime().ToString("yyyy-MM-dd")) <
+            DateTime.Parse(nowDayTime.ToDateTime().ToString("yyyy-MM-dd"));
+    }
+
+    private TokenInfo GetTokenInfo(string symbol)
+    {
+        return State.TokenContract.GetTokenInfo.Call(new GetTokenInfoInput
+        {
+            Symbol = symbol
+        });
+    }
+
+    private GetBalanceOutput GetTokenBalance(string symbol, Address cAddress)
+    {
+        return State.TokenContract.GetBalance.Call(new GetBalanceInput
+        {
+            Symbol = symbol,
+            Owner = cAddress
+        });
+    }
+
+    private void SetProjectDelegator(Address delegatorAddress)
+    {
+        if (!IsValidHash(State.CaProjectDelegateHash.Value))
+        {
+            return;
+        }
+
+        var projectDelegateInfo = State.ProjectDelegateInfo[State.CaProjectDelegateHash.Value];
+        if (projectDelegateInfo == null || projectDelegateInfo.DelegateeHashList.Count == 0)
+        {
+            return;
+        }
+
+        State.ProjectDelegationFee.Value ??= new ProjectDelegationFee()
+        {
+            Amount = CAContractConstants.DefaultProjectDelegationFee
+        };
+
+        var delegations = new Dictionary<string, long>
+        {
+            [CAContractConstants.ELFTokenSymbol] = State.ProjectDelegationFee.Value.Amount
+        };
+        // Randomly select a delegatee based on the address
+        var selectIndex = (int)Math.Abs(delegatorAddress.ToByteArray().ToInt64(true) %
+                                        projectDelegateInfo.DelegateeHashList.Count);
+        State.TokenContract.SetTransactionFeeDelegations.VirtualSend(projectDelegateInfo.DelegateeHashList[selectIndex],
+            new SetTransactionFeeDelegationsInput
+            {
+                DelegatorAddress = delegatorAddress,
+                Delegations =
+                {
+                    delegations
+                }
+            });
+    }
+
+    private bool IsValidInviteCode(string code)
+    {
+        return !string.IsNullOrWhiteSpace(code) && code.Length <= CAContractConstants.ReferralCodeLength;
+    }
+
+    private Address RecoverVerifierAddress(string verificationDoc, ByteString signature)
+    {
+        var data = HashHelper.ComputeFrom(verificationDoc);
+        var publicKey = Context.RecoverPublicKey(signature.ToByteArray(),
+            data.ToByteArray());
+        return Address.FromPublicKey(publicKey);
+    }
+
+    private int GetVerificationDocLength(string verificationDoc)
+    {
+        return string.IsNullOrWhiteSpace(verificationDoc) ? 0 : verificationDoc.Split(",").Length;
+    }
+
+    /// <summary>
+    /// State.CheckOperationDetailsInSignatureEnabled==true: must verify the Hash value of operationDetails
+    /// verifierDoc.Length >= 8: only verify registration and social recovery
+    /// </summary>
+    /// <param name="operationTypeName"></param>
+    /// <param name="verifierDoc"></param>
+    /// <param name="operationDetails"></param>
+    /// <returns></returns>
+    private bool CheckVerifierSignatureOperationDetail(string operationTypeName, string[] verifierDoc,
+        string operationDetails)
+    {
+        if (State.CheckOperationDetailsInSignatureEnabled.Value
+            || (verifierDoc.Length >= 8 &&
+                (operationTypeName == nameof(OperationType.CreateCaholder).ToLower() ||
+                 operationTypeName == nameof(OperationType.SocialRecovery).ToLower())))
+        {
+            if (verifierDoc.Length < 8 || string.IsNullOrWhiteSpace(verifierDoc[7]) ||
+                string.IsNullOrWhiteSpace(operationDetails))
+            {
+                return false;
+            }
+
+            return verifierDoc[7] == HashHelper.ComputeFrom(operationDetails).ToHex();
+        }
+
+        return true;
     }
 }

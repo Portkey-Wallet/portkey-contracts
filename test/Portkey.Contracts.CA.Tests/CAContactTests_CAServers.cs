@@ -18,25 +18,7 @@ public partial class CAContractTests
         {
             ContractAdmin = DefaultAccount.Address,
         });
-        await CaContractStub.ChangeOperationTypeInSignatureEnabled.SendAsync(new OperationTypeInSignatureEnabledInput()
-        {
-            OperationTypeInSignatureEnabled = true
-        });
-        
-        var caContractAddresses = new List<CAContractAddress>
-        {
-            new CAContractAddress()
-            {
-                Address = CaContractAddress,
-                ChainId = 123456
-            }
-        };
-        var input = new SetCAContractAddressesInput
-        {
-            CaContractAddresses = {caContractAddresses}
-        };
-        await CaContractStub.SetCAContractAddresses.SendAsync(input);
-  
+
         var output = await CaContractStub.GetCAServers.CallAsync(new Empty());
         output.CaServers.Count.ShouldBe(0);
         //success
@@ -81,14 +63,7 @@ public partial class CAContractTests
     public async Task RemoveCAServerTest()
     {
         //set admin
-        await CaContractStub.Initialize.SendAsync(new InitializeInput()
-        {
-            ContractAdmin = DefaultAccount.Address,
-        });
-        await CaContractStub.ChangeOperationTypeInSignatureEnabled.SendAsync(new OperationTypeInSignatureEnabledInput()
-        {
-            OperationTypeInSignatureEnabled = true
-        });
+        await Initiate();
         await CaContractStub.AddCAServer.SendAsync( new AddCAServerInput()
         {
             Name = "Server1",

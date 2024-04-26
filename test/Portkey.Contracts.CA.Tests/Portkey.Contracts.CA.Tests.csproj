@@ -11,12 +11,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="AElf.Contracts.Genesis" Version="1.3.0" />
-        <PackageReference Include="AElf.Contracts.MultiToken" Version="1.3.0" />
-        <PackageReference Include="AElf.Contracts.Election" Version="1.3.0" />
-        <PackageReference Include="AElf.Contracts.Consensus.AEDPoS" Version="1.3.0" />
-        <PackageReference Include="AElf.EconomicSystem" Version="1.3.0" />
-        <PackageReference Include="AElf.GovernmentSystem" Version="1.3.0" />
+        <PackageReference Include="AElf.Contracts.Genesis" Version="1.6.0" />
+        <PackageReference Include="AElf.Contracts.MultiToken" Version="1.6.0" />
+        <PackageReference Include="AElf.Contracts.Election" Version="1.6.0" />
+        <PackageReference Include="AElf.Contracts.Consensus.AEDPoS" Version="1.6.0" />
+        <PackageReference Include="AElf.EconomicSystem" Version="1.6.0" />
+        <PackageReference Include="AElf.GovernmentSystem" Version="1.6.0" />
         <PackageReference Include="coverlet.msbuild" Version="3.1.2">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -30,12 +30,12 @@
         <PackageReference Include="xunit" Version="2.4.1" />
         <PackageReference Include="xunit.runner.console" Version="2.4.1" />
         <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3" />
-        <PackageReference Include="AElf.Kernel.SmartContract.ExecutionPluginForMethodFee" Version="1.3.0" />
+        <PackageReference Include="AElf.Kernel.SmartContract.ExecutionPluginForMethodFee" Version="1.6.0" />
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="AElf.ContractTestKit" Version="1.3.0" />
-        <PackageReference Include="AElf.ContractTestBase" Version="1.3.0" />
+        <PackageReference Include="AElf.ContractTestKit" Version="1.6.0" />
+        <PackageReference Include="AElf.ContractTestBase" Version="1.6.0" />
     </ItemGroup>
     <ItemGroup>
         <ContractMessage Include="..\..\protobuf\authority_info.proto">
@@ -49,11 +49,17 @@
         <ContractStub Include="..\..\protobuf\ca_contract.proto">
             <Link>Protobuf\Proto\ca_contract.proto</Link>
         </ContractStub>
+        <ContractStub Include="..\..\protobuf\ca_contract_impl.proto">
+            <Link>Protobuf\Proto\ca_contract_impl.proto</Link>
+        </ContractStub>
         <ContractStub Include="..\..\protobuf\token_contract.proto">
             <Link>Protobuf\Proto\token_contract.proto</Link>
         </ContractStub>
         <ContractStub Include="..\..\protobuf\token_contract_impl.proto">
             <Link>Protobuf\Proto\token_contract_impl.proto</Link>
+        </ContractStub>
+        <ContractStub Include="..\..\protobuf\transaction_fee.proto">
+            <Link>Protobuf\Proto\transaction_fee.proto</Link>
         </ContractStub>
         <ContractStub Include="..\..\protobuf\acs3.proto">
             <Link>Protobuf\Proto\acs3.proto</Link>
@@ -79,9 +85,9 @@
         <ContractBase Include="..\..\protobuf\acs1.proto">
             <Link>Protobuf\Proto\acs1.proto</Link>
         </ContractBase>
-        <ContractBase Include="..\..\protobuf\acs2.proto">
+        <ContractStub Include="..\..\protobuf\acs2.proto">
             <Link>Protobuf\Proto\acs2.proto</Link>
-        </ContractBase>
+        </ContractStub>
         <ContractBase Include="..\..\protobuf\acs10.proto">
             <Link>Protobuf\Proto\base\acs10.proto</Link>
         </ContractBase>

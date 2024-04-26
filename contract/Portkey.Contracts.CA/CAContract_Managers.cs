@@ -1,5 +1,5 @@
-using System;
 using System.Linq;
+using AElf;
 using AElf.Contracts.MultiToken;
 using AElf.Sdk.CSharp;
 using AElf.Types;
@@ -25,27 +25,23 @@ public partial class CAContract
         Assert(caHash != null, "CA Holder does not exist.");
 
         var holderInfo = GetHolderInfoByCaHash(caHash);
+        
+        if (NeedToCheckCreateChain(input.GuardiansApproved))
+        {
+            AssertCreateChain(holderInfo);
+        }
+        
         var guardians = holderInfo.GuardianList!.Guardians;
 
         Assert(input.GuardiansApproved.Count > 0, "invalid input Guardians Approved");
 
-        var guardianApprovedAmount = 0;
-        var guardianApprovedList = input.GuardiansApproved
-            .DistinctBy(g => $"{g.Type}{g.IdentifierHash}{g.VerificationInfo.Id}")
-            .ToList();
-        var methodName = nameof(SocialRecovery).ToLower();
-        foreach (var guardian in guardianApprovedList)
-        {
-            //Whether the guardian exists in the holder info.
-            if (!IsGuardianExist(caHash, guardian)) continue;
-            //Check the verifier signature and data of the guardian to be approved.
-            var isApproved = CheckVerifierSignatureAndDataCompatible(guardian, methodName);
-            if (!isApproved) continue;
-            guardianApprovedAmount++;
-        }
+        var operationDetails = input.ManagerInfo.Address.ToBase58();
+        var guardianApprovedCount = GetGuardianApprovedCount(caHash, input.GuardiansApproved,
+            nameof(OperationType.SocialRecovery).ToLower(), operationDetails);
 
-        var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(guardians.Count, guardianApprovedAmount,
-            holderInfo.JudgementStrategy);
+        var strategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
+        var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(guardians.Count, guardianApprovedCount,
+            strategy);
         if (!isJudgementStrategySatisfied)
         {
             return new Empty();
@@ -57,19 +53,19 @@ public partial class CAContract
         Assert(holderInfo.ManagerInfos.Count < CAContractConstants.ManagerMaxCount,
             "The amount of ManagerInfos out of limit");
 
+        var caAddress = Context.ConvertVirtualAddressToContractAddress(caHash);
+
         State.HolderInfoMap[caHash].ManagerInfos.Add(input.ManagerInfo);
         SetDelegator(caHash, input.ManagerInfo);
-
-        SetContractDelegator(input.ManagerInfo);
 
         Context.Fire(new ManagerInfoSocialRecovered()
         {
             CaHash = caHash,
-            CaAddress = Context.ConvertVirtualAddressToContractAddress(caHash),
+            CaAddress = caAddress,
             Manager = input.ManagerInfo.Address,
             ExtraData = input.ManagerInfo.ExtraData
         });
-
+        FireInvitedLogEvent(caHash, nameof(SocialRecovery), input.ReferralCode, input.ProjectCode);
         return new Empty();
     }
 
@@ -87,15 +83,15 @@ public partial class CAContract
         Assert(holderInfo.ManagerInfos.Count < CAContractConstants.ManagerMaxCount,
             "The amount of ManagerInfos out of limit");
 
+        var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
+
         holderInfo.ManagerInfos.Add(input.ManagerInfo);
         SetDelegator(input.CaHash, input.ManagerInfo);
-
-        SetContractDelegator(input.ManagerInfo);
 
         Context.Fire(new ManagerInfoAdded
         {
             CaHash = input.CaHash,
-            CaAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash),
+            CaAddress = caAddress,
             Manager = input.ManagerInfo.Address,
             ExtraData = input.ManagerInfo.ExtraData
         });
@@ -123,30 +119,19 @@ public partial class CAContract
 
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
 
-        var guardianApprovedAmount = 0;
-        var guardianApprovedList = input.GuardiansApproved!
-            .DistinctBy(g => $"{g.Type}{g.IdentifierHash}{g.VerificationInfo.Id}")
-            .ToList();
-        var methodName = nameof(RemoveOtherManagerInfo).ToLower();
-        foreach (var guardian in guardianApprovedList)
-        {
-            //Whether the guardian exists in the holder info.
-            if (!IsGuardianExist(input.CaHash, guardian)) continue;
-            //Check the verifier signature and data of the guardian to be approved.
-            var isApproved = CheckVerifierSignatureAndDataCompatible(guardian, methodName);
-            if (!isApproved) continue;
-            guardianApprovedAmount++;
-        }
+        var guardianApprovedCount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved,
+            nameof(OperationType.RemoveOtherManagerInfo).ToLower());
 
         //Whether the approved guardians count is satisfied.
-        var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count, guardianApprovedAmount,
-            holderInfo.JudgementStrategy);
+        var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count,
+            guardianApprovedCount, holderInfo.JudgementStrategy);
         return !isJudgementStrategySatisfied ? new Empty() : RemoveManager(input.CaHash, input.ManagerInfo.Address);
     }
 
     private Empty RemoveManager(Hash caHash, Address address)
     {
         var holderInfo = GetHolderInfoByCaHash(caHash);
+        AssertCreateChain(holderInfo);
 
         // Manager does not exist
         var managerInfo = FindManagerInfo(holderInfo.ManagerInfos, address);
@@ -155,14 +140,15 @@ public partial class CAContract
             return new Empty();
         }
 
+        var caAddress = Context.ConvertVirtualAddressToContractAddress(caHash);
+
         holderInfo.ManagerInfos.Remove(managerInfo);
         RemoveDelegator(caHash, managerInfo);
-        RemoveContractDelegator(managerInfo);
 
         Context.Fire(new ManagerInfoRemoved
         {
             CaHash = caHash,
-            CaAddress = Context.ConvertVirtualAddressToContractAddress(caHash),
+            CaAddress = caAddress,
             Manager = managerInfo.Address,
             ExtraData = managerInfo.ExtraData
         });
@@ -176,10 +162,13 @@ public partial class CAContract
         CheckManagerInfosInput(input!.CaHash, input.ManagerInfos);
 
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
+        AssertCreateChain(holderInfo);
 
         var managerInfosToUpdate = input.ManagerInfos.Distinct().ToList();
 
         var managerInfoList = holderInfo.ManagerInfos;
+
+        var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
 
         foreach (var manager in managerInfosToUpdate)
         {
@@ -194,7 +183,7 @@ public partial class CAContract
             Context.Fire(new ManagerInfoUpdated
             {
                 CaHash = input.CaHash,
-                CaAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash),
+                CaAddress = caAddress,
                 Manager = managerToUpdate.Address,
                 ExtraData = managerToUpdate.ExtraData
             });
@@ -231,7 +220,17 @@ public partial class CAContract
         Assert(input.ContractAddress != null && !string.IsNullOrWhiteSpace(input.MethodName),
             "Invalid input.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
-        Context.SendVirtualInline(input.CaHash, input.ContractAddress, input.MethodName, input.Args);
+        Assert(!State.ForbiddenForwardCallContractMethod[input.ContractAddress][input.MethodName.ToLower()],
+            $"Does not have permission for {input.MethodName}.");
+        if (input.MethodName == nameof(State.TokenContract.Transfer) &&
+            input.ContractAddress == State.TokenContract.Value)
+        {
+            var transferInput = TransferInput.Parser.ParseFrom(input.Args);
+            UpdateDailyTransferredAmount(input.CaHash, input.GuardiansApproved, transferInput.Symbol,
+                transferInput.Amount);
+        }
+
+        Context.SendVirtualInline(input.CaHash, input.ContractAddress, input.MethodName, input.Args, true);
         return new Empty();
     }
 
@@ -240,15 +239,15 @@ public partial class CAContract
         Assert(input.CaHash != null, "CA hash is null.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
         Assert(input.To != null && !string.IsNullOrWhiteSpace(input.Symbol), "Invalid input.");
-        Context.SendVirtualInline(input.CaHash, State.TokenContract.Value,
-            nameof(State.TokenContract.Transfer),
+        UpdateDailyTransferredAmount(input.CaHash, input.GuardiansApproved, input.Symbol, input.Amount);
+        Context.SendVirtualInline(input.CaHash, State.TokenContract.Value, nameof(State.TokenContract.Transfer),
             new TransferInput
             {
                 To = input.To,
                 Amount = input.Amount,
                 Symbol = input.Symbol,
                 Memo = input.Memo
-            }.ToByteString());
+            }.ToByteString(), true);
         return new Empty();
     }
 
@@ -267,7 +266,49 @@ public partial class CAContract
                 Amount = input.Amount,
                 Symbol = input.Symbol,
                 Memo = input.Memo
-            }.ToByteString());
+            }.ToByteString(), true);
+        return new Empty();
+    }
+
+    public override Empty ManagerApprove(ManagerApproveInput input)
+    {
+        Assert(input != null, "invalid input");
+        Assert(input.CaHash != null, "CA hash is null.");
+        Assert(input.Symbol != null, "symbol is null.");
+        Assert(input.Spender != null && !input.Spender.Value.IsNullOrEmpty(), "Invalid input address.");
+        CheckManagerInfoPermission(input.CaHash, Context.Sender);
+        GuardianApprovedCheck(input.CaHash, input.GuardiansApproved, OperationType.Approve,
+            nameof(OperationType.Approve).ToLower());
+        Context.SendVirtualInline(input.CaHash, State.TokenContract.Value,
+            nameof(State.TokenContract.Approve),
+            new ApproveInput
+            {
+                Spender = input.Spender,
+                Amount = input.Amount,
+                Symbol = input.Symbol,
+            }.ToByteString(), true);
+        Context.Fire(new ManagerApproved
+        {
+            CaHash = input.CaHash,
+            Spender = input.Spender,
+            Amount = input.Amount,
+            Symbol = input.Symbol,
+        });
+        return new Empty();
+    }
+
+    public override Empty SetForbiddenForwardCallContractMethod(SetForbiddenForwardCallContractMethodInput input)
+    {
+        Assert(input != null && input.Address != null, "Invalid input");
+        Assert(Context.Sender == State.Admin.Value, "No permission.");
+        Assert(!string.IsNullOrWhiteSpace(input.MethodName), "MethodName cannot be empty");
+        State.ForbiddenForwardCallContractMethod[input.Address][input.MethodName.ToLower()] = input.Forbidden;
+        Context.Fire(new ForbiddenForwardCallContractMethodChanged
+        {
+            MethodName = input.MethodName,
+            Address = input.Address,
+            Forbidden = input.Forbidden
+        });
         return new Empty();
     }
 
@@ -280,5 +321,30 @@ public partial class CAContract
     private ManagerInfo FindManagerInfo(RepeatedField<ManagerInfo> managerInfos, Address address)
     {
         return managerInfos.FirstOrDefault(s => s.Address == address);
+    }
+    
+    /// <summary>
+    /// When all 'VerificationDoc.Length >= 8', there is no need to verify the 'CreateChain'.
+    /// </summary>
+    /// <param name="guardianApproved"></param>
+    /// <returns></returns>
+    private bool NeedToCheckCreateChain(RepeatedField<GuardianInfo> guardianApproved)
+    {
+        if (guardianApproved.Count == 0)
+        {
+            return true;
+        }
+
+        foreach (var guardianInfo in guardianApproved)
+        {
+            if (guardianInfo?.VerificationInfo == null ||
+                string.IsNullOrWhiteSpace(guardianInfo.VerificationInfo.VerificationDoc) ||
+                GetVerificationDocLength(guardianInfo.VerificationInfo.VerificationDoc) < 8)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -10,8 +10,6 @@ public partial class CAContract
 {
     public override Empty AddVerifierServerEndPoints(AddVerifierServerEndPointsInput input)
     {
-        // Assert(Context.Sender.Equals(State.Admin.Value),
-        //     "Only Admin has permission to add VerifierServerEndPoints");
         Assert(State.ServerControllers.Value.Controllers.Contains(Context.Sender), "No permission");
         Assert(input != null, "invalid input");
         Assert(!string.IsNullOrWhiteSpace(input!.Name), "invalid input name");
@@ -22,12 +20,25 @@ public partial class CAContract
 
         State.VerifiersServerList.Value ??= new VerifierServerList();
 
-        var serverId = HashHelper.ConcatAndCompute(Context.TransactionId,
-            HashHelper.ComputeFrom(Context.Self));
-
+        var isSpecifyVerifierId = IsValidHash(input.VerifierId);
         var verifierServerList = State.VerifiersServerList.Value;
-        var server = verifierServerList.VerifierServers
-            .FirstOrDefault(server => server.Name == input.Name);
+        var serverId = isSpecifyVerifierId ? input.VerifierId : HashHelper.ConcatAndCompute(Context.TransactionId,
+            HashHelper.ComputeFrom(Context.Self));
+        var server = verifierServerList.VerifierServers.FirstOrDefault(o => o.Id == serverId);
+        if (server != null)
+        {
+            Assert(server.Name == input.Name, "not support update name");
+        }
+        else
+        {
+            server = verifierServerList.VerifierServers.FirstOrDefault(o => o.Name == input.Name);
+            if (server != null)
+            {
+                Assert(!isSpecifyVerifierId, "verifierServer name existed");
+                serverId = server.Id;
+                server.ImageUrl = input.ImageUrl;
+            }
+        }
 
         if (server == null)
         {
@@ -84,13 +95,11 @@ public partial class CAContract
 
     public override Empty RemoveVerifierServerEndPoints(RemoveVerifierServerEndPointsInput input)
     {
-        // Assert(Context.Sender.Equals(State.Admin.Value),
-        //     "Only Admin has permission to remove VerifierServerEndPoints");
         Assert(State.ServerControllers.Value.Controllers.Contains(Context.Sender), "No permission");
         Assert(input != null, "invalid input");
         Assert(IsValidHash(input!.Id), "invalid input id");
         Assert(input.EndPoints != null && input.EndPoints.Count > 0, "invalid input endPoints");
-        if (State.VerifiersServerList.Value == null) return new Empty();
+        if (State.VerifiersServerList.Value == null || State.VerifiersServerList.Value.VerifierServers.Count == 0) return new Empty();
 
         var server = State.VerifiersServerList.Value.VerifierServers
             .FirstOrDefault(server => server.Id == input.Id);
@@ -126,8 +135,6 @@ public partial class CAContract
 
     public override Empty RemoveVerifierServer(RemoveVerifierServerInput input)
     {
-        // Assert(Context.Sender.Equals(State.Admin.Value),
-        //     "Only Admin has permission to remove VerifierServer");
         Assert(State.ServerControllers.Value.Controllers.Contains(Context.Sender), "No permission");
         Assert(input != null, "invalid input");
         Assert(IsValidHash(input!.Id), "invalid input id");
@@ -159,7 +166,6 @@ public partial class CAContract
         {
             output.VerifierServers.Add(verifierServerList.VerifierServers);
         }
-
         return output;
     }
 }

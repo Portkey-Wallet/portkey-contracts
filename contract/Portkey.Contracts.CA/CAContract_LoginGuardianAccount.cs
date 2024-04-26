@@ -1,6 +1,7 @@
 using System.Linq;
 using AElf.Sdk.CSharp;
 using AElf.Types;
+using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
 
 namespace Portkey.Contracts.CA;
@@ -13,52 +14,80 @@ public partial class CAContract
         Assert(input != null, "input should not be null");
         Assert(input!.CaHash != null, "CaHash should not be null");
         // Guardian should be valid, not null, and be with non-null Value
-        Assert(input.Guardian != null, "Guardian should not be null");
-        Assert(IsValidHash(input.Guardian!.IdentifierHash), "Guardian IdentifierHash should not be null");
+        Assert(input.GuardianToSetLogin != null, "GuardianToSetLogin should not be null");
+        Assert(input.GuardiansApproved.Count > 0, "GuardiansApproved should not be empty.");
+        Assert(IsValidHash(input.GuardianToSetLogin.IdentifierHash), "Guardian IdentifierHash should not be null");
+
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
 
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
+        AssertCreateChain(holderInfo);
 
-        var loginGuardian = input.Guardian;
+        var isOccupied = CheckLoginGuardianIsNotOccupied(input.GuardianToSetLogin, input.CaHash);
 
-        var isOccupied = CheckLoginGuardianIsNotOccupied(loginGuardian, input.CaHash);
-
-        Assert(isOccupied != CAContractConstants.LoginGuardianIsOccupiedByOthers,
-            $"The login guardian --{loginGuardian!.IdentifierHash}-- is occupied by others!");
+        Assert(isOccupied != LoginGuardianStatus.IsOccupiedByOthers,
+            $"The login guardian --{input.GuardianToSetLogin!.IdentifierHash}-- is occupied by others!");
 
         // for idempotent
-        if (isOccupied == CAContractConstants.LoginGuardianIsYours)
+        if (isOccupied == LoginGuardianStatus.IsYours)
         {
             return new Empty();
         }
 
-        Assert(isOccupied == CAContractConstants.LoginGuardianIsNotOccupied,
+        Assert(isOccupied == LoginGuardianStatus.IsNotOccupied,
             "Internal error, how can it be?");
 
         var guardian = holderInfo.GuardianList!.Guardians.FirstOrDefault(t =>
-            t.VerifierId == input.Guardian.VerifierId && t.IdentifierHash == input.Guardian.IdentifierHash &&
-            t.Type == input.Guardian.Type);
+            t.VerifierId == input.GuardianToSetLogin.VerificationInfo.Id && t.IdentifierHash == input.GuardianToSetLogin.IdentifierHash &&
+            t.Type == input.GuardianToSetLogin.Type);
 
         if (guardian == null)
         {
             return new Empty();
         }
 
+        var methodName = nameof(OperationType.SetLoginAccount).ToLower();
+        input.GuardiansApproved.Add(input.GuardianToSetLogin);
+        var guardianApprovedCount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved, methodName);
+        var holderJudgementStrategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
+        Assert(IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count, guardianApprovedCount,
+            holderJudgementStrategy), "JudgementStrategy validate failed");
+
         guardian.IsLoginGuardian = true;
 
-        State.LoginGuardianMap[loginGuardian.IdentifierHash][loginGuardian.VerifierId] = input.CaHash;
+        State.LoginGuardianMap[input.GuardianToSetLogin.IdentifierHash][input.GuardianToSetLogin.VerificationInfo.Id] = input.CaHash;
 
-        State.GuardianMap[loginGuardian.IdentifierHash] = input.CaHash;
-
+        State.GuardianMap[input.GuardianToSetLogin.IdentifierHash] = input.CaHash;
+        
+        var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
+        
         Context.Fire(new LoginGuardianAdded
         {
             CaHash = input.CaHash,
-            CaAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash),
+            CaAddress = caAddress,
             LoginGuardian = guardian,
             Manager = Context.Sender
         });
 
         return new Empty();
+    }
+
+    private int GetGuardianApprovedCount(Hash cahHash, RepeatedField<GuardianInfo> guardianApproved, string methodName,
+        string operationDetails = null)
+    {
+        var guardianApprovedCount = 0;
+        var guardianApprovedList = guardianApproved
+            .DistinctBy(g => $"{g.Type}{g.IdentifierHash}{g.VerificationInfo.Id}")
+            .ToList();
+        foreach (var guardianInfo in guardianApprovedList)
+        {
+            if (!IsGuardianExist(cahHash, guardianInfo)) continue;
+            var isApproved = CheckVerifierSignatureAndData(guardianInfo, methodName, cahHash, operationDetails);
+            if (!isApproved) continue;
+            guardianApprovedCount++;
+        }
+
+        return guardianApprovedCount;
     }
 
     // Unset a Guardian for login, if already unset, return ture
@@ -67,71 +96,75 @@ public partial class CAContract
         Assert(input != null, "Invalid input");
         Assert(input!.CaHash != null, "CaHash can not be null");
         // Guardian should be valid, not null, and be with non-null Value
-        Assert(input.Guardian != null, "Guardian can not be null");
-        Assert(IsValidHash(input.Guardian!.IdentifierHash), "Guardian IdentifierHash can not be null");
+        Assert(input.GuardianToUnsetLogin != null, "GuardianToUnsetLogin should not be null");
+        Assert(input.GuardiansApproved.Count > 0, "GuardiansApproved should not be empty.");
+        Assert(IsValidHash(input.GuardianToUnsetLogin.IdentifierHash), "Guardian IdentifierHash should not be null");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
 
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
-
+        AssertCreateChain(holderInfo);
         // if CAHolder only have one LoginGuardian,not Allow Unset;
         Assert(holderInfo.GuardianList!.Guardians.Count(g => g.IsLoginGuardian) > 1,
             "only one LoginGuardian,can not be Unset");
-        var loginGuardian = input.Guardian;
-
-        // if (State.LoginGuardianMap[loginGuardian.IdentifierHash][input.Guardian.VerifierId] == null ||
-        //     State.LoginGuardianMap[loginGuardian.IdentifierHash][input.Guardian.VerifierId] != input.CaHash)
-        // {
-        //     return new Empty();
-        // }
-
+        
         var guardian = holderInfo.GuardianList!.Guardians.FirstOrDefault(t =>
-            t.VerifierId == input.Guardian.VerifierId && t.IdentifierHash == input.Guardian.IdentifierHash &&
-            t.Type == input.Guardian.Type);
+            t.VerifierId == input.GuardianToUnsetLogin.VerificationInfo.Id && t.IdentifierHash == input.GuardianToUnsetLogin.IdentifierHash &&
+            t.Type == input.GuardianToUnsetLogin.Type);
 
         if (guardian == null || !guardian.IsLoginGuardian)
         {
             return new Empty();
-        } 
+        }
+
+        var methodName = nameof(OperationType.UnSetLoginAccount).ToLower();
+        input.GuardiansApproved.Add(input.GuardianToUnsetLogin);
+        var guardianApprovedCount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved, methodName);
+        var holderJudgementStrategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
+        Assert(IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count, guardianApprovedCount,
+            holderJudgementStrategy), "JudgementStrategy validate failed");
 
         guardian.IsLoginGuardian = false;
 
-        State.LoginGuardianMap[loginGuardian.IdentifierHash].Remove(input.Guardian.VerifierId);
+        State.LoginGuardianMap[input.GuardianToUnsetLogin.IdentifierHash].Remove(input.GuardianToUnsetLogin.VerificationInfo.Id);
 
+        var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
         Context.Fire(new LoginGuardianRemoved
         {
             CaHash = input.CaHash,
-            CaAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash),
+            CaAddress = caAddress,
             LoginGuardian = guardian,
             Manager = Context.Sender
         });
 
+        
+
         // not found, or removed and be registered by others later, quit to be idempotent
         if (holderInfo.GuardianList.Guardians.Where(g =>
-                g.IdentifierHash == loginGuardian.IdentifierHash).All(g => !g.IsLoginGuardian))
+                g.IdentifierHash == input.GuardianToUnsetLogin.IdentifierHash).All(g => !g.IsLoginGuardian))
         {
-            State.GuardianMap.Remove(loginGuardian.IdentifierHash);
+            State.GuardianMap.Remove(input.GuardianToUnsetLogin.IdentifierHash);
             Context.Fire(new LoginGuardianUnbound
             {
                 CaHash = input.CaHash,
-                CaAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash),
-                LoginGuardianIdentifierHash = loginGuardian.IdentifierHash,
+                CaAddress = caAddress,
+                LoginGuardianIdentifierHash = input.GuardianToUnsetLogin.IdentifierHash,
                 Manager = Context.Sender
             });
         }
-
+        
         return new Empty();
     }
 
-    private int CheckLoginGuardianIsNotOccupied(Guardian guardian, Hash caHash)
+    private LoginGuardianStatus CheckLoginGuardianIsNotOccupied(GuardianInfo guardian, Hash caHash)
     {
-        var result = State.LoginGuardianMap[guardian.IdentifierHash][guardian.VerifierId];
+        var result = State.LoginGuardianMap[guardian.IdentifierHash][guardian.VerificationInfo.Id];
         if (result == null)
         {
-            return CAContractConstants.LoginGuardianIsNotOccupied;
+            return LoginGuardianStatus.IsNotOccupied;
         }
 
         return result == caHash
-            ? CAContractConstants.LoginGuardianIsYours
-            : CAContractConstants.LoginGuardianIsOccupiedByOthers;
+            ? LoginGuardianStatus.IsYours
+            : LoginGuardianStatus.IsOccupiedByOthers;
     }
 }

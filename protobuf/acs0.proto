@@ -58,17 +58,38 @@ service ACS0 {
 
 message ContractInfo
 {
+    // The serial number of the contract.
     int64 serial_number = 1;
+    // The author of the contract, this is the person who deployed the contract.
     aelf.Address author = 2;
+    // The category of contract code(0: C#).
     sint32 category = 3;
+    // The hash of the contract code.
     aelf.Hash code_hash = 4;
+    // Whether it is a system contract.
     bool is_system_contract = 5;
+    // The version of the current contract.
     int32 version = 6;
+    string contract_version = 7;
+    // Indicates if the contract is the user contract.
+    bool is_user_contract = 8;
+    // The address for deploying the contract
+    aelf.Address deployer = 9;
 }
 
 message ContractDeploymentInput {
     sint32 category = 1;
     bytes code = 2;
+    ContractOperation contract_operation = 3;
+}
+
+message ContractOperation{
+    int32 chain_id = 1;
+    aelf.Hash code_hash = 2;
+    aelf.Address deployer = 3;
+    aelf.Hash salt = 4;
+    int32 version = 5;
+    bytes signature = 10000;
 }
 
 message SystemContractDeploymentInput {
