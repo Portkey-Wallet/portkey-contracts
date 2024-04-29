@@ -1,5 +1,8 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using AElf;
 using AElf.Contracts.MultiToken;
+using AElf.Cryptography;
 using AElf.Standards.ACS3;
 using AElf.Types;
 using Google.Protobuf;
@@ -8,12 +11,23 @@ using Xunit;
 
 namespace Portkey.Contracts.CA;
 
-public class CAContractParallelTest : CAContractTestBase
+public partial class  CAContractTests
 {
     [Fact]
     public async Task ACS2_GetResourceInfo_ManagerForwardCall_Test()
     {
         await SetManagerForwardCallParallel_Test();
+        await TokenContractStub.SetTransactionFeeDelegations.SendAsync(new SetTransactionFeeDelegationsInput
+        {
+            DelegatorAddress = Accounts[0].Address,
+            Delegations =
+            {
+                new Dictionary<string, long>
+                {
+                    [CAContractConstants.ELFTokenSymbol] = 100000000
+                }
+            }
+        });
         var transaction = GenerateCaTransaction(Accounts[0].Address, nameof(CaContractStub.ManagerForwardCall),
             GetManagerForwardCallInput()
         );
@@ -21,6 +35,22 @@ public class CAContractParallelTest : CAContractTestBase
         var result = await Acs2BaseStub.GetResourceInfo.CallAsync(transaction);
         result.NonParallelizable.ShouldBeFalse();
         result.WritePaths.Count.ShouldBeGreaterThan(0);
+        
+        await CaContractStub.SetManagerForwardCallParallelInfo.SendAsync(
+            new SetManagerForwardCallParallelInfoInput
+            {
+                ContractAddress = TokenContractAddress,
+                MethodName = nameof(TokenContractStub.Transfer),
+                IsParallel = false 
+            });
+        var result1 = await Acs2BaseStub.GetResourceInfo.CallAsync(transaction);
+        result1.NonParallelizable.ShouldBeTrue();
+        
+        var transaction1 = GenerateCaTransaction(Accounts[0].Address, nameof(CaContractStub.AddManagerInfo),
+            new AddManagerInfoInput()
+        );
+        var result2 = await Acs2BaseStub.GetResourceInfo.CallAsync(transaction1);
+        result2.NonParallelizable.ShouldBeTrue();
     }
 
     [Fact]
@@ -131,7 +161,15 @@ public class CAContractParallelTest : CAContractTestBase
                 To = DefaultAddress,
                 Symbol = "ELF",
                 Amount = 100,
-            }.ToByteString()
+            }.ToByteString(),
+            GuardiansApproved = { new GuardianInfo
+            {
+                VerificationInfo = new VerificationInfo
+                {
+                    Signature = ByteStringHelper.FromHexString(CryptoHelper.SignWithPrivateKey(
+                        DefaultKeyPair.PrivateKey, HashHelper.ComputeFrom("AAA").ToByteArray()).ToHex())
+                }
+            } }
         };
     }
 
