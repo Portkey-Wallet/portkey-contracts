@@ -26,7 +26,7 @@ public partial class CAContract
 
         var methodName = nameof(OperationType.AddGuardian).ToLower();
         //Check the verifier signature and data of the guardian to be added.
-        var operateDetails = $"{input.GuardianToAdd.IdentifierHash.ToHex()}_{input.GuardianToAdd.Type}_{input.GuardianToAdd.VerificationInfo.Id.ToHex()}";
+        var operateDetails = $"{input.GuardianToAdd.IdentifierHash.ToHex()}_{(int)input.GuardianToAdd.Type}_{input.GuardianToAdd.VerificationInfo.Id.ToHex()}";
         var guardianApprovedCount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved, methodName, operateDetails);
 
         if (!CheckVerifierSignatureAndData(input.GuardianToAdd, methodName, input.CaHash))
@@ -105,7 +105,7 @@ public partial class CAContract
                 "Guardian approved list contains to removed guardian.");
         }
 
-        var operateDetails = $"{input.GuardianToRemove.IdentifierHash.ToHex()}_{input.GuardianToRemove.Type}_{input.GuardianToRemove.VerificationInfo.Id.ToHex()}";
+        var operateDetails = $"{input.GuardianToRemove.IdentifierHash.ToHex()}_{(int)input.GuardianToRemove.Type}_{input.GuardianToRemove.VerificationInfo.Id.ToHex()}";
         var guardianApprovedCount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved,
             nameof(OperationType.RemoveGuardian).ToLower(), operateDetails);
 
@@ -197,7 +197,7 @@ public partial class CAContract
                 "Guardian approved list contains to updated guardian.");
         }
 
-        var operateDetails = $"{input.GuardianToUpdatePre.IdentifierHash.ToHex()}_{input.GuardianToUpdatePre.Type}_" +
+        var operateDetails = $"{input.GuardianToUpdatePre.IdentifierHash.ToHex()}_{(int)input.GuardianToUpdatePre.Type}_" +
                              $"{input.GuardianToUpdatePre.VerificationInfo.Id.ToHex()}_{input.GuardianToUpdateNew.VerificationInfo.Id.ToHex()}";
         var guardianApprovedCount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved,
             nameof(OperationType.UpdateGuardian).ToLower(), operateDetails);

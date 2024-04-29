@@ -1187,8 +1187,9 @@ public partial class CAContractTests
         var verificationTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
         var operationType = Convert.ToInt32(OperationType.RemoveOtherManagerInfo).ToString();
+        var operateDetails = $"{User1Address.ToBase58()}";
         var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0, salt,
-            operationType);
+            operationType, MainChainId, operateDetails);
         var caInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput()
         {
             LoginGuardianIdentifierHash = _guardian
@@ -1213,7 +1214,8 @@ public partial class CAContractTests
                         Id = _verifierId,
                         Signature = signature,
                         VerificationDoc =
-                            $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType},{MainChainId}"
+                            $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType}," +
+                            $"{MainChainId},{HashHelper.ComputeFrom(operateDetails).ToHex()}"
                     }
                 }
             }
@@ -1738,8 +1740,9 @@ public partial class CAContractTests
         var approveVerifyTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
         var approveOpType = Convert.ToInt32(OperationType.Approve).ToString();
+        var operateDetails = $"{User2Address.ToBase58()}_ELF_10000"; 
         var approveSign = GenerateSignature(VerifierKeyPair, VerifierAddress, approveVerifyTime, _guardian, 0, salt,
-            approveOpType);
+            approveOpType, MainChainId, operateDetails);
         await CaContractStubManagerInfo1.ManagerApprove.SendAsync(new ManagerApproveInput
         {
             CaHash = _transferLimitTestCaHash,
@@ -1755,7 +1758,8 @@ public partial class CAContractTests
                         Id = _verifierServers[0].Id,
                         Signature = approveSign,
                         VerificationDoc =
-                            $"{0},{_guardian.ToHex()},{approveVerifyTime},{VerifierAddress.ToBase58()},{salt},{approveOpType},{MainChainId}"
+                            $"{0},{_guardian.ToHex()},{approveVerifyTime},{VerifierAddress.ToBase58()},{salt},{approveOpType}," +
+                            $"{MainChainId},{HashHelper.ComputeFrom(operateDetails).ToHex()}"
                     }
                 }
             },
