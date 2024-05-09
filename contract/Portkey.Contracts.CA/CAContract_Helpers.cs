@@ -265,9 +265,7 @@ public partial class CAContract
         string operationDetails)
     {
         if (State.CheckOperationDetailsInSignatureEnabled.Value
-            || (verifierDoc.Length >= 8 &&
-                (operationTypeName == nameof(OperationType.CreateCaholder).ToLower() ||
-                 operationTypeName == nameof(OperationType.SocialRecovery).ToLower())))
+            || verifierDoc.Length >= 8)
         {
             if (verifierDoc.Length < 8 || string.IsNullOrWhiteSpace(verifierDoc[7]) ||
                 string.IsNullOrWhiteSpace(operationDetails))
