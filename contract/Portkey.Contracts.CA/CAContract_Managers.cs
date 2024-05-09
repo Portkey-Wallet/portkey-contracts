@@ -119,8 +119,9 @@ public partial class CAContract
 
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
 
+        var operateDetails = input.ManagerInfo.Address.ToBase58();
         var guardianApprovedCount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved,
-            nameof(OperationType.RemoveOtherManagerInfo).ToLower());
+            nameof(OperationType.RemoveOtherManagerInfo).ToLower(), operateDetails);
 
         //Whether the approved guardians count is satisfied.
         var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count,
@@ -227,7 +228,7 @@ public partial class CAContract
         {
             var transferInput = TransferInput.Parser.ParseFrom(input.Args);
             UpdateDailyTransferredAmount(input.CaHash, input.GuardiansApproved, transferInput.Symbol,
-                transferInput.Amount);
+                transferInput.Amount, transferInput.To);
         }
 
         Context.SendVirtualInline(input.CaHash, input.ContractAddress, input.MethodName, input.Args, true);
@@ -239,7 +240,7 @@ public partial class CAContract
         Assert(input.CaHash != null, "CA hash is null.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
         Assert(input.To != null && !string.IsNullOrWhiteSpace(input.Symbol), "Invalid input.");
-        UpdateDailyTransferredAmount(input.CaHash, input.GuardiansApproved, input.Symbol, input.Amount);
+        UpdateDailyTransferredAmount(input.CaHash, input.GuardiansApproved, input.Symbol, input.Amount, input.To);
         Context.SendVirtualInline(input.CaHash, State.TokenContract.Value, nameof(State.TokenContract.Transfer),
             new TransferInput
             {
@@ -277,8 +278,9 @@ public partial class CAContract
         Assert(input.Symbol != null, "symbol is null.");
         Assert(input.Spender != null && !input.Spender.Value.IsNullOrEmpty(), "Invalid input address.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
+        var operateDetails = $"{input.Spender.ToBase58()}_{input.Symbol}_{input.Amount}"; 
         GuardianApprovedCheck(input.CaHash, input.GuardiansApproved, OperationType.Approve,
-            nameof(OperationType.Approve).ToLower());
+            nameof(OperationType.Approve).ToLower(), operateDetails);
         Context.SendVirtualInline(input.CaHash, State.TokenContract.Value,
             nameof(State.TokenContract.Approve),
             new ApproveInput
