@@ -1766,6 +1766,81 @@ public partial class CAContractTests
             Symbol = "ELF",
             Amount = 10000
         });
+        
+        var executionResult = await CaContractStubManagerInfo1.ManagerApprove.SendWithExceptionAsync(new ManagerApproveInput
+        {
+            CaHash = _transferLimitTestCaHash,
+            Spender = User2Address,
+            Symbol = "ELF",
+            Amount = 10000
+        });
+        executionResult.TransactionResult.Error.ShouldContain("invalid input Guardians Approved");
+        await CaContractStub.AddManagerApproveSpenderWhitelist.SendAsync(
+            new AddManagerApproveSpenderWhitelistInput
+            {
+                SpenderList = { User2Address }
+            });
+        await CaContractStubManagerInfo1.ManagerApprove.SendAsync(new ManagerApproveInput
+        {
+            CaHash = _transferLimitTestCaHash,
+            Spender = User2Address,
+            Symbol = "ELF",
+            Amount = 10000
+        });
+    }
+
+    [Fact]
+    public async Task ManagerApproveSpenderWhitelistTest()
+    {
+        await CaContractStub.Initialize.SendAsync(new InitializeInput
+        {
+            ContractAdmin = DefaultAddress,
+        });
+        await TokenContractStub.Transfer.SendAsync(new TransferInput()
+        {
+            Symbol = "ELF",
+            To = User1Address,
+            Amount = 10000000000
+        });
+        var executionResult = await CaContractStubManagerInfo1.AddManagerApproveSpenderWhitelist.SendWithExceptionAsync(
+            new AddManagerApproveSpenderWhitelistInput
+            {
+                SpenderList = {  }
+            });
+        executionResult.TransactionResult.Error.ShouldContain("Invalid input");
+        var executionResult1 = await CaContractStubManagerInfo1.AddManagerApproveSpenderWhitelist.SendWithExceptionAsync(
+            new AddManagerApproveSpenderWhitelistInput
+            {
+                SpenderList = { TokenContractAddress }
+            });
+        executionResult1.TransactionResult.Error.ShouldContain("No permission.");
+        await CaContractStub.AddManagerApproveSpenderWhitelist.SendAsync(
+            new AddManagerApproveSpenderWhitelistInput
+            {
+                SpenderList = { TokenContractAddress }
+            });
+        var checkSpender = await CaContractStub.CheckInManagerApproveSpenderWhitelist.CallAsync(TokenContractAddress);
+        checkSpender.Value.ShouldBeTrue();
+        
+        var executionResult5 = await CaContractStubManagerInfo1.RemoveManagerApproveSpenderWhitelist.SendWithExceptionAsync(
+            new RemoveManagerApproveSpenderWhitelistInput
+            {
+                SpenderList = {  }
+            });
+        executionResult5.TransactionResult.Error.ShouldContain("Invalid input");
+        var executionResult6 = await CaContractStubManagerInfo1.RemoveManagerApproveSpenderWhitelist.SendWithExceptionAsync(
+            new RemoveManagerApproveSpenderWhitelistInput
+            {
+                SpenderList = { TokenContractAddress }
+            });
+        executionResult6.TransactionResult.Error.ShouldContain("No permission.");
+        await CaContractStub.RemoveManagerApproveSpenderWhitelist.SendAsync(
+            new RemoveManagerApproveSpenderWhitelistInput
+            {
+                SpenderList = { TokenContractAddress }
+            });
+        var checkSpender1 = await CaContractStub.CheckInManagerApproveSpenderWhitelist.CallAsync(TokenContractAddress);
+        checkSpender1.Value.ShouldBeFalse();
     }
 
     [Fact]
