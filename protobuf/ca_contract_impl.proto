@@ -68,6 +68,18 @@ service CAContractImpl {
   rpc AddTransactionWhitelist (WhitelistTransactions) returns (google.protobuf.Empty){}
   rpc RemoveTransactionWhitelist (WhitelistTransactions) returns (google.protobuf.Empty){}
   rpc GetTransactionWhitelist (google.protobuf.Empty) returns (WhitelistTransactions) {option (aelf.is_view) = true;}
+
+  rpc AddManagerApproveSpenderWhitelist (AddManagerApproveSpenderWhitelistInput) returns (google.protobuf.Empty){}
+  rpc RemoveManagerApproveSpenderWhitelist(RemoveManagerApproveSpenderWhitelistInput) returns (google.protobuf.Empty){}
+  rpc CheckInManagerApproveSpenderWhitelist (aelf.Address) returns (google.protobuf.BoolValue) {option (aelf.is_view) = true;}
+}
+
+message AddManagerApproveSpenderWhitelistInput {
+  repeated aelf.Address spender_list = 1;
+}
+
+message RemoveManagerApproveSpenderWhitelistInput {
+  repeated aelf.Address spender_list = 1;
 }
 
 message ManagerApproveInput {
