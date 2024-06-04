@@ -49,6 +49,7 @@ public partial class CAContractState : ContractState
     public MappedState<Hash, string, TransferredAmount> DailyTransferredAmountMap { get; set; }
     public MappedState<string, TransferLimit> TokenDefaultTransferLimit { get; set; }
     public MappedState<Address, string, bool> ForbiddenForwardCallContractMethod { get; set; }
+    public MappedState<Address, bool> ManagerApproveSpenderWhitelistMap { get; set; }
     public SingletonState<ProjectDelegationFee> ProjectDelegationFee { get; set; }
     public MappedState<Hash, ProjectDelegateInfo> ProjectDelegateInfo { get; set; }
     public SingletonState<Hash> CaProjectDelegateHash { get; set; }

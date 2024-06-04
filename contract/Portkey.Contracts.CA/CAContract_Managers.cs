@@ -278,9 +278,17 @@ public partial class CAContract
         Assert(input.Symbol != null, "symbol is null.");
         Assert(input.Spender != null && !input.Spender.Value.IsNullOrEmpty(), "Invalid input address.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
-        var operateDetails = $"{input.Spender.ToBase58()}_{input.Symbol}_{input.Amount}"; 
-        GuardianApprovedCheck(input.CaHash, input.GuardiansApproved, OperationType.Approve,
-            nameof(OperationType.Approve).ToLower(), operateDetails);
+        if (input.GuardiansApproved.Count > 0)
+        {
+            var operateDetails = $"{input.Spender.ToBase58()}_{input.Symbol}_{input.Amount}"; 
+            GuardianApprovedCheck(input.CaHash, input.GuardiansApproved, OperationType.Approve,
+                nameof(OperationType.Approve).ToLower(), operateDetails);
+        }
+        else
+        {
+            Assert(State.ManagerApproveSpenderWhitelistMap[input.Spender],
+                "invalid input Guardians Approved");
+        }
         Context.SendVirtualInline(input.CaHash, State.TokenContract.Value,
             nameof(State.TokenContract.Approve),
             new ApproveInput
@@ -298,6 +306,39 @@ public partial class CAContract
         });
         return new Empty();
     }
+
+    public override Empty AddManagerApproveSpenderWhitelist(AddManagerApproveSpenderWhitelistInput input)
+    {
+        Assert(input != null && input.SpenderList.Count > 0, "Invalid input");
+        Assert(Context.Sender == State.Admin.Value, "No permission.");
+        foreach (var spender in input.SpenderList)
+        {
+            Assert(!spender.Value.IsNullOrEmpty(), "Invalid input");
+            State.ManagerApproveSpenderWhitelistMap[spender] = true;
+        }
+        return new Empty();
+    }
+
+    public override Empty RemoveManagerApproveSpenderWhitelist(RemoveManagerApproveSpenderWhitelistInput input)
+    {
+        Assert(input != null && input.SpenderList.Count > 0, "Invalid input");
+        Assert(Context.Sender == State.Admin.Value, "No permission.");
+        foreach (var spender in input.SpenderList)
+        {
+            Assert(!spender.Value.IsNullOrEmpty(), "Invalid input");
+            State.ManagerApproveSpenderWhitelistMap[spender] = false;
+        }
+        return new Empty();
+    }
+
+    public override BoolValue CheckInManagerApproveSpenderWhitelist(Address input)
+    {
+        return new BoolValue
+        {
+            Value = State.ManagerApproveSpenderWhitelistMap[input]
+        };
+    }
+
 
     public override Empty SetForbiddenForwardCallContractMethod(SetForbiddenForwardCallContractMethodInput input)
     {
