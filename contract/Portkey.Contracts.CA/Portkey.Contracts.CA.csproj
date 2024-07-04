@@ -18,6 +18,9 @@
         <CommonMessage Include="..\..\protobuf\authority_info.proto">
             <Link>Protobuf\Proto\authority_info.proto</Link>
         </CommonMessage>
+	<CommonMessage Include="..\..\protobuf\oracle_common_message.proto">
+            <Link>Protobuf\Proto\oracle_common_message.proto</Link>
+        </CommonMessage>
     </ItemGroup>
     <ItemGroup>
         <ContractReference Include="..\..\protobuf\acs0.proto">
@@ -50,6 +53,9 @@
         <ContractReference Include="..\..\protobuf\configuration_contract.proto">
             <Link>Protobuf\Proto\reference\configuration_contract.proto</Link>
         </ContractReference>
+	<ContractReference Include="..\..\protobuf\oracle_contract.proto">
+            <Link>Protobuf\Proto\reference\oracle_contract.proto</Link>
+        </ContractReference>
     </ItemGroup>
     
     <ItemGroup>
@@ -75,5 +81,15 @@
         <ContractReference Include="..\..\protobuf\token_contract_impl.proto">
             <Link>Protobuf\Proto\reference\token_contract_impl.proto</Link>
         </ContractReference>
+    </ItemGroup>
+    <ItemGroup>
+    	<ContractBase Include="..\..\protobuf\request_interface.proto">
+           <Link>Protobuf\Proto\request_interface.proto</Link>
+        </ContractBase>
+    </ItemGroup>
+    <ItemGroup>
+      <PackageReference Include="Groth16.Net" Version="1.0.3" />
+      <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="7.5.0" />
+      <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     </ItemGroup>
 </Project>

@@ -3,8 +3,11 @@ using AElf;
 using AElf.Contracts.MultiToken;
 using AElf.Sdk.CSharp;
 using AElf.Types;
+using AetherLink.Contracts.Consumer;
+using AetherLink.Contracts.Oracle;
 using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
+using Newtonsoft.Json;
 
 namespace Portkey.Contracts.CA;
 
@@ -57,11 +60,25 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         }
 
         holderId = HashHelper.ConcatAndCompute(Context.TransactionId, Context.PreviousBlockHash);
-        if (!CreateCaHolderInfoWithCaHashAndCreateChainId(input.ManagerInfo, input.GuardianApproved,
-                input.JudgementStrategy,
-                holderId, Context.ChainId, out var guardian, out var caAddress))
+        Guardian guardian;
+        Address caAddress;
+        if (IsZkLoginSupported(input.GuardianApproved.Type))
         {
-            return new Empty();
+            if (!CreateCaHolderInfoWithCaHashAndCreateChainIdForZkLogin(input.ManagerInfo, input.GuardianApproved,
+                    input.JudgementStrategy,
+                    holderId, Context.ChainId, out guardian, out caAddress))
+            {
+                return new Empty();
+            }
+        }
+        else
+        {
+            if (!CreateCaHolderInfoWithCaHashAndCreateChainId(input.ManagerInfo, input.GuardianApproved,
+                    input.JudgementStrategy,
+                    holderId, Context.ChainId, out guardian, out caAddress))
+            {
+                return new Empty();
+            }
         }
 
         if (!SetProjectDelegateInfo(holderId, input.DelegateInfo))
@@ -92,6 +109,12 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         FireInvitedLogEvent(holderId, nameof(CreateCAHolder), input.ReferralCode, input.ProjectCode);
         return new Empty();
     }
+
+    // private bool IsZkLoginSupported(GuardianType type)
+    // {
+    //     return GuardianType.OfGoogle.Equals(type) || GuardianType.OfApple.Equals(type) ||
+    //            GuardianType.OfFacebook.Equals(type);
+    // }
 
     private void FireInvitedLogEvent(Hash caHash, string methodName, string referralCode, string projectCode)
     {
@@ -138,12 +161,25 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
 
         // if CAHolder exists
         if (holderId != null || holderInfo != null) return new Empty();
-
-        if (!CreateCaHolderInfoWithCaHashAndCreateChainId(input.ManagerInfo, input.GuardianApproved,
-                input.JudgementStrategy,
-                input.CaHash, input.CreateChainId, out var guardian, out var caAddress))
+        Guardian guardian;
+        Address caAddress;
+        if (IsZkLoginSupported(input.GuardianApproved.Type))
         {
-            return new Empty();
+            if (!CreateCaHolderInfoWithCaHashAndCreateChainIdForZkLogin(input.ManagerInfo, input.GuardianApproved,
+                    input.JudgementStrategy,
+                    holderId, Context.ChainId, out guardian, out caAddress))
+            {
+                return new Empty();
+            }
+        }
+        else
+        {
+            if (!CreateCaHolderInfoWithCaHashAndCreateChainId(input.ManagerInfo, input.GuardianApproved,
+                    input.JudgementStrategy,
+                    input.CaHash, input.CreateChainId, out guardian, out caAddress))
+            {
+                return new Empty();
+            }
         }
 
         SetProjectDelegator(caAddress);
@@ -162,6 +198,62 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
 
         return new Empty();
     }
+    
+    private bool CreateCaHolderInfoWithCaHashAndCreateChainIdForZkLogin(ManagerInfo managerInfo, GuardianInfo guardianApproved,
+        StrategyNode judgementStrategy, Hash holderId, int chainId, out Guardian guardian, out Address caAddress)
+    {
+        //Check zk proof
+        if (!CheckZkLoginVerifierAndData(guardianApproved))
+        {
+            guardian = null;
+            caAddress = null;
+            return false;
+        }
+
+        var guardianIdentifierHash = guardianApproved.IdentifierHash;
+        var holderInfo = new HolderInfo();
+        holderInfo.CreatorAddress = Context.Sender;
+        holderInfo.CreateChainId = chainId;
+        holderInfo.ManagerInfos.Add(managerInfo);
+
+        var salt = guardianApproved.ZkOidcInfo.Salt;
+        guardian = new Guardian
+        {
+            IdentifierHash = guardianApproved.IdentifierHash,
+            Salt = salt,
+            Type = guardianApproved.Type,
+            //todo use circuit_id or verifying_key as verifierId
+            VerifierId = Hash.LoadFromHex(guardianApproved.ZkOidcInfo.CircuitId),
+            IsLoginGuardian = true
+        };
+        //todo for google apple facebook guardian, portkey contract should generate a random old verifier
+        holderInfo.GuardianList = new GuardianList
+        {
+            Guardians = { guardian }
+        };
+
+        holderInfo.JudgementStrategy = judgementStrategy ?? Strategy.DefaultStrategy();
+
+        // Where is the code for double check approved guardians?
+        // Don't forget to assign GuardianApprovedCount
+        var isJudgementStrategySatisfied =
+            IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count, 1, holderInfo.JudgementStrategy);
+        if (!isJudgementStrategySatisfied)
+        {
+            caAddress = null;
+            return false;
+        }
+
+        State.HolderInfoMap[holderId] = holderInfo;
+        State.GuardianMap[guardianIdentifierHash] = holderId;
+        State.LoginGuardianMap[guardianIdentifierHash][guardianApproved.VerificationInfo.Id] = holderId;
+
+        SetDelegator(holderId, managerInfo);
+
+        caAddress = Context.ConvertVirtualAddressToContractAddress(holderId);
+
+        return true;
+    }
 
     private bool CreateCaHolderInfoWithCaHashAndCreateChainId(ManagerInfo managerInfo, GuardianInfo guardianApproved,
         StrategyNode judgementStrategy, Hash holderId, int chainId, out Guardian guardian, out Address caAddress)
@@ -169,6 +261,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         //Check verifier signature.
         var methodName = nameof(CreateCAHolder).ToLower();
         var operationDetail = managerInfo.Address.ToBase58();
+        
         if (!CheckVerifierSignatureAndData(guardianApproved, methodName, chainId == Context.ChainId ? null : holderId,
                 operationDetail))
         {
@@ -320,5 +413,110 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         {
             CheckOperationDetailsEnabled = State.CheckOperationDetailsInSignatureEnabled.Value
         };
+    }
+
+    public override Empty AddJwtIssuer(/*GuardianType guardianType, */StringValue input)
+    {
+        Assert(input != null, "Invalid Issuer.");
+        Assert(!input.Equals(State.JwtIssuers[GuardianType.OfGoogle]), "Google jwt issuer exists");
+        State.JwtIssuers[GuardianType.OfGoogle] = input.Value;
+        return new Empty();
+    }
+
+    public override Empty AddVerifyingKey(VerifyingKey input)
+    {
+        Assert(input != null, "Invalid verifying key.");
+        Assert(!string.IsNullOrEmpty(input.CircuitId), "circuitId is required.");
+        Assert(!string.IsNullOrEmpty(input.VerifyingKey_), "verifying key is required.");
+        State.CircuitIdToVerifyingKey[input.CircuitId] = input;
+        return base.AddVerifyingKey(input);
+    }
+
+    public override BoolValue IsValidIssuer(/*GuardianType guardianType, */StringValue input)
+    {
+        Assert(input != null, "Invalid verifying key.");
+        Assert(State.JwtIssuers[GuardianType.OfGoogle] != null
+            || State.JwtIssuers[GuardianType.OfApple] != null
+            || State.JwtIssuers[GuardianType.OfFacebook] != null, "verifying key doesn't exist.");
+        return new BoolValue
+        {
+            Value = true//State.JwtIssuers[guardianType].Equals(input)
+        };
+    }
+
+    public override VerifyingKey GetVerifyingKey(StringValue input)
+    {
+        Assert(input != null, "Invalid circuitId.");
+        Assert(State.CircuitIdToVerifyingKey[input.Value] != null, "circuitId not exist");
+        return State.CircuitIdToVerifyingKey[input.Value];
+    }
+
+    public override Empty StartOracleRequest(StartOracleRequestInput input)
+    {
+        Assert(input != null, "Invalid input.");
+        Assert(input.SubscriptionId > 0, "Invalid input subscription id.");
+        Assert(input.RequestTypeIndex > 0, "Invalid request type index.");
+
+        State.OracleContract.SendRequest.Send(new SendRequestInput
+        {
+            SubscriptionId = input.SubscriptionId,
+            RequestTypeIndex = input.RequestTypeIndex,
+            SpecificData = input.SpecificData
+        });
+        
+        return new Empty();
+    }
+
+    public override Empty HandleOracleFulfillment(HandleOracleFulfillmentInput input)
+    {
+        Assert(input != null, "Invalid input.");
+        // Assert(IsHashValid(input.RequestId), "Invalid input request id.");
+        Assert(input.RequestTypeIndex > 0, "Invalid request type index.");
+        Assert(!input.Response.IsNullOrEmpty() || !input.Err.IsNullOrEmpty(), "Invalid input response or err.");
+        GoogleResponse reponse = JsonConvert.DeserializeObject<GoogleResponse>(System.Text.Encoding.UTF8.GetString(input.Response.ToByteArray()));
+        Assert(reponse != null, "Invalid input.");
+        //todo aetherlink can't differentiate apple/google/facebook
+        foreach (var googleKeyDto in reponse.Keys)
+        {
+            State.KidToPublicKey[GuardianType.OfGoogle][googleKeyDto.Kid] = googleKeyDto.N;
+        }
+
+        return new Empty();
+    }
+    
+    // {
+    //     "keys": [
+    //     {
+    //         "n": "w-l_VE4KNa22n4nsMwcabujowm924YoQQnwOz_dPYHmDI1O-r2bqw6mHmByXwii7aaeIMHJZWpmT5SkR3OYIu5RbSgiU-8JrQoplW_vZY2IqG1y5-frPC_9gnz_0qKKjtjqglCP-1AlfOdu7r5kOpkOACs5mWn4tm1K9R1EPjk2T_MMO7FkteZd8woh1fwUUuvbhPyDxBzx9EUsnGWbpTndOYc7W-EUk1jMtWBk3buLeaypVaOLWranK_XFrX-xx03BohrfinOqmftYgc0z94sxix7X1G36JZeh8-jpUhwyBPinBxOZOE_5kQn4CYM66Ygxwiws0ZJ-klG2qTi239w",
+    //         "kid": "674dbba8faee69acae1bc1be190453678f472803",
+    //         "e": "AQAB",
+    //         "alg": "RS256",
+    //         "kty": "RSA",
+    //         "use": "sig"
+    //     },
+    //     {
+    //         "e": "AQAB",
+    //         "alg": "RS256",
+    //         "kid": "c3abe413b2268ae976458c82c15179547e97527e",
+    //         "kty": "RSA",
+    //         "use": "sig",
+    //         "n": "rr9RI_trqotRBIi9qTgoYPE4FnjvhIOoolHhi3Lxw3FqK-8vYwczsVEsTzVek3MAUdNNILhJozKN1Snirlrr_albKitJFJ1SbjJe2HsNeZu96TrWMNmWCCUOXK0ecEVdw8gqfGOE-_VvKaIVxYGaJpSystRjRXfrT8QHXNYMSI7xqJI9Obw4IUpwYxky6eVtB3zLW4Qz7cH2jFMsSB3uufdvOA-odJXrwZkC2FX0krVtSyCWzazjHMX0zOCckZVZK7xBNjuuElcnZ4IpGHcHDYtyI004WY-ez7_yxyOHGoJd31Omg39DkunpSQxfA87LLGumtd1OROvQzNFZETDqfw"
+    //     }
+    //     ]
+    // }
+    
+    internal class GoogleResponse
+    {
+        public List<GoogleKeyDto> Keys { get; set; }
+    }
+    
+    internal class GoogleKeyDto
+    {
+        public string N { get; set; }
+        public string Kid { get; set; }
+        public string E { get; set; }
+        public string Alg { get; set; }
+        public string Kty { get; set; }
+        public string Use { get; set; }
     }
 }

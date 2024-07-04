@@ -73,5 +73,10 @@ public partial class CAContractState : ContractState
     /// </summary>
     public MappedState<Hash, Hash> PreCrossChainSyncHolderInfoMarks { get; set; }
     
-
+    //zklogin admin operations key is the verifier type(Google/Apple...) value is the issuer
+    public MappedState<GuardianType, string> JwtIssuers { get; set; }
+    
+    public MappedState<string, VerifyingKey> CircuitIdToVerifyingKey { get; set; }
+    
+    public MappedState<GuardianType, string, string> KidToPublicKey { get; set; }
 }

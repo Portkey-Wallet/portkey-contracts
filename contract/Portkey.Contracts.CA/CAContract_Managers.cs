@@ -6,6 +6,7 @@ using AElf.Types;
 using Google.Protobuf;
 using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Portkey.Contracts.CA;
 
@@ -380,6 +381,11 @@ public partial class CAContract
 
         foreach (var guardianInfo in guardianApproved)
         {
+            //todo make sure there's no need to check for zk login
+            if (CanVerifyWithZkLogin(guardianInfo))
+            {
+                continue;
+            }
             if (guardianInfo?.VerificationInfo == null ||
                 string.IsNullOrWhiteSpace(guardianInfo.VerificationInfo.VerificationDoc) ||
                 GetVerificationDocLength(guardianInfo.VerificationInfo.VerificationDoc) < 8)
@@ -389,5 +395,12 @@ public partial class CAContract
         }
 
         return false;
+    }
+
+    private bool CanVerifyWithZkLogin(GuardianInfo guardianInfo)
+    {
+        return IsZkLoginSupported(guardianInfo.Type) && guardianInfo.ZkOidcInfo != null
+                                                     && !guardianInfo.ZkOidcInfo.Nonce.IsNullOrEmpty()
+                                                     && !guardianInfo.ZkOidcInfo.ZkProof.IsNullOrEmpty();
     }
 }

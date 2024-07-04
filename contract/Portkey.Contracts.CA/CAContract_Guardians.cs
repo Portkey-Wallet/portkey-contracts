@@ -15,6 +15,7 @@ public partial class CAContract
             "Invalid input.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
+        //todo the guardian the supported zk has no verifierId
         Assert(
             holderInfo.GuardianList.Guardians.FirstOrDefault(g =>
                 g.VerifierId == input.GuardianToAdd.VerificationInfo.Id) == null,

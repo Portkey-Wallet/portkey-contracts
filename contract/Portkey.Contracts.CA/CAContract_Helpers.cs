@@ -1,17 +1,146 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Numerics;
+using System.Text;
 using AElf;
 using AElf.Contracts.MultiToken;
 using AElf.CSharp.Core.Extension;
 using AElf.Types;
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
+using Groth16.Net;
+using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
 
 namespace Portkey.Contracts.CA;
 
 public partial class CAContract
 {
+    private const int CircomBigIntN = 121;
+    private const int CiromBigIntK = 17;
+    
+    private bool CheckZkLoginVerifierAndData(GuardianInfo guardianInfo)
+    {
+        // check guardian type
+        if (!IsZkLoginSupported(guardianInfo.Type))
+        {
+            return false;
+        }
+        if (guardianInfo.ZkOidcInfo == null)
+        {
+            return false;
+        }
+        //check circuit id
+        if (State.CircuitIdToVerifyingKey[guardianInfo.ZkOidcInfo.CircuitId] == null
+            || State.JwtIssuers[guardianInfo.Type] == null)
+        {
+            return false;
+        }
+        // check jwt issuer
+        if (!State.JwtIssuers[guardianInfo.Type].Equals(guardianInfo.ZkOidcInfo.Issuer))
+        {
+            return false;
+        }
+        // check nonce
+        if (string.IsNullOrWhiteSpace(guardianInfo.ZkOidcInfo.Nonce))
+        {
+            return false;
+        }
+        // check nonce = sha256(nonce_payload.to_bytes())
+        if (!guardianInfo.ZkOidcInfo.Nonce.Equals(GetSha256Hash(guardianInfo.ZkOidcInfo.NoncePayload.ToByteArray())))
+        {
+            return false;
+        }
+        //todo how to verify the zkproof
+        // var header = Base64UrlEncoder.Decode(guardianInfo.ZkOidcInfo.Header);
+
+        var publicKey = State.KidToPublicKey[guardianInfo.Type][guardianInfo.ZkOidcInfo.Kid];
+        var circuitId = new StringValue
+        {
+            Value = guardianInfo.ZkOidcInfo.CircuitId
+        };
+        var verifyingKey = GetVerifyingKey(circuitId);
+        if (verifyingKey == null)
+        {
+            return false;
+        }
+        return VerifyZkProof(guardianInfo.ZkOidcInfo.ZkProof, guardianInfo.ZkOidcInfo.Nonce,
+            guardianInfo.ZkOidcInfo.IdentifierHash.ToHex(), guardianInfo.ZkOidcInfo.Salt, verifyingKey.VerifyingKey_, publicKey);
+    }
+
+    private bool VerifyZkProof(string proof, string nonce, string identifierHash, string salt, string verifyingKey, string pubkey)
+    {
+        var pubkeyChunks = Decode(pubkey)
+            .ToChunked(CircomBigIntN, CiromBigIntK)
+            .Select(HexToBigInt).ToList();
+        
+        var proofDto = JsonConvert.DeserializeObject<InternalRapidSnarkProofRepr>(proof);
+
+        var nonceInInts = Encoding.UTF8.GetBytes(nonce).Select(b => b.ToString()).ToList();
+        var saltInInts = salt.HexStringToByteArray().Select(b => b.ToString()).ToList();
+
+        var publicInputs = new List<List<string>>
+        {
+            ToPublicInput(identifierHash),
+            nonceInInts, pubkeyChunks, saltInInts
+        }.SelectMany(n => n).ToList();
+        return Verifier.VerifyBn254(verifyingKey, publicInputs, new RapidSnarkProof
+        {
+            PiA = proofDto.PiA,
+            PiB = proofDto.PiB,
+            PiC = proofDto.PiC,
+        });
+    }
+    
+    private byte[] Decode(string input)
+    {
+        if (input.IsNullOrEmpty())
+            throw new ArgumentException(nameof(input));
+
+        var output = input;
+        output = output.Replace('-', '+'); // 62nd char of encoding
+        output = output.Replace('_', '/'); // 63rd char of encoding
+        switch (output.Length % 4) // Pad with trailing '='s
+        {
+            case 0:
+                break; // No pad chars in this case
+            case 2:
+                output += "==";
+                break; // Two pad chars
+            case 3:
+                output += "=";
+                break; // One pad char
+            default:
+                throw new FormatException("Illegal base64url string.");
+        }
+        var converted = Convert.FromBase64String(output); // Standard base64 decoder
+        return converted;
+    }
+    
+    //Sha256Hash
+    private List<string> ToPublicInput(string identifierHash)
+    {
+        return identifierHash.HexStringToByteArray().Select(b => b.ToString()).ToList();
+    }
+    
+    private static string HexToBigInt(string hexString)
+    {
+        return BigInteger.Parse(hexString, NumberStyles.HexNumber).ToString();
+    }
+    
+    public bool IsZkLoginSupported(GuardianType type)
+    {
+        return GuardianType.OfGoogle.Equals(type) || GuardianType.OfApple.Equals(type) ||
+               GuardianType.OfFacebook.Equals(type);
+    }
+    
+    private static string GetSha256Hash(byte[] input)
+    {
+        return HashHelper.ComputeFrom(input).ToHex();
+    }
+        
     private bool CheckVerifierSignatureAndData(GuardianInfo guardianInfo, string methodName, Hash caHash = null,
         string operationDetails = null)
     {
@@ -277,5 +406,13 @@ public partial class CAContract
         }
 
         return true;
+    }
+    
+    internal class InternalRapidSnarkProofRepr
+    {
+        [JsonProperty("pi_a")] public List<string> PiA { get; set; }
+        [JsonProperty("pi_b")] public List<List<string>> PiB { get; set; }
+        [JsonProperty("pi_c")] public List<string> PiC { get; set; }
+        [JsonProperty("protocol")] public string Protocol { get; set; }
     }
 }
