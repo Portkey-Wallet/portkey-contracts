@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 
 namespace Portkey.Contracts.CA;
@@ -51,33 +50,53 @@ public static class BytesExtension
         array[index] = (byte) 0;
     }
 
+    // private static byte[] Mask(byte[] array, int maskBits)
+    // {
+    //   int length1 = (maskBits - 1) / 8 + 1;
+    //   int num1 = maskBits % 8;
+    //   int length2 = array.Length;
+    //   byte[] numArray = new byte[length1];
+    //   int num2 = length1 - 1;
+    //   int num3 = length2 - 1;
+    //   for (int index = 0; index < length1; ++index)
+    //     numArray[num2 - index] = array[num3 - index];
+    //   byte num4 = 0;
+    //   for (int index = 0; index < num1; ++index)
+    //     num4 |= (byte) (1 << index);
+    //   if (num1 > 0)
+    //     numArray[0] = (byte) ((uint) numArray[0] & (uint) num4);
+    //   return numArray;
+    // }
+    
     private static byte[] Mask(byte[] array, int maskBits)
     {
       int length1 = (maskBits - 1) / 8 + 1;
       int num1 = maskBits % 8;
       int length2 = array.Length;
-      byte[] numArray = new byte[length1];
+      // byte[] numArray = new byte[length1];
+      var numList = new List<byte>(length1);
       int num2 = length1 - 1;
       int num3 = length2 - 1;
       for (int index = 0; index < length1; ++index)
-        numArray[num2 - index] = array[num3 - index];
+        numList[num2 - index] = array[num3 - index];
       byte num4 = 0;
       for (int index = 0; index < num1; ++index)
         num4 |= (byte) (1 << index);
       if (num1 > 0)
-        numArray[0] = (byte) ((uint) numArray[0] & (uint) num4);
-      return numArray;
+        numList[0] = (byte) ((uint) numList[0] & (uint) num4);
+      return numList.ToArray();
     }
 
-    public static IList<string> ToChunked(this byte[] bytes, int bytesPerChunk, int numOfChunks)
+    public static IList<byte[]> ToChunked(this byte[] bytes, int bytesPerChunk, int numOfChunks)
     {
-      List<string> chunked = new List<string>();
+      List<byte[]> chunked = new List<byte[]>();
       for (int index = 0; index < numOfChunks; ++index)
       {
-        string str = BitConverter.ToString(Mask(bytes, bytesPerChunk)).Replace("-", "");
-        chunked.Add(str);
+        // string str = BitConverter.ToString(Mask(bytes, bytesPerChunk)).Replace("-", "");
+        // chunked.Add(str);
+        chunked.Add(Mask(bytes, bytesPerChunk));
         ShiftArrayRight(bytes, bytesPerChunk);
       }
-      return (IList<string>) chunked;
+      return chunked;
     }
 }

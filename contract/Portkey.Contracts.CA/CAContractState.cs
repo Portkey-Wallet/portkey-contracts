@@ -75,8 +75,10 @@ public partial class CAContractState : ContractState
     
     //zklogin admin operations key is the verifier type(Google/Apple...) value is the issuer
     public MappedState<GuardianType, string> JwtIssuers { get; set; }
+    //key is circuitId, value is VerifyingKeys
+    public MappedState<string, VerifyingKey> CircuitVerifyingKeys { get; set; }
+    //guardian type,kid, value is public key
+    public MappedState<GuardianType, string, string> IssuerPublicKeysByKid { get; set; }
     
-    public MappedState<string, VerifyingKey> CircuitIdToVerifyingKey { get; set; }
-    
-    public MappedState<GuardianType, string, string> KidToPublicKey { get; set; }
+    public SingletonState<ZkNonceList> ZkNonceList { get; set; }
 }

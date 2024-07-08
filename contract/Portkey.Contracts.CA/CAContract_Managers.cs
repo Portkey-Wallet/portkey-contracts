@@ -6,7 +6,6 @@ using AElf.Types;
 using Google.Protobuf;
 using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
-using Microsoft.IdentityModel.Tokens;
 
 namespace Portkey.Contracts.CA;
 
@@ -35,7 +34,16 @@ public partial class CAContract
         var guardians = holderInfo.GuardianList!.Guardians;
 
         Assert(input.GuardiansApproved.Count > 0, "invalid input Guardians Approved");
-
+        
+        //approved guardian that supports zk, should be verified 
+        foreach (var guardianInfo in input.GuardiansApproved)
+        {
+            if (IsZkLoginSupported(guardianInfo.Type) && IsValidGuardianSupportZkLogin(guardianInfo))
+            {
+                Assert(CheckZkLoginVerifierAndData(guardianInfo), "approved guardian wasn't verified by zk");
+            }
+        }
+        
         var operationDetails = input.ManagerInfo.Address.ToBase58();
         var guardianApprovedCount = GetGuardianApprovedCount(caHash, input.GuardiansApproved,
             nameof(OperationType.SocialRecovery).ToLower(), operationDetails);
@@ -400,7 +408,7 @@ public partial class CAContract
     private bool CanVerifyWithZkLogin(GuardianInfo guardianInfo)
     {
         return IsZkLoginSupported(guardianInfo.Type) && guardianInfo.ZkOidcInfo != null
-                                                     && !guardianInfo.ZkOidcInfo.Nonce.IsNullOrEmpty()
-                                                     && !guardianInfo.ZkOidcInfo.ZkProof.IsNullOrEmpty();
+                                                     && (guardianInfo.ZkOidcInfo.Nonce is not (null or ""))
+                                                     && (guardianInfo.ZkOidcInfo.ZkProof is not (null or ""));
     }
 }

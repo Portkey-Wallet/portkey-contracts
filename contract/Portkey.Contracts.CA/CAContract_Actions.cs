@@ -7,7 +7,6 @@ using AetherLink.Contracts.Consumer;
 using AetherLink.Contracts.Oracle;
 using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
-using Newtonsoft.Json;
 
 namespace Portkey.Contracts.CA;
 
@@ -216,17 +215,18 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         holderInfo.CreateChainId = chainId;
         holderInfo.ManagerInfos.Add(managerInfo);
 
-        var salt = guardianApproved.ZkOidcInfo.Salt;
         guardian = new Guardian
         {
             IdentifierHash = guardianApproved.IdentifierHash,
-            Salt = salt,
+            //the original verifier hasn't been verified
+            Salt = string.Empty,
             Type = guardianApproved.Type,
-            //todo use circuit_id or verifying_key as verifierId
-            VerifierId = Hash.LoadFromHex(guardianApproved.ZkOidcInfo.CircuitId),
-            IsLoginGuardian = true
+            //get a verifier from verifier server list verifierId
+            VerifierId = GetOneVerifierFromServers(),
+            IsLoginGuardian = true,
+            ZkOidcInfo = guardianApproved.ZkOidcInfo,
+            ManuallySupportForZk = true //when the new user registered,portkey contract used zklogin as verifier
         };
-        //todo for google apple facebook guardian, portkey contract should generate a random old verifier
         holderInfo.GuardianList = new GuardianList
         {
             Guardians = { guardian }
@@ -283,7 +283,8 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
             Salt = salt,
             Type = guardianApproved.Type,
             VerifierId = guardianApproved.VerificationInfo.Id,
-            IsLoginGuardian = true
+            IsLoginGuardian = true,
+            ManuallySupportForZk = false
         };
 
         holderInfo.GuardianList = new GuardianList
@@ -428,7 +429,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         Assert(input != null, "Invalid verifying key.");
         Assert(!string.IsNullOrEmpty(input.CircuitId), "circuitId is required.");
         Assert(!string.IsNullOrEmpty(input.VerifyingKey_), "verifying key is required.");
-        State.CircuitIdToVerifyingKey[input.CircuitId] = input;
+        State.CircuitVerifyingKeys[input.CircuitId] = input;
         return base.AddVerifyingKey(input);
     }
 
@@ -447,8 +448,8 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
     public override VerifyingKey GetVerifyingKey(StringValue input)
     {
         Assert(input != null, "Invalid circuitId.");
-        Assert(State.CircuitIdToVerifyingKey[input.Value] != null, "circuitId not exist");
-        return State.CircuitIdToVerifyingKey[input.Value];
+        Assert(State.CircuitVerifyingKeys[input.Value] != null, "circuitId not exist");
+        return State.CircuitVerifyingKeys[input.Value];
     }
 
     public override Empty StartOracleRequest(StartOracleRequestInput input)
@@ -473,12 +474,13 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         // Assert(IsHashValid(input.RequestId), "Invalid input request id.");
         Assert(input.RequestTypeIndex > 0, "Invalid request type index.");
         Assert(!input.Response.IsNullOrEmpty() || !input.Err.IsNullOrEmpty(), "Invalid input response or err.");
-        GoogleResponse reponse = JsonConvert.DeserializeObject<GoogleResponse>(System.Text.Encoding.UTF8.GetString(input.Response.ToByteArray()));
-        Assert(reponse != null, "Invalid input.");
+        //check the input.Response input.Response.ToBase64() or input.Response.ToHex() or input.Response.ToPlainBase58()
+        GoogleResponse response = GoogleResponse.Parser.ParseJson(input.Response.ToStringUtf8());
+        Assert(response != null, "Invalid input.");
         //todo aetherlink can't differentiate apple/google/facebook
-        foreach (var googleKeyDto in reponse.Keys)
+        foreach (var googleKeyDto in response.Keys)
         {
-            State.KidToPublicKey[GuardianType.OfGoogle][googleKeyDto.Kid] = googleKeyDto.N;
+            State.IssuerPublicKeysByKid[GuardianType.OfGoogle][googleKeyDto.Kid] = googleKeyDto.N;
         }
 
         return new Empty();
@@ -505,18 +507,18 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
     //     ]
     // }
     
-    internal class GoogleResponse
-    {
-        public List<GoogleKeyDto> Keys { get; set; }
-    }
-    
-    internal class GoogleKeyDto
-    {
-        public string N { get; set; }
-        public string Kid { get; set; }
-        public string E { get; set; }
-        public string Alg { get; set; }
-        public string Kty { get; set; }
-        public string Use { get; set; }
-    }
+    // internal class GoogleResponse
+    // {
+    //     public List<GoogleKeyDto> Keys { get; set; }
+    // }
+    //
+    // internal class GoogleKeyDto
+    // {
+    //     public string N { get; set; }
+    //     public string Kid { get; set; }
+    //     public string E { get; set; }
+    //     public string Alg { get; set; }
+    //     public string Kty { get; set; }
+    //     public string Use { get; set; }
+    // }
 }

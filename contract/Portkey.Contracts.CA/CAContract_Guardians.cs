@@ -1,6 +1,7 @@
 using System.Linq;
 using AElf.CSharp.Core;
 using AElf.Sdk.CSharp;
+using AElf.Types;
 using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
 
@@ -29,12 +30,22 @@ public partial class CAContract
         //Check the verifier signature and data of the guardian to be added.
         var operateDetails = $"{input.GuardianToAdd.IdentifierHash.ToHex()}_{(int)input.GuardianToAdd.Type}_{input.GuardianToAdd.VerificationInfo.Id.ToHex()}";
         var guardianApprovedCount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved, methodName, operateDetails);
-
-        if (!CheckVerifierSignatureAndData(input.GuardianToAdd, methodName, input.CaHash))
+        //for the guardian supporting zk, the front end inputs zk params, portkey contract verifies with zk
+        if (IsZkLoginSupported(input.GuardianToAdd.Type) && IsValidGuardianSupportZkLogin(input.GuardianToAdd))
         {
-            return new Empty();
+            if (!CheckZkLoginVerifierAndData(input.GuardianToAdd))
+            {
+                return new Empty();
+            }
         }
-        
+        else //otherwise portkey contract uses the original verifier
+        {
+            if (!CheckVerifierSignatureAndData(input.GuardianToAdd, methodName, input.CaHash))
+            {
+                return new Empty();
+            }
+        }
+
         //Whether the approved guardians count is satisfied.
         var holderJudgementStrategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
         var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count,
@@ -44,15 +55,44 @@ public partial class CAContract
             return new Empty();
         }
         //var loginGuardians = GetLoginGuardians(holderInfo.GuardianList);
-
-        var guardianAdded = new Guardian
+        //for new users of new version,portkey contract should generate a random verifier for the guardian supporting zk
+        //for old users of new version,portkey contract uses zk as the default verifier,replacing the original verifier
+        //for users of old version,portkey contract uses the original verifier,the front end won't input zk parameters
+        Guardian guardianAdded;
+        if (IsZkLoginSupported(input.GuardianToAdd.Type))
         {
-            IdentifierHash = input.GuardianToAdd!.IdentifierHash,
-            Salt = GetSaltFromVerificationDoc(input.GuardianToAdd.VerificationInfo.VerificationDoc),
-            Type = input.GuardianToAdd.Type,
-            VerifierId = input.GuardianToAdd.VerificationInfo.Id,
-            IsLoginGuardian = false
-        };
+            Hash verifierId;
+            if (input.GuardianToAdd.VerificationInfo.Id == null)
+            {
+                //choosing a random verifier for the users of new version, then they can use the verifier to log in old version portkey
+                verifierId = GetOneVerifierFromServers();
+            }
+            else
+            {
+                verifierId = input.GuardianToAdd.VerificationInfo.Id;
+            }
+
+            guardianAdded = new Guardian
+            {
+                IdentifierHash = input.GuardianToAdd!.IdentifierHash,
+                Salt = GetSaltFromVerificationDoc(input.GuardianToAdd.VerificationInfo.VerificationDoc),
+                Type = input.GuardianToAdd.Type,
+                VerifierId = verifierId,
+                IsLoginGuardian = false,
+                ZkOidcInfo = input.GuardianToAdd.ZkOidcInfo
+            };
+        }
+        else
+        {
+            guardianAdded = new Guardian
+            {
+                IdentifierHash = input.GuardianToAdd!.IdentifierHash,
+                Salt = GetSaltFromVerificationDoc(input.GuardianToAdd.VerificationInfo.VerificationDoc),
+                Type = input.GuardianToAdd.Type,
+                VerifierId = input.GuardianToAdd.VerificationInfo.Id,
+                IsLoginGuardian = false
+            };
+        }
         State.HolderInfoMap[input.CaHash].GuardianList?.Guardians.Add(guardianAdded);
 
         var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
@@ -76,6 +116,7 @@ public partial class CAContract
         AssertCreateChain(holderInfo);
         //Select satisfied guardian to remove.
         //Filter: guardian.type && guardian.&& && VerifierId
+        //for guardian supporting zk,portkey contract could also use verifierId as the condition,cause a random verifier would be generated
         var toRemoveGuardian = holderInfo.GuardianList.Guardians.FirstOrDefault(g =>
             g.Type == input.GuardianToRemove.Type &&
             g.IdentifierHash == input.GuardianToRemove.IdentifierHash &&
@@ -153,6 +194,8 @@ public partial class CAContract
 
     public override Empty UpdateGuardian(UpdateGuardianInput input)
     {
+        //for guardian supporting zk,users mustn't update verifier
+        //for guardian not supporting zk,users can update verifier except zk
         Assert(input.CaHash != null && input.GuardianToUpdatePre != null
                                     && input.GuardianToUpdateNew != null && input.GuardiansApproved.Count != 0,
             "Invalid input.");
@@ -212,6 +255,9 @@ public partial class CAContract
         }
 
         existPreGuardian.VerifierId = input.GuardianToUpdateNew?.VerificationInfo.Id;
+        //when the user changed the verifier to zk,the front end would show zk verifier totally, not show zk+original verifier
+        existPreGuardian.ManuallySupportForZk = !IsValidZkOidcInfoSupportZkLogin(input.GuardianToUpdatePre.ZkOidcInfo)
+                                                && IsValidZkOidcInfoSupportZkLogin(input.GuardianToUpdateNew.ZkOidcInfo);
 
         if (State.LoginGuardianMap[preGuardian.IdentifierHash][preGuardian.VerifierId] != null)
         {

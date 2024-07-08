@@ -88,8 +88,7 @@
         </ContractBase>
     </ItemGroup>
     <ItemGroup>
+      <PackageReference Include="Google.Protobuf" Version="3.26.0" />
       <PackageReference Include="Groth16.Net" Version="1.0.3" />
-      <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="7.5.0" />
-      <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     </ItemGroup>
 </Project>

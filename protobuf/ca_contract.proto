@@ -186,6 +186,8 @@ message Guardian {
   aelf.Hash identifier_hash = 3;
   string salt = 4;
   bool is_login_guardian = 5;
+  ZkJwtAuthInfo zk_oidc_info = 6;
+  bool manuallySupportForZk = 7;
 }
 
 enum GuardianType {
@@ -286,8 +288,8 @@ message ZkJwtAuthInfo {
     aelf.Hash identifier_hash = 1;
     // salt used to generate the identifier_hash, it has to be 16 bytes
     string salt = 2;
-    // head is the original jwt head in base64url format
-    string header = 3;
+    // extract kid from jwt head
+    string kid = 3;
     // the identifier of the circuit
     string circuit_id = 4;
     // zk_proof is the serialized zk proof
@@ -298,8 +300,6 @@ message ZkJwtAuthInfo {
     string nonce = 7;
     // the payload that is used to calculate the nonce, where nonce = hash(serialize(non 
     NoncePayload nonce_payload = 8;
-    
-    string kid = 9;
 }
 
 message NoncePayload {
@@ -315,12 +315,16 @@ message AddManager {
   aelf.Hash identifier_hash = 2;
   aelf.Address manager_address = 3; // ？？ Or use ManagerInfo here ？？ 
 }
-    
+
 message RemoveManager {
   // used to differentiate the operation that may have same parameters 
   google. protobuf. Timestamp timestamp = 1;
   aelf.Hash identifier_hash = 2;
   aelf.Address manager_address = 3; // ？？ Or use ManagerInfo here ？？ 
+}
+
+message ZkNonceList {
+  repeated string nonce = 1;
 }
 
 enum StrategyValueType {
@@ -738,6 +742,32 @@ message Invited {
   string method_name = 3;
   string referral_code = 4;
   string project_code = 5;
+}
+
+message InternalRapidSnarkProofRepr {
+  repeated string pi_a = 1;
+  repeated InnerPiB pi_b = 2;
+  repeated string pi_c = 3;
+  string protocol = 4;
+}
+
+message InnerPiB {
+  repeated string pi_b = 1;
+}
+
+message GoogleResponse
+{
+  repeated GoogleKeyDto keys = 1;
+}
+
+message GoogleKeyDto
+{
+  string n = 1;
+  string kid = 2;
+  string e = 3;
+  string alg = 4;
+  string kty = 5;
+  string use = 6;
 }
 
 enum OperationType {

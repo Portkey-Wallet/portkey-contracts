@@ -1,9 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
-using System.Numerics;
-using System.Text;
 using AElf;
 using AElf.Contracts.MultiToken;
 using AElf.CSharp.Core.Extension;
@@ -11,8 +8,6 @@ using AElf.Types;
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using Groth16.Net;
-using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
 
 namespace Portkey.Contracts.CA;
 
@@ -21,7 +16,7 @@ public partial class CAContract
     private const int CircomBigIntN = 121;
     private const int CiromBigIntK = 17;
     
-    private bool CheckZkLoginVerifierAndData(GuardianInfo guardianInfo)
+    public bool CheckZkLoginVerifierAndData(GuardianInfo guardianInfo)
     {
         // check guardian type
         if (!IsZkLoginSupported(guardianInfo.Type))
@@ -33,11 +28,11 @@ public partial class CAContract
             return false;
         }
         //check circuit id
-        if (State.CircuitIdToVerifyingKey[guardianInfo.ZkOidcInfo.CircuitId] == null
-            || State.JwtIssuers[guardianInfo.Type] == null)
-        {
-            return false;
-        }
+        // if (State.CircuitIdToVerifyingKey[guardianInfo.ZkOidcInfo.CircuitId] == null
+        //     || State.JwtIssuers[guardianInfo.Type] == null)
+        // {
+        //     return false;
+        // }
         // check jwt issuer
         if (!State.JwtIssuers[guardianInfo.Type].Equals(guardianInfo.ZkOidcInfo.Issuer))
         {
@@ -48,15 +43,28 @@ public partial class CAContract
         {
             return false;
         }
-        // check nonce = sha256(nonce_payload.to_bytes())
-        if (!guardianInfo.ZkOidcInfo.Nonce.Equals(GetSha256Hash(guardianInfo.ZkOidcInfo.NoncePayload.ToByteArray())))
+        //check nonce wasn't used before
+        State.ZkNonceList.Value ??= new ZkNonceList();
+        if (State.ZkNonceList.Value.Nonce.Contains(guardianInfo.ZkOidcInfo.Nonce))
         {
             return false;
         }
-        //todo how to verify the zkproof
-        // var header = Base64UrlEncoder.Decode(guardianInfo.ZkOidcInfo.Header);
+        else
+        {
+            State.ZkNonceList.Value.Nonce.Add(guardianInfo.ZkOidcInfo.Nonce);
+        }
 
-        var publicKey = State.KidToPublicKey[guardianInfo.Type][guardianInfo.ZkOidcInfo.Kid];
+        // check nonce = sha256(nonce_payload.to_bytes())
+        if (!guardianInfo.ZkOidcInfo.Nonce.Equals(GetSha256Hash(guardianInfo.ZkOidcInfo.NoncePayload.AddManagerAddress.ToByteArray())))
+        {
+            return false;
+        }
+
+        var publicKey = State.IssuerPublicKeysByKid[guardianInfo.Type][guardianInfo.ZkOidcInfo.Kid];
+        if (publicKey is null or "")
+        {
+            return false;
+        }
         var circuitId = new StringValue
         {
             Value = guardianInfo.ZkOidcInfo.CircuitId
@@ -75,10 +83,9 @@ public partial class CAContract
         var pubkeyChunks = Decode(pubkey)
             .ToChunked(CircomBigIntN, CiromBigIntK)
             .Select(HexToBigInt).ToList();
-        
-        var proofDto = JsonConvert.DeserializeObject<InternalRapidSnarkProofRepr>(proof);
-
-        var nonceInInts = Encoding.UTF8.GetBytes(nonce).Select(b => b.ToString()).ToList();
+        var proofDto = InternalRapidSnarkProofRepr.Parser.ParseJson(proof);
+        var nonceInInts = nonce.ToCharArray().Select(b => ((int)b).ToString()).ToList();
+        // var nonceInInts = Encoding.UTF8.GetBytes(nonce).Select(b => b.ToString()).ToList();
         var saltInInts = salt.HexStringToByteArray().Select(b => b.ToString()).ToList();
 
         var publicInputs = new List<List<string>>
@@ -86,19 +93,21 @@ public partial class CAContract
             ToPublicInput(identifierHash),
             nonceInInts, pubkeyChunks, saltInInts
         }.SelectMany(n => n).ToList();
+        var piB = new List<List<string>>();
+        for (var i = 0; i < proofDto.PiB.Count; i++)
+        {
+            piB[i].AddRange(proofDto.PiB[i].PiB.ToList());
+        }
         return Verifier.VerifyBn254(verifyingKey, publicInputs, new RapidSnarkProof
         {
-            PiA = proofDto.PiA,
-            PiB = proofDto.PiB,
-            PiC = proofDto.PiC,
+            PiA = proofDto.PiA.ToList(),
+            PiB = piB,
+            PiC = proofDto.PiC.ToList(),
         });
     }
     
     private byte[] Decode(string input)
     {
-        if (input.IsNullOrEmpty())
-            throw new ArgumentException(nameof(input));
-
         var output = input;
         output = output.Replace('-', '+'); // 62nd char of encoding
         output = output.Replace('_', '/'); // 63rd char of encoding
@@ -112,8 +121,6 @@ public partial class CAContract
             case 3:
                 output += "=";
                 break; // One pad char
-            default:
-                throw new FormatException("Illegal base64url string.");
         }
         var converted = Convert.FromBase64String(output); // Standard base64 decoder
         return converted;
@@ -125,12 +132,44 @@ public partial class CAContract
         return identifierHash.HexStringToByteArray().Select(b => b.ToString()).ToList();
     }
     
-    private static string HexToBigInt(string hexString)
+    private static string HexToBigInt(byte[] hex)
     {
-        return BigInteger.Parse(hexString, NumberStyles.HexNumber).ToString();
+        return HexHelper.ConvertBigEndianToDecimalString(hex);
+        // return BigInteger.Parse(hexString, NumberStyles.HexNumber).ToString();
+    }
+
+    public static bool IsValidGuardianSupportZkLogin(GuardianInfo guardianInfo)
+    {
+        if (guardianInfo == null)
+        {
+            return false;
+        }
+
+        return guardianInfo.ZkOidcInfo != null
+               && guardianInfo.ZkOidcInfo.Nonce is not (null or "")
+               && guardianInfo.ZkOidcInfo.Kid is not (null or "")
+               && guardianInfo.ZkOidcInfo.ZkProof is not (null or "")
+               && guardianInfo.ZkOidcInfo.Issuer is not (null or "")
+               && guardianInfo.ZkOidcInfo.Salt is not (null or "")
+               && guardianInfo.ZkOidcInfo.NoncePayload is not null;
     }
     
-    public bool IsZkLoginSupported(GuardianType type)
+    public static bool IsValidZkOidcInfoSupportZkLogin(ZkJwtAuthInfo zkOidcInfo)
+    {
+        if (zkOidcInfo == null)
+        {
+            return false;
+        }
+
+        return zkOidcInfo.Nonce is not (null or "")
+               && zkOidcInfo.Kid is not (null or "")
+               && zkOidcInfo.ZkProof is not (null or "")
+               && zkOidcInfo.Issuer is not (null or "")
+               && zkOidcInfo.Salt is not (null or "")
+               && zkOidcInfo.NoncePayload is not null;
+    }
+    
+    public static bool IsZkLoginSupported(GuardianType type)
     {
         return GuardianType.OfGoogle.Equals(type) || GuardianType.OfApple.Equals(type) ||
                GuardianType.OfFacebook.Equals(type);
@@ -139,6 +178,14 @@ public partial class CAContract
     private static string GetSha256Hash(byte[] input)
     {
         return HashHelper.ComputeFrom(input).ToHex();
+    }
+
+    public Hash GetOneVerifierFromServers()
+    {
+        var verifiers = State.VerifiersServerList.Value.VerifierServers;
+        // Random class is not allowed
+        // verifierId = verifiers[new Random().Next(verifiers.Count)].Id;
+        return verifiers[0].Id;
     }
         
     private bool CheckVerifierSignatureAndData(GuardianInfo guardianInfo, string methodName, Hash caHash = null,
@@ -407,12 +454,16 @@ public partial class CAContract
 
         return true;
     }
-    
-    internal class InternalRapidSnarkProofRepr
-    {
-        [JsonProperty("pi_a")] public List<string> PiA { get; set; }
-        [JsonProperty("pi_b")] public List<List<string>> PiB { get; set; }
-        [JsonProperty("pi_c")] public List<string> PiC { get; set; }
-        [JsonProperty("protocol")] public string Protocol { get; set; }
-    }
+    // class InternalRapidSnarkProofRepr
+    // {
+    //     // [JsonProperty("pi_a")] 
+    //     public List<string> Pi_a { get; set; }
+    //     // [JsonProperty("pi_b")] 
+    //     public List<List<string>> Pi_b { get; set; }
+    //     // [JsonProperty("pi_c")] 
+    //     public List<string> Pi_c { get; set; }
+    //     
+    //     // [JsonProperty("protocol")]
+    //     public string Protocol { get; set; }
+    // }
 }
