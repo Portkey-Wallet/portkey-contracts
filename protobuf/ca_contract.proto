@@ -12,13 +12,11 @@ import "google/protobuf/timestamp.proto";
 import "authority_info.proto";
 import "acs12.proto";
 import "acs2.proto";
-import "request_interface.proto";
 
 option csharp_namespace = "Portkey.Contracts.CA";
 
 service CAContract {
   option (aelf.base) = "acs2.proto";
-  option (aelf.base) = "request_interface.proto";
   rpc Initialize(InitializeInput) returns (google.protobuf.Empty){}
 
   // If the Guardian has CAHolder and Manager, meaning CAHolder created before, return true
@@ -63,14 +61,7 @@ service CAContract {
   
   rpc UpdateManagerInfos (UpdateManagerInfosInput) returns (google.protobuf.Empty) {}
 
-  // If End Points already exists, return true
-  rpc AddVerifierServerEndPoints (AddVerifierServerEndPointsInput) returns (google.protobuf.Empty) {}
-
-  // If End Points does not exists, return true
-  rpc RemoveVerifierServerEndPoints (RemoveVerifierServerEndPointsInput) returns (google.protobuf.Empty) {}
-
-  // if Verifier Server does not exists, return true
-  rpc RemoveVerifierServer (RemoveVerifierServerInput) returns (google.protobuf.Empty) {}
+  
 
   rpc AddCAServer (AddCAServerInput) returns (google.protobuf.Empty){}
 
@@ -78,7 +69,7 @@ service CAContract {
   
   rpc GetHolderInfo(GetHolderInfoInput) returns (GetHolderInfoOutput) {option (aelf.is_view) = true;}
 
-  rpc GetVerifierServers (google.protobuf.Empty) returns (GetVerifierServersOutput) {option (aelf.is_view) = true;}
+  
   
   rpc GetCAServers (google.protobuf.Empty) returns (GetCAServersOutput) {option (aelf.is_view) = true;}
   
@@ -114,28 +105,6 @@ service CAContract {
   rpc SetCheckOperationDetailsInSignatureEnabled (SetCheckOperationDetailsInSignatureEnabledInput) returns (google.protobuf.Empty) {}
 
   rpc GetCheckOperationDetailsInSignatureEnabled (google.protobuf.Empty) returns (GetCheckOperationDetailsInSignatureEnabledOutput) {option (aelf.is_view) = true;}
-
-  // add a jwt issuer
-  rpc AddJwtIssuer (google.protobuf.StringValue) returns (google.protobuf.Empty);
-  
-  // add a verifying key for a circuit
-  rpc AddVerifyingKey (VerifyingKey) returns (google.protobuf.Empty);
-  
-  // query whether an issuer is valid
-  rpc IsValidIssuer (google.protobuf.StringValue) returns (google.protobuf.BoolValue) {
-    option (aelf.is_view) = true;
-  }
-  
-  // query the verifying key of a circuit (by circuit_id)
-  rpc GetVerifyingKey (google.protobuf.StringValue) returns (VerifyingKey) {
-    option (aelf.is_view) = true;
-  }
-}
-
-message VerifyingKey {
-  string circuit_id = 1; // use the hash of VerifyingKey as the circuit_id
-  string verifying_key = 2; // VerifyingKey in hex format
-  string description = 3;
 }
 
 // Events
@@ -199,22 +168,14 @@ enum GuardianType {
   GUARDIAN_TYPE_OF_TWITTER = 6;
 }
 
-message VerifierServer {
-  aelf.Hash id = 1;
-  string name = 2;
-  string image_url = 3;
-  repeated string end_points = 4;
-  repeated aelf.Address verifier_addresses = 5;
-}
+
 
 message CAServer {
   string name = 1;
   string end_point = 2;
 }
 
-message VerifierServerList {
-  repeated VerifierServer verifier_servers = 1;
-}
+
 
 message CAServerList {
   repeated CAServer ca_servers = 1;
@@ -284,22 +245,22 @@ message VerificationInfo {
 }
 
 message ZkJwtAuthInfo {
-    // the type may be changed if we decide to use Poseidon hash function later
-    aelf.Hash identifier_hash = 1;
-    // salt used to generate the identifier_hash, it has to be 16 bytes
-    string salt = 2;
-    // extract kid from jwt head
-    string kid = 3;
-    // the identifier of the circuit
-    string circuit_id = 4;
-    // zk_proof is the serialized zk proof
-    string zk_proof = 5;
-    // the issuer of the jwt
-    string issuer = 6;
-    // nonce associated with the jwt
-    string nonce = 7;
-    // the payload that is used to calculate the nonce, where nonce = hash(serialize(non 
-    NoncePayload nonce_payload = 8;
+  // the type may be changed if we decide to use Poseidon hash function later
+  aelf.Hash identifier_hash = 1;
+  // salt used to generate the identifier_hash, it has to be 16 bytes
+  string salt = 2;
+  // extract kid from jwt head
+  string kid = 3;
+  // the identifier of the circuit
+  string circuit_id = 4;
+  // zk_proof is the serialized zk proof
+  string zk_proof = 5;
+  // the issuer of the jwt
+  string issuer = 6;
+  // nonce associated with the jwt
+  string nonce = 7;
+  // the payload that is used to calculate the nonce, where nonce = hash(serialize(non 
+  NoncePayload nonce_payload = 8;
 }
 
 message NoncePayload {
@@ -322,11 +283,6 @@ message RemoveManager {
   aelf.Hash identifier_hash = 2;
   aelf.Address manager_address = 3; // ？？ Or use ManagerInfo here ？？ 
 }
-
-message ZkNonceList {
-  repeated string nonce = 1;
-}
-
 enum StrategyValueType {
   STRATEGY = 0;
   LONG = 1;
@@ -474,28 +430,6 @@ message UpdateManagerInfosInput {
   repeated ManagerInfo manager_infos = 2;
 }
 
-message AddVerifierServerEndPointsInput {
-  // If not exists, add; If does, insert
-  string name = 1;
-  string image_url = 2;
-  // Add all, ignore if has duplicates
-  repeated string end_points = 3;
-  repeated aelf.Address verifier_address_list = 4;
-  aelf.Hash verifier_id = 5;
-}
-
-message RemoveVerifierServerInput {
-  // If not exists, add; If does, insert
-  aelf.Hash id = 1;
-}
-
-message RemoveVerifierServerEndPointsInput {
-  // If not exists, ignore
-  aelf.Hash id = 1;
-  // Remove all, ignore if do not exist
-  repeated string end_points = 2;
-}
-
 message AddCAServerInput{
   string name = 1;
   string end_points = 2;
@@ -505,9 +439,7 @@ message RemoveCAServerInput {
   string name = 1;
 }
 
-message GetVerifierServersOutput {
-  repeated VerifierServer verifier_servers = 1;
-}
+
 
 message GetCAServersOutput {
   repeated CAServer ca_servers = 1;
@@ -674,24 +606,6 @@ message LoginGuardianRemoved {
   Guardian login_guardian = 4 [(aelf.is_indexed) = true];
 }
 
-// VerifierServerEndPoints added
-message VerifierServerEndPointsAdded {
-  option (aelf.is_event) = true;
-  VerifierServer verifier_server = 1 [(aelf.is_indexed) = true];
-}
-
-// VerifierServerEndPoints removed
-message VerifierServerEndPointsRemoved {
-  option (aelf.is_event) = true;
-  VerifierServer verifier_server = 1 [(aelf.is_indexed) = true];
-}
-
-// VerifierServer removed
-message VerifierServerRemoved {
-  option (aelf.is_event) = true;
-  VerifierServer verifier_server = 1 [(aelf.is_indexed) = true];
-}
-
 message CAServerAdded {
   option (aelf.is_event) = true;
   CAServer ca_sever_added = 1;
@@ -742,32 +656,6 @@ message Invited {
   string method_name = 3;
   string referral_code = 4;
   string project_code = 5;
-}
-
-message InternalRapidSnarkProofRepr {
-  repeated string pi_a = 1;
-  repeated InnerPiB pi_b = 2;
-  repeated string pi_c = 3;
-  string protocol = 4;
-}
-
-message InnerPiB {
-  repeated string pi_b = 1;
-}
-
-message GoogleResponse
-{
-  repeated GoogleKeyDto keys = 1;
-}
-
-message GoogleKeyDto
-{
-  string n = 1;
-  string kid = 2;
-  string e = 3;
-  string alg = 4;
-  string kty = 5;
-  string use = 6;
 }
 
 enum OperationType {

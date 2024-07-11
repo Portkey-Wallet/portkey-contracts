@@ -11,12 +11,14 @@ import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 import "ca_contract.proto";
+import "request_interface.proto";
 
 option csharp_namespace = "Portkey.Contracts.CA";
 
 service CAContractImpl {
   option (aelf.base) = "acs12.proto";
   option (aelf.base) = "ca_contract.proto";
+  option (aelf.base) = "request_interface.proto";
   option (aelf.csharp_state) = "Portkey.Contracts.CA.CAContractState";
   // approve
   rpc ManagerApprove(ManagerApproveInput) returns (google.protobuf.Empty) {}
@@ -72,6 +74,33 @@ service CAContractImpl {
   rpc AddManagerApproveSpenderWhitelist (AddManagerApproveSpenderWhitelistInput) returns (google.protobuf.Empty){}
   rpc RemoveManagerApproveSpenderWhitelist(RemoveManagerApproveSpenderWhitelistInput) returns (google.protobuf.Empty){}
   rpc CheckInManagerApproveSpenderWhitelist (aelf.Address) returns (google.protobuf.BoolValue) {option (aelf.is_view) = true;}
+
+  // If End Points already exists, return true
+  rpc AddVerifierServerEndPoints (AddVerifierServerEndPointsInput) returns (google.protobuf.Empty) {}
+
+  // If End Points does not exists, return true
+  rpc RemoveVerifierServerEndPoints (RemoveVerifierServerEndPointsInput) returns (google.protobuf.Empty) {}
+
+  // if Verifier Server does not exists, return true
+  rpc RemoveVerifierServer (RemoveVerifierServerInput) returns (google.protobuf.Empty) {}
+
+  rpc GetVerifierServers (google.protobuf.Empty) returns (GetVerifierServersOutput) {option (aelf.is_view) = true;}
+  
+  // add a jwt issuer
+  rpc AddJwtIssuer (google.protobuf.StringValue) returns (google.protobuf.Empty);
+
+  // add a verifying key for a circuit
+  rpc AddVerifyingKey (VerifyingKey) returns (google.protobuf.Empty);
+
+  // query whether an issuer is valid
+  rpc IsValidIssuer (google.protobuf.StringValue) returns (google.protobuf.BoolValue) {
+    option (aelf.is_view) = true;
+  }
+
+  // query the verifying key of a circuit (by circuit_id)
+  rpc GetVerifyingKey (google.protobuf.StringValue) returns (VerifyingKey) {
+    option (aelf.is_view) = true;
+  }
 }
 
 message AddManagerApproveSpenderWhitelistInput {
@@ -302,7 +331,98 @@ message ProjectDelegateeRegistered {
   DelegateeAddressList delegatee_address_list = 4 [(aelf.is_indexed) = true];
 }
 
-
 message SetTokenInitialTransferLimitInput {
   int64 token_initial_transfer_limit = 1;
+}
+
+message VerifierServer {
+  aelf.Hash id = 1;
+  string name = 2;
+  string image_url = 3;
+  repeated string end_points = 4;
+  repeated aelf.Address verifier_addresses = 5;
+}
+
+message VerifierServerList {
+  repeated VerifierServer verifier_servers = 1;
+}
+
+message GetVerifierServersOutput {
+  repeated VerifierServer verifier_servers = 1;
+}
+
+// VerifierServerEndPoints added
+message VerifierServerEndPointsAdded {
+  option (aelf.is_event) = true;
+  VerifierServer verifier_server = 1 [(aelf.is_indexed) = true];
+}
+
+// VerifierServerEndPoints removed
+message VerifierServerEndPointsRemoved {
+  option (aelf.is_event) = true;
+  VerifierServer verifier_server = 1 [(aelf.is_indexed) = true];
+}
+
+// VerifierServer removed
+message VerifierServerRemoved {
+  option (aelf.is_event) = true;
+  VerifierServer verifier_server = 1 [(aelf.is_indexed) = true];
+}
+
+message AddVerifierServerEndPointsInput {
+  // If not exists, add; If does, insert
+  string name = 1;
+  string image_url = 2;
+  // Add all, ignore if has duplicates
+  repeated string end_points = 3;
+  repeated aelf.Address verifier_address_list = 4;
+  aelf.Hash verifier_id = 5;
+}
+
+message RemoveVerifierServerInput {
+  // If not exists, add; If does, insert
+  aelf.Hash id = 1;
+}
+
+message RemoveVerifierServerEndPointsInput {
+  // If not exists, ignore
+  aelf.Hash id = 1;
+  // Remove all, ignore if do not exist
+  repeated string end_points = 2;
+}
+
+message VerifyingKey {
+  string circuit_id = 1; // use the hash of VerifyingKey as the circuit_id
+  string verifying_key = 2; // VerifyingKey in hex format
+  string description = 3;
+}
+
+message ZkNonceList {
+  repeated string nonce = 1;
+}
+
+message InternalRapidSnarkProofRepr {
+  repeated string pi_a = 1;
+  repeated InnerPiB pi_b = 2;
+  repeated string pi_c = 3;
+  string protocol = 4;
+}
+
+message InnerPiB {
+  repeated string pi_b = 1;
+}
+
+message GoogleResponse
+{
+  repeated GoogleKeyDto keys = 1;
+}
+
+message GoogleKeyDto
+{
+  string n = 1;
+  string kid = 2;
+  string e = 3;
+  string alg = 4;
+  string kty = 5;
+  string use = 6;
 }

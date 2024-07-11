@@ -28,11 +28,11 @@ public partial class CAContract
             return false;
         }
         //check circuit id
-        // if (State.CircuitIdToVerifyingKey[guardianInfo.ZkOidcInfo.CircuitId] == null
-        //     || State.JwtIssuers[guardianInfo.Type] == null)
-        // {
-        //     return false;
-        // }
+        if (State.CircuitVerifyingKeys[guardianInfo.ZkOidcInfo.CircuitId] == null
+            || State.JwtIssuers[guardianInfo.Type] == null)
+        {
+            return false;
+        }
         // check jwt issuer
         if (!State.JwtIssuers[guardianInfo.Type].Equals(guardianInfo.ZkOidcInfo.Issuer))
         {
@@ -53,13 +53,13 @@ public partial class CAContract
         {
             State.ZkNonceList.Value.Nonce.Add(guardianInfo.ZkOidcInfo.Nonce);
         }
-
+    
         // check nonce = sha256(nonce_payload.to_bytes())
         if (!guardianInfo.ZkOidcInfo.Nonce.Equals(GetSha256Hash(guardianInfo.ZkOidcInfo.NoncePayload.AddManagerAddress.ToByteArray())))
         {
             return false;
         }
-
+    
         var publicKey = State.IssuerPublicKeysByKid[guardianInfo.Type][guardianInfo.ZkOidcInfo.Kid];
         if (publicKey is null or "")
         {
@@ -74,10 +74,11 @@ public partial class CAContract
         {
             return false;
         }
+
         return VerifyZkProof(guardianInfo.ZkOidcInfo.ZkProof, guardianInfo.ZkOidcInfo.Nonce,
             guardianInfo.ZkOidcInfo.IdentifierHash.ToHex(), guardianInfo.ZkOidcInfo.Salt, verifyingKey.VerifyingKey_, publicKey);
     }
-
+    
     private bool VerifyZkProof(string proof, string nonce, string identifierHash, string salt, string verifyingKey, string pubkey)
     {
         var pubkeyChunks = Decode(pubkey)
@@ -87,12 +88,17 @@ public partial class CAContract
         var nonceInInts = nonce.ToCharArray().Select(b => ((int)b).ToString()).ToList();
         // var nonceInInts = Encoding.UTF8.GetBytes(nonce).Select(b => b.ToString()).ToList();
         var saltInInts = salt.HexStringToByteArray().Select(b => b.ToString()).ToList();
-
-        var publicInputs = new List<List<string>>
-        {
-            ToPublicInput(identifierHash),
-            nonceInInts, pubkeyChunks, saltInInts
-        }.SelectMany(n => n).ToList();
+    
+        // var publicInputs = new List<List<string>>
+        // {
+        //     ToPublicInput(identifierHash),
+        //     nonceInInts, pubkeyChunks, saltInInts
+        // }.SelectMany(n => n).ToList();
+        var publicInputs = new List<string>();
+        publicInputs.AddRange(ToPublicInput(identifierHash));
+        publicInputs.AddRange(nonceInInts);
+        publicInputs.AddRange(pubkeyChunks);
+        publicInputs.AddRange(saltInInts);
         var piB = new List<List<string>>();
         for (var i = 0; i < proofDto.PiB.Count; i++)
         {
@@ -137,14 +143,14 @@ public partial class CAContract
         return HexHelper.ConvertBigEndianToDecimalString(hex);
         // return BigInteger.Parse(hexString, NumberStyles.HexNumber).ToString();
     }
-
+    
     public static bool IsValidGuardianSupportZkLogin(GuardianInfo guardianInfo)
     {
         if (guardianInfo == null)
         {
             return false;
         }
-
+    
         return guardianInfo.ZkOidcInfo != null
                && guardianInfo.ZkOidcInfo.Nonce is not (null or "")
                && guardianInfo.ZkOidcInfo.Kid is not (null or "")
@@ -160,7 +166,7 @@ public partial class CAContract
         {
             return false;
         }
-
+    
         return zkOidcInfo.Nonce is not (null or "")
                && zkOidcInfo.Kid is not (null or "")
                && zkOidcInfo.ZkProof is not (null or "")
@@ -179,12 +185,10 @@ public partial class CAContract
     {
         return HashHelper.ComputeFrom(input).ToHex();
     }
-
+    
     public Hash GetOneVerifierFromServers()
     {
         var verifiers = State.VerifiersServerList.Value.VerifierServers;
-        // Random class is not allowed
-        // verifierId = verifiers[new Random().Next(verifiers.Count)].Id;
         return verifiers[0].Id;
     }
         
@@ -454,16 +458,4 @@ public partial class CAContract
 
         return true;
     }
-    // class InternalRapidSnarkProofRepr
-    // {
-    //     // [JsonProperty("pi_a")] 
-    //     public List<string> Pi_a { get; set; }
-    //     // [JsonProperty("pi_b")] 
-    //     public List<List<string>> Pi_b { get; set; }
-    //     // [JsonProperty("pi_c")] 
-    //     public List<string> Pi_c { get; set; }
-    //     
-    //     // [JsonProperty("protocol")]
-    //     public string Protocol { get; set; }
-    // }
 }
