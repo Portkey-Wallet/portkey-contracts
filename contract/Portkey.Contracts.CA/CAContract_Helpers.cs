@@ -25,14 +25,14 @@ public partial class CAContract
             Assert(false, "CheckZkLoginVerifierAndData IsZkLoginSupported error");
             return false;
         }
-        if (guardianInfo.ZkOidcInfo == null)
+        if (guardianInfo.ZkLoginInfo == null)
         {
             //todo for test log
-            Assert(false, "CheckZkLoginVerifierAndData guardianInfo.ZkOidcInfo is null");
+            Assert(false, "CheckZkLoginVerifierAndData guardianInfo.ZkLoginInfo is null");
             return false;
         }
         //check circuit id
-        if (State.CircuitVerifyingKeys[guardianInfo.ZkOidcInfo.CircuitId] == null)
+        if (State.CircuitVerifyingKeys[guardianInfo.ZkLoginInfo.CircuitId] == null)
         {
             //todo for test log
             Assert(false, "CheckZkLoginVerifierAndData circuit id error");
@@ -40,14 +40,14 @@ public partial class CAContract
         }
         // check jwt issuer
         if (State.OidcProviderAdminData[guardianInfo.Type].Issuer == null
-            || !State.OidcProviderAdminData[guardianInfo.Type].Issuer.Equals(guardianInfo.ZkOidcInfo.Issuer))
+            || !State.OidcProviderAdminData[guardianInfo.Type].Issuer.Equals(guardianInfo.ZkLoginInfo.Issuer))
         {
             //todo for test log
             Assert(false, "CheckZkLoginVerifierAndData  jwt issuer error");
             return false;
         }
         // check nonce
-        if (string.IsNullOrWhiteSpace(guardianInfo.ZkOidcInfo.Nonce))
+        if (string.IsNullOrWhiteSpace(guardianInfo.ZkLoginInfo.Nonce))
         {
             //todo for test log
             Assert(false, "CheckZkLoginVerifierAndData nonce error");
@@ -55,19 +55,19 @@ public partial class CAContract
         }
         //check nonce wasn't used before
         // State.ZkNonceList.Value ??= new ZkNonceList();
-        // if (State.ZkNonceList.Value.Nonce.Contains(guardianInfo.ZkOidcInfo.Nonce))
+        // if (State.ZkNonceList.Value.Nonce.Contains(guardianInfo.ZkLoginInfo.Nonce))
         // {
         //     //todo for test log
-        //     Assert(!State.ZkNonceList.Value.Nonce.Contains(guardianInfo.ZkOidcInfo.Nonce), "CheckZkLoginVerifierAndData Nonce used error");
+        //     Assert(!State.ZkNonceList.Value.Nonce.Contains(guardianInfo.ZkLoginInfo.Nonce), "CheckZkLoginVerifierAndData Nonce used error");
         //     return false;
         // }
         // else
         // {
-        //     State.ZkNonceList.Value.Nonce.Add(guardianInfo.ZkOidcInfo.Nonce);
+        //     State.ZkNonceList.Value.Nonce.Add(guardianInfo.ZkLoginInfo.Nonce);
         // }
     
         // check nonce = sha256(nonce_payload.to_bytes())
-        if (!guardianInfo.ZkOidcInfo.Nonce.Equals(GetSha256Hash(guardianInfo.ZkOidcInfo.NoncePayload.AddManagerAddress.ToByteArray())))
+        if (!guardianInfo.ZkLoginInfo.Nonce.Equals(GetSha256Hash(guardianInfo.ZkLoginInfo.NoncePayload.ToByteArray())))
         {
             //todo for test log
             Assert(false, "CheckZkLoginVerifierAndData nonce noncepayload error");
@@ -75,8 +75,8 @@ public partial class CAContract
         }
         
         // no need to check manager address again, the method that invoked current method has checked manage address
-        // State.HolderInfoMap[caHash].ManagerInfos.Any(m => m.Address == guardianInfo.ZkOidcInfo.NoncePayload.AddManagerAddress.ManagerAddress)
-        var publicKey = State.IssuerPublicKeysByKid[guardianInfo.Type][guardianInfo.ZkOidcInfo.Kid];
+        // State.HolderInfoMap[caHash].ManagerInfos.Any(m => m.Address == guardianInfo.ZkLoginInfo.NoncePayload.AddManagerAddress.ManagerAddress)
+        var publicKey = State.IssuerPublicKeysByKid[guardianInfo.Type][guardianInfo.ZkLoginInfo.Kid];
         if (publicKey is null or "")
         {
             //todo for test log
@@ -85,7 +85,7 @@ public partial class CAContract
         }
         var circuitId = new StringValue
         {
-            Value = guardianInfo.ZkOidcInfo.CircuitId
+            Value = guardianInfo.ZkLoginInfo.CircuitId
         };
         var verifyingKey = GetVerifyingKey(circuitId);
         if (verifyingKey == null)
@@ -95,8 +95,8 @@ public partial class CAContract
             return false;
         }
 
-        var result = VerifyZkProof(guardianInfo.ZkOidcInfo.ZkProof, guardianInfo.ZkOidcInfo.Nonce,
-            guardianInfo.ZkOidcInfo.IdentifierHash.ToHex(), guardianInfo.ZkOidcInfo.Salt, verifyingKey.VerifyingKey_, publicKey);
+        var result = VerifyZkProof(guardianInfo.ZkLoginInfo.ZkProof, guardianInfo.ZkLoginInfo.Nonce,
+            guardianInfo.ZkLoginInfo.IdentifierHash.ToHex(), guardianInfo.ZkLoginInfo.Salt, verifyingKey.VerifyingKey_, publicKey);
         if (!result)
         {
             //todo for test log
@@ -170,28 +170,28 @@ public partial class CAContract
             return false;
         }
     
-        return guardianInfo.ZkOidcInfo != null
-               && guardianInfo.ZkOidcInfo.Nonce is not (null or "")
-               && guardianInfo.ZkOidcInfo.Kid is not (null or "")
-               && guardianInfo.ZkOidcInfo.ZkProof is not (null or "")
-               && guardianInfo.ZkOidcInfo.Issuer is not (null or "")
-               && guardianInfo.ZkOidcInfo.Salt is not (null or "")
-               && guardianInfo.ZkOidcInfo.NoncePayload is not null;
+        return guardianInfo.ZkLoginInfo != null
+               && guardianInfo.ZkLoginInfo.Nonce is not (null or "")
+               && guardianInfo.ZkLoginInfo.Kid is not (null or "")
+               && guardianInfo.ZkLoginInfo.ZkProof is not (null or "")
+               && guardianInfo.ZkLoginInfo.Issuer is not (null or "")
+               && guardianInfo.ZkLoginInfo.Salt is not (null or "")
+               && guardianInfo.ZkLoginInfo.NoncePayload is not null;
     }
     
-    public static bool IsValidZkOidcInfoSupportZkLogin(ZkJwtAuthInfo zkOidcInfo)
+    public static bool IsValidZkOidcInfoSupportZkLogin(ZkLoginInfo zkLoginInfo)
     {
-        if (zkOidcInfo == null)
+        if (zkLoginInfo == null)
         {
             return false;
         }
     
-        return zkOidcInfo.Nonce is not (null or "")
-               && zkOidcInfo.Kid is not (null or "")
-               && zkOidcInfo.ZkProof is not (null or "")
-               && zkOidcInfo.Issuer is not (null or "")
-               && zkOidcInfo.Salt is not (null or "")
-               && zkOidcInfo.NoncePayload is not null;
+        return zkLoginInfo.Nonce is not (null or "")
+               && zkLoginInfo.Kid is not (null or "")
+               && zkLoginInfo.ZkProof is not (null or "")
+               && zkLoginInfo.Issuer is not (null or "")
+               && zkLoginInfo.Salt is not (null or "")
+               && zkLoginInfo.NoncePayload is not null;
     }
     
     public static bool IsZkLoginSupported(GuardianType type)

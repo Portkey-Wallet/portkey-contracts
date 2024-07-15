@@ -225,7 +225,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
             //get a verifier from verifier server list verifierId
             VerifierId = GetOneVerifierFromServers(),
             IsLoginGuardian = true,
-            ZkOidcInfo = guardianApproved.ZkOidcInfo,
+            ZkLoginInfo = guardianApproved.ZkLoginInfo,
             ManuallySupportForZk = true //when the new user registered,portkey contract used zklogin as verifier
         };
         holderInfo.GuardianList = new GuardianList
@@ -423,12 +423,12 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         Assert(input != null, "Invalid input when AddJwtIssuer.");
         Assert(IsValidGuardianType(input.Type), "Invalid guardian input when adding jwt issuer.");
         Assert(input.Issuer != null, "Invalid Issuer input when adding jwt issuer.");
-        Assert(input.Oauth2Endpoint != null, "Invalid Oauth2Endpoint input when adding jwt issuer.");
+        Assert(input.JwksEndpoint != null, "Invalid Oauth2Endpoint input when adding jwt issuer.");
         Assert(!input.Issuer.Equals(State.OidcProviderAdminData[input.Type].Issuer), "the guardian type's issuer exists");
         State.OidcProviderAdminData[input.Type] = new ZkBasicAdminData()
         {
             Issuer = input.Issuer,
-            Oauth2Endpoint = input.Oauth2Endpoint
+            Oauth2Endpoint = input.JwksEndpoint
         };
         return new Empty();
     }
@@ -480,8 +480,8 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
     {
         Assert(Context.Sender == State.Admin.Value, "No SetOracleAddress permission.");
         Assert(input != null, "Invalid address input");
-        Assert(State.OracleAddress.Value != null, "OracleAddress exists");
-        State.OracleAddress.Value = input;
+        // Assert(State.OracleAddress.Value != null, "OracleAddress exists");
+        State.OracleContract.Value = input;
         return new Empty();
     }
 
@@ -498,7 +498,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
 
         var specificData = new OracleDataFeedsSpecificData()
         {
-            Cron = "0 */2 * * * ?",
+            Cron = "0 */10 * * * ?",
             DataFeedsJobSpec = new OracleDataFeedsJobSpec()
             {
                 Type = "PlainDataFeeds",
@@ -520,16 +520,17 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
 
     public override Empty HandleOracleFulfillment(HandleOracleFulfillmentInput input)
     {
+        Assert(State.OracleContract.Value == Context.Sender, "Only oracle contract can invoke.");
         Assert(input != null, "Invalid input.");
-        Assert(State.OracleContract.Value == State.OracleAddress.Value, "Invalid OracleContract address.");
         Assert(input.RequestTypeIndex > 0, "Invalid request type index.");
         Assert(!input.Response.IsNullOrEmpty() || !input.Err.IsNullOrEmpty(), "Invalid input response or err.");
         //check the input.Response input.Response.ToBase64() or input.Response.ToHex() or input.Response.ToPlainBase58()
-        GoogleResponse response = GoogleResponse.Parser.ParseFrom(input.Response.ToByteArray());
+        var response = Jwks.Parser.ParseFrom(input.Response.ToByteArray());
         Assert(response != null, "Invalid HandleOracleFulfillmentInput response input.");
         //todo aetherlink can't differentiate apple/google/facebook
         foreach (var googleKeyDto in response.Keys)
         {
+            //for test env, only support google guardian
             State.IssuerPublicKeysByKid[GuardianType.OfGoogle][googleKeyDto.Kid] = googleKeyDto.N;
         }
 

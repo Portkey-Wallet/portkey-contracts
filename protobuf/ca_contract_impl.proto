@@ -407,12 +407,12 @@ message InnerPiB {
   repeated string pi_b = 1;
 }
 
-message GoogleResponse
+message Jwks
 {
-  repeated GoogleKeyDto keys = 1;
+  repeated JwkRecord keys = 1;
 }
 
-message GoogleKeyDto
+message JwkRecord
 {
   string n = 1;
   string kid = 2;

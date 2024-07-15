@@ -164,7 +164,7 @@ message Guardian {
   aelf.Hash identifier_hash = 3;
   string salt = 4;
   bool is_login_guardian = 5;
-  ZkJwtAuthInfo zk_oidc_info = 6;
+  ZkLoginInfo zk_login_info = 6;
   bool manuallySupportForZk = 7;
 }
 
@@ -240,7 +240,7 @@ message GuardianInfo {
   GuardianType type = 1;
   aelf.Hash identifier_hash = 2;
   VerificationInfo verification_info = 3;
-  ZkJwtAuthInfo zk_oidc_info = 4;
+  ZkLoginInfo zk_login_info = 4;
 }
 
 message VerificationInfo {
@@ -249,7 +249,7 @@ message VerificationInfo {
   string verification_doc = 3;
 }
 
-message ZkJwtAuthInfo {
+message ZkLoginInfo {
   // the type may be changed if we decide to use Poseidon hash function later
   aelf.Hash identifier_hash = 1;
   // salt used to generate the identifier_hash, it has to be 16 bytes
@@ -292,7 +292,7 @@ message RemoveManager {
 message JwtIssuerAndEndpointInput {
   GuardianType type = 1;
   string issuer = 2;
-  string oauth2_endpoint = 3;
+  string jwks_endpoint = 3;
 }
 
 message KidPublicKeyInput {

@@ -79,7 +79,7 @@ public partial class CAContract
                 Type = input.GuardianToAdd.Type,
                 VerifierId = verifierId,
                 IsLoginGuardian = false,
-                ZkOidcInfo = input.GuardianToAdd.ZkOidcInfo
+                ZkLoginInfo = input.GuardianToAdd.ZkLoginInfo
             };
         }
         else
@@ -256,8 +256,8 @@ public partial class CAContract
 
         existPreGuardian.VerifierId = input.GuardianToUpdateNew?.VerificationInfo.Id;
         //when the user changed the verifier to zk,the front end would show zk verifier totally, not show zk+original verifier
-        existPreGuardian.ManuallySupportForZk = !IsValidZkOidcInfoSupportZkLogin(input.GuardianToUpdatePre.ZkOidcInfo)
-                                                && IsValidZkOidcInfoSupportZkLogin(input.GuardianToUpdateNew.ZkOidcInfo);
+        existPreGuardian.ManuallySupportForZk = !IsValidZkOidcInfoSupportZkLogin(input.GuardianToUpdatePre.ZkLoginInfo)
+                                                && IsValidZkOidcInfoSupportZkLogin(input.GuardianToUpdateNew.ZkLoginInfo);
 
         if (State.LoginGuardianMap[preGuardian.IdentifierHash][preGuardian.VerifierId] != null)
         {

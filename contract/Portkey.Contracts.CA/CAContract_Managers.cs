@@ -407,8 +407,8 @@ public partial class CAContract
 
     private bool CanVerifyWithZkLogin(GuardianInfo guardianInfo)
     {
-        return IsZkLoginSupported(guardianInfo.Type) && guardianInfo.ZkOidcInfo != null
-                                                     && (guardianInfo.ZkOidcInfo.Nonce is not (null or ""))
-                                                     && (guardianInfo.ZkOidcInfo.ZkProof is not (null or ""));
+        return IsZkLoginSupported(guardianInfo.Type) && guardianInfo.ZkLoginInfo != null
+                                                     && (guardianInfo.ZkLoginInfo.Nonce is not (null or ""))
+                                                     && (guardianInfo.ZkLoginInfo.ZkProof is not (null or ""));
     }
 }

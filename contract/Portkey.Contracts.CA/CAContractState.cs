@@ -81,6 +81,4 @@ public partial class CAContractState : ContractState
     public MappedState<GuardianType, string, string> IssuerPublicKeysByKid { get; set; }
     
     public SingletonState<ZkNonceList> ZkNonceList { get; set; }
-    
-    public SingletonState<Address> OracleAddress { get; set; }
 }
