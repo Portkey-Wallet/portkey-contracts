@@ -103,7 +103,7 @@ service CAContract {
   rpc GetCheckOperationDetailsInSignatureEnabled (google.protobuf.Empty) returns (GetCheckOperationDetailsInSignatureEnabledOutput) {option (aelf.is_view) = true;}
 
   // add a jwt issuer
-  rpc AddJwtIssuer (JwtIssuerAndEndpointInput) returns (google.protobuf.Empty);
+  rpc AddOrUpdateJwtIssuer (JwtIssuerAndEndpointInput) returns (google.protobuf.Empty);
 
   // query whether an issuer is valid
   rpc IsValidIssuer (JwtIssuerAndEndpointInput) returns (google.protobuf.BoolValue) {

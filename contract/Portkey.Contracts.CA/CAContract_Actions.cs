@@ -417,18 +417,17 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         };
     }
 
-    public override Empty AddJwtIssuer(JwtIssuerAndEndpointInput input)
+    public override Empty AddOrUpdateJwtIssuer(JwtIssuerAndEndpointInput input)
     {
         Assert(Context.Sender == State.Admin.Value, "No AddJwtIssuer permission.");
         Assert(input != null, "Invalid input when AddJwtIssuer.");
         Assert(IsValidGuardianType(input.Type), "Invalid guardian input when adding jwt issuer.");
         Assert(input.Issuer != null, "Invalid Issuer input when adding jwt issuer.");
-        Assert(input.JwksEndpoint != null, "Invalid Oauth2Endpoint input when adding jwt issuer.");
-        Assert(!input.Issuer.Equals(State.OidcProviderAdminData[input.Type].Issuer), "the guardian type's issuer exists");
+        Assert(input.JwksEndpoint != null, "Invalid JwksEndpoint input when adding jwt issuer.");
         State.OidcProviderAdminData[input.Type] = new ZkBasicAdminData()
         {
             Issuer = input.Issuer,
-            Oauth2Endpoint = input.JwksEndpoint
+            JwksEndpoint = input.JwksEndpoint
         };
         return new Empty();
     }
@@ -502,7 +501,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
             DataFeedsJobSpec = new OracleDataFeedsJobSpec()
             {
                 Type = "PlainDataFeeds",
-                Url = State.OidcProviderAdminData[input.Type].Oauth2Endpoint
+                Url = State.OidcProviderAdminData[input.Type].JwksEndpoint
                 //"https://www.googleapis.com/oauth2/v3/certs"
             }
         };

@@ -425,7 +425,7 @@ message JwkRecord
 message ZkBasicAdminData
 {
   string issuer = 1;
-  string oauth2_endpoint = 2; //the url that can get kid and public key from third party
+  string jwks_endpoint = 2; //the url that can get kid and public key from third party
   int64 subscription_id = 3;
   int32 request_type_index = 4;
   OracleDataFeedsSpecificData specific_data = 5;
