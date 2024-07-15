@@ -61,15 +61,11 @@ service CAContract {
   
   rpc UpdateManagerInfos (UpdateManagerInfosInput) returns (google.protobuf.Empty) {}
 
-  
-
   rpc AddCAServer (AddCAServerInput) returns (google.protobuf.Empty){}
 
   rpc RemoveCAServer (RemoveCAServerInput) returns (google.protobuf.Empty){}
   
   rpc GetHolderInfo(GetHolderInfoInput) returns (GetHolderInfoOutput) {option (aelf.is_view) = true;}
-
-  
   
   rpc GetCAServers (google.protobuf.Empty) returns (GetCAServersOutput) {option (aelf.is_view) = true;}
   
@@ -105,6 +101,19 @@ service CAContract {
   rpc SetCheckOperationDetailsInSignatureEnabled (SetCheckOperationDetailsInSignatureEnabledInput) returns (google.protobuf.Empty) {}
 
   rpc GetCheckOperationDetailsInSignatureEnabled (google.protobuf.Empty) returns (GetCheckOperationDetailsInSignatureEnabledOutput) {option (aelf.is_view) = true;}
+
+  // add a jwt issuer
+  rpc AddJwtIssuer (JwtIssuerAndEndpointInput) returns (google.protobuf.Empty);
+
+  // query whether an issuer is valid
+  rpc IsValidIssuer (JwtIssuerAndEndpointInput) returns (google.protobuf.BoolValue) {
+    option (aelf.is_view) = true;
+  }
+  
+  rpc AddKidPublicKey(KidPublicKeyInput) returns (google.protobuf.Empty);
+
+  //start oracle data feeds task by subscription_id and guardian_type
+  rpc StartOracleDataFeedsTask (StartOracleDataFeedsTaskRequest) returns (google.protobuf.Empty);
 }
 
 // Events
@@ -168,14 +177,10 @@ enum GuardianType {
   GUARDIAN_TYPE_OF_TWITTER = 6;
 }
 
-
-
 message CAServer {
   string name = 1;
   string end_point = 2;
 }
-
-
 
 message CAServerList {
   repeated CAServer ca_servers = 1;
@@ -283,6 +288,25 @@ message RemoveManager {
   aelf.Hash identifier_hash = 2;
   aelf.Address manager_address = 3; // ？？ Or use ManagerInfo here ？？ 
 }
+
+message JwtIssuerAndEndpointInput {
+  GuardianType type = 1;
+  string issuer = 2;
+  string oauth2_endpoint = 3;
+}
+
+message KidPublicKeyInput {
+  GuardianType type = 1;
+  string kid = 2;
+  string public_key = 3;
+}
+
+message StartOracleDataFeedsTaskRequest
+{
+  GuardianType type = 1;
+  int64 subscription_id = 2;
+}
+
 enum StrategyValueType {
   STRATEGY = 0;
   LONG = 1;

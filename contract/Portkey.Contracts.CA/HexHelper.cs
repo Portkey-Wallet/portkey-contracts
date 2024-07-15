@@ -5,27 +5,16 @@ namespace Portkey.Contracts.CA;
 
 public static class HexHelper
 {
-    // public static byte[] HexStringToByteArray(this string hex)
-    // {
-    //     var length = hex.Length;
-    //     var bytes = new byte[length / 2];
-    //     for (var i = 0; i < length; i += 2)
-    //     {
-    //         bytes[i / 2] = Convert.ToByte(hex.Substring(i, 2), 16);
-    //     }
-    //
-    //     return bytes;
-    // }
-    
     public static byte[] HexStringToByteArray(this string hex)
     {
         var length = hex.Length;
-        var bytes = new List<byte>(length / 2);
+        var bytesLength = length / 2;
+        var bytes = new List<byte>(bytesLength);
+        for (var i = 0; i < bytesLength; i++)
+            bytes.Add(0);
         for (var i = 0; i < length; i += 2)
-        {
             bytes[i / 2] = Convert.ToByte(hex.Substring(i, 2), 16);
-        }
-
+    
         return bytes.ToArray();
     }
     
@@ -40,6 +29,7 @@ public static class HexHelper
         result.Reverse();
         return string.Join("", result);
     }
+    
     static void MultiplyBy256(List<int> number)
     {
         var carry = 0;
@@ -55,6 +45,7 @@ public static class HexHelper
             carry /= 10;
         }
     }
+    
     static void AddByte(List<int> number, byte b)
     {
         int carry = b;

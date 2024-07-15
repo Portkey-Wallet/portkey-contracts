@@ -5,6 +5,7 @@ using AElf.Sdk.CSharp;
 using AElf.Types;
 using AetherLink.Contracts.Consumer;
 using AetherLink.Contracts.Oracle;
+using Google.Protobuf;
 using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
 
@@ -416,67 +417,116 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         };
     }
 
-    public override Empty AddJwtIssuer(/*GuardianType guardianType, */StringValue input)
+    public override Empty AddJwtIssuer(JwtIssuerAndEndpointInput input)
     {
-        Assert(input != null, "Invalid Issuer.");
-        Assert(!input.Equals(State.JwtIssuers[GuardianType.OfGoogle]), "Google jwt issuer exists");
-        State.JwtIssuers[GuardianType.OfGoogle] = input.Value;
+        Assert(Context.Sender == State.Admin.Value, "No AddJwtIssuer permission.");
+        Assert(input != null, "Invalid input when AddJwtIssuer.");
+        Assert(IsValidGuardianType(input.Type), "Invalid guardian input when adding jwt issuer.");
+        Assert(input.Issuer != null, "Invalid Issuer input when adding jwt issuer.");
+        Assert(input.Oauth2Endpoint != null, "Invalid Oauth2Endpoint input when adding jwt issuer.");
+        Assert(!input.Issuer.Equals(State.OidcProviderAdminData[input.Type].Issuer), "the guardian type's issuer exists");
+        State.OidcProviderAdminData[input.Type] = new ZkBasicAdminData()
+        {
+            Issuer = input.Issuer,
+            Oauth2Endpoint = input.Oauth2Endpoint
+        };
         return new Empty();
     }
 
-    public override Empty AddVerifyingKey(VerifyingKey input)
+    public override Empty AddKidPublicKey(KidPublicKeyInput input)
     {
-        Assert(input != null, "Invalid verifying key.");
+        Assert(Context.Sender == State.Admin.Value, "No AddKidPublicKey permission.");
+        Assert(input != null, "Invalid input when AddJwtIssuer.");
+        Assert(IsValidGuardianType(input.Type), "Invalid guardian input when adding kid public key.");
+        Assert(input.Kid != null, "Invalid kid input when adding kid public key.");
+        Assert(input.PublicKey != null, "Invalid PublicKey input when adding kid public key.");
+        State.IssuerPublicKeysByKid[input.Type][input.Kid] = input.PublicKey;
+        return new Empty();
+    }
+
+    public override Empty AddOrUpdateVerifyingKey(VerifyingKey input)
+    {
+        Assert(Context.Sender == State.Admin.Value, "no addVerifyingKey permission.");
+        Assert(input != null, "Invalid verifying key input.");
         Assert(!string.IsNullOrEmpty(input.CircuitId), "circuitId is required.");
         Assert(!string.IsNullOrEmpty(input.VerifyingKey_), "verifying key is required.");
         State.CircuitVerifyingKeys[input.CircuitId] = input;
-        return base.AddVerifyingKey(input);
+        return new Empty();
     }
 
-    public override BoolValue IsValidIssuer(/*GuardianType guardianType, */StringValue input)
+    public override BoolValue IsValidIssuer(JwtIssuerAndEndpointInput input)
     {
-        Assert(input != null, "Invalid verifying key.");
-        Assert(State.JwtIssuers[GuardianType.OfGoogle] != null
-            || State.JwtIssuers[GuardianType.OfApple] != null
-            || State.JwtIssuers[GuardianType.OfFacebook] != null, "verifying key doesn't exist.");
+        Assert(Context.Sender == State.Admin.Value, "No IsValidIssuer permission.");
+        Assert(input != null, "Invalid JwtIssuerInput in IsValidIssuer method.");
+        Assert(input.Issuer != null, "Invalid Issuer in IsValidIssuer method.");
+        Assert(IsValidGuardianType(input.Type), "Invalid Type in IsValidIssuer method.");
+        Assert(State.OidcProviderAdminData[input.Type] != null, "guardian type doesn't exist.");
+        Assert(State.OidcProviderAdminData[input.Type].Issuer != null, "verifying key doesn't exist.");
         return new BoolValue
         {
-            Value = true//State.JwtIssuers[guardianType].Equals(input)
+            Value = State.OidcProviderAdminData[input.Type].Issuer == input.Issuer
         };
     }
 
     public override VerifyingKey GetVerifyingKey(StringValue input)
     {
-        Assert(input != null, "Invalid circuitId.");
+        Assert(Context.Sender == State.Admin.Value, "No GetVerifyingKey permission.");
+        Assert(input != null, "Invalid circuit id.");
         Assert(State.CircuitVerifyingKeys[input.Value] != null, "circuitId not exist");
         return State.CircuitVerifyingKeys[input.Value];
     }
 
-    public override Empty StartOracleRequest(StartOracleRequestInput input)
+    public override Empty SetOracleAddress(Address input)
     {
-        Assert(input != null, "Invalid input.");
-        Assert(input.SubscriptionId > 0, "Invalid input subscription id.");
-        Assert(input.RequestTypeIndex > 0, "Invalid request type index.");
+        Assert(Context.Sender == State.Admin.Value, "No SetOracleAddress permission.");
+        Assert(input != null, "Invalid address input");
+        Assert(State.OracleAddress.Value != null, "OracleAddress exists");
+        State.OracleAddress.Value = input;
+        return new Empty();
+    }
 
+    public override Empty StartOracleDataFeedsTask(StartOracleDataFeedsTaskRequest input)
+    {
+        Assert(Context.Sender == State.Admin.Value, "No StartOracleRequest permission.");
+        Assert(input != null, "Invalid StartOracleDataFeedsTaskRequest input.");
+        Assert(IsValidGuardianType(input.Type), "Invalid input type.");
+        Assert(input.SubscriptionId > 0, "Invalid input subscription id.");
+        Assert(State.OidcProviderAdminData[input.Type] != null, "StartOracleDataFeedsTaskRequest OidcProviderAdminData doesn't exist");
+        Assert(!(State.OidcProviderAdminData[input.Type].SubscriptionId.Equals(input.SubscriptionId)
+            && State.OidcProviderAdminData[input.Type].SpecificData != null
+            && State.OidcProviderAdminData[input.Type].SpecificData.DataFeedsJobSpec != null), "the SubscriptionId has started before");
+
+        var specificData = new OracleDataFeedsSpecificData()
+        {
+            Cron = "0 */2 * * * ?",
+            DataFeedsJobSpec = new OracleDataFeedsJobSpec()
+            {
+                Type = "PlainDataFeeds",
+                Url = State.OidcProviderAdminData[input.Type].Oauth2Endpoint
+                //"https://www.googleapis.com/oauth2/v3/certs"
+            }
+        };
         State.OracleContract.SendRequest.Send(new SendRequestInput
         {
             SubscriptionId = input.SubscriptionId,
-            RequestTypeIndex = input.RequestTypeIndex,
-            SpecificData = input.SpecificData
+            RequestTypeIndex = 1,
+            SpecificData = specificData.ToByteString()
         });
-        
+        State.OidcProviderAdminData[input.Type].SubscriptionId = input.SubscriptionId;
+        State.OidcProviderAdminData[input.Type].RequestTypeIndex = 1;
+        State.OidcProviderAdminData[input.Type].SpecificData = specificData;
         return new Empty();
     }
 
     public override Empty HandleOracleFulfillment(HandleOracleFulfillmentInput input)
     {
         Assert(input != null, "Invalid input.");
-        // Assert(IsHashValid(input.RequestId), "Invalid input request id.");
+        Assert(State.OracleContract.Value == State.OracleAddress.Value, "Invalid OracleContract address.");
         Assert(input.RequestTypeIndex > 0, "Invalid request type index.");
         Assert(!input.Response.IsNullOrEmpty() || !input.Err.IsNullOrEmpty(), "Invalid input response or err.");
         //check the input.Response input.Response.ToBase64() or input.Response.ToHex() or input.Response.ToPlainBase58()
-        GoogleResponse response = GoogleResponse.Parser.ParseJson(input.Response.ToStringUtf8());
-        Assert(response != null, "Invalid input.");
+        GoogleResponse response = GoogleResponse.Parser.ParseFrom(input.Response.ToByteArray());
+        Assert(response != null, "Invalid HandleOracleFulfillmentInput response input.");
         //todo aetherlink can't differentiate apple/google/facebook
         foreach (var googleKeyDto in response.Keys)
         {
@@ -485,40 +535,4 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
 
         return new Empty();
     }
-    
-    // {
-    //     "keys": [
-    //     {
-    //         "n": "w-l_VE4KNa22n4nsMwcabujowm924YoQQnwOz_dPYHmDI1O-r2bqw6mHmByXwii7aaeIMHJZWpmT5SkR3OYIu5RbSgiU-8JrQoplW_vZY2IqG1y5-frPC_9gnz_0qKKjtjqglCP-1AlfOdu7r5kOpkOACs5mWn4tm1K9R1EPjk2T_MMO7FkteZd8woh1fwUUuvbhPyDxBzx9EUsnGWbpTndOYc7W-EUk1jMtWBk3buLeaypVaOLWranK_XFrX-xx03BohrfinOqmftYgc0z94sxix7X1G36JZeh8-jpUhwyBPinBxOZOE_5kQn4CYM66Ygxwiws0ZJ-klG2qTi239w",
-    //         "kid": "674dbba8faee69acae1bc1be190453678f472803",
-    //         "e": "AQAB",
-    //         "alg": "RS256",
-    //         "kty": "RSA",
-    //         "use": "sig"
-    //     },
-    //     {
-    //         "e": "AQAB",
-    //         "alg": "RS256",
-    //         "kid": "c3abe413b2268ae976458c82c15179547e97527e",
-    //         "kty": "RSA",
-    //         "use": "sig",
-    //         "n": "rr9RI_trqotRBIi9qTgoYPE4FnjvhIOoolHhi3Lxw3FqK-8vYwczsVEsTzVek3MAUdNNILhJozKN1Snirlrr_albKitJFJ1SbjJe2HsNeZu96TrWMNmWCCUOXK0ecEVdw8gqfGOE-_VvKaIVxYGaJpSystRjRXfrT8QHXNYMSI7xqJI9Obw4IUpwYxky6eVtB3zLW4Qz7cH2jFMsSB3uufdvOA-odJXrwZkC2FX0krVtSyCWzazjHMX0zOCckZVZK7xBNjuuElcnZ4IpGHcHDYtyI004WY-ez7_yxyOHGoJd31Omg39DkunpSQxfA87LLGumtd1OROvQzNFZETDqfw"
-    //     }
-    //     ]
-    // }
-    
-    // internal class GoogleResponse
-    // {
-    //     public List<GoogleKeyDto> Keys { get; set; }
-    // }
-    //
-    // internal class GoogleKeyDto
-    // {
-    //     public string N { get; set; }
-    //     public string Kid { get; set; }
-    //     public string E { get; set; }
-    //     public string Alg { get; set; }
-    //     public string Kty { get; set; }
-    //     public string Use { get; set; }
-    // }
 }

@@ -86,21 +86,16 @@ service CAContractImpl {
 
   rpc GetVerifierServers (google.protobuf.Empty) returns (GetVerifierServersOutput) {option (aelf.is_view) = true;}
   
-  // add a jwt issuer
-  rpc AddJwtIssuer (google.protobuf.StringValue) returns (google.protobuf.Empty);
-
-  // add a verifying key for a circuit
-  rpc AddVerifyingKey (VerifyingKey) returns (google.protobuf.Empty);
-
-  // query whether an issuer is valid
-  rpc IsValidIssuer (google.protobuf.StringValue) returns (google.protobuf.BoolValue) {
-    option (aelf.is_view) = true;
-  }
-
+  // add a verifying key for a circuit or update the old one
+  rpc AddOrUpdateVerifyingKey (VerifyingKey) returns (google.protobuf.Empty);
+  
   // query the verifying key of a circuit (by circuit_id)
   rpc GetVerifyingKey (google.protobuf.StringValue) returns (VerifyingKey) {
     option (aelf.is_view) = true;
   }
+  
+  //set oracle address in portkey contract
+  rpc SetOracleAddress (aelf.Address) returns (google.protobuf.Empty);
 }
 
 message AddManagerApproveSpenderWhitelistInput {
@@ -425,4 +420,25 @@ message GoogleKeyDto
   string alg = 4;
   string kty = 5;
   string use = 6;
+}
+
+message ZkBasicAdminData
+{
+  string issuer = 1;
+  string oauth2_endpoint = 2; //the url that can get kid and public key from third party
+  int64 subscription_id = 3;
+  int32 request_type_index = 4;
+  OracleDataFeedsSpecificData specific_data = 5;
+}
+
+message OracleDataFeedsSpecificData
+{
+  string cron = 1;
+  OracleDataFeedsJobSpec data_feeds_job_spec = 2;
+}
+
+message OracleDataFeedsJobSpec
+{
+  string type = 1;
+  string url = 2;
 }

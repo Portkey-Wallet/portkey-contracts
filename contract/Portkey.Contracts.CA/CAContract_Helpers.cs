@@ -21,48 +21,66 @@ public partial class CAContract
         // check guardian type
         if (!IsZkLoginSupported(guardianInfo.Type))
         {
+            //todo for test log
+            Assert(false, "CheckZkLoginVerifierAndData IsZkLoginSupported error");
             return false;
         }
         if (guardianInfo.ZkOidcInfo == null)
         {
+            //todo for test log
+            Assert(false, "CheckZkLoginVerifierAndData guardianInfo.ZkOidcInfo is null");
             return false;
         }
         //check circuit id
-        if (State.CircuitVerifyingKeys[guardianInfo.ZkOidcInfo.CircuitId] == null
-            || State.JwtIssuers[guardianInfo.Type] == null)
+        if (State.CircuitVerifyingKeys[guardianInfo.ZkOidcInfo.CircuitId] == null)
         {
+            //todo for test log
+            Assert(false, "CheckZkLoginVerifierAndData circuit id error");
             return false;
         }
         // check jwt issuer
-        if (!State.JwtIssuers[guardianInfo.Type].Equals(guardianInfo.ZkOidcInfo.Issuer))
+        if (State.OidcProviderAdminData[guardianInfo.Type].Issuer == null
+            || !State.OidcProviderAdminData[guardianInfo.Type].Issuer.Equals(guardianInfo.ZkOidcInfo.Issuer))
         {
+            //todo for test log
+            Assert(false, "CheckZkLoginVerifierAndData  jwt issuer error");
             return false;
         }
         // check nonce
         if (string.IsNullOrWhiteSpace(guardianInfo.ZkOidcInfo.Nonce))
         {
+            //todo for test log
+            Assert(false, "CheckZkLoginVerifierAndData nonce error");
             return false;
         }
         //check nonce wasn't used before
-        State.ZkNonceList.Value ??= new ZkNonceList();
-        if (State.ZkNonceList.Value.Nonce.Contains(guardianInfo.ZkOidcInfo.Nonce))
-        {
-            return false;
-        }
-        else
-        {
-            State.ZkNonceList.Value.Nonce.Add(guardianInfo.ZkOidcInfo.Nonce);
-        }
+        // State.ZkNonceList.Value ??= new ZkNonceList();
+        // if (State.ZkNonceList.Value.Nonce.Contains(guardianInfo.ZkOidcInfo.Nonce))
+        // {
+        //     //todo for test log
+        //     Assert(!State.ZkNonceList.Value.Nonce.Contains(guardianInfo.ZkOidcInfo.Nonce), "CheckZkLoginVerifierAndData Nonce used error");
+        //     return false;
+        // }
+        // else
+        // {
+        //     State.ZkNonceList.Value.Nonce.Add(guardianInfo.ZkOidcInfo.Nonce);
+        // }
     
         // check nonce = sha256(nonce_payload.to_bytes())
         if (!guardianInfo.ZkOidcInfo.Nonce.Equals(GetSha256Hash(guardianInfo.ZkOidcInfo.NoncePayload.AddManagerAddress.ToByteArray())))
         {
+            //todo for test log
+            Assert(false, "CheckZkLoginVerifierAndData nonce noncepayload error");
             return false;
         }
-    
+        
+        // no need to check manager address again, the method that invoked current method has checked manage address
+        // State.HolderInfoMap[caHash].ManagerInfos.Any(m => m.Address == guardianInfo.ZkOidcInfo.NoncePayload.AddManagerAddress.ManagerAddress)
         var publicKey = State.IssuerPublicKeysByKid[guardianInfo.Type][guardianInfo.ZkOidcInfo.Kid];
         if (publicKey is null or "")
         {
+            //todo for test log
+            Assert(false, "CheckZkLoginVerifierAndData circuit id error");
             return false;
         }
         var circuitId = new StringValue
@@ -72,11 +90,19 @@ public partial class CAContract
         var verifyingKey = GetVerifyingKey(circuitId);
         if (verifyingKey == null)
         {
+            //todo for test log
+            Assert(verifyingKey != null, "CheckZkLoginVerifierAndData verifyingKey error");
             return false;
         }
 
-        return VerifyZkProof(guardianInfo.ZkOidcInfo.ZkProof, guardianInfo.ZkOidcInfo.Nonce,
+        var result = VerifyZkProof(guardianInfo.ZkOidcInfo.ZkProof, guardianInfo.ZkOidcInfo.Nonce,
             guardianInfo.ZkOidcInfo.IdentifierHash.ToHex(), guardianInfo.ZkOidcInfo.Salt, verifyingKey.VerifyingKey_, publicKey);
+        if (!result)
+        {
+            //todo for test log
+            Assert(result, "CheckZkLoginVerifierAndData VerifyZkProof error");
+        }
+        return result;
     }
     
     private bool VerifyZkProof(string proof, string nonce, string identifierHash, string salt, string verifyingKey, string pubkey)
@@ -86,14 +112,8 @@ public partial class CAContract
             .Select(HexToBigInt).ToList();
         var proofDto = InternalRapidSnarkProofRepr.Parser.ParseJson(proof);
         var nonceInInts = nonce.ToCharArray().Select(b => ((int)b).ToString()).ToList();
-        // var nonceInInts = Encoding.UTF8.GetBytes(nonce).Select(b => b.ToString()).ToList();
         var saltInInts = salt.HexStringToByteArray().Select(b => b.ToString()).ToList();
-    
-        // var publicInputs = new List<List<string>>
-        // {
-        //     ToPublicInput(identifierHash),
-        //     nonceInInts, pubkeyChunks, saltInInts
-        // }.SelectMany(n => n).ToList();
+        
         var publicInputs = new List<string>();
         publicInputs.AddRange(ToPublicInput(identifierHash));
         publicInputs.AddRange(nonceInInts);
@@ -141,7 +161,6 @@ public partial class CAContract
     private static string HexToBigInt(byte[] hex)
     {
         return HexHelper.ConvertBigEndianToDecimalString(hex);
-        // return BigInteger.Parse(hexString, NumberStyles.HexNumber).ToString();
     }
     
     public static bool IsValidGuardianSupportZkLogin(GuardianInfo guardianInfo)
@@ -179,6 +198,16 @@ public partial class CAContract
     {
         return GuardianType.OfGoogle.Equals(type) || GuardianType.OfApple.Equals(type) ||
                GuardianType.OfFacebook.Equals(type);
+    }
+    
+    public static bool IsValidGuardianType(GuardianType type)
+    {
+        return GuardianType.OfGoogle.Equals(type)
+               || GuardianType.OfApple.Equals(type)
+               || GuardianType.OfFacebook.Equals(type)
+               || GuardianType.OfEmail.Equals(type)
+               || GuardianType.OfTelegram.Equals(type)
+               || GuardianType.OfTwitter.Equals(type);
     }
     
     private static string GetSha256Hash(byte[] input)
