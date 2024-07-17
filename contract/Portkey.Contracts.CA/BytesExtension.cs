@@ -24,7 +24,7 @@ public static class BytesExtension
           int index2 = num4 - index1;
           int index3 = num4 - num5;
           int num6 = (int) array[index3];
-          byte num7 = (byte) ((index3 > 0 ? (int) array[index3 - 1] : 0) << num2);
+          byte num7 = (byte) ((index3 > 0 ? (int) array[index3 - 1] : 0) << num2 & 0xff); //& 0xff
           int num8 = num1 & 31;
           byte num9 = (byte) (num6 >> num8);
           array[index2] = (byte) ((uint) num7 | (uint) num9);

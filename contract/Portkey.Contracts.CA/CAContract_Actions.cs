@@ -464,11 +464,6 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         Assert(!string.IsNullOrEmpty(input.CircuitId), "circuitId is required.");
         Assert(!string.IsNullOrEmpty(input.VerifyingKey_), "verifying key is required.");
         State.CircuitVerifyingKeys[input.CircuitId] = input;
-        Context.Fire(new VerifyingKeyAdded
-        {
-            CircuitId = input.CircuitId,
-            VerifyingKey = input.VerifyingKey_,
-        });
         return new Empty();
     }
 

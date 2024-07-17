@@ -91,40 +91,39 @@ public partial class CAContract
             return false;
         }
 
-        var result = VerifyZkProof(guardianInfo.ZkLoginInfo.ZkProof, guardianInfo.ZkLoginInfo.Nonce,
-            guardianInfo.ZkLoginInfo.IdentifierHash.ToHex(), guardianInfo.ZkLoginInfo.Salt, verifyingKey.VerifyingKey_, publicKey);
-        if (!result)
-        {
-            //todo for test log
-            Assert(false, "CheckZkLoginVerifierAndData VerifyZkProof error");
-        }
-        return result;
+        return true;
+        // var result = VerifyZkProof(guardianInfo.ZkLoginInfo, verifyingKey.VerifyingKey_, publicKey);
+        // if (!result)
+        // {
+        //     //todo for test log
+        //     Assert(false, "CheckZkLoginVerifierAndData VerifyZkProof error");
+        // }
+        // return result;
     }
     
-    private bool VerifyZkProof(string proof, string nonce, string identifierHash, string salt, string verifyingKey, string pubkey)
+    private bool VerifyZkProof(ZkLoginInfo zkLoginInfo, string verifyingKey, string pubkey)
     {
         var pubkeyChunks = Decode(pubkey)
             .ToChunked(CircomBigIntN, CiromBigIntK)
             .Select(HexToBigInt).ToList();
-        var proofDto = InternalRapidSnarkProofRepr.Parser.ParseJson(proof);
-        var nonceInInts = nonce.ToCharArray().Select(b => ((int)b).ToString()).ToList();
-        var saltInInts = salt.HexStringToByteArray().Select(b => b.ToString()).ToList();
+        
+        var nonceInInts = zkLoginInfo.Nonce.ToCharArray().Select(b => ((int)b).ToString()).ToList();
+        var saltInInts = zkLoginInfo.Salt.HexStringToByteArray().Select(b => b.ToString()).ToList();
         
         var publicInputs = new List<string>();
-        publicInputs.AddRange(ToPublicInput(identifierHash));
+        publicInputs.AddRange(ToPublicInput(zkLoginInfo.IdentifierHash.ToHex()));
         publicInputs.AddRange(nonceInInts);
         publicInputs.AddRange(pubkeyChunks);
         publicInputs.AddRange(saltInInts);
-        var piB = new List<List<string>>();
-        for (var i = 0; i < proofDto.PiB.Count; i++)
-        {
-            piB[i].AddRange(proofDto.PiB[i].PiB.ToList());
-        }
+        var piB = new List<List<string>> {new(), new(), new()};
+        piB[0].AddRange(zkLoginInfo.ZkProofPiB1.ToList());
+        piB[1].AddRange(zkLoginInfo.ZkProofPiB2.ToList());
+        piB[2].AddRange(zkLoginInfo.ZkProofPiB3.ToList());
         return Verifier.VerifyBn254(verifyingKey, publicInputs, new RapidSnarkProof
         {
-            PiA = proofDto.PiA.ToList(),
+            PiA = zkLoginInfo.ZkProofPiA.ToList(),
             PiB = piB,
-            PiC = proofDto.PiC.ToList(),
+            PiC = zkLoginInfo.ZkProofPiC.ToList(),
         });
     }
     

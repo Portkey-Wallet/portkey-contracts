@@ -116,18 +116,6 @@ service CAContract {
   rpc StartOracleDataFeedsTask (StartOracleDataFeedsTaskRequest) returns (google.protobuf.Empty);
 }
 
-// Events
-message IssuerAdded {
-  option (aelf.is_event) = true;
-  string issuer = 1;
-}
-
-message VerifyingKeyAdded {
-  option (aelf.is_event) = true;
-  string circuit_id = 1 [(aelf.is_indexed) = true];
-  string verifying_key = 2 [(aelf.is_indexed) = true];
-}
-
 //Data structure
 message HolderInfo {
   aelf.Address creator_address = 1;
@@ -267,6 +255,11 @@ message ZkLoginInfo {
   string nonce = 7;
   // the payload that is used to calculate the nonce, where nonce = hash(serialize(non 
   NoncePayload nonce_payload = 8;
+  repeated string zk_proof_pi_a = 9;
+  repeated string zk_proof_pi_b_1 = 10;
+  repeated string zk_proof_pi_b_2 = 11;
+  repeated string zk_proof_pi_b_3 = 12;
+  repeated string zk_proof_pi_c = 13;
 }
 
 message NoncePayload {
