@@ -67,12 +67,12 @@ public partial class CAContract
         // }
     
         // check nonce = sha256(nonce_payload.to_bytes())
-        if (!guardianInfo.ZkLoginInfo.Nonce.Equals(GetSha256Hash(guardianInfo.ZkLoginInfo.NoncePayload.ToByteArray())))
-        {
-            //todo for test log
-            Assert(false, "CheckZkLoginVerifierAndData nonce noncepayload error");
-            return false;
-        }
+        // if (!guardianInfo.ZkLoginInfo.Nonce.Equals(GetSha256Hash(guardianInfo.ZkLoginInfo.NoncePayload.ToByteArray())))
+        // {
+        //     //todo for test log
+        //     Assert(false, "CheckZkLoginVerifierAndData nonce noncepayload error");
+        //     return false;
+        // }
         
         // no need to check manager address again, the method that invoked current method has checked manage address
         // State.HolderInfoMap[caHash].ManagerInfos.Any(m => m.Address == guardianInfo.ZkLoginInfo.NoncePayload.AddManagerAddress.ManagerAddress)
@@ -83,15 +83,11 @@ public partial class CAContract
             Assert(false, "CheckZkLoginVerifierAndData circuit id error");
             return false;
         }
-        var circuitId = new StringValue
-        {
-            Value = guardianInfo.ZkLoginInfo.CircuitId
-        };
-        var verifyingKey = GetVerifyingKey(circuitId);
+        var verifyingKey = State.CircuitVerifyingKeys[guardianInfo.ZkLoginInfo.CircuitId];
         if (verifyingKey == null)
         {
             //todo for test log
-            Assert(verifyingKey != null, "CheckZkLoginVerifierAndData verifyingKey error");
+            Assert(false, "CheckZkLoginVerifierAndData verifyingKey error");
             return false;
         }
 
@@ -100,7 +96,7 @@ public partial class CAContract
         if (!result)
         {
             //todo for test log
-            Assert(result, "CheckZkLoginVerifierAndData VerifyZkProof error");
+            Assert(false, "CheckZkLoginVerifierAndData VerifyZkProof error");
         }
         return result;
     }

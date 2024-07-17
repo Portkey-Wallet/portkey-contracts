@@ -111,7 +111,7 @@ service CAContract {
   }
   
   rpc AddKidPublicKey(KidPublicKeyInput) returns (google.protobuf.Empty);
-
+  
   //start oracle data feeds task by subscription_id and guardian_type
   rpc StartOracleDataFeedsTask (StartOracleDataFeedsTaskRequest) returns (google.protobuf.Empty);
 }
@@ -124,7 +124,8 @@ message IssuerAdded {
 
 message VerifyingKeyAdded {
   option (aelf.is_event) = true;
-  string circuit_id = 1;
+  string circuit_id = 1 [(aelf.is_indexed) = true];
+  string verifying_key = 2 [(aelf.is_indexed) = true];
 }
 
 //Data structure

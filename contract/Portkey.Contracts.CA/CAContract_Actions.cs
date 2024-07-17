@@ -431,6 +431,20 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         };
         return new Empty();
     }
+    
+    public override BoolValue IsValidIssuer(JwtIssuerAndEndpointInput input)
+    {
+        Assert(Context.Sender == State.Admin.Value, "No IsValidIssuer permission.");
+        Assert(input != null, "Invalid JwtIssuerInput in IsValidIssuer method.");
+        Assert(input.Issuer != null, "Invalid Issuer in IsValidIssuer method.");
+        Assert(IsValidGuardianType(input.Type), "Invalid Type in IsValidIssuer method.");
+        Assert(State.OidcProviderAdminData[input.Type] != null, "guardian type doesn't exist.");
+        Assert(State.OidcProviderAdminData[input.Type].Issuer != null, "verifying key doesn't exist.");
+        return new BoolValue
+        {
+            Value = State.OidcProviderAdminData[input.Type].Issuer == input.Issuer
+        };
+    }
 
     public override Empty AddKidPublicKey(KidPublicKeyInput input)
     {
@@ -450,21 +464,12 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         Assert(!string.IsNullOrEmpty(input.CircuitId), "circuitId is required.");
         Assert(!string.IsNullOrEmpty(input.VerifyingKey_), "verifying key is required.");
         State.CircuitVerifyingKeys[input.CircuitId] = input;
-        return new Empty();
-    }
-
-    public override BoolValue IsValidIssuer(JwtIssuerAndEndpointInput input)
-    {
-        Assert(Context.Sender == State.Admin.Value, "No IsValidIssuer permission.");
-        Assert(input != null, "Invalid JwtIssuerInput in IsValidIssuer method.");
-        Assert(input.Issuer != null, "Invalid Issuer in IsValidIssuer method.");
-        Assert(IsValidGuardianType(input.Type), "Invalid Type in IsValidIssuer method.");
-        Assert(State.OidcProviderAdminData[input.Type] != null, "guardian type doesn't exist.");
-        Assert(State.OidcProviderAdminData[input.Type].Issuer != null, "verifying key doesn't exist.");
-        return new BoolValue
+        Context.Fire(new VerifyingKeyAdded
         {
-            Value = State.OidcProviderAdminData[input.Type].Issuer == input.Issuer
-        };
+            CircuitId = input.CircuitId,
+            VerifyingKey = input.VerifyingKey_,
+        });
+        return new Empty();
     }
 
     public override VerifyingKey GetVerifyingKey(StringValue input)
