@@ -33,7 +33,7 @@ public partial class CAContract
         //for the guardian supporting zk, the front end inputs zk params, portkey contract verifies with zk
         if (IsZkLoginSupported(input.GuardianToAdd.Type) && IsValidGuardianSupportZkLogin(input.GuardianToAdd))
         {
-            if (!CheckZkLoginVerifierAndData(input.GuardianToAdd))
+            if (!CheckZkLoginVerifierAndData(input.GuardianToAdd, input.CaHash))
             {
                 return new Empty();
             }

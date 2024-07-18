@@ -124,14 +124,14 @@ public partial class CAContract
         publicInputs.AddRange(pubkeyChunks);
         publicInputs.AddRange(saltInInts);
         var piB = new List<List<string>> {new(), new(), new()};
-        piB[0].AddRange(zkLoginInfo.ZkProofPiB1.ToList());
-        piB[1].AddRange(zkLoginInfo.ZkProofPiB2.ToList());
-        piB[2].AddRange(zkLoginInfo.ZkProofPiB3.ToList());
+        piB[0].AddRange(zkLoginInfo.ZkProofInfo.ZkProofPiB1.ToList());
+        piB[1].AddRange(zkLoginInfo.ZkProofInfo.ZkProofPiB2.ToList());
+        piB[2].AddRange(zkLoginInfo.ZkProofInfo.ZkProofPiB3.ToList());
         return Verifier.VerifyBn254(verifyingKey, publicInputs, new RapidSnarkProof
         {
-            PiA = zkLoginInfo.ZkProofPiA.ToList(),
+            PiA = zkLoginInfo.ZkProofInfo.ZkProofPiA.ToList(),
             PiB = piB,
-            PiC = zkLoginInfo.ZkProofPiC.ToList(),
+            PiC = zkLoginInfo.ZkProofInfo.ZkProofPiC.ToList(),
         });
     }
     
