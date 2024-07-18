@@ -16,8 +16,15 @@ public partial class CAContract
     private const int CircomBigIntN = 121;
     private const int CiromBigIntK = 17;
     
-    public bool CheckZkLoginVerifierAndData(GuardianInfo guardianInfo)
+    public bool CheckZkLoginVerifierAndData(GuardianInfo guardianInfo, Hash caHash)
     {
+        //check the caHash
+        if (caHash == null || caHash.Equals(Hash.Empty))
+        {
+            //todo for test log
+            Assert(false, "CheckZkLoginVerifierAndData CaHash error");
+            return false;
+        }
         // check guardian type
         if (!IsZkLoginSupported(guardianInfo.Type))
         {
@@ -54,19 +61,21 @@ public partial class CAContract
             return false;
         }
         //check nonce wasn't used before
-        State.ZkNonceList.Value ??= new ZkNonceList();
-        if (State.ZkNonceList.Value.Nonce.Contains(guardianInfo.ZkLoginInfo.Nonce))
+        State.ZkNonceListByCaHash[caHash] ??= new ZkNonceList();
+        if (State.ZkNonceListByCaHash[caHash].Nonce.Contains(guardianInfo.ZkLoginInfo.Nonce))
         {
             //todo for test log
-            Assert(!State.ZkNonceList.Value.Nonce.Contains(guardianInfo.ZkLoginInfo.Nonce), "CheckZkLoginVerifierAndData Nonce used error");
+            Assert(false, "CheckZkLoginVerifierAndData Nonce used error");
             return false;
         }
         else
         {
-            State.ZkNonceList.Value.Nonce.Add(guardianInfo.ZkLoginInfo.Nonce);
+            State.ZkNonceListByCaHash[caHash].Nonce.Add(guardianInfo.ZkLoginInfo.Nonce);
         }
     
         // check nonce = sha256(nonce_payload.to_bytes())
+        // guardianInfo.ZkLoginInfo.NoncePayload.AddManagerAddress.Timestamp.Seconds +
+        //     guardianInfo.ZkLoginInfo.NoncePayload.AddManagerAddress.ManagerAddress.ToBase58();
         // if (!guardianInfo.ZkLoginInfo.Nonce.Equals(GetSha256Hash(guardianInfo.ZkLoginInfo.NoncePayload.ToByteArray())))
         // {
         //     //todo for test log

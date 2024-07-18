@@ -197,7 +197,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         StrategyNode judgementStrategy, Hash holderId, int chainId, out Guardian guardian, out Address caAddress)
     {
         //Check zk proof
-        if (!CheckZkLoginVerifierAndData(guardianApproved))
+        if (!CheckZkLoginVerifierAndData(guardianApproved, holderId))
         {
             guardian = null;
             caAddress = null;

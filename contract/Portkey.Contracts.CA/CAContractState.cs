@@ -80,5 +80,7 @@ public partial class CAContractState : ContractState
     //guardian type,kid, value is public key
     public MappedState<GuardianType, string, string> IssuerPublicKeysByKid { get; set; }
     
-    public SingletonState<ZkNonceList> ZkNonceList { get; set; }
+    //optimize the logic that differentiate the used nonce by caHash
+    public MappedState<Hash, ZkNonceList> ZkNonceListByCaHash { get; set; }
+    // public SingletonState<ZkNonceList> ZkNonceList { get; set; }
 }

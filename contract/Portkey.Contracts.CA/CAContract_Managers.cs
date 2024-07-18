@@ -40,7 +40,7 @@ public partial class CAContract
         {
             if (IsZkLoginSupported(guardianInfo.Type) && IsValidGuardianSupportZkLogin(guardianInfo))
             {
-                Assert(CheckZkLoginVerifierAndData(guardianInfo), "approved guardian wasn't verified by zk");
+                Assert(CheckZkLoginVerifierAndData(guardianInfo, caHash), "approved guardian wasn't verified by zk");
             }
         }
         

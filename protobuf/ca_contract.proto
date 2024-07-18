@@ -255,11 +255,15 @@ message ZkLoginInfo {
   string nonce = 7;
   // the payload that is used to calculate the nonce, where nonce = hash(serialize(non 
   NoncePayload nonce_payload = 8;
-  repeated string zk_proof_pi_a = 9;
-  repeated string zk_proof_pi_b_1 = 10;
-  repeated string zk_proof_pi_b_2 = 11;
-  repeated string zk_proof_pi_b_3 = 12;
-  repeated string zk_proof_pi_c = 13;
+  ZkProofExtractedInfo zk_proof_extracted_info = 9;
+}
+
+message ZkProofExtractedInfo {
+  repeated string zk_proof_pi_a = 1;
+  repeated string zk_proof_pi_b_1 = 2;
+  repeated string zk_proof_pi_b_2 = 3;
+  repeated string zk_proof_pi_b_3 = 4;
+  repeated string zk_proof_pi_c = 5;
 }
 
 message NoncePayload {
@@ -272,14 +276,14 @@ message NoncePayload {
 message AddManager {
   // used to differentiate the operation that may have same parameters
   google.protobuf.Timestamp timestamp = 1;
-  aelf.Hash identifier_hash = 2;
+  aelf.Hash ca_hash = 2;
   aelf.Address manager_address = 3; // ？？ Or use ManagerInfo here ？？ 
 }
 
 message RemoveManager {
   // used to differentiate the operation that may have same parameters 
   google. protobuf. Timestamp timestamp = 1;
-  aelf.Hash identifier_hash = 2;
+  aelf.Hash ca_hash = 2;
   aelf.Address manager_address = 3; // ？？ Or use ManagerInfo here ？？ 
 }
 
