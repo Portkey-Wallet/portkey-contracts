@@ -94,6 +94,8 @@ service CAContractImpl {
     option (aelf.is_view) = true;
   }
   
+  rpc InitZkNonceList (google.protobuf.Empty) returns (google.protobuf.Empty);
+  
   //set oracle address in portkey contract
   rpc SetOracleAddress (aelf.Address) returns (google.protobuf.Empty);
 }
@@ -394,17 +396,6 @@ message VerifyingKey {
 
 message ZkNonceList {
   repeated string nonce = 1;
-}
-
-message InternalRapidSnarkProofRepr {
-  repeated string pi_a = 1;
-  repeated InnerPiB pi_b = 2;
-  repeated string pi_c = 3;
-  string protocol = 4;
-}
-
-message InnerPiB {
-  repeated string pi_b = 1;
 }
 
 message Jwks

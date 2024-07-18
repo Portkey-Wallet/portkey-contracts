@@ -62,7 +62,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         holderId = HashHelper.ConcatAndCompute(Context.TransactionId, Context.PreviousBlockHash);
         Guardian guardian;
         Address caAddress;
-        if (IsZkLoginSupported(input.GuardianApproved.Type))
+        if (CanZkLoginExecute(input.GuardianApproved))
         {
             if (!CreateCaHolderInfoWithCaHashAndCreateChainIdForZkLogin(input.ManagerInfo, input.GuardianApproved,
                     input.JudgementStrategy,
@@ -109,12 +109,6 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         FireInvitedLogEvent(holderId, nameof(CreateCAHolder), input.ReferralCode, input.ProjectCode);
         return new Empty();
     }
-
-    // private bool IsZkLoginSupported(GuardianType type)
-    // {
-    //     return GuardianType.OfGoogle.Equals(type) || GuardianType.OfApple.Equals(type) ||
-    //            GuardianType.OfFacebook.Equals(type);
-    // }
 
     private void FireInvitedLogEvent(Hash caHash, string methodName, string referralCode, string projectCode)
     {

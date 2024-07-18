@@ -54,17 +54,17 @@ public partial class CAContract
             return false;
         }
         //check nonce wasn't used before
-        // State.ZkNonceList.Value ??= new ZkNonceList();
-        // if (State.ZkNonceList.Value.Nonce.Contains(guardianInfo.ZkLoginInfo.Nonce))
-        // {
-        //     //todo for test log
-        //     Assert(!State.ZkNonceList.Value.Nonce.Contains(guardianInfo.ZkLoginInfo.Nonce), "CheckZkLoginVerifierAndData Nonce used error");
-        //     return false;
-        // }
-        // else
-        // {
-        //     State.ZkNonceList.Value.Nonce.Add(guardianInfo.ZkLoginInfo.Nonce);
-        // }
+        State.ZkNonceList.Value ??= new ZkNonceList();
+        if (State.ZkNonceList.Value.Nonce.Contains(guardianInfo.ZkLoginInfo.Nonce))
+        {
+            //todo for test log
+            Assert(!State.ZkNonceList.Value.Nonce.Contains(guardianInfo.ZkLoginInfo.Nonce), "CheckZkLoginVerifierAndData Nonce used error");
+            return false;
+        }
+        else
+        {
+            State.ZkNonceList.Value.Nonce.Add(guardianInfo.ZkLoginInfo.Nonce);
+        }
     
         // check nonce = sha256(nonce_payload.to_bytes())
         // if (!guardianInfo.ZkLoginInfo.Nonce.Equals(GetSha256Hash(guardianInfo.ZkLoginInfo.NoncePayload.ToByteArray())))
@@ -91,14 +91,13 @@ public partial class CAContract
             return false;
         }
 
-        return true;
-        // var result = VerifyZkProof(guardianInfo.ZkLoginInfo, verifyingKey.VerifyingKey_, publicKey);
-        // if (!result)
-        // {
-        //     //todo for test log
-        //     Assert(false, "CheckZkLoginVerifierAndData VerifyZkProof error");
-        // }
-        // return result;
+        var result = VerifyZkProof(guardianInfo.ZkLoginInfo, verifyingKey.VerifyingKey_, publicKey);
+        if (!result)
+        {
+            //todo for test log
+            Assert(false, "CheckZkLoginVerifierAndData VerifyZkProof error");
+        }
+        return result;
     }
     
     private bool VerifyZkProof(ZkLoginInfo zkLoginInfo, string verifyingKey, string pubkey)
@@ -194,7 +193,12 @@ public partial class CAContract
         return GuardianType.OfGoogle.Equals(type) || GuardianType.OfApple.Equals(type) ||
                GuardianType.OfFacebook.Equals(type);
     }
-    
+
+    public static bool CanZkLoginExecute(GuardianInfo guardianInfo)
+    {
+        return IsZkLoginSupported(guardianInfo.Type) && IsValidZkOidcInfoSupportZkLogin(guardianInfo.ZkLoginInfo);
+    }
+
     public static bool IsValidGuardianType(GuardianType type)
     {
         return GuardianType.OfGoogle.Equals(type)
