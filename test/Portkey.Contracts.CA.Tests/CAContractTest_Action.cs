@@ -180,4 +180,38 @@ public partial class  CAContractTests
     //     getResult.CircuitId.ShouldBe(circuitId);
     //     getResult.VerifyingKey_.ShouldBe(verifyingKey);
     // }
+
+    [Fact]
+    public async Task StartOracleDataFeedsTaskTest()
+    {
+        var setOracleAddressResult = await CaContractStub.SetOracleAddress.SendAsync(
+            Address.FromBase58("HhfWgMGcmfEtumd93yPgyjqz3CcUA1k4G6twhdF9qcY9kao31"));
+        var jwtIssuerResult = await CaContractStub.AddOrUpdateJwtIssuer.SendAsync(new JwtIssuerAndEndpointInput
+        {
+            Type = GuardianType.OfGoogle,
+            Issuer = "https://accounts.google.com",
+            JwksEndpoint = "https://www.googleapis.com/oauth2/v3/certs"
+        });
+        var jwtIssuerCreated = JwtIssuerCreated.Parser.ParseFrom(jwtIssuerResult.TransactionResult.Logs.First(e => e.Name == nameof(JwtIssuerCreated)).NonIndexed);
+        jwtIssuerCreated.Issuer.ShouldBe("https://accounts.google.com");
+        jwtIssuerCreated.JwksEndpoint.ShouldBe("https://www.googleapis.com/oauth2/v3/certs");
+        
+        var taskStartedResult = await CaContractStub.StartOracleDataFeedsTask.SendAsync(new StartOracleDataFeedsTaskRequest
+        {
+            Type = GuardianType.OfGoogle,
+            SubscriptionId = 123456
+        });
+        var oracleDataFeedsTaskStarted = OracleDataFeedsTaskStarted.Parser.ParseFrom(taskStartedResult.TransactionResult.Logs.First(e => e.Name == nameof(OracleDataFeedsTaskStarted)).NonIndexed);
+        oracleDataFeedsTaskStarted.SubscriptionId.ShouldBe(123456);
+        oracleDataFeedsTaskStarted.RequestTypeIndex.ShouldBe(1);
+        oracleDataFeedsTaskStarted.SpecificData.ShouldBe(new OracleDataFeedsSpecificData()
+        {
+            Cron = "0 */10 * * * ?",
+            DataFeedsJobSpec = new OracleDataFeedsJobSpec()
+            {
+                Type = "PlainDataFeeds",
+                Url = "https://www.googleapis.com/oauth2/v3/certs"
+            }
+        }.ToByteString());
+    }
 }

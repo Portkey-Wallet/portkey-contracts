@@ -157,7 +157,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         if (holderId != null || holderInfo != null) return new Empty();
         Guardian guardian;
         Address caAddress;
-        if (IsZkLoginSupported(input.GuardianApproved.Type))
+        if (CanZkLoginExecute(input.GuardianApproved))
         {
             if (!CreateCaHolderInfoWithCaHashAndCreateChainIdForZkLogin(input.ManagerInfo, input.GuardianApproved,
                     input.JudgementStrategy,
@@ -423,6 +423,11 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
             Issuer = input.Issuer,
             JwksEndpoint = input.JwksEndpoint
         };
+        Context.Fire(new JwtIssuerCreated
+        {
+            Issuer = State.OidcProviderAdminData[input.Type].Issuer,
+            JwksEndpoint = State.OidcProviderAdminData[input.Type].JwksEndpoint
+        });
         return new Empty();
     }
     
@@ -473,7 +478,6 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
     {
         Assert(Context.Sender == State.Admin.Value, "No SetOracleAddress permission.");
         Assert(input != null, "Invalid address input");
-        // Assert(State.OracleAddress.Value != null, "OracleAddress exists");
         State.OracleContract.Value = input;
         return new Empty();
     }
@@ -508,6 +512,13 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         State.OidcProviderAdminData[input.Type].SubscriptionId = input.SubscriptionId;
         State.OidcProviderAdminData[input.Type].RequestTypeIndex = 1;
         State.OidcProviderAdminData[input.Type].SpecificData = specificData;
+        
+        Context.Fire(new OracleDataFeedsTaskStarted
+        {
+            SubscriptionId = State.OidcProviderAdminData[input.Type].SubscriptionId,
+            RequestTypeIndex = State.OidcProviderAdminData[input.Type].RequestTypeIndex,
+            SpecificData = State.OidcProviderAdminData[input.Type].SpecificData.ToByteString()
+        });
         return new Empty();
     }
 
