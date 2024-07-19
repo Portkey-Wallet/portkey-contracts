@@ -99,23 +99,35 @@ public partial class CAContract
         var nonceInInts = zkLoginInfo.Nonce.ToCharArray().Select(b => ((int)b).ToString()).ToList();
         var saltInInts = zkLoginInfo.Salt.HexStringToByteArray().Select(b => b.ToString()).ToList();
         
+        var publicInputs = PreparePublicInputs(zkLoginInfo, nonceInInts, pubkeyChunks, saltInInts);
+        var (piA, piB, piC) = PrepareZkProof(zkLoginInfo);
+        return Verifier.VerifyBn254(verifyingKey, publicInputs, new RapidSnarkProof
+        {
+            PiA = piA,
+            PiB = piB,
+            PiC = piC
+        });
+    }
+
+    private static (List<string>, List<List<string>>, List<string>) PrepareZkProof(ZkLoginInfo zkLoginInfo)
+    {
+        var piB = new List<List<string>> {new(), new(), new()};
+        piB[0].AddRange(zkLoginInfo.ZkProofInfo.ZkProofPiB1.ToList());
+        piB[1].AddRange(zkLoginInfo.ZkProofInfo.ZkProofPiB2.ToList());
+        piB[2].AddRange(zkLoginInfo.ZkProofInfo.ZkProofPiB3.ToList());
+        return (zkLoginInfo.ZkProofInfo.ZkProofPiA.ToList(), piB, zkLoginInfo.ZkProofInfo.ZkProofPiC.ToList());
+    }
+
+    private List<string> PreparePublicInputs(ZkLoginInfo zkLoginInfo, List<string> nonceInInts, List<string> pubkeyChunks, List<string> saltInInts)
+    {
         var publicInputs = new List<string>();
         publicInputs.AddRange(ToPublicInput(zkLoginInfo.IdentifierHash.ToHex()));
         publicInputs.AddRange(nonceInInts);
         publicInputs.AddRange(pubkeyChunks);
         publicInputs.AddRange(saltInInts);
-        var piB = new List<List<string>> {new(), new(), new()};
-        piB[0].AddRange(zkLoginInfo.ZkProofInfo.ZkProofPiB1.ToList());
-        piB[1].AddRange(zkLoginInfo.ZkProofInfo.ZkProofPiB2.ToList());
-        piB[2].AddRange(zkLoginInfo.ZkProofInfo.ZkProofPiB3.ToList());
-        return Verifier.VerifyBn254(verifyingKey, publicInputs, new RapidSnarkProof
-        {
-            PiA = zkLoginInfo.ZkProofInfo.ZkProofPiA.ToList(),
-            PiB = piB,
-            PiC = zkLoginInfo.ZkProofInfo.ZkProofPiC.ToList(),
-        });
+        return publicInputs;
     }
-    
+
     private byte[] Decode(string input)
     {
         var output = input;

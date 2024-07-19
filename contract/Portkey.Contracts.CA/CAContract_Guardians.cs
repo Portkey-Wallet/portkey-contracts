@@ -16,7 +16,6 @@ public partial class CAContract
             "Invalid input.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
-        //todo the guardian the supported zk has no verifierId
         Assert(
             holderInfo.GuardianList.Guardians.FirstOrDefault(g =>
                 g.VerifierId == input.GuardianToAdd.VerificationInfo.Id) == null,
@@ -31,7 +30,7 @@ public partial class CAContract
         var operateDetails = $"{input.GuardianToAdd.IdentifierHash.ToHex()}_{(int)input.GuardianToAdd.Type}_{input.GuardianToAdd.VerificationInfo.Id.ToHex()}";
         var guardianApprovedCount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved, methodName, operateDetails);
         //for the guardian supporting zk, the front end inputs zk params, portkey contract verifies with zk
-        if (IsZkLoginSupported(input.GuardianToAdd.Type) && IsValidGuardianSupportZkLogin(input.GuardianToAdd))
+        if (CanZkLoginExecute(input.GuardianToAdd))
         {
             if (!CheckZkLoginVerifierAndData(input.GuardianToAdd, input.CaHash))
             {
@@ -59,10 +58,12 @@ public partial class CAContract
         //for old users of new version,portkey contract uses zk as the default verifier,replacing the original verifier
         //for users of old version,portkey contract uses the original verifier,the front end won't input zk parameters
         Guardian guardianAdded;
-        if (IsZkLoginSupported(input.GuardianToAdd.Type))
+        if (CanZkLoginExecute(input.GuardianToAdd))
         {
             Hash verifierId;
-            if (input.GuardianToAdd.VerificationInfo.Id == null)
+            if (input.GuardianToAdd.VerificationInfo == null
+                || input.GuardianToAdd.VerificationInfo.Id == null
+                || Hash.Empty.Equals(input.GuardianToAdd.VerificationInfo.Id))
             {
                 //choosing a random verifier for the users of new version, then they can use the verifier to log in old version portkey
                 verifierId = GetOneVerifierFromServers();
@@ -75,7 +76,7 @@ public partial class CAContract
             guardianAdded = new Guardian
             {
                 IdentifierHash = input.GuardianToAdd!.IdentifierHash,
-                Salt = GetSaltFromVerificationDoc(input.GuardianToAdd.VerificationInfo.VerificationDoc),
+                Salt = "",
                 Type = input.GuardianToAdd.Type,
                 VerifierId = verifierId,
                 IsLoginGuardian = false,
