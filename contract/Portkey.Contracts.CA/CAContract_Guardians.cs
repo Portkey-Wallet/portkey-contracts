@@ -258,7 +258,7 @@ public partial class CAContract
         existPreGuardian.VerifierId = input.GuardianToUpdateNew?.VerificationInfo.Id;
         //when the user changed the verifier to zk,the front end would show zk verifier totally, not show zk+original verifier
         existPreGuardian.ManuallySupportForZk = !IsValidZkOidcInfoSupportZkLogin(input.GuardianToUpdatePre.ZkLoginInfo)
-                                                && IsValidZkOidcInfoSupportZkLogin(input.GuardianToUpdateNew.ZkLoginInfo);
+                                                && IsValidZkOidcInfoSupportZkLogin(input.GuardianToUpdateNew?.ZkLoginInfo);
 
         if (State.LoginGuardianMap[preGuardian.IdentifierHash][preGuardian.VerifierId] != null)
         {

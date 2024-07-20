@@ -100,7 +100,7 @@ public partial class CAContract
         var saltInInts = zkLoginInfo.Salt.HexStringToByteArray().Select(b => b.ToString()).ToList();
         
         var publicInputs = PreparePublicInputs(zkLoginInfo, nonceInInts, pubkeyChunks, saltInInts);
-        var (piA, piB, piC) = PrepareZkProof(zkLoginInfo);
+        PrepareZkProof(zkLoginInfo, out var piA, out var piB, out var piC);
         return Verifier.VerifyBn254(verifyingKey, publicInputs, new RapidSnarkProof
         {
             PiA = piA,
@@ -109,13 +109,15 @@ public partial class CAContract
         });
     }
 
-    private static (List<string>, List<List<string>>, List<string>) PrepareZkProof(ZkLoginInfo zkLoginInfo)
+    private static void PrepareZkProof(ZkLoginInfo zkLoginInfo,
+        out List<string> piA, out List<List<string>> piB, out List<string> piC)
     {
-        var piB = new List<List<string>> {new(), new(), new()};
+        piA = zkLoginInfo.ZkProofInfo.ZkProofPiA.ToList();
+        piB = new List<List<string>> {new(), new(), new()};
         piB[0].AddRange(zkLoginInfo.ZkProofInfo.ZkProofPiB1.ToList());
         piB[1].AddRange(zkLoginInfo.ZkProofInfo.ZkProofPiB2.ToList());
         piB[2].AddRange(zkLoginInfo.ZkProofInfo.ZkProofPiB3.ToList());
-        return (zkLoginInfo.ZkProofInfo.ZkProofPiA.ToList(), piB, zkLoginInfo.ZkProofInfo.ZkProofPiC.ToList());
+        piC = zkLoginInfo.ZkProofInfo.ZkProofPiC.ToList();
     }
 
     private List<string> PreparePublicInputs(ZkLoginInfo zkLoginInfo, List<string> nonceInInts, List<string> pubkeyChunks, List<string> saltInInts)
@@ -157,22 +159,6 @@ public partial class CAContract
     private static string HexToBigInt(byte[] hex)
     {
         return HexHelper.ConvertBigEndianToDecimalString(hex);
-    }
-
-    private static bool IsValidGuardianSupportZkLogin(GuardianInfo guardianInfo)
-    {
-        if (guardianInfo == null)
-        {
-            return false;
-        }
-    
-        return guardianInfo.ZkLoginInfo != null
-               && guardianInfo.ZkLoginInfo.Nonce is not (null or "")
-               && guardianInfo.ZkLoginInfo.Kid is not (null or "")
-               && guardianInfo.ZkLoginInfo.ZkProof is not (null or "")
-               && guardianInfo.ZkLoginInfo.Issuer is not (null or "")
-               && guardianInfo.ZkLoginInfo.Salt is not (null or "")
-               && guardianInfo.ZkLoginInfo.NoncePayload is not null;
     }
     
     public static bool IsValidZkOidcInfoSupportZkLogin(ZkLoginInfo zkLoginInfo)

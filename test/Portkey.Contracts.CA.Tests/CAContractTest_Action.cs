@@ -65,7 +65,6 @@ public partial class  CAContractTests
         var manager = new ManagerInfo
         {
             Address = Address.FromBase58("HiRZofPPQFWStAeRhZuAG36X5CGzbG9Q2kqGhyWM2pT8ct6c6"),
-            //Address.FromBytes(new byte[]{202,57,94,175,89,180,75,77,7,249,100,200,65,9,254,78,245,160,145,178,6,133,111,56,218,135,170,198,174,247,241,213}),
             ExtraData = "{\"transactionTime\":1721272236850,\"deviceInfo\":\"{\"deviceType\":2,\"deviceName\":\"iPhone 15\"}\",\"version\":\"2.0.0\"}"
         };
         const string circuitId = "a6530155400942bd0c70cc9cb164a53aa2104cb6ee95da1454d085d28d9dd18f";
@@ -98,14 +97,12 @@ public partial class  CAContractTests
                 VerificationInfo = new VerificationInfo
                 {
                     Id = Hash.LoadFromHex("e8c0652f79ef46f4775135ab146708bb14e806844dde5a680e4be3f96d46b6b8"),
-                    //Hash.LoadFromByteArray(new byte[]{232,192,101,47,121,239,70,244,119,81,53,171,20,103,8,187,20,232,6,132,77,222,90,104,14,75,227,249,109,70,182,184}),
                     Signature = ByteString.Empty,
                     VerificationDoc = ""
                 },
                 ZkLoginInfo = new ZkLoginInfo
                 {
                     IdentifierHash = Hash.LoadFromHex("66764ec6750ec44fa9847557600ef9cedc609c94df28b39c95902f7f8ff3d5c8"),
-                    //Hash.LoadFromByteArray(new byte[]{30,31,255,215,15,14,237,217,87,5,132,112,251,51,50,88,115,129,9,243,193,101,63,229,140,151,198,94,59,168,46,122}),
                     Salt = "0c22a2ed4ff4498c81bd188686e14ba8",
                     Nonce = "08a1aaf244bfc862c74f230a61f9362a284bc0aa7ca3fc6eeaee2f7b3d50db0e",
                     ZkProof = "{\"pi_a\":[\"15727179907124446347782937237082125919708808443740827249582502426551232071659\",\"12149243433694162911174145985483574174179375013319353574400189139102713867739\",\"1\"],\"pi_b\":[[\"7337516926278779294459533772262223402986693428300163017059214630930007296064\",\"1036804036284303906754931511475466215940770331694613561287807571876203454773\"],[\"12047700080590029409297924625003249429295109058268331583128859046129973380151\",\"21029596007211945680255645531519866576674430586292603458415553469043258182165\"],[\"1\",\"0\"]],\"pi_c\":[\"2856414343584816351184622767702245255549285668485066007576383826679774283020\",\"12237092978376382462756500493560116955268902529638174116533019396768952254600\",\"1\"],\"protocol\":\"groth16\"}",
@@ -125,9 +122,7 @@ public partial class  CAContractTests
                         AddManagerAddress = new AddManager
                         {
                             CaHash = Hash.Empty,
-                            //Hash.LoadFromByteArray(new byte[]{30,31,255,215,15,14,237,217,87,5,132,112,251,51,50,88,115,129,9,243,193,101,63,229,140,151,198,94,59,168,46,122}),
                             ManagerAddress = Address.FromBase58("HiRZofPPQFWStAeRhZuAG36X5CGzbG9Q2kqGhyWM2pT8ct6c6"),
-                            //Address.FromBytes(new byte[]{202,57,94,175,89,180,75,77,7,249,100,200,65,9,254,78,245,160,145,178,6,133,111,56,218,135,170,198,174,247,241,213}),
                             Timestamp = new Timestamp
                             {
                                 Seconds = 1721203238,

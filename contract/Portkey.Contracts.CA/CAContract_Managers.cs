@@ -36,12 +36,10 @@ public partial class CAContract
         Assert(input.GuardiansApproved.Count > 0, "invalid input Guardians Approved");
         
         //approved guardian that supports zk, should be verified 
-        foreach (var guardianInfo in input.GuardiansApproved)
+        var guardianInfo = input.GuardiansApproved.FirstOrDefault(g => g.IdentifierHash.Equals(input.LoginGuardianIdentifierHash));
+        if (CanZkLoginExecute(guardianInfo))
         {
-            if (IsZkLoginSupported(guardianInfo.Type) && IsValidGuardianSupportZkLogin(guardianInfo))
-            {
-                Assert(CheckZkLoginVerifierAndData(guardianInfo, caHash), "approved guardian wasn't verified by zk");
-            }
+            Assert(CheckZkLoginVerifierAndData(guardianInfo, caHash), "approved guardian wasn't verified by zk");
         }
         
         var operationDetails = input.ManagerInfo.Address.ToBase58();
@@ -389,8 +387,7 @@ public partial class CAContract
 
         foreach (var guardianInfo in guardianApproved)
         {
-            //todo make sure there's no need to check for zk login
-            if (CanVerifyWithZkLogin(guardianInfo))
+            if (CanZkLoginExecute(guardianInfo))
             {
                 continue;
             }
@@ -403,12 +400,5 @@ public partial class CAContract
         }
 
         return false;
-    }
-
-    private bool CanVerifyWithZkLogin(GuardianInfo guardianInfo)
-    {
-        return IsZkLoginSupported(guardianInfo.Type) && guardianInfo.ZkLoginInfo != null
-                                                     && (guardianInfo.ZkLoginInfo.Nonce is not (null or ""))
-                                                     && (guardianInfo.ZkLoginInfo.ZkProof is not (null or ""));
     }
 }
