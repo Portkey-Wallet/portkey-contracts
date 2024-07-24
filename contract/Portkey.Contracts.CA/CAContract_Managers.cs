@@ -35,13 +35,6 @@ public partial class CAContract
 
         Assert(input.GuardiansApproved.Count > 0, "invalid input Guardians Approved");
         
-        //approved guardian that supports zk, should be verified 
-        var guardianInfo = input.GuardiansApproved.FirstOrDefault(g => g.IdentifierHash.Equals(input.LoginGuardianIdentifierHash));
-        if (CanZkLoginExecute(guardianInfo))
-        {
-            Assert(CheckZkLoginVerifierAndData(guardianInfo, caHash), "approved guardian wasn't verified by zk");
-        }
-        
         var operationDetails = input.ManagerInfo.Address.ToBase58();
         var guardianApprovedCount = GetGuardianApprovedCount(caHash, input.GuardiansApproved,
             nameof(OperationType.SocialRecovery).ToLower(), operationDetails);

@@ -75,7 +75,7 @@ public partial class CAContract
         return new Empty();
     }
 
-    private int GetGuardianApprovedCount(Hash cahHash, RepeatedField<GuardianInfo> guardianApproved, string methodName,
+    private int GetGuardianApprovedCount(Hash caHash, RepeatedField<GuardianInfo> guardianApproved, string methodName,
         string operationDetails = null)
     {
         var guardianApprovedCount = 0;
@@ -84,8 +84,10 @@ public partial class CAContract
             .ToList();
         foreach (var guardianInfo in guardianApprovedList)
         {
-            if (!IsGuardianExist(cahHash, guardianInfo)) continue;
-            var isApproved = CheckVerifierSignatureAndData(guardianInfo, methodName, cahHash, operationDetails);
+            if (!IsGuardianExist(caHash, guardianInfo)) continue;
+            bool isApproved = CanZkLoginExecute(guardianInfo) 
+                ? CheckZkLoginVerifierAndData(guardianInfo, caHash) 
+                : CheckVerifierSignatureAndData(guardianInfo, methodName, caHash, operationDetails);
             if (!isApproved) continue;
             guardianApprovedCount++;
         }

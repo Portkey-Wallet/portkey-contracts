@@ -24,26 +24,26 @@ public partial class CAContract
             holderInfo.GuardianList.Guardians.FirstOrDefault(g =>
                 g.Type == input.GuardianToAdd.Type && g.IdentifierHash == input.GuardianToAdd.IdentifierHash) == null,
             "The account already exists");
-
+        foreach (var guardianInfo in input.GuardiansApproved)
+        {
+            CheckZkParams(guardianInfo);
+        }
+        var guardianToAddSupportZk = CheckZkParams(input.GuardianToAdd);
+        
+        //for the guardian supporting zk, the front end inputs zk params, portkey contract verifies with zk
+        if (guardianToAddSupportZk && !CheckZkLoginVerifierAndData(input.GuardianToAdd, input.CaHash))
+        {
+            return new Empty();
+        }
         var methodName = nameof(OperationType.AddGuardian).ToLower();
+        //otherwise portkey contract uses the original verifier
+        if (!guardianToAddSupportZk && !CheckVerifierSignatureAndData(input.GuardianToAdd, methodName, input.CaHash))
+        {
+            return new Empty();
+        }
         //Check the verifier signature and data of the guardian to be added.
         var operateDetails = $"{input.GuardianToAdd.IdentifierHash.ToHex()}_{(int)input.GuardianToAdd.Type}_{input.GuardianToAdd.VerificationInfo.Id.ToHex()}";
         var guardianApprovedCount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved, methodName, operateDetails);
-        //for the guardian supporting zk, the front end inputs zk params, portkey contract verifies with zk
-        if (CanZkLoginExecute(input.GuardianToAdd))
-        {
-            if (!CheckZkLoginVerifierAndData(input.GuardianToAdd, input.CaHash))
-            {
-                return new Empty();
-            }
-        }
-        else //otherwise portkey contract uses the original verifier
-        {
-            if (!CheckVerifierSignatureAndData(input.GuardianToAdd, methodName, input.CaHash))
-            {
-                return new Empty();
-            }
-        }
 
         //Whether the approved guardians count is satisfied.
         var holderJudgementStrategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
@@ -58,27 +58,14 @@ public partial class CAContract
         //for old users of new version,portkey contract uses zk as the default verifier,replacing the original verifier
         //for users of old version,portkey contract uses the original verifier,the front end won't input zk parameters
         Guardian guardianAdded;
-        if (CanZkLoginExecute(input.GuardianToAdd))
+        if (guardianToAddSupportZk)
         {
-            Hash verifierId;
-            if (input.GuardianToAdd.VerificationInfo == null
-                || input.GuardianToAdd.VerificationInfo.Id == null
-                || Hash.Empty.Equals(input.GuardianToAdd.VerificationInfo.Id))
-            {
-                //choosing a random verifier for the users of new version, then they can use the verifier to log in old version portkey
-                verifierId = GetOneVerifierFromServers();
-            }
-            else
-            {
-                verifierId = input.GuardianToAdd.VerificationInfo.Id;
-            }
-
             guardianAdded = new Guardian
             {
                 IdentifierHash = input.GuardianToAdd!.IdentifierHash,
                 Salt = "",
                 Type = input.GuardianToAdd.Type,
-                VerifierId = verifierId,
+                VerifierId = input.GuardianToAdd.VerificationInfo.Id,
                 IsLoginGuardian = false,
                 ZkLoginInfo = input.GuardianToAdd.ZkLoginInfo
             };
@@ -105,6 +92,31 @@ public partial class CAContract
             GuardianAdded_ = guardianAdded
         });
         return new Empty();
+    }
+
+    private bool CheckZkParams(GuardianInfo guardianInfo)
+    {
+        var supportedZk = CanZkLoginExecute(guardianInfo);
+        if (!supportedZk)
+            return false;
+        Assert(guardianInfo.ZkLoginInfo.ZkProofInfo != null, "the zkProofInfo is null");
+                
+        var zkProofPiA = guardianInfo.ZkLoginInfo.ZkProofInfo.ZkProofPiA;
+        Assert(zkProofPiA is { Count: 3 }, "the zkProofInfo zkProofPiA is invalid");
+                
+        var zkProofPiB1 = guardianInfo.ZkLoginInfo.ZkProofInfo.ZkProofPiB1;
+        Assert(zkProofPiB1 is { Count: 2 }, "the zkProofInfo zkProofPiB1 is invalid");
+                
+        var zkProofPiB2 = guardianInfo.ZkLoginInfo.ZkProofInfo.ZkProofPiB2;
+        Assert(zkProofPiB2 is { Count: 2 }, "the zkProofInfo zkProofPiB2 is invalid");
+                
+        var zkProofPiB3 = guardianInfo.ZkLoginInfo.ZkProofInfo.ZkProofPiB3;
+        Assert(zkProofPiB3 is { Count: 2 }, "the zkProofInfo zkProofPiB3 is invalid");
+                
+        var zkProofPiC = guardianInfo.ZkLoginInfo.ZkProofInfo.ZkProofPiC;
+        Assert(zkProofPiC is { Count: 3 }, "the zkProofInfo zkProofPiC is invalid");
+
+        return true;
     }
 
     // Remove a Guardian, if already removed, return 

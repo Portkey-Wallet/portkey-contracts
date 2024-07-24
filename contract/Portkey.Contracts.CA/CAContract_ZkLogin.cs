@@ -43,15 +43,6 @@ public partial class CAContract
         {
             return false;
         }
-        // check guardian type
-        if (!IsZkLoginSupported(guardianInfo.Type))
-        {
-            return false;
-        }
-        if (guardianInfo.ZkLoginInfo == null)
-        {
-            return false;
-        }
         //check circuit id
         if (State.CircuitVerifyingKeys[guardianInfo.ZkLoginInfo.CircuitId] == null)
         {
@@ -69,23 +60,23 @@ public partial class CAContract
             return false;
         }
         //check nonce wasn't used before
-        State.ZkNonceListByCaHash[caHash] ??= new ZkNonceList();
-        if (State.ZkNonceListByCaHash[caHash].Nonce.Contains(guardianInfo.ZkLoginInfo.Nonce))
-        {
-            return false;
-        }
-        else
-        {
-            State.ZkNonceListByCaHash[caHash].Nonce.Add(guardianInfo.ZkLoginInfo.Nonce);
-        }
+        // State.ZkNonceListByCaHash[caHash] ??= new ZkNonceList();
+        // if (State.ZkNonceListByCaHash[caHash].Nonce.Contains(guardianInfo.ZkLoginInfo.Nonce))
+        // {
+        //     return false;
+        // }
+        // else
+        // {
+        //     State.ZkNonceListByCaHash[caHash].Nonce.Add(guardianInfo.ZkLoginInfo.Nonce);
+        // }
     
         // check nonce = sha256(nonce_payload.to_bytes())
-        var noncePayload = guardianInfo.ZkLoginInfo.NoncePayload.AddManagerAddress.Timestamp.Seconds +
-                           guardianInfo.ZkLoginInfo.NoncePayload.AddManagerAddress.ManagerAddress.ToBase58();
-        if (!guardianInfo.ZkLoginInfo.Nonce.Equals(GetSha256Hash(noncePayload.GetBytes())))
-        {
-            return false;
-        }
+        // var noncePayload = guardianInfo.ZkLoginInfo.NoncePayload.AddManagerAddress.Timestamp.Seconds +
+        //                    guardianInfo.ZkLoginInfo.NoncePayload.AddManagerAddress.ManagerAddress.ToBase58();
+        // if (!guardianInfo.ZkLoginInfo.Nonce.Equals(GetSha256Hash(noncePayload.GetBytes())))
+        // {
+        //     return false;
+        // }
 
         return true;
     }
@@ -163,12 +154,8 @@ public partial class CAContract
     
     public static bool IsValidZkOidcInfoSupportZkLogin(ZkLoginInfo zkLoginInfo)
     {
-        if (zkLoginInfo == null)
-        {
-            return false;
-        }
-    
-        return zkLoginInfo.Nonce is not (null or "")
+        return zkLoginInfo is not null 
+               && zkLoginInfo.Nonce is not (null or "")
                && zkLoginInfo.Kid is not (null or "")
                && zkLoginInfo.ZkProof is not (null or "")
                && zkLoginInfo.Issuer is not (null or "")
@@ -184,7 +171,7 @@ public partial class CAContract
 
     public static bool CanZkLoginExecute(GuardianInfo guardianInfo)
     {
-        return IsZkLoginSupported(guardianInfo.Type) && IsValidZkOidcInfoSupportZkLogin(guardianInfo.ZkLoginInfo);
+        return guardianInfo is not null && IsZkLoginSupported(guardianInfo.Type) && IsValidZkOidcInfoSupportZkLogin(guardianInfo.ZkLoginInfo);
     }
 
     public static bool IsValidGuardianType(GuardianType type)
