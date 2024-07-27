@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using AElf;
+using AElf.CSharp.Core.Extension;
 using AElf.Types;
 using Google.Protobuf.Collections;
+using Google.Protobuf.WellKnownTypes;
 using Groth16.Net;
 
 namespace Portkey.Contracts.CA;
@@ -61,8 +63,8 @@ public partial class CAContract
             return false;
         }
         //check nonce wasn't used before
-        var currentTimeSeconds =  Context.CurrentBlockTime.ToDateTime().Second;
-        var nonces = InitZkNonceInfos(caHash, currentTimeSeconds);
+        var currentTime =  Context.CurrentBlockTime;
+        var nonces = InitZkNonceInfos(caHash, currentTime);
         if (nonces.Contains(guardianInfo.ZkLoginInfo.Nonce))
         {
             return false;
@@ -72,7 +74,7 @@ public partial class CAContract
             State.ZkNonceInfosByCaHash[caHash].ZkNonceInfos.Add(new ZkNonceInfo
             {
                 Nonce = guardianInfo.ZkLoginInfo.Nonce,
-                Timestamp = currentTimeSeconds
+                Datetime = DateTime.SpecifyKind(currentTime.ToDateTime(), DateTimeKind.Utc).ToString()
             });
         }
     
@@ -87,13 +89,14 @@ public partial class CAContract
         return true;
     }
 
-    private List<string> InitZkNonceInfos(Hash caHash, long currentTimeSeconds)
+    private List<string> InitZkNonceInfos(Hash caHash, Timestamp currentTime)
     {
         State.ZkNonceInfosByCaHash[caHash] ??= new ZkNonceList();
         //clear overdue nonces, prevent the nonce data growing all the time
         foreach (var zkNonceInfo in State.ZkNonceInfosByCaHash[caHash].ZkNonceInfos)
         {
-            if (currentTimeSeconds - 86400 >= zkNonceInfo.Timestamp)
+            var nonceDatetime = DateTime.SpecifyKind(Convert.ToDateTime(zkNonceInfo.Datetime), DateTimeKind.Utc);
+            if (nonceDatetime.ToTimestamp().AddDays(1) <= currentTime)
             {
                 State.ZkNonceInfosByCaHash[caHash].ZkNonceInfos.Remove(zkNonceInfo);
             }

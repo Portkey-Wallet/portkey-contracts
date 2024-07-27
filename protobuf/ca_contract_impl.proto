@@ -449,7 +449,7 @@ message ZkNonceList {
 
 message ZkNonceInfo {
   string nonce = 1;
-  int64 timestamp = 2;
+  string datetime = 2;
 }
 
 message Jwks
