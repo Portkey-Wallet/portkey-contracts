@@ -479,7 +479,8 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         Assert(IsValidGuardianType(input.Type), "Invalid guardian input when adding kid public key.");
         Assert(input.Kid != null, "Invalid kid input when adding kid public key.");
         Assert(input.PublicKey != null, "Invalid PublicKey input when adding kid public key.");
-        State.IssuerPublicKeysByKid[input.Type][input.Kid] = input.PublicKey;
+        
+        SetPublicKeyAndChunks(input.Type, input.Kid, input.PublicKey);
         return new Empty();
     }
 
@@ -487,11 +488,11 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
     {
         Assert(Context.Sender == State.Admin.Value, "No GetGooglePublicKeyByKid permission.");
         Assert(input != null, "Invalid kid.");
-        Assert(State.IssuerPublicKeysByKid[GuardianType.OfGoogle][input.Value] != null, "the public key of kid not exists.");
+        Assert(State.PublicKeysChunksByKid[GuardianType.OfGoogle][input.Value] != null, "the public key of kid not exists.");
         return new KidPublicKeyOutput
         {
             Kid = input.Value,
-            PublicKey = State.IssuerPublicKeysByKid[GuardianType.OfGoogle][input.Value]
+            PublicKey = State.PublicKeysChunksByKid[GuardianType.OfGoogle][input.Value].PublicKey
         };
     }
     
@@ -499,11 +500,11 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
     {
         Assert(Context.Sender == State.Admin.Value, "No GetGooglePublicKeyByKid permission.");
         Assert(input != null, "Invalid kid.");
-        Assert(State.IssuerPublicKeysByKid[GuardianType.OfApple][input.Value] != null, "the public key of kid not exists.");
+        Assert(State.PublicKeysChunksByKid[GuardianType.OfApple][input.Value] != null, "the public key of kid not exists.");
         return new KidPublicKeyOutput
         {
             Kid = input.Value,
-            PublicKey = State.IssuerPublicKeysByKid[GuardianType.OfApple][input.Value]
+            PublicKey = State.PublicKeysChunksByKid[GuardianType.OfApple][input.Value].PublicKey
         };
     }
     
@@ -511,11 +512,11 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
     {
         Assert(Context.Sender == State.Admin.Value, "No GetGooglePublicKeyByKid permission.");
         Assert(input != null, "Invalid kid.");
-        Assert(State.IssuerPublicKeysByKid[GuardianType.OfFacebook][input.Value] != null, "the public key of kid not exists.");
+        Assert(State.PublicKeysChunksByKid[GuardianType.OfFacebook][input.Value] != null, "the public key of kid not exists.");
         return new KidPublicKeyOutput
         {
             Kid = input.Value,
-            PublicKey = State.IssuerPublicKeysByKid[GuardianType.OfFacebook][input.Value]
+            PublicKey = State.PublicKeysChunksByKid[GuardianType.OfFacebook][input.Value].PublicKey
         };
     }
 
@@ -544,7 +545,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         State.OracleContract.Value = input;
         return new Empty();
     }
-
+    
     public override Empty StartOracleDataFeedsTask(StartOracleDataFeedsTaskRequest input)
     {
         Assert(Context.Sender == State.Admin.Value, "No StartOracleRequest permission.");
@@ -565,13 +566,18 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
                 Url = State.OidcProviderAdminData[input.Type].JwksEndpoint
             }
         };
-        
+        var specificDataWrapper = new AetherLink.Contracts.DataFeeds.Coordinator.SpecificData
+        {
+            Data = specificData.ToByteString(),
+            DataVersion = 0
+        }.ToByteString();
         State.OracleContract.SendRequest.Send(new SendRequestInput
         {
             SubscriptionId = input.SubscriptionId,
             RequestTypeIndex = 1,
-            SpecificData = specificData.ToByteString()
+            SpecificData = specificDataWrapper,
         });
+        
         State.OidcProviderAdminData[input.Type].SubscriptionId = input.SubscriptionId;
         State.OidcProviderAdminData[input.Type].RequestTypeIndex = 1;
         State.OidcProviderAdminData[input.Type].SpecificData = specificData;
@@ -598,7 +604,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         foreach (var googleKeyDto in response.Keys)
         {
             //for test env, only support google guardian
-            State.IssuerPublicKeysByKid[GuardianType.OfGoogle][googleKeyDto.Kid] = googleKeyDto.N;
+            SetPublicKeyAndChunks(GuardianType.OfGoogle, googleKeyDto.Kid, googleKeyDto.N);
         }
 
         return new Empty();

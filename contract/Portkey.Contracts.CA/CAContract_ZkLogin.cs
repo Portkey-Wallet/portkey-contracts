@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using AElf;
 using AElf.Types;
+using Google.Protobuf.Collections;
 using Groth16.Net;
 
 namespace Portkey.Contracts.CA;
@@ -20,8 +21,8 @@ public partial class CAContract
         }
         
         //check public key
-        var publicKey = State.IssuerPublicKeysByKid[guardianInfo.Type][guardianInfo.ZkLoginInfo.Kid];
-        if (publicKey is null or "")
+        var publicKey = State.PublicKeysChunksByKid[guardianInfo.Type][guardianInfo.ZkLoginInfo.Kid];
+        if (publicKey is null || (publicKey.PublicKey is (null or "")))
         {
             return false;
         }
@@ -33,7 +34,7 @@ public partial class CAContract
             return false;
         }
 
-        return VerifyZkProof(guardianInfo.ZkLoginInfo, verifyingKey.VerifyingKey_, publicKey);
+        return VerifyZkProof(guardianInfo.Type, guardianInfo.ZkLoginInfo, verifyingKey.VerifyingKey_, publicKey.PublicKey);
     }
 
     private bool DoCheckZkLoginBasicParams(GuardianInfo guardianInfo, Hash caHash)
@@ -60,15 +61,20 @@ public partial class CAContract
             return false;
         }
         //check nonce wasn't used before
-        // State.ZkNonceListByCaHash[caHash] ??= new ZkNonceList();
-        // if (State.ZkNonceListByCaHash[caHash].Nonce.Contains(guardianInfo.ZkLoginInfo.Nonce))
-        // {
-        //     return false;
-        // }
-        // else
-        // {
-        //     State.ZkNonceListByCaHash[caHash].Nonce.Add(guardianInfo.ZkLoginInfo.Nonce);
-        // }
+        var currentTimeSeconds =  Context.CurrentBlockTime.ToDateTime().Second;
+        var nonces = InitZkNonceInfos(caHash, currentTimeSeconds);
+        if (nonces.Contains(guardianInfo.ZkLoginInfo.Nonce))
+        {
+            return false;
+        }
+        else
+        {
+            State.ZkNonceInfosByCaHash[caHash].ZkNonceInfos.Add(new ZkNonceInfo
+            {
+                Nonce = guardianInfo.ZkLoginInfo.Nonce,
+                Timestamp = currentTimeSeconds
+            });
+        }
     
         // check nonce = sha256(nonce_payload.to_bytes())
         // var noncePayload = guardianInfo.ZkLoginInfo.NoncePayload.AddManagerAddress.Timestamp.Seconds +
@@ -81,11 +87,24 @@ public partial class CAContract
         return true;
     }
 
-    private bool VerifyZkProof(ZkLoginInfo zkLoginInfo, string verifyingKey, string pubkey)
+    private List<string> InitZkNonceInfos(Hash caHash, long currentTimeSeconds)
     {
-        var pubkeyChunks = Decode(pubkey)
-            .ToChunked(CircomBigIntN, CiromBigIntK)
-            .Select(HexToBigInt).ToList();
+        State.ZkNonceInfosByCaHash[caHash] ??= new ZkNonceList();
+        //clear overdue nonces, prevent the nonce data growing all the time
+        foreach (var zkNonceInfo in State.ZkNonceInfosByCaHash[caHash].ZkNonceInfos)
+        {
+            if (currentTimeSeconds - 86400 >= zkNonceInfo.Timestamp)
+            {
+                State.ZkNonceInfosByCaHash[caHash].ZkNonceInfos.Remove(zkNonceInfo);
+            }
+        }
+
+        return State.ZkNonceInfosByCaHash[caHash].ZkNonceInfos.Select(nonce => nonce.Nonce).ToList();
+    }
+
+    private bool VerifyZkProof(GuardianType type, ZkLoginInfo zkLoginInfo, string verifyingKey, string pubkey)
+    {
+        var pubkeyChunks = GetPublicKeyChunks(type, zkLoginInfo.Kid, pubkey);
         
         var nonceInInts = zkLoginInfo.Nonce.ToCharArray().Select(b => ((int)b).ToString()).ToList();
         var saltInInts = zkLoginInfo.Salt.HexStringToByteArray().Select(b => b.ToString()).ToList();
@@ -114,11 +133,48 @@ public partial class CAContract
     private List<string> PreparePublicInputs(ZkLoginInfo zkLoginInfo, List<string> nonceInInts, List<string> pubkeyChunks, List<string> saltInInts)
     {
         var publicInputs = new List<string>();
-        publicInputs.AddRange(ToPublicInput(zkLoginInfo.IdentifierHash.ToHex()));
+        publicInputs.AddRange(ToPublicInput(zkLoginInfo.IdentifierHashType, zkLoginInfo.IdentifierHash.ToHex()));
         publicInputs.AddRange(nonceInInts);
         publicInputs.AddRange(pubkeyChunks);
         publicInputs.AddRange(saltInInts);
         return publicInputs;
+    }
+
+    private List<string> GetPublicKeyChunks(GuardianType type, string kid, string publicKey)
+    {
+        var zkPublicKeyInfo = State.PublicKeysChunksByKid[type][kid];
+        if (zkPublicKeyInfo != null && zkPublicKeyInfo.PublicKey.Equals(publicKey)
+            && zkPublicKeyInfo.PublicKeyChunks != null && zkPublicKeyInfo.PublicKeyChunks.Count > 0)
+        {
+            return zkPublicKeyInfo.PublicKeyChunks.ToList();
+        }
+
+        return GeneratePublicKeyChunks(publicKey).ToList();
+    }
+
+    private void SetPublicKeyAndChunks(GuardianType type, string kid, string publicKey)
+    {
+        if (State.PublicKeysChunksByKid[type][kid] != null
+            && State.PublicKeysChunksByKid[type][kid].PublicKey.Equals(publicKey))
+        {
+            return;
+        }
+
+        State.PublicKeysChunksByKid[type][kid] = new ZkPublicKeyInfo()
+        {
+            Kid = kid,
+            PublicKey = publicKey,
+            PublicKeyChunks = { GeneratePublicKeyChunks(publicKey) }
+        };
+    }
+
+    private RepeatedField<string> GeneratePublicKeyChunks(string pubkey)
+    {
+        var result = new RepeatedField<string>();
+        result.AddRange(Decode(pubkey)
+            .ToChunked(CircomBigIntN, CiromBigIntK)
+            .Select(HexToBigInt));
+        return result;
     }
 
     private byte[] Decode(string input)
@@ -140,11 +196,27 @@ public partial class CAContract
         var converted = Convert.FromBase64String(output); // Standard base64 decoder
         return converted;
     }
+
+    private List<string> ToPublicInput(IdentifierHashType identifierHashType, string identifierHash)
+    {
+        if (IdentifierHashType.PoseidonHash.Equals(identifierHashType))
+        {
+            return PoseidonHashToPublicInput(identifierHash);
+            
+        }
+        return Sha256HashToPublicInput(identifierHash);
+    }
     
-    //Sha256Hash
-    private List<string> ToPublicInput(string identifierHash)
+    //Sha256 Hash
+    private List<string> Sha256HashToPublicInput(string identifierHash)
     {
         return identifierHash.HexStringToByteArray().Select(b => b.ToString()).ToList();
+    }
+    
+    //poseidon Hash
+    private List<string> PoseidonHashToPublicInput(string identifierHash)
+    {
+        return new List<string>{ identifierHash };
     }
     
     private static string HexToBigInt(byte[] hex)

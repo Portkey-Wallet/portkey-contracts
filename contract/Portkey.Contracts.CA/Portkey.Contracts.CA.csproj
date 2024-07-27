@@ -86,16 +86,13 @@
     	<ContractBase Include="..\..\protobuf\request_interface.proto">
            <Link>Protobuf\Proto\request_interface.proto</Link>
         </ContractBase>
-<!--        <ContractBase Include="..\..\protobuf\coordinator_contract.proto">-->
-<!--            <Link>Protobuf\Proto\coordinator_contract.proto</Link>-->
-<!--        </ContractBase>-->
+        <ContractBase Include="..\..\protobuf\coordinator_contract.proto">
+            <Link>Protobuf\Proto\coordinator_contract.proto</Link>
+        </ContractBase>
+        <ContractBase Include="..\..\protobuf\data_feeds_coordinator_contract.proto">
+            <Link>Protobuf\Proto\data_feeds_coordinator_contract.proto</Link>
+        </ContractBase>
     </ItemGroup>
-<!--    <ItemGroup>-->
-<!--        &lt;!&ndash; Reference the protobuf definition of the contract &ndash;&gt;-->
-<!--        <ContractCode Include="..\..\protobuf\data_feeds_coordinator_contract.proto">-->
-<!--            <Link>Protobuf\Proto\data_feeds_coordinator_contract.proto</Link>-->
-<!--        </ContractCode>-->
-<!--    </ItemGroup>-->
     <ItemGroup>
       <PackageReference Include="Google.Protobuf" Version="3.26.0" />
       <PackageReference Include="Groth16.Net" Version="1.0.3" />

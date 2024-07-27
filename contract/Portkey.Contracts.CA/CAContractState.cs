@@ -78,8 +78,8 @@ public partial class CAContractState : ContractState
     //key is circuitId, value is VerifyingKeys
     public MappedState<string, VerifyingKey> CircuitVerifyingKeys { get; set; }
     //guardian type,kid, value is public key
-    public MappedState<GuardianType, string, string> IssuerPublicKeysByKid { get; set; }
+    public MappedState<GuardianType, string, ZkPublicKeyInfo> PublicKeysChunksByKid { get; set; }
     
     //differentiate the used nonce by caHash
-    public MappedState<Hash, ZkNonceList> ZkNonceListByCaHash { get; set; }
+    public MappedState<Hash, ZkNonceList> ZkNonceInfosByCaHash { get; set; }
 }

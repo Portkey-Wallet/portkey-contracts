@@ -61,13 +61,7 @@ service CAContract {
   
   rpc UpdateManagerInfos (UpdateManagerInfosInput) returns (google.protobuf.Empty) {}
 
-  rpc AddCAServer (AddCAServerInput) returns (google.protobuf.Empty){}
-
-  rpc RemoveCAServer (RemoveCAServerInput) returns (google.protobuf.Empty){}
-  
   rpc GetHolderInfo(GetHolderInfoInput) returns (GetHolderInfoOutput) {option (aelf.is_view) = true;}
-  
-  rpc GetCAServers (google.protobuf.Empty) returns (GetCAServersOutput) {option (aelf.is_view) = true;}
   
   // Validates CAHolder with ManagerInfos
   rpc ValidateCAHolderInfoWithManagerInfosExists (ValidateCAHolderInfoWithManagerInfosExistsInput) returns (google.protobuf.Empty) {}
@@ -166,15 +160,6 @@ enum GuardianType {
   GUARDIAN_TYPE_OF_TWITTER = 6;
 }
 
-message CAServer {
-  string name = 1;
-  string end_point = 2;
-}
-
-message CAServerList {
-  repeated CAServer ca_servers = 1;
-}
-
 message ControllerList {
   repeated aelf.Address controllers = 1;
 }
@@ -256,6 +241,12 @@ message ZkLoginInfo {
   // the payload that is used to calculate the nonce, where nonce = hash(serialize(non 
   NoncePayload nonce_payload = 8;
   ZkProofInfo zk_proof_info = 9;
+  IdentifierHashType identifier_hash_type = 10;
+}
+
+enum IdentifierHashType{
+  SHA_256_HASH = 0;
+  POSEIDON_HASH = 1;
 }
 
 message ZkProofInfo {
@@ -452,21 +443,6 @@ message UpdateManagerInfosInput {
   repeated ManagerInfo manager_infos = 2;
 }
 
-message AddCAServerInput{
-  string name = 1;
-  string end_points = 2;
-}
-
-message RemoveCAServerInput {
-  string name = 1;
-}
-
-
-
-message GetCAServersOutput {
-  repeated CAServer ca_servers = 1;
-}
-
 message ValidateCAHolderInfoWithManagerInfosExistsInput {
   aelf.Hash ca_hash = 1;
   repeated ManagerInfo manager_infos = 2;
@@ -628,15 +604,6 @@ message LoginGuardianRemoved {
   Guardian login_guardian = 4 [(aelf.is_indexed) = true];
 }
 
-message CAServerAdded {
-  option (aelf.is_event) = true;
-  CAServer ca_sever_added = 1;
-}
-
-message CAServerRemoved {
-  option (aelf.is_event) = true;
-  CAServer ca_server_removed = 1;
-}
 message CAHolderSynced {
   option (aelf.is_event) = true;
   aelf.Address creator = 1 [(aelf.is_indexed) = true];

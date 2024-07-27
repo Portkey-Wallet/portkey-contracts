@@ -928,4 +928,144 @@ public async Task SetLoginGuardian_RegisterByOthers()
     {
         return list.Guardians.Where(g => g.IsLoginGuardian).ToList().Count;
     }
+    
+    [Fact]
+    public async Task SetLoginGuardian_GuardianApprove_ZK_Success()
+    {
+        var verificationTime = DateTime.UtcNow;
+        var salt = Guid.NewGuid().ToString("N"); 
+        var salt1 = Guid.NewGuid().ToString("N");
+        var operationType = Convert.ToInt32(OperationType.SetLoginAccount).ToString();
+        // var caHash = await CreateCAHolder_AndGetCaHash_Helper();
+        await AddGuardianWithZkTestLoginWithZkAndAddEmailGuardian();
+        
+        var holderInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput
+        {
+            LoginGuardianIdentifierHash = Hash.LoadFromHex("e5d12986c422e134e50057d702b11fdb5ee4d28d9e8418bf21b245a41d27cf5f")
+        });
+        var caHash = holderInfo.CaHash;
+        GetLoginGuardianCount(holderInfo.GuardianList).ShouldBe(1);
+        
+        var guardianApprove = new List<GuardianInfo>
+        {
+            new()
+            {
+                IdentifierHash = Hash.LoadFromHex("e5d12986c422e134e50057d702b11fdb5ee4d28d9e8418bf21b245a41d27cf5f"),
+                Type = GuardianType.OfGoogle,
+                VerificationInfo = new VerificationInfo
+                {
+                    Id = Hash.LoadFromHex("7cffb8aaa452a13a4d477375ef25bb40c570476a76ab41119a94d7db33c440a9"),
+                    // Signature = ByteString.Empty,
+                    // VerificationDoc = ""
+                },
+                ZkLoginInfo = new ZkLoginInfo
+                {
+                    IdentifierHash = Hash.LoadFromHex("61ede365d5fc4731f0e4631f360c920585915788f3ab1487cad65d738d670516"),
+                    Salt = "4f8f7469d8d44351acf2055ab491a1ce",
+                    Nonce = "3332b44a8f3ab7a46960cf78694757df03baf47fb93471686fe191734a77141d",
+                    ZkProof = "{\"pi_a\":[\"13653499308465311314779681904135208898008255617934243379245733734939531085902\",\"8524727878079641865631718080395754120964110120366957073582010926658219780180\",\"1\"],\"pi_b\":[[\"18334343753232689027626120752218101962543940167578981953362331577829102038700\",\"21193665004857277374106867719745463881968202698147510401507989999797237533905\"],[\"6231647031167524356442788723802243477990558566624701270205005506539953777294\",\"2632410410715515694628601778518667621866966633328916138132231359437582197339\"],[\"1\",\"0\"]],\"pi_c\":[\"7395866727068505445227711086544101826091525908317162021966999480069819091479\",\"4041550074265117864636446247441465403515671461744228230057708860094595125205\",\"1\"],\"protocol\":\"groth16\"}",
+                    ZkProofInfo = new ZkProofInfo
+                    {
+                        ZkProofPiA =  { "13653499308465311314779681904135208898008255617934243379245733734939531085902",
+                            "8524727878079641865631718080395754120964110120366957073582010926658219780180",
+                            "1" },
+                        ZkProofPiB1 = { "18334343753232689027626120752218101962543940167578981953362331577829102038700",
+                            "21193665004857277374106867719745463881968202698147510401507989999797237533905" },
+                        ZkProofPiB2 = { "6231647031167524356442788723802243477990558566624701270205005506539953777294",
+                            "2632410410715515694628601778518667621866966633328916138132231359437582197339" },
+                        ZkProofPiB3 = { "1","0" },
+                        ZkProofPiC = { "7395866727068505445227711086544101826091525908317162021966999480069819091479",
+                            "4041550074265117864636446247441465403515671461744228230057708860094595125205",
+                            "1" }
+                    },
+                    Issuer = "https://accounts.google.com",
+                    Kid = "f2e11986282de93f27b264fd2a4de192993dcb8c",
+                    CircuitId = "0999c81d5873bc7c3c5bc7e5d5e63be4d4ca91b77b45f9954b79e1d33499f25e",
+                    NoncePayload = new NoncePayload
+                    {
+                        // AddManagerAddress = new AddManager
+                        // {
+                        //     CaHash = Hash.Empty,
+                        //     ManagerAddress = Address.FromBase58("YanBhpryvqf9RcFVapi1vhu5fvCzoVeT8x5AbRBvTNZKsQJRf"),
+                        //     Timestamp = new Timestamp
+                        //     {
+                        //         Seconds = 1721203238,
+                        //         Nanos = 912000000
+                        //     }
+                        // }
+                    }
+                }
+            }
+        };
+        var input = new SetGuardianForLoginInput()
+        {
+            CaHash = caHash,
+            GuardianToSetLogin = new GuardianInfo
+            {
+                Type = GuardianType.OfGoogle,
+                IdentifierHash = Hash.LoadFromHex("a831cbb61da83b8e155a30a3e57dd8216a022278475951f7ea860c8f4fe63be5"),
+                VerificationInfo = new VerificationInfo
+                {
+                    Id = Hash.LoadFromHex("0745df56b7a450d3a5d66447515ec2306b5a207277a5a82e9eb50488d19f5a37"),
+                    // Signature = GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime, _guardian1, 0,salt1,operationType),
+                    // VerificationDoc =
+                    //     $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{salt1},{operationType},{MainChainId}"
+                }
+            },
+            GuardiansApproved = { guardianApprove }
+        };
+        await CaContractStub.SetGuardianForLogin.SendAsync(input);
+        holderInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput
+        {
+            CaHash = caHash
+        });
+        holderInfo.GuardianList.Guardians.Count.ShouldBe(2);
+        GetLoginGuardianCount(holderInfo.GuardianList).ShouldBe(2);
+        
+        operationType = Convert.ToInt32(OperationType.UnSetLoginAccount).ToString();
+        var unsetOperateDetails = $"{_guardian.ToHex()}_{(int)GuardianType.OfEmail}_{_verifierId.ToHex()}";
+        var guardianApprove1 = new List<GuardianInfo>
+        {
+            new()
+            {
+                Type = GuardianType.OfEmail,
+                IdentifierHash = _guardian1,
+                VerificationInfo = new VerificationInfo
+                {
+                    Id = _verifierId1,
+                    Signature = GenerateSignature(VerifierKeyPair1, VerifierAddress1, verificationTime, _guardian1, 0,salt1,operationType,
+                        MainChainId, unsetOperateDetails),
+                    VerificationDoc =
+                        $"{0},{_guardian1.ToHex()},{verificationTime},{VerifierAddress1.ToBase58()},{salt1},{operationType}," +
+                        $"{MainChainId},{HashHelper.ComputeFrom(unsetOperateDetails).ToHex()}"
+                }
+            }
+        };
+        var input1 = new UnsetGuardianForLoginInput()
+        {
+            CaHash = caHash,
+            GuardianToUnsetLogin = new GuardianInfo
+            {
+                Type = GuardianType.OfEmail,
+                IdentifierHash = _guardian,
+                VerificationInfo = new VerificationInfo
+                {
+                    Id = _verifierId,
+                    Signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime, _guardian, 0,salt,operationType),
+                    VerificationDoc =
+                        $"{0},{_guardian.ToHex()},{verificationTime},{VerifierAddress.ToBase58()},{salt},{operationType},{MainChainId}"
+                }
+            },
+            GuardiansApproved = { guardianApprove1 }
+        };
+        await CaContractStub.UnsetGuardianForLogin.SendAsync(input1);
+        holderInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput
+        {
+            CaHash = caHash
+        });
+        holderInfo.GuardianList.Guardians.Count.ShouldBe(2);
+        GetLoginGuardianCount(holderInfo.GuardianList).ShouldBe(1);
+        holderInfo.GuardianList.Guardians[0].IsLoginGuardian.ShouldBeFalse();
+        holderInfo.GuardianList.Guardians[1].IsLoginGuardian.ShouldBeTrue();
+    }
 }

@@ -74,16 +74,23 @@ service CAContractImpl {
   rpc AddManagerApproveSpenderWhitelist (AddManagerApproveSpenderWhitelistInput) returns (google.protobuf.Empty){}
   rpc RemoveManagerApproveSpenderWhitelist(RemoveManagerApproveSpenderWhitelistInput) returns (google.protobuf.Empty){}
   rpc CheckInManagerApproveSpenderWhitelist (aelf.Address) returns (google.protobuf.BoolValue) {option (aelf.is_view) = true;}
-
-  // If End Points already exists, return true
+  
+  //CAServer
+  rpc AddCAServer (AddCAServerInput) returns (google.protobuf.Empty){}
+  //CAServer
+  rpc RemoveCAServer (RemoveCAServerInput) returns (google.protobuf.Empty){}
+  //CAServer
+  rpc GetCAServers (google.protobuf.Empty) returns (GetCAServersOutput) {option (aelf.is_view) = true;}
+  
+  //Verifier If End Points already exists, return true
   rpc AddVerifierServerEndPoints (AddVerifierServerEndPointsInput) returns (google.protobuf.Empty) {}
 
-  // If End Points does not exists, return true
+  //Verifier If End Points does not exists, return true
   rpc RemoveVerifierServerEndPoints (RemoveVerifierServerEndPointsInput) returns (google.protobuf.Empty) {}
 
-  // if Verifier Server does not exists, return true
+  //Verifier if Verifier Server does not exists, return true
   rpc RemoveVerifierServer (RemoveVerifierServerInput) returns (google.protobuf.Empty) {}
-
+  //Verifier
   rpc GetVerifierServers (google.protobuf.Empty) returns (GetVerifierServersOutput) {option (aelf.is_view) = true;}
   
   // add a verifying key for a circuit or update the old one
@@ -105,8 +112,6 @@ service CAContractImpl {
   rpc GetFacebookPublicKeyByKid(google.protobuf.StringValue) returns (KidPublicKeyOutput) {
     option (aelf.is_view) = true;
   }
-  
-  rpc InitZkNonceList (google.protobuf.Empty) returns (google.protobuf.Empty);
   
   //set oracle address in portkey contract
   rpc SetOracleAddress (aelf.Address) returns (google.protobuf.Empty);
@@ -344,6 +349,38 @@ message SetTokenInitialTransferLimitInput {
   int64 token_initial_transfer_limit = 1;
 }
 
+message AddCAServerInput{
+  string name = 1;
+  string end_points = 2;
+}
+
+message RemoveCAServerInput {
+  string name = 1;
+}
+
+message CAServer {
+  string name = 1;
+  string end_point = 2;
+}
+
+message CAServerList {
+  repeated CAServer ca_servers = 1;
+}
+
+message GetCAServersOutput {
+  repeated CAServer ca_servers = 1;
+}
+
+message CAServerAdded {
+  option (aelf.is_event) = true;
+  CAServer ca_sever_added = 1;
+}
+
+message CAServerRemoved {
+  option (aelf.is_event) = true;
+  CAServer ca_server_removed = 1;
+}
+
 message VerifierServer {
   aelf.Hash id = 1;
   string name = 2;
@@ -407,7 +444,12 @@ message VerifyingKey {
 }
 
 message ZkNonceList {
-  repeated string nonce = 1;
+  repeated ZkNonceInfo zk_nonce_infos = 1;
+}
+
+message ZkNonceInfo {
+  string nonce = 1;
+  int64 timestamp = 2;
 }
 
 message Jwks
@@ -469,4 +511,10 @@ message CAHolderErrorOccured {
 message KidPublicKeyOutput {
   string kid = 1;
   string public_key = 2;
+}
+
+message ZkPublicKeyInfo {
+  string kid = 1;
+  string public_key = 2;
+  repeated string public_key_chunks = 3;
 }
