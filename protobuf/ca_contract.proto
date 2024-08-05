@@ -33,6 +33,8 @@ service CAContract {
 
   rpc UpdateGuardian (UpdateGuardianInput) returns (google.protobuf.Empty) {}
 
+  rpc AppendGuardianPoseidonHash(AppendGuardianInput) returns (google.protobuf.Empty) {}
+
   // If Guardian is already setted, return true
   rpc SetGuardianForLogin (SetGuardianForLoginInput) returns (google.protobuf.Empty) {}
 
@@ -149,6 +151,7 @@ message Guardian {
   bool is_login_guardian = 5;
   ZkLoginInfo zk_login_info = 6;
   bool manuallySupportForZk = 7;
+  string poseidon_identifier_hash = 8;
 }
 
 enum GuardianType {
@@ -215,6 +218,7 @@ message GuardianInfo {
   aelf.Hash identifier_hash = 2;
   VerificationInfo verification_info = 3;
   ZkLoginInfo zk_login_info = 4;
+  string poseidon_identifier_hash = 5;
 }
 
 message VerificationInfo {
@@ -241,7 +245,8 @@ message ZkLoginInfo {
   // the payload that is used to calculate the nonce, where nonce = hash(serialize(non 
   NoncePayload nonce_payload = 8;
   ZkProofInfo zk_proof_info = 9;
-  IdentifierHashType identifier_hash_type = 10;
+  string poseidon_identifier_hash = 10;
+  IdentifierHashType identifier_hash_type = 11;
 }
 
 enum IdentifierHashType{
@@ -351,6 +356,17 @@ message UpdateGuardianInput{
   GuardianInfo guardian_to_update_pre = 2;
   GuardianInfo guardian_to_update_new = 3;
   repeated GuardianInfo guardians_approved = 4;
+}
+
+message AppendGuardianInput {
+  aelf.Hash ca_hash = 1;
+  repeated GuardianInfoWithPoseidon guardians = 2;
+}
+
+message GuardianInfoWithPoseidon {
+  GuardianType type = 1;
+  aelf.Hash identifier_hash = 2;
+  string poseidon_identifier_hash = 3;
 }
 
 message SetGuardianForLoginInput {

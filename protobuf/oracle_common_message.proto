@@ -23,6 +23,7 @@ message Commitment {
   google.protobuf.Timestamp timeout_timestamp = 5;
   bytes specific_data = 6;
   int32 request_type_index = 7;
+  aelf.Hash trace_id = 8;
 }
 
 message Report {

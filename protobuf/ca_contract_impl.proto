@@ -473,19 +473,7 @@ message ZkBasicAdminData
   string jwks_endpoint = 2; //the url that can get kid and public key from third party
   int64 subscription_id = 3;
   int32 request_type_index = 4;
-  OracleDataFeedsSpecificData specific_data = 5;
-}
-
-message OracleDataFeedsSpecificData
-{
-  string cron = 1;
-  OracleDataFeedsJobSpec data_feeds_job_spec = 2;
-}
-
-message OracleDataFeedsJobSpec
-{
-  string type = 1;
-  string url = 2;
+  string specific_data = 5;
 }
 
 message JwtIssuerCreated
@@ -511,6 +499,7 @@ message CAHolderErrorOccured {
 message KidPublicKeyOutput {
   string kid = 1;
   string public_key = 2;
+  repeated string public_key_chunks = 3;
 }
 
 message ZkPublicKeyInfo {
