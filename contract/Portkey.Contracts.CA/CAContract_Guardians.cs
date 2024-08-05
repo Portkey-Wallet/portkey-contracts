@@ -1,7 +1,6 @@
 using System.Linq;
 using AElf.CSharp.Core;
 using AElf.Sdk.CSharp;
-using AElf.Types;
 using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
 
@@ -16,10 +15,7 @@ public partial class CAContract
             "Invalid input.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
-        Assert(
-            holderInfo.GuardianList.Guardians.FirstOrDefault(g =>
-                g.VerifierId == input.GuardianToAdd.VerificationInfo.Id) == null,
-            "The verifier already exists");
+        AssertWhenVerifierIdInValid(holderInfo.GuardianList.Guardians, input.GuardianToAdd);
         Assert(
             holderInfo.GuardianList.Guardians.FirstOrDefault(g =>
                 g.Type == input.GuardianToAdd.Type && g.IdentifierHash == input.GuardianToAdd.IdentifierHash) == null,
@@ -63,7 +59,7 @@ public partial class CAContract
             guardianAdded = new Guardian
             {
                 IdentifierHash = input.GuardianToAdd!.IdentifierHash,
-                Salt = "",
+                Salt = input.GuardianToAdd.ZkLoginInfo.Salt,
                 Type = input.GuardianToAdd.Type,
                 VerifierId = input.GuardianToAdd.VerificationInfo.Id,
                 IsLoginGuardian = false,
@@ -94,29 +90,22 @@ public partial class CAContract
         return new Empty();
     }
 
-    private bool CheckZkParams(GuardianInfo guardianInfo)
+    private void AssertWhenVerifierIdInValid(RepeatedField<Guardian> guardians, GuardianInfo newGuardianInfo)
     {
-        var supportedZk = CanZkLoginExecute(guardianInfo);
-        if (!supportedZk)
-            return false;
-        Assert(guardianInfo.ZkLoginInfo.ZkProofInfo != null, "the zkProofInfo is null");
-                
-        var zkProofPiA = guardianInfo.ZkLoginInfo.ZkProofInfo.ZkProofPiA;
-        Assert(zkProofPiA is { Count: 3 }, "the zkProofInfo zkProofPiA is invalid");
-                
-        var zkProofPiB1 = guardianInfo.ZkLoginInfo.ZkProofInfo.ZkProofPiB1;
-        Assert(zkProofPiB1 is { Count: 2 }, "the zkProofInfo zkProofPiB1 is invalid");
-                
-        var zkProofPiB2 = guardianInfo.ZkLoginInfo.ZkProofInfo.ZkProofPiB2;
-        Assert(zkProofPiB2 is { Count: 2 }, "the zkProofInfo zkProofPiB2 is invalid");
-                
-        var zkProofPiB3 = guardianInfo.ZkLoginInfo.ZkProofInfo.ZkProofPiB3;
-        Assert(zkProofPiB3 is { Count: 2 }, "the zkProofInfo zkProofPiB3 is invalid");
-                
-        var zkProofPiC = guardianInfo.ZkLoginInfo.ZkProofInfo.ZkProofPiC;
-        Assert(zkProofPiC is { Count: 3 }, "the zkProofInfo zkProofPiC is invalid");
+        var newGuardianSupportZk = CanZkLoginExecute(newGuardianInfo);
+        if (newGuardianSupportZk)
+        {
+            return;
+        }
 
-        return true;
+        var notSupportZkGuardians = guardians.Where(g => !CanGuardianZkLoginExecute(g)).ToList();
+        if (!notSupportZkGuardians.Any())
+        {
+            return;
+        }
+        var notExisted = !notSupportZkGuardians
+            .Any(gd => gd.VerifierId.Equals(newGuardianInfo.VerificationInfo.Id));
+        Assert(notExisted, "The verifier already exists");
     }
 
     // Remove a Guardian, if already removed, return 
@@ -235,10 +224,7 @@ public partial class CAContract
             return new Empty();
         }
 
-        Assert(
-            holderInfo.GuardianList.Guardians.FirstOrDefault(g =>
-                g.VerifierId == input.GuardianToUpdateNew.VerificationInfo.Id) == null,
-            "The verifier already exists");
+        AssertWhenVerifierIdInValid(holderInfo.GuardianList.Guardians, input.GuardianToUpdateNew);
         var preGuardian = existPreGuardian.Clone();
 
         //Check verifier id is exist.
@@ -288,6 +274,35 @@ public partial class CAContract
             GuardianUpdatedNew = existPreGuardian
         });
 
+        return new Empty();
+    }
+
+    public override Empty AppendGuardianPoseidonHash(AppendGuardianInput input)
+    {
+        Assert(input != null && input.CaHash != null, "Invalid input.");
+        foreach (var guardian in input.Guardians)
+        {
+            Assert(guardian?.Type != null && guardian?.IdentifierHash != null && guardian?.PoseidonIdentifierHash != null, "guardian type identifierHash poseidon invalid.");
+        }
+        CheckManagerInfoPermission(input.CaHash, Context.Sender);
+        var holderInfo = GetHolderInfoByCaHash(input.CaHash);
+        AssertCreateChain(holderInfo);
+
+        var guardiansOfHolder = holderInfo.GuardianList.Guardians;
+        foreach (var guardianInfoWithPoseidon in input.Guardians)
+        {
+            var guardianOfHolder= guardiansOfHolder.FirstOrDefault(g =>
+                g.Type.Equals(guardianInfoWithPoseidon.Type) && g.IdentifierHash.Equals(guardianInfoWithPoseidon.IdentifierHash));
+            guardianOfHolder.PoseidonIdentifierHash = guardianInfoWithPoseidon.PoseidonIdentifierHash;
+        }
+        
+        var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
+        Context.Fire(new GuardianUpdated
+        {
+            CaHash = input.CaHash,
+            CaAddress = caAddress,
+        });
+    
         return new Empty();
     }
 }

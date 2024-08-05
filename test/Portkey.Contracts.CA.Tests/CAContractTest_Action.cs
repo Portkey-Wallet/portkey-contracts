@@ -1,8 +1,10 @@
 using System;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using AElf;
 using AElf.Types;
+using AetherLink.Contracts.Consumer;
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using Shouldly;
@@ -56,33 +58,73 @@ public partial class  CAContractTests
         invited.ProjectCode.ShouldBe("345");
         invited.MethodName.ShouldBe("CreateCAHolder");
     }
+
+    public async Task InitTestVerifierServers()
+    {
+        await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
+        {
+            Name = "Gauss",
+            ImageUrl = "https://portkey-did.s3.ap-northeast-1.amazonaws.com/img/Gauss.png",
+            EndPoints = { "http://10.10.32.98:15002" },
+            VerifierAddressList = { Address.FromBase58("5M5sG4v1H9cdB4HKsmGrPyyeoNBAEbj2moMarNidzp7xyVDZ7") },
+            VerifierId = Hash.LoadFromHex("e8c0652f79ef46f4775135ab146708bb14e806844dde5a680e4be3f96d46b6b8")
+        });
+        await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
+        {
+            Name = "Portkey",
+            ImageUrl = "https://portkey-did.s3.ap-northeast-1.amazonaws.com/img/Gauss.png",
+            EndPoints = { "http://10.10.32.98:15002" },
+            VerifierAddressList = { Address.FromBase58("2mBnRTqXMb5Afz4CWM2QakLRVDfaq2doJNRNQT1MXoi2uc6Zy3") },
+            VerifierId = Hash.LoadFromHex("0745df56b7a450d3a5d66447515ec2306b5a207277a5a82e9eb50488d19f5a37")
+        });
+        await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
+        {
+            Name = "Minerva",
+            ImageUrl = "https://portkey-did.s3.ap-northeast-1.amazonaws.com/img/Gauss.png",
+            EndPoints = { "http://10.10.32.98:15002" },
+            VerifierAddressList = { Address.FromBase58("3sWGDJhu5XDycTWXGa6r4qicYKbUyy6oZyRbRRDKGTiWTXwU4") },
+            VerifierId = Hash.LoadFromHex("7cffb8aaa452a13a4d477375ef25bb40c570476a76ab41119a94d7db33c440a9")
+        });
+        await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
+        {
+            Name = "CryptoGuardian",
+            ImageUrl = "https://portkey-did.s3.ap-northeast-1.amazonaws.com/img/CryptoGuardian.png",
+            EndPoints = { "http://10.10.32.98:15002" },
+            VerifierAddressList = { Address.FromBase58("2bWwpsN9WSc4iKJPHYL4EZX3nfxVY7XLadecnNMar1GdSb4hJz") },
+            VerifierId = Hash.LoadFromHex("61bc9c43eb8d311c21b3fe082884875e4fd377f11aa8ac278ba4ffab4e1ba3c9")
+        });
+        await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
+        {
+            Name = "DokewCapital",
+            ImageUrl = "https://portkey-did.s3.ap-northeast-1.amazonaws.com/img/DokewCapital.png",
+            EndPoints = { "http://10.10.32.98:15002" },
+            VerifierAddressList = { Address.FromBase58("2kqh5HHiL4HoGWqwBqWiTNLBnr8eAQBEJi3cjH1btPovTyGwej") },
+            VerifierId = Hash.LoadFromHex("7550fcdf5f64a3e0572130822b29e4c5bb62ad226e8dba1f23a7bbf00a56cc72")
+        });
+    }
     
     [Fact]
     public async Task CreateHolderWithReferralCode2()
     {
         await Initiate();
-        await InitTestVerifierServer();
-        var verifyTime = DateTime.UtcNow;
-        var salt = Guid.NewGuid().ToString("N");
-        var opType = Convert.ToInt32(OperationType.CreateCaholder).ToString();
-        var id = _verifierServers[0].Id;
+        await InitTestVerifierServers();
     
         var manager = new ManagerInfo
         {
-            Address = Address.FromBase58("HamAPdEKwPVfx9YWcRxRDdCMCt6kufy6j31ppzXKcJZpWB6zH"),
-            ExtraData = "{\"transactionTime\":1721877534289,\"deviceInfo\":\"g007Zjlkg9K8vz0MHT7GLPX14TTy2npjRQkKdVNgbmH/LBTD7IrGtMC180LTu9pq\",\"version\":\"2.0.0\"}"
+            Address = Address.FromBase58("7MPohXygSyPC1nj3abQQ1G5kP27rSy3PfYWVDszznjphtjAQ4"),
+            ExtraData = "{\"transactionTime\":1722408923886,\"deviceInfo\":\"FhnR4caky62N/3msEMcB/MytONu3ru8UA0USyuLMy9FnHc384X+mk+ZzqMu7KCvX\",\"version\":\"2.0.0\"}"
         };
         var createResult = await CaContractStub.CreateCAHolder.SendAsync(new CreateCAHolderInput
         {
             GuardianApproved = new GuardianInfo
             {
-                IdentifierHash = Hash.LoadFromHex("5dafb9d20e69ddaddb3bdf1e3213e377f1e28399a0fea8cc07cd099fc3abcb13"),
-                Type = GuardianType.OfEmail,
+                IdentifierHash = Hash.LoadFromHex("33cf3ee51f74564bfd58567cd2de2470e5123dfa66e6bacf7c55a6e45d7cbe8a"),
+                Type = GuardianType.OfGoogle,
                 VerificationInfo = new VerificationInfo
                 {
-                    Id = id, //Hash.LoadFromHex("e8c0652f79ef46f4775135ab146708bb14e806844dde5a680e4be3f96d46b6b8"),
-                    Signature = ByteStringHelper.FromHexString("3e7086a45d39b51b7c02c38619dee73967289b385e90b56368d4155e113e0c0a4439332d9f2225a88c28cb9b75d7d026c0506a1fa5eec3f2c3105193fcb1006d00"),
-                    VerificationDoc = "0,5dafb9d20e69ddaddb3bdf1e3213e377f1e28399a0fea8cc07cd099fc3abcb13,2024/07/25 03:18:47.500,5M5sG4v1H9cdB4HKsmGrPyyeoNBAEbj2moMarNidzp7xyVDZ7,8fae05adb0c25549b2fa8ed5406dea04,1,9992731,29518b75a8f8b2eb7b84098125ea557ca960c17015e4093a5563305621fef704"
+                    Id = Hash.LoadFromHex("0745df56b7a450d3a5d66447515ec2306b5a207277a5a82e9eb50488d19f5a37"),
+                    Signature = ByteString.CopyFromUtf8("uB129ec1hhpbUpJ8vtG0qKWg3MPQCURlo3pmYgUS/PEg4PSGhE/5bPQp4/iK3X9cerHGdoQudqflkKKHU1Yz0gA="),
+                    VerificationDoc = "2,33cf3ee51f74564bfd58567cd2de2470e5123dfa66e6bacf7c55a6e45d7cbe8a,2024/07/31 06:35:15.424,2mBnRTqXMb5Afz4CWM2QakLRVDfaq2doJNRNQT1MXoi2uc6Zy3,66bc0fcf19fa0f4495dc2b275babdd8b,8,1931928,4f3b571b4776fef4bb806b7c6d94cd76957f0f3a01a6b6d2e84a7200298c5a2b"
                 }
             },
             ManagerInfo = manager,
@@ -178,7 +220,6 @@ public partial class  CAContractTests
             VerifierAddressList = { Address.FromBase58("5M5sG4v1H9cdB4HKsmGrPyyeoNBAEbj2moMarNidzp7xyVDZ7") },
             VerifierId = Hash.LoadFromHex("e8c0652f79ef46f4775135ab146708bb14e806844dde5a680e4be3f96d46b6b8")
         });
-       
         await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
         {
             Name = "Portkey",
@@ -194,6 +235,22 @@ public partial class  CAContractTests
             EndPoints = { "http://10.10.32.98:15002" },
             VerifierAddressList = { Address.FromBase58("3sWGDJhu5XDycTWXGa6r4qicYKbUyy6oZyRbRRDKGTiWTXwU4") },
             VerifierId = Hash.LoadFromHex("7cffb8aaa452a13a4d477375ef25bb40c570476a76ab41119a94d7db33c440a9")
+        });
+        await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
+        {
+            Name = "CryptoGuardian",
+            ImageUrl = "https://portkey-did.s3.ap-northeast-1.amazonaws.com/img/CryptoGuardian.png",
+            EndPoints = { "http://10.10.32.98:15002" },
+            VerifierAddressList = { Address.FromBase58("2bWwpsN9WSc4iKJPHYL4EZX3nfxVY7XLadecnNMar1GdSb4hJz") },
+            VerifierId = Hash.LoadFromHex("61bc9c43eb8d311c21b3fe082884875e4fd377f11aa8ac278ba4ffab4e1ba3c9")
+        });
+        await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
+        {
+            Name = "DokewCapital",
+            ImageUrl = "https://portkey-did.s3.ap-northeast-1.amazonaws.com/img/DokewCapital.png",
+            EndPoints = { "http://10.10.32.98:15002" },
+            VerifierAddressList = { Address.FromBase58("2kqh5HHiL4HoGWqwBqWiTNLBnr8eAQBEJi3cjH1btPovTyGwej") },
+            VerifierId = Hash.LoadFromHex("7550fcdf5f64a3e0572130822b29e4c5bb62ad226e8dba1f23a7bbf00a56cc72")
         });
         var manager = new ManagerInfo
         {
@@ -229,8 +286,8 @@ public partial class  CAContractTests
                 VerificationInfo = new VerificationInfo
                 {
                     Id = Hash.LoadFromHex("7cffb8aaa452a13a4d477375ef25bb40c570476a76ab41119a94d7db33c440a9"),
-                    // Signature = ByteString.Empty,
-                    // VerificationDoc = ""
+                    Signature = ByteString.Empty,
+                    VerificationDoc = ""
                 },
                 ZkLoginInfo = new ZkLoginInfo
                 {
@@ -313,10 +370,10 @@ public partial class  CAContractTests
     public async Task StartOracleDataFeedsTaskTest()
     {
         var setOracleAddressResult = await CaContractStub.SetOracleAddress.SendAsync(
-            Address.FromBase58("HhfWgMGcmfEtumd93yPgyjqz3CcUA1k4G6twhdF9qcY9kao31"));
+            Address.FromBase58("21Fh7yog1B741yioZhNAFbs3byJ97jvBmbGAPPZKZpHHog5aEg"));
         var jwtIssuerResult = await CaContractStub.AddOrUpdateJwtIssuer.SendAsync(new JwtIssuerAndEndpointInput
         {
-            Type = GuardianType.OfGoogle,
+            Type = GuardianType.OfFacebook,
             Issuer = "https://accounts.google.com",
             JwksEndpoint = "https://www.googleapis.com/oauth2/v3/certs"
         });
@@ -326,21 +383,12 @@ public partial class  CAContractTests
         
         var taskStartedResult = await CaContractStub.StartOracleDataFeedsTask.SendAsync(new StartOracleDataFeedsTaskRequest
         {
-            Type = GuardianType.OfGoogle,
-            SubscriptionId = 123456
+            Type = GuardianType.OfFacebook,
+            SubscriptionId = 2
         });
         var oracleDataFeedsTaskStarted = OracleDataFeedsTaskStarted.Parser.ParseFrom(taskStartedResult.TransactionResult.Logs.First(e => e.Name == nameof(OracleDataFeedsTaskStarted)).NonIndexed);
         oracleDataFeedsTaskStarted.SubscriptionId.ShouldBe(123456);
         oracleDataFeedsTaskStarted.RequestTypeIndex.ShouldBe(1);
-        oracleDataFeedsTaskStarted.SpecificData.ShouldBe(new OracleDataFeedsSpecificData()
-        {
-            Cron = "0 */10 * * * ?",
-            DataFeedsJobSpec = new OracleDataFeedsJobSpec()
-            {
-                Type = "PlainDataFeeds",
-                Url = "https://www.googleapis.com/oauth2/v3/certs"
-            }
-        }.ToByteString());
     }
     
     [Fact]
@@ -603,5 +651,43 @@ public partial class  CAContractTests
         invited.ReferralCode.ShouldBe("123");
         invited.ProjectCode.ShouldBe("345");
         invited.MethodName.ShouldBe("CreateCAHolder");
+    }
+
+    [Fact]
+    public async Task TestHandleOracleFulfillment()
+    {
+        await Initiate();
+        await CaContractStub.AddOrUpdateJwtIssuer.SendAsync(new JwtIssuerAndEndpointInput
+        {
+            Issuer = "https://accounts.google.com",
+            JwksEndpoint = "https://www.googleapis.com/oauth2/v3/certs",
+            Type = GuardianType.OfGoogle
+        });
+        await CaContractStub.AddOrUpdateJwtIssuer.SendAsync(new JwtIssuerAndEndpointInput
+        {
+            Issuer = "https://appleid.apple.com",
+            JwksEndpoint = "https://appleid.apple.com/auth/keys",
+            Type = GuardianType.OfApple
+        });
+        await CaContractStub.AddOrUpdateJwtIssuer.SendAsync(new JwtIssuerAndEndpointInput
+        {
+            Issuer = "https://www.facebook.com",
+            JwksEndpoint = "https://limited.facebook.com/.well-known/oauth/openid/jwks",
+            Type = GuardianType.OfFacebook
+        });
+        await CaContractStub.AddKidPublicKey.SendAsync(new KidPublicKeyInput
+        {
+            Type = GuardianType.OfFacebook,
+            Kid = "2536a84ba9d727cf0f8aac3d06c5777bb31ab6f6",
+            PublicKey = "s8J70aIzklILWqLmqaz4I6VC9G4JRFW9yDYGq5rgAIKW_UGshZjqbEYwzznlS3R56BqfMBb0fVx537ubc93dHQfCROy6nOXDh4wg66tZyFSUWzM9Ys87B35EQ2RN0xdYzN4pB2V5dG_-RAyy3hJl2CKO21D_bkKkXHoWdkZgLLnrF09bPD_rVWOAEdoHgJIbcE_7yUePOT6Nsg1b61qGFHM7iqIXQq13GsIUUCFxwSvpYJ0FaOaLDa-Lpb1LspeYLCGb2lw8EjvQg1_PEmVv_GRwPtxEOFyirt8pgaByD0d6iZclTkZfensB-G7KWTjLPA_W3mBL2JGB-UJkN5Qpkw"
+        });
+        await CaContractStub.HandleOracleFulfillment.SendAsync(new HandleOracleFulfillmentInput
+        {
+            RequestId = Hash.LoadFromHex("1086a9a40093dc0a802deb830b9746343e9d023246037e41b61550f76508e19e"),
+            RequestTypeIndex = 1,
+            Response = ByteString.CopyFrom(Encoding.UTF8.GetBytes("{\"keys\":[{\"kid\":\"2536a84ba9d727cf0f8aac3d06c5777bb31ab6f6\",\"kty\":\"RSA\",\"alg\":\"RS256\",\"use\":\"sig\",\"n\":\"s8J70aIzklILWqLmqaz4I6VC9G4JRFW9yDYGq5rgAIKW_UGshZjqbEYwzznlS3R56BqfMBb0fVx537ubc93dHQfCROy6nOXDh4wg66tZyFSUWzM9Ys87B35EQ2RN0xdYzN4pB2V5dG_-RAyy3hJl2CKO21D_bkKkXHoWdkZgLLnrF09bPD_rVWOAEdoHgJIbcE_7yUePOT6Nsg1b61qGFHM7iqIXQq13GsIUUCFxwSvpYJ0FaOaLDa-Lpb1LspeYLCGb2lw8EjvQg1_PEmVv_GRwPtxEOFyirt8pgaByD0d6iZclTkZfensB-G7KWTjLPA_W3mBL2JGB-UJkN5Qpkw\",\"e\":\"AQAB\"},{\"kid\":\"c87192bdd4cc38bc02f6d45c6712ddd8daecc72d\",\"kty\":\"RSA\",\"alg\":\"RS256\",\"use\":\"sig\",\"n\":\"vE4yTlS8lhBPWd82Rpr9znyZbSIirkmbYIcyn34Zx8GpZe8_peXUBg4wex4TpqFrKNCiT5lHcaBiQcFe9CywryxOlVHmrq6ds9IEHR36swh3UwYt1L-YujV36VG-Ty6xgvNRmCcAfe-kV_ZZ2sXYpOJMO_fwxSSBwRUWR2hbzwmqpiJn6FT6P_eh-osE_Tr4BFd7bBBxpbyvqJF7CHdX51Lv6mOssYJeDje226LbuvcsoX77mPFa45R4K44JbBaSTanFpBzwdrdZtpF7HDQ-v1gFKMCcF86glyysPhG6C9WniMVlfDJ3q489wXKeQwJv207WOzWrLsQdM7NlsynPEw\",\"e\":\"AQAB\"}]}")),
+            TraceId = HashHelper.ComputeFrom("https://www.facebook.com"),
+            Err = ByteString.Empty
+        });
     }
 }

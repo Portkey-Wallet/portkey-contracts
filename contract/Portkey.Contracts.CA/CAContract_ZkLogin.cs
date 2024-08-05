@@ -12,8 +12,8 @@ namespace Portkey.Contracts.CA;
 
 public partial class CAContract
 {
-    private const int CircomBigIntN = 121;
-    private const int CiromBigIntK = 17;
+    private const int CircomBigIntN = 64;
+    private const int CircomBigIntK = 32;
 
     private bool CheckZkLoginVerifierAndData(GuardianInfo guardianInfo, Hash caHash)
     {
@@ -51,9 +51,24 @@ public partial class CAContract
         {
             return false;
         }
+        //check identifier hash
+        if (guardianInfo.ZkLoginInfo.IdentifierHashType == IdentifierHashType.Sha256Hash)
+        {
+            if (!guardianInfo.IdentifierHash.Equals(guardianInfo.ZkLoginInfo.IdentifierHash))
+            {
+                return false;
+            }
+        }
+        else
+        {
+            if (!guardianInfo.PoseidonIdentifierHash.Equals(guardianInfo.ZkLoginInfo.PoseidonIdentifierHash))
+            {
+                return false;
+            }
+        }
         // check jwt issuer
-        if (State.OidcProviderAdminData[guardianInfo.Type].Issuer == null
-            || !State.OidcProviderAdminData[guardianInfo.Type].Issuer.Equals(guardianInfo.ZkLoginInfo.Issuer))
+        if (State.OidcProviderData[guardianInfo.Type].Issuer == null
+            || !State.OidcProviderData[guardianInfo.Type].Issuer.Equals(guardianInfo.ZkLoginInfo.Issuer))
         {
             return false;
         }
@@ -79,12 +94,12 @@ public partial class CAContract
         }
     
         // check nonce = sha256(nonce_payload.to_bytes())
-        // var noncePayload = guardianInfo.ZkLoginInfo.NoncePayload.AddManagerAddress.Timestamp.Seconds +
-        //                    guardianInfo.ZkLoginInfo.NoncePayload.AddManagerAddress.ManagerAddress.ToBase58();
-        // if (!guardianInfo.ZkLoginInfo.Nonce.Equals(GetSha256Hash(noncePayload.GetBytes())))
-        // {
-        //     return false;
-        // }
+        var noncePayload = guardianInfo.ZkLoginInfo.NoncePayload.AddManagerAddress.Timestamp.Seconds +
+                           guardianInfo.ZkLoginInfo.NoncePayload.AddManagerAddress.ManagerAddress.ToBase58();
+        if (!guardianInfo.ZkLoginInfo.Nonce.Equals(GetSha256Hash(noncePayload.GetBytes())))
+        {
+            return false;
+        }
 
         return true;
     }
@@ -158,7 +173,9 @@ public partial class CAContract
     private void SetPublicKeyAndChunks(GuardianType type, string kid, string publicKey)
     {
         if (State.PublicKeysChunksByKid[type][kid] != null
-            && State.PublicKeysChunksByKid[type][kid].PublicKey.Equals(publicKey))
+            && State.PublicKeysChunksByKid[type][kid].PublicKey.Equals(publicKey)
+            && State.PublicKeysChunksByKid[type][kid].PublicKeyChunks != null
+            && State.PublicKeysChunksByKid[type][kid].PublicKeyChunks.Count == CircomBigIntK)
         {
             return;
         }
@@ -175,7 +192,7 @@ public partial class CAContract
     {
         var result = new RepeatedField<string>();
         result.AddRange(Decode(pubkey)
-            .ToChunked(CircomBigIntN, CiromBigIntK)
+            .ToChunked(CircomBigIntN, CircomBigIntK)
             .Select(HexToBigInt));
         return result;
     }
@@ -244,10 +261,15 @@ public partial class CAContract
                GuardianType.OfFacebook.Equals(type);
     }
 
-    public static bool CanZkLoginExecute(GuardianInfo guardianInfo)
+    private static bool CanZkLoginExecute(GuardianInfo guardianInfo)
     {
         return guardianInfo is not null && IsZkLoginSupported(guardianInfo.Type) && IsValidZkOidcInfoSupportZkLogin(guardianInfo.ZkLoginInfo);
     }
+    
+    private static bool CanGuardianZkLoginExecute(Guardian guardian)
+        {
+            return guardian is not null && IsZkLoginSupported(guardian.Type) && IsValidZkOidcInfoSupportZkLogin(guardian.ZkLoginInfo);
+        }
 
     public static bool IsValidGuardianType(GuardianType type)
     {
@@ -268,5 +290,30 @@ public partial class CAContract
     {
         var verifiers = State.VerifiersServerList.Value.VerifierServers;
         return verifiers[0].Id;
+    }
+    
+    private bool CheckZkParams(GuardianInfo guardianInfo)
+    {
+        var supportedZk = CanZkLoginExecute(guardianInfo);
+        if (!supportedZk)
+            return false;
+        Assert(guardianInfo.ZkLoginInfo.ZkProofInfo != null, "the zkProofInfo is null");
+                
+        var zkProofPiA = guardianInfo.ZkLoginInfo.ZkProofInfo.ZkProofPiA;
+        Assert(zkProofPiA is { Count: 3 }, "the zkProofInfo zkProofPiA is invalid");
+                
+        var zkProofPiB1 = guardianInfo.ZkLoginInfo.ZkProofInfo.ZkProofPiB1;
+        Assert(zkProofPiB1 is { Count: 2 }, "the zkProofInfo zkProofPiB1 is invalid");
+                
+        var zkProofPiB2 = guardianInfo.ZkLoginInfo.ZkProofInfo.ZkProofPiB2;
+        Assert(zkProofPiB2 is { Count: 2 }, "the zkProofInfo zkProofPiB2 is invalid");
+                
+        var zkProofPiB3 = guardianInfo.ZkLoginInfo.ZkProofInfo.ZkProofPiB3;
+        Assert(zkProofPiB3 is { Count: 2 }, "the zkProofInfo zkProofPiB3 is invalid");
+                
+        var zkProofPiC = guardianInfo.ZkLoginInfo.ZkProofInfo.ZkProofPiC;
+        Assert(zkProofPiC is { Count: 3 }, "the zkProofInfo zkProofPiC is invalid");
+
+        return true;
     }
 }
