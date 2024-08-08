@@ -499,7 +499,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
     
     public override KidPublicKeyOutput GetApplePublicKeyByKid(StringValue input)
     {
-        Assert(Context.Sender == State.Admin.Value, "No GetGooglePublicKeyByKid permission.");
+        Assert(Context.Sender == State.Admin.Value, "No GetApplePublicKeyByKid permission.");
         Assert(input != null, "Invalid kid.");
         Assert(State.PublicKeysChunksByKid[GuardianType.OfApple][input.Value] != null, "the public key of kid not exists.");
         return new KidPublicKeyOutput
@@ -512,7 +512,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
     
     public override KidPublicKeyOutput GetFacebookPublicKeyByKid(StringValue input)
     {
-        Assert(Context.Sender == State.Admin.Value, "No GetGooglePublicKeyByKid permission.");
+        Assert(Context.Sender == State.Admin.Value, "No GetFacebookPublicKeyByKid permission.");
         Assert(input != null, "Invalid kid.");
         Assert(State.PublicKeysChunksByKid[GuardianType.OfFacebook][input.Value] != null, "the public key of kid not exists.");
         return new KidPublicKeyOutput

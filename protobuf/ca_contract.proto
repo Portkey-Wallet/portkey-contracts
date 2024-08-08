@@ -33,7 +33,7 @@ service CAContract {
 
   rpc UpdateGuardian (UpdateGuardianInput) returns (google.protobuf.Empty) {}
 
-  rpc AppendGuardianPoseidonHash(AppendGuardianInput) returns (google.protobuf.Empty) {}
+  rpc AppendGuardianPoseidonHash(AppendGuardianRequest) returns (google.protobuf.Empty) {}
 
   // If Guardian is already setted, return true
   rpc SetGuardianForLogin (SetGuardianForLoginInput) returns (google.protobuf.Empty) {}
@@ -358,12 +358,16 @@ message UpdateGuardianInput{
   repeated GuardianInfo guardians_approved = 4;
 }
 
-message AppendGuardianInput {
-  aelf.Hash ca_hash = 1;
-  repeated GuardianInfoWithPoseidon guardians = 2;
+message AppendGuardianRequest{
+  repeated AppendGuardianInput input = 1;
 }
 
-message GuardianInfoWithPoseidon {
+message AppendGuardianInput {
+  aelf.Hash ca_hash = 1;
+  repeated PoseidonGuardian guardians = 2;
+}
+
+message PoseidonGuardian {
   GuardianType type = 1;
   aelf.Hash identifier_hash = 2;
   string poseidon_identifier_hash = 3;
