@@ -277,31 +277,36 @@ public partial class CAContract
         return new Empty();
     }
 
-    public override Empty AppendGuardianPoseidonHash(AppendGuardianInput input)
+    public override Empty AppendGuardianPoseidonHash(AppendGuardianRequest request)
     {
-        Assert(input != null && input.CaHash != null, "Invalid input.");
-        foreach (var guardian in input.Guardians)
+        Assert(State.CreatorControllers.Value.Controllers.Contains(Context.Sender), "No AppendGuardianPoseidonHash permission");
+        Assert(request != null, "Invalid request.");
+        Assert(request.Input != null, "Invalid input.");
+        Assert(request.Input.Count <= 30, "input count is more than 30.");
+        foreach (var appendGuardianInput in request.Input)
         {
-            Assert(guardian?.Type != null && guardian?.IdentifierHash != null && guardian?.PoseidonIdentifierHash != null, "guardian type identifierHash poseidon invalid.");
+            Assert(appendGuardianInput != null && appendGuardianInput.CaHash != null, "Invalid appendGuardianInput.");
+            foreach (var guardian in appendGuardianInput.Guardians)
+            {
+                Assert(guardian?.Type != null && guardian?.IdentifierHash != null, "guardian type identifierHash invalid.");
+            }
         }
-        CheckManagerInfoPermission(input.CaHash, Context.Sender);
-        var holderInfo = GetHolderInfoByCaHash(input.CaHash);
-        AssertCreateChain(holderInfo);
 
-        var guardiansOfHolder = holderInfo.GuardianList.Guardians;
-        foreach (var guardianInfoWithPoseidon in input.Guardians)
+        foreach (var appendGuardianInput in request.Input)
         {
-            var guardianOfHolder= guardiansOfHolder.FirstOrDefault(g =>
-                g.Type.Equals(guardianInfoWithPoseidon.Type) && g.IdentifierHash.Equals(guardianInfoWithPoseidon.IdentifierHash));
-            guardianOfHolder.PoseidonIdentifierHash = guardianInfoWithPoseidon.PoseidonIdentifierHash;
+            var holderInfo = GetHolderInfoByCaHash(appendGuardianInput.CaHash);
+            var guardiansOfHolder = holderInfo.GuardianList.Guardians;
+            foreach (var guardianInfoWithPoseidon in appendGuardianInput.Guardians)
+            {
+                var guardianOfHolder= guardiansOfHolder.FirstOrDefault(g =>
+                    g.Type.Equals(guardianInfoWithPoseidon.Type) && g.IdentifierHash.Equals(guardianInfoWithPoseidon.IdentifierHash));
+                if (guardianOfHolder == null)
+                {
+                    continue;
+                }
+                guardianOfHolder.PoseidonIdentifierHash = guardianInfoWithPoseidon.PoseidonIdentifierHash;
+            }
         }
-        
-        var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
-        Context.Fire(new GuardianUpdated
-        {
-            CaHash = input.CaHash,
-            CaAddress = caAddress,
-        });
     
         return new Empty();
     }
