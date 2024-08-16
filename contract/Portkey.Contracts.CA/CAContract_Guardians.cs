@@ -1,7 +1,6 @@
 using System.Linq;
 using AElf.CSharp.Core;
 using AElf.Sdk.CSharp;
-using AElf.Types;
 using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
 
@@ -16,30 +15,26 @@ public partial class CAContract
             "Invalid input.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
-        Assert(
-            holderInfo.GuardianList.Guardians.FirstOrDefault(g =>
-                g.VerifierId == input.GuardianToAdd.VerificationInfo.Id) == null,
-            "The verifier already exists");
-        Assert(
-            holderInfo.GuardianList.Guardians.FirstOrDefault(g =>
-                g.Type == input.GuardianToAdd.Type && g.IdentifierHash == input.GuardianToAdd.IdentifierHash) == null,
-            "The account already exists");
+        AssertWhenVerifierIdInValid(holderInfo.GuardianList.Guardians, input.GuardianToAdd);
+        if (holderInfo.GuardianList.Guardians.Any(g =>
+                g.Type == input.GuardianToAdd.Type && g.IdentifierHash == input.GuardianToAdd.IdentifierHash))
+        {
+            return new Empty();
+        }
         foreach (var guardianInfo in input.GuardiansApproved)
         {
             CheckZkParams(guardianInfo);
         }
         var guardianToAddSupportZk = CheckZkParams(input.GuardianToAdd);
-        
-        //for the guardian supporting zk, the front end inputs zk params, portkey contract verifies with zk
-        if (guardianToAddSupportZk && !CheckZkLoginVerifierAndData(input.GuardianToAdd, input.CaHash))
-        {
-            return new Empty();
-        }
         var methodName = nameof(OperationType.AddGuardian).ToLower();
-        //otherwise portkey contract uses the original verifier
-        if (!guardianToAddSupportZk && !CheckVerifierSignatureAndData(input.GuardianToAdd, methodName, input.CaHash))
+        //for the guardian supporting zk, the front end inputs zk params, portkey contract verifies with zk
+        if (guardianToAddSupportZk)
         {
-            return new Empty();
+            Assert(CheckZkLoginVerifierAndData(input.GuardianToAdd, input.CaHash), "input.GuardianToAdd supports zkLogin, but verified failed ");
+        }
+        else //otherwise portkey contract uses the original verifier
+        {
+            Assert(CheckVerifierSignatureAndData(input.GuardianToAdd, methodName, input.CaHash), "CheckVerifierSignatureAndData error ");
         }
         //Check the verifier signature and data of the guardian to be added.
         var operateDetails = $"{input.GuardianToAdd.IdentifierHash.ToHex()}_{(int)input.GuardianToAdd.Type}_{input.GuardianToAdd.VerificationInfo.Id.ToHex()}";
@@ -49,10 +44,8 @@ public partial class CAContract
         var holderJudgementStrategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
         var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count,
             guardianApprovedCount, holderJudgementStrategy);
-        if (!isJudgementStrategySatisfied)
-        {
-            return new Empty();
-        }
+        Assert(isJudgementStrategySatisfied, "The number of approved guardians does not meet the requirements ");
+        
         //var loginGuardians = GetLoginGuardians(holderInfo.GuardianList);
         //for new users of new version,portkey contract should generate a random verifier for the guardian supporting zk
         //for old users of new version,portkey contract uses zk as the default verifier,replacing the original verifier
@@ -63,11 +56,12 @@ public partial class CAContract
             guardianAdded = new Guardian
             {
                 IdentifierHash = input.GuardianToAdd!.IdentifierHash,
-                Salt = "",
+                Salt = input.GuardianToAdd.ZkLoginInfo.Salt,
                 Type = input.GuardianToAdd.Type,
                 VerifierId = input.GuardianToAdd.VerificationInfo.Id,
                 IsLoginGuardian = false,
-                ZkLoginInfo = input.GuardianToAdd.ZkLoginInfo
+                ZkLoginInfo = input.GuardianToAdd.ZkLoginInfo,
+                PoseidonIdentifierHash = input.GuardianToAdd.ZkLoginInfo.PoseidonIdentifierHash
             };
         }
         else
@@ -94,29 +88,20 @@ public partial class CAContract
         return new Empty();
     }
 
-    private bool CheckZkParams(GuardianInfo guardianInfo)
+    private void AssertWhenVerifierIdInValid(RepeatedField<Guardian> guardians, GuardianInfo newGuardianInfo)
     {
-        var supportedZk = CanZkLoginExecute(guardianInfo);
-        if (!supportedZk)
-            return false;
-        Assert(guardianInfo.ZkLoginInfo.ZkProofInfo != null, "the zkProofInfo is null");
-                
-        var zkProofPiA = guardianInfo.ZkLoginInfo.ZkProofInfo.ZkProofPiA;
-        Assert(zkProofPiA is { Count: 3 }, "the zkProofInfo zkProofPiA is invalid");
-                
-        var zkProofPiB1 = guardianInfo.ZkLoginInfo.ZkProofInfo.ZkProofPiB1;
-        Assert(zkProofPiB1 is { Count: 2 }, "the zkProofInfo zkProofPiB1 is invalid");
-                
-        var zkProofPiB2 = guardianInfo.ZkLoginInfo.ZkProofInfo.ZkProofPiB2;
-        Assert(zkProofPiB2 is { Count: 2 }, "the zkProofInfo zkProofPiB2 is invalid");
-                
-        var zkProofPiB3 = guardianInfo.ZkLoginInfo.ZkProofInfo.ZkProofPiB3;
-        Assert(zkProofPiB3 is { Count: 2 }, "the zkProofInfo zkProofPiB3 is invalid");
-                
-        var zkProofPiC = guardianInfo.ZkLoginInfo.ZkProofInfo.ZkProofPiC;
-        Assert(zkProofPiC is { Count: 3 }, "the zkProofInfo zkProofPiC is invalid");
+        if (CanZkLoginExecute(newGuardianInfo))
+        {
+            return;
+        }
 
-        return true;
+        var notSupportZkGuardians = guardians.Where(g => !CanGuardianZkLoginExecute(g)).ToList();
+        if (notSupportZkGuardians.Count == 0)
+        {
+            return;
+        }
+        Assert(!notSupportZkGuardians
+            .Any(gd => gd.VerifierId.Equals(newGuardianInfo.VerificationInfo.Id)), "The verifier already exists");
     }
 
     // Remove a Guardian, if already removed, return 
@@ -230,15 +215,18 @@ public partial class CAContract
             g.IdentifierHash == input.GuardianToUpdateNew.IdentifierHash &&
             g.VerifierId == input.GuardianToUpdateNew.VerificationInfo.Id);
 
-        if (existPreGuardian == null || toUpdateGuardian != null)
+        //verifier changed to zk
+        if (IsZkLoginSupported(input.GuardianToUpdateNew.Type) && !input.GuardianToUpdatePre.UpdateSupportZk && input.GuardianToUpdateNew.UpdateSupportZk)
         {
-            return new Empty();
+            Assert(existPreGuardian.VerifierId == toUpdateGuardian.VerifierId, "verifierId can't be changed when new guardian supports zk");
         }
-
-        Assert(
-            holderInfo.GuardianList.Guardians.FirstOrDefault(g =>
-                g.VerifierId == input.GuardianToUpdateNew.VerificationInfo.Id) == null,
-            "The verifier already exists");
+        else
+        {
+            Assert(existPreGuardian != null, "existPreGuardian not exists");
+            Assert(toUpdateGuardian == null, "toUpdateGuardian exists");
+            AssertWhenVerifierIdInValid(holderInfo.GuardianList.Guardians, input.GuardianToUpdateNew);
+        }
+        
         var preGuardian = existPreGuardian.Clone();
 
         //Check verifier id is exist.
@@ -262,15 +250,12 @@ public partial class CAContract
         //Whether the approved guardians count is satisfied.
         var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count.Sub(1),
             guardianApprovedCount, holderInfo.JudgementStrategy);
-        if (!isJudgementStrategySatisfied)
-        {
-            return new Empty();
-        }
+        Assert(isJudgementStrategySatisfied, "guardian approved is" + guardianApprovedCount + ", not satisfied strategy");
 
         existPreGuardian.VerifierId = input.GuardianToUpdateNew?.VerificationInfo.Id;
         //when the user changed the verifier to zk,the front end would show zk verifier totally, not show zk+original verifier
-        existPreGuardian.ManuallySupportForZk = !IsValidZkOidcInfoSupportZkLogin(input.GuardianToUpdatePre.ZkLoginInfo)
-                                                && IsValidZkOidcInfoSupportZkLogin(input.GuardianToUpdateNew?.ZkLoginInfo);
+        existPreGuardian.ManuallySupportForZk = IsZkLoginSupported(input.GuardianToUpdateNew.Type)
+            && !input.GuardianToUpdatePre.UpdateSupportZk && input.GuardianToUpdateNew.UpdateSupportZk;
 
         if (State.LoginGuardianMap[preGuardian.IdentifierHash][preGuardian.VerifierId] != null)
         {
@@ -289,5 +274,86 @@ public partial class CAContract
         });
 
         return new Empty();
+    }
+
+    public override Empty AppendGuardianPoseidonHash(AppendGuardianRequest request)
+    {
+        Assert(State.CreatorControllers.Value.Controllers.Contains(Context.Sender), "No AppendGuardianPoseidonHash permission");
+        Assert(request != null, "Invalid request.");
+        Assert(request.Input != null, "Invalid input.");
+        Assert(request.Input.Count <= 30, "input count is more than 30.");
+        foreach (var appendGuardianInput in request.Input)
+        {
+            Assert(appendGuardianInput != null && appendGuardianInput.CaHash != null, "Invalid appendGuardianInput.");
+            foreach (var guardian in appendGuardianInput.Guardians)
+            {
+                Assert(guardian?.Type != null && guardian?.IdentifierHash != null, "guardian type identifierHash invalid.");
+            }
+        }
+
+        foreach (var appendGuardianInput in request.Input)
+        {
+            var holderInfo = State.HolderInfoMap[appendGuardianInput.CaHash];
+            var guardiansOfHolder = holderInfo?.GuardianList?.Guardians;
+            if (guardiansOfHolder == null || guardiansOfHolder.Count == 0)
+            {
+                continue;
+            }
+            foreach (var guardianInfoWithPoseidon in appendGuardianInput.Guardians)
+            {
+                var guardianOfHolder= guardiansOfHolder.FirstOrDefault(g =>
+                    g.Type.Equals(guardianInfoWithPoseidon.Type) && g.IdentifierHash.Equals(guardianInfoWithPoseidon.IdentifierHash));
+                if (guardianOfHolder == null)
+                {
+                    continue;
+                }
+                guardianOfHolder.PoseidonIdentifierHash = guardianInfoWithPoseidon.PoseidonIdentifierHash;
+            }
+        }
+    
+        return new Empty();
+    }
+
+    public override Empty AppendGoogleGuardianPoseidon(AppendSingleGuardianPoseidonInput input)
+    {
+        var guardiansOfHolder = CheckAppendGuardianPoseidon(input);
+
+        var guardianOfHolder= guardiansOfHolder.FirstOrDefault(g =>
+            g.Type.Equals(GuardianType.OfGoogle) && g.IdentifierHash.Equals(input.IdentifierHash));
+        Assert(guardianOfHolder != null, "guardianOfHolder of Google not exists");
+        input.PoseidonIdentifierHash.Contains("");
+        SetPoseidonHash(input, guardianOfHolder);
+        return new Empty();
+    }
+
+    private static void SetPoseidonHash(AppendSingleGuardianPoseidonInput input, Guardian guardianOfHolder)
+    {
+        guardianOfHolder.PoseidonIdentifierHash = input.PoseidonIdentifierHash.Replace("_", "");
+    }
+
+    public override Empty AppendAppleGuardianPoseidon(AppendSingleGuardianPoseidonInput input)
+    {
+        var guardiansOfHolder = CheckAppendGuardianPoseidon(input);
+        
+        var guardianOfHolder= guardiansOfHolder.FirstOrDefault(g =>
+            g.Type.Equals(GuardianType.OfApple) && g.IdentifierHash.Equals(input.IdentifierHash));
+        Assert(guardianOfHolder != null, "guardianOfHolder of Apple not exist");
+        SetPoseidonHash(input, guardianOfHolder);
+        return new Empty();
+    }
+    
+    private RepeatedField<Guardian> CheckAppendGuardianPoseidon(AppendSingleGuardianPoseidonInput input)
+    {
+        Assert(State.CreatorControllers.Value.Controllers.Contains(Context.Sender)
+               || Context.Sender == State.Admin.Value, "No AppendSingleGuardianPoseidonInput permission");
+        Assert(input != null, "Invalid request.");
+        Assert(input.CaHash != null, "Invalid CaHash.");
+        Assert(input.IdentifierHash != null, "Invalid IdentifierHash.");
+        Assert(!string.IsNullOrWhiteSpace(input.PoseidonIdentifierHash), "Invalid PoseidonIdentifierHash.");
+        var holderInfo = State.HolderInfoMap[input.CaHash];
+        Assert(holderInfo != null, "holderInfo not exist.");
+        var guardiansOfHolder = holderInfo?.GuardianList?.Guardians;
+        Assert(guardiansOfHolder != null && guardiansOfHolder.Count != 0, "guardiansOfHolder not exists.");
+        return guardiansOfHolder;
     }
 }

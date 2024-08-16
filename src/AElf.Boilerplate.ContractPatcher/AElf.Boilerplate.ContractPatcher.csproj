@@ -16,6 +16,9 @@
         <PackageReference Include="AElf.CSharp.CodeOps" Version="1.0.1" />
         <PackageReference Include="AElf.Runtime.CSharp.Core" Version="1.3.0" />
         <PackageReference Include="AElf.Types" Version="1.3.0" />
+       <!-- <PackageReference Include="AElf.CSharp.CodeOps" Version="1.10.0" />
+        <PackageReference Include="AElf.Runtime.CSharp.Core" Version="1.10.0" />
+        <PackageReference Include="AElf.Types" Version="1.10.0" />-->
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="CommandLineParser" Version="2.8.0" />

@@ -74,11 +74,13 @@ public partial class CAContractState : ContractState
     public MappedState<Hash, Hash> PreCrossChainSyncHolderInfoMarks { get; set; }
     
     //zklogin admin operations key is the verifier type(Google/Apple...) value is the issuer
-    public MappedState<GuardianType, ZkBasicAdminData> OidcProviderAdminData { get; set; }
+    public MappedState<GuardianType, ZkBasicAdminData> OidcProviderData { get; set; }
     //key is circuitId, value is VerifyingKeys
     public MappedState<string, VerifyingKey> CircuitVerifyingKeys { get; set; }
     //guardian type,kid, value is public key
     public MappedState<GuardianType, string, ZkPublicKeyInfo> PublicKeysChunksByKid { get; set; }
+    //guardian type, current kid list, keep the same with aetherlink invacation
+    public MappedState<GuardianType, CurrentKids> KidsByGuardianType { get; set; }
     
     //differentiate the used nonce by caHash
     public MappedState<Hash, ZkNonceList> ZkNonceInfosByCaHash { get; set; }

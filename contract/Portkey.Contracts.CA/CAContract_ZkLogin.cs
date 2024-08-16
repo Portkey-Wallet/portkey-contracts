@@ -12,8 +12,8 @@ namespace Portkey.Contracts.CA;
 
 public partial class CAContract
 {
-    private const int CircomBigIntN = 121;
-    private const int CiromBigIntK = 17;
+    private const int CircomBigIntN = 64;
+    private const int CircomBigIntK = 32;
 
     private bool CheckZkLoginVerifierAndData(GuardianInfo guardianInfo, Hash caHash)
     {
@@ -24,68 +24,58 @@ public partial class CAContract
         
         //check public key
         var publicKey = State.PublicKeysChunksByKid[guardianInfo.Type][guardianInfo.ZkLoginInfo.Kid];
-        if (publicKey is null || (publicKey.PublicKey is (null or "")))
-        {
-            return false;
-        }
+        Assert(publicKey is { PublicKey: not null }, "zkLogin publicKey invalid");
         
         //check verifying key
         var verifyingKey = State.CircuitVerifyingKeys[guardianInfo.ZkLoginInfo.CircuitId];
-        if (verifyingKey == null)
-        {
-            return false;
-        }
+        Assert(verifyingKey != null, "zkLogin verifyingKey invalid");
 
-        return VerifyZkProof(guardianInfo.Type, guardianInfo.ZkLoginInfo, verifyingKey.VerifyingKey_, publicKey.PublicKey);
+        var result = VerifyZkProof(guardianInfo.Type, guardianInfo.ZkLoginInfo, verifyingKey.VerifyingKey_, publicKey.PublicKey);
+        Assert(result, "zkLogin VerifyZkProof error");
+        
+        return true;
     }
 
     private bool DoCheckZkLoginBasicParams(GuardianInfo guardianInfo, Hash caHash)
     {
         //check the caHash
-        if (caHash == null || caHash.Equals(Hash.Empty))
-        {
-            return false;
-        }
+        Assert(caHash != null && !Hash.Empty.Equals(caHash), "zkLogin caHash is invalid");
+        
         //check circuit id
-        if (State.CircuitVerifyingKeys[guardianInfo.ZkLoginInfo.CircuitId] == null)
-        {
-            return false;
-        }
+        Assert(State.CircuitVerifyingKeys[guardianInfo.ZkLoginInfo.CircuitId] != null, "zkLogin CircuitId is invalid");
+        
         // check jwt issuer
-        if (State.OidcProviderAdminData[guardianInfo.Type].Issuer == null
-            || !State.OidcProviderAdminData[guardianInfo.Type].Issuer.Equals(guardianInfo.ZkLoginInfo.Issuer))
-        {
-            return false;
-        }
+        var issuer = State.OidcProviderData[guardianInfo.Type].Issuer;
+        Assert(issuer != null, "zkLogin Issuer not exists");
+        var issuerWithoutPrefix = issuer.Replace("https://", "");
+        Assert(issuer.Equals(guardianInfo.ZkLoginInfo.Issuer) || issuerWithoutPrefix.Equals(guardianInfo.ZkLoginInfo.Issuer), "zkLogin Issuer is invalid");
+        
         // check nonce
-        if (string.IsNullOrWhiteSpace(guardianInfo.ZkLoginInfo.Nonce))
-        {
-            return false;
-        }
+        Assert(!string.IsNullOrWhiteSpace(guardianInfo.ZkLoginInfo.Nonce), "zkLogin nonce is null");
+        
         //check nonce wasn't used before
         var currentTime =  Context.CurrentBlockTime;
         var nonces = InitZkNonceInfos(caHash, currentTime);
-        if (nonces.Contains(guardianInfo.ZkLoginInfo.Nonce))
+        Assert(!nonces.Contains(guardianInfo.ZkLoginInfo.Nonce), "zkLogin nonce exists, please don't use nonce more than once");
+        State.ZkNonceInfosByCaHash[caHash].ZkNonceInfos.Add(new ZkNonceInfo
         {
-            return false;
-        }
-        else
-        {
-            State.ZkNonceInfosByCaHash[caHash].ZkNonceInfos.Add(new ZkNonceInfo
-            {
-                Nonce = guardianInfo.ZkLoginInfo.Nonce,
-                Datetime = DateTime.SpecifyKind(currentTime.ToDateTime(), DateTimeKind.Utc).ToString()
-            });
-        }
+            Nonce = guardianInfo.ZkLoginInfo.Nonce,
+            Datetime = DateTime.SpecifyKind(currentTime.ToDateTime(), DateTimeKind.Utc).ToString()
+        });
     
         // check nonce = sha256(nonce_payload.to_bytes())
-        // var noncePayload = guardianInfo.ZkLoginInfo.NoncePayload.AddManagerAddress.Timestamp.Seconds +
-        //                    guardianInfo.ZkLoginInfo.NoncePayload.AddManagerAddress.ManagerAddress.ToBase58();
-        // if (!guardianInfo.ZkLoginInfo.Nonce.Equals(GetSha256Hash(noncePayload.GetBytes())))
-        // {
-        //     return false;
-        // }
-
+        Assert(guardianInfo.ZkLoginInfo.NoncePayload is { AddManagerAddress: not null }, "zkLogin addManagerAddress is invalid");
+        var noncePayload = guardianInfo.ZkLoginInfo.NoncePayload.AddManagerAddress.Timestamp.Seconds +
+                           guardianInfo.ZkLoginInfo.NoncePayload.AddManagerAddress.ManagerAddress.ToBase58();
+        if (guardianInfo.Type.Equals(GuardianType.OfGoogle))
+        {
+            Assert(guardianInfo.ZkLoginInfo.Nonce.Equals(GetSha256Hash(noncePayload.GetBytes())), "zkLogin nonce is invalid");
+        }
+        if (guardianInfo.Type.Equals(GuardianType.OfApple))
+        {
+            Assert(guardianInfo.ZkLoginInfo.Nonce.Equals(GetSha256Hash(GetSha256Hash(noncePayload.GetBytes()).GetBytes())), "zkLogin nonce is invalid");
+        }
+        
         return true;
     }
 
@@ -136,7 +126,7 @@ public partial class CAContract
     private List<string> PreparePublicInputs(ZkLoginInfo zkLoginInfo, List<string> nonceInInts, List<string> pubkeyChunks, List<string> saltInInts)
     {
         var publicInputs = new List<string>();
-        publicInputs.AddRange(ToPublicInput(zkLoginInfo.IdentifierHashType, zkLoginInfo.IdentifierHash.ToHex()));
+        publicInputs.AddRange(ToPublicInput(zkLoginInfo.IdentifierHashType, zkLoginInfo.IdentifierHash.ToHex(), zkLoginInfo.PoseidonIdentifierHash));
         publicInputs.AddRange(nonceInInts);
         publicInputs.AddRange(pubkeyChunks);
         publicInputs.AddRange(saltInInts);
@@ -157,8 +147,18 @@ public partial class CAContract
 
     private void SetPublicKeyAndChunks(GuardianType type, string kid, string publicKey)
     {
+        State.KidsByGuardianType[type] ??= new CurrentKids()
+        {
+            Kids = { }
+        };
+        if (!State.KidsByGuardianType[type].Kids.Contains(kid))
+        {
+            State.KidsByGuardianType[type].Kids.Add(kid);
+        }
         if (State.PublicKeysChunksByKid[type][kid] != null
-            && State.PublicKeysChunksByKid[type][kid].PublicKey.Equals(publicKey))
+            && State.PublicKeysChunksByKid[type][kid].PublicKey.Equals(publicKey)
+            && State.PublicKeysChunksByKid[type][kid].PublicKeyChunks != null
+            && State.PublicKeysChunksByKid[type][kid].PublicKeyChunks.Count == CircomBigIntK)
         {
             return;
         }
@@ -175,12 +175,12 @@ public partial class CAContract
     {
         var result = new RepeatedField<string>();
         result.AddRange(Decode(pubkey)
-            .ToChunked(CircomBigIntN, CiromBigIntK)
+            .ToChunked(CircomBigIntN, CircomBigIntK)
             .Select(HexToBigInt));
         return result;
     }
 
-    private byte[] Decode(string input)
+    private static byte[] Decode(string input)
     {
         var output = input;
         output = output.Replace('-', '+'); // 62nd char of encoding
@@ -200,14 +200,9 @@ public partial class CAContract
         return converted;
     }
 
-    private List<string> ToPublicInput(IdentifierHashType identifierHashType, string identifierHash)
+    private List<string> ToPublicInput(IdentifierHashType identifierHashType, string identifierHash, string poseidonHash)
     {
-        if (IdentifierHashType.PoseidonHash.Equals(identifierHashType))
-        {
-            return PoseidonHashToPublicInput(identifierHash);
-            
-        }
-        return Sha256HashToPublicInput(identifierHash);
+        return IdentifierHashType.PoseidonHash.Equals(identifierHashType) ? PoseidonHashToPublicInput(poseidonHash) : Sha256HashToPublicInput(identifierHash);
     }
     
     //Sha256 Hash
@@ -226,8 +221,8 @@ public partial class CAContract
     {
         return HexHelper.ConvertBigEndianToDecimalString(hex);
     }
-    
-    public static bool IsValidZkOidcInfoSupportZkLogin(ZkLoginInfo zkLoginInfo)
+
+    private static bool IsValidZkOidcInfoSupportZkLogin(ZkLoginInfo zkLoginInfo)
     {
         return zkLoginInfo is not null 
                && zkLoginInfo.Nonce is not (null or "")
@@ -237,19 +232,23 @@ public partial class CAContract
                && zkLoginInfo.Salt is not (null or "")
                && zkLoginInfo.NoncePayload is not null;
     }
-    
-    public static bool IsZkLoginSupported(GuardianType type)
+
+    private static bool IsZkLoginSupported(GuardianType type)
     {
-        return GuardianType.OfGoogle.Equals(type) || GuardianType.OfApple.Equals(type) ||
-               GuardianType.OfFacebook.Equals(type);
+        return GuardianType.OfGoogle.Equals(type) || GuardianType.OfApple.Equals(type);
     }
 
-    public static bool CanZkLoginExecute(GuardianInfo guardianInfo)
+    private static bool CanZkLoginExecute(GuardianInfo guardianInfo)
     {
         return guardianInfo is not null && IsZkLoginSupported(guardianInfo.Type) && IsValidZkOidcInfoSupportZkLogin(guardianInfo.ZkLoginInfo);
     }
+    
+    private static bool CanGuardianZkLoginExecute(Guardian guardian)
+    {
+        return guardian is not null && IsZkLoginSupported(guardian.Type) && IsValidZkOidcInfoSupportZkLogin(guardian.ZkLoginInfo);
+    }
 
-    public static bool IsValidGuardianType(GuardianType type)
+    private static bool IsValidGuardianType(GuardianType type)
     {
         return GuardianType.OfGoogle.Equals(type)
                || GuardianType.OfApple.Equals(type)
@@ -263,10 +262,27 @@ public partial class CAContract
     {
         return HashHelper.ComputeFrom(input).ToHex();
     }
-    
-    public Hash GetOneVerifierFromServers()
+
+    private Hash GetOneVerifierFromServers()
     {
         var verifiers = State.VerifiersServerList.Value.VerifierServers;
         return verifiers[0].Id;
+    }
+    
+    private bool CheckZkParams(GuardianInfo guardianInfo)
+    {
+        if (!CanZkLoginExecute(guardianInfo))
+        {
+            return false;
+        }
+        
+        Assert(guardianInfo.ZkLoginInfo.ZkProofInfo != null, "the zkProofInfo is null");
+        Assert(guardianInfo.ZkLoginInfo.ZkProofInfo.ZkProofPiA is { Count: 3 }, "the zkProofInfo zkProofPiA is invalid");
+        Assert(guardianInfo.ZkLoginInfo.ZkProofInfo.ZkProofPiB1 is { Count: 2 }, "the zkProofInfo zkProofPiB1 is invalid");
+        Assert(guardianInfo.ZkLoginInfo.ZkProofInfo.ZkProofPiB2 is { Count: 2 }, "the zkProofInfo zkProofPiB2 is invalid");
+        Assert(guardianInfo.ZkLoginInfo.ZkProofInfo.ZkProofPiB3 is { Count: 2 }, "the zkProofInfo zkProofPiB3 is invalid");
+        Assert(guardianInfo.ZkLoginInfo.ZkProofInfo.ZkProofPiC is { Count: 3 }, "the zkProofInfo zkProofPiC is invalid");
+
+        return true;
     }
 }

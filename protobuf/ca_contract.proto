@@ -32,6 +32,8 @@ service CAContract {
   rpc RemoveGuardian (RemoveGuardianInput) returns (google.protobuf.Empty) {}
 
   rpc UpdateGuardian (UpdateGuardianInput) returns (google.protobuf.Empty) {}
+  
+  rpc AppendGuardianPoseidonHash(AppendGuardianRequest) returns (google.protobuf.Empty) {}
 
   // If Guardian is already setted, return true
   rpc SetGuardianForLogin (SetGuardianForLoginInput) returns (google.protobuf.Empty) {}
@@ -149,6 +151,7 @@ message Guardian {
   bool is_login_guardian = 5;
   ZkLoginInfo zk_login_info = 6;
   bool manuallySupportForZk = 7;
+  string poseidon_identifier_hash = 8;
 }
 
 enum GuardianType {
@@ -215,6 +218,7 @@ message GuardianInfo {
   aelf.Hash identifier_hash = 2;
   VerificationInfo verification_info = 3;
   ZkLoginInfo zk_login_info = 4;
+  bool update_support_zk = 5;
 }
 
 message VerificationInfo {
@@ -241,7 +245,8 @@ message ZkLoginInfo {
   // the payload that is used to calculate the nonce, where nonce = hash(serialize(non 
   NoncePayload nonce_payload = 8;
   ZkProofInfo zk_proof_info = 9;
-  IdentifierHashType identifier_hash_type = 10;
+  string poseidon_identifier_hash = 10;
+  IdentifierHashType identifier_hash_type = 11;
 }
 
 enum IdentifierHashType{
@@ -251,9 +256,9 @@ enum IdentifierHashType{
 
 message ZkProofInfo {
   repeated string zk_proof_pi_a = 1;
-  repeated string zk_proof_pi_b_1 = 2;
-  repeated string zk_proof_pi_b_2 = 3;
-  repeated string zk_proof_pi_b_3 = 4;
+  repeated string zk_proof_pi_b1 = 2;
+  repeated string zk_proof_pi_b2 = 3;
+  repeated string zk_proof_pi_b3 = 4;
   repeated string zk_proof_pi_c = 5;
 }
 
@@ -351,6 +356,20 @@ message UpdateGuardianInput{
   GuardianInfo guardian_to_update_pre = 2;
   GuardianInfo guardian_to_update_new = 3;
   repeated GuardianInfo guardians_approved = 4;
+}
+
+message AppendGuardianRequest{
+  repeated AppendGuardianInput input = 1;
+}
+message AppendGuardianInput {
+  aelf.Hash ca_hash = 1;
+  repeated PoseidonGuardian guardians = 2;
+}
+
+message PoseidonGuardian {
+  GuardianType type = 1;
+  aelf.Hash identifier_hash = 2;
+  string poseidon_identifier_hash = 3;
 }
 
 message SetGuardianForLoginInput {

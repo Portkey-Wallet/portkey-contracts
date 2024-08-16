@@ -53,7 +53,7 @@
         <ContractReference Include="..\..\protobuf\configuration_contract.proto">
             <Link>Protobuf\Proto\reference\configuration_contract.proto</Link>
         </ContractReference>
-	<ContractReference Include="..\..\protobuf\oracle_contract.proto">
+	    <ContractReference Include="..\..\protobuf\oracle_contract.proto">
             <Link>Protobuf\Proto\reference\oracle_contract.proto</Link>
         </ContractReference>
     </ItemGroup>

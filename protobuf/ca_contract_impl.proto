@@ -95,6 +95,10 @@ service CAContractImpl {
   
   // add a verifying key for a circuit or update the old one
   rpc AddOrUpdateVerifyingKey (VerifyingKey) returns (google.protobuf.Empty);
+
+  rpc AppendGoogleGuardianPoseidon(AppendSingleGuardianPoseidonInput) returns (google.protobuf.Empty) {}
+
+  rpc AppendAppleGuardianPoseidon(AppendSingleGuardianPoseidonInput) returns (google.protobuf.Empty) {}
   
   // query the verifying key of a circuit (by circuit_id)
   rpc GetVerifyingKey (google.protobuf.StringValue) returns (VerifyingKey) {
@@ -108,13 +112,22 @@ service CAContractImpl {
   rpc GetApplePublicKeyByKid(google.protobuf.StringValue) returns (KidPublicKeyOutput) {
     option (aelf.is_view) = true;
   }
-
-  rpc GetFacebookPublicKeyByKid(google.protobuf.StringValue) returns (KidPublicKeyOutput) {
-    option (aelf.is_view) = true;
-  }
   
   //set oracle address in portkey contract
   rpc SetOracleAddress (aelf.Address) returns (google.protobuf.Empty);
+  
+  //get zk nonce list by caHash
+  rpc GetZkNonceListByCaHash(aelf.Hash) returns (ZkNonceList) {
+    option (aelf.is_view) = true;
+  }
+  //get google kids
+  rpc GetGoogleKids(google.protobuf.Empty) returns (CurrentKids) {
+    option (aelf.is_view) = true;
+  }
+  //get apple kids
+  rpc GetAppleKids(google.protobuf.Empty) returns (CurrentKids) {
+    option (aelf.is_view) = true;
+  }
 }
 
 message AddManagerApproveSpenderWhitelistInput {
@@ -473,19 +486,7 @@ message ZkBasicAdminData
   string jwks_endpoint = 2; //the url that can get kid and public key from third party
   int64 subscription_id = 3;
   int32 request_type_index = 4;
-  OracleDataFeedsSpecificData specific_data = 5;
-}
-
-message OracleDataFeedsSpecificData
-{
-  string cron = 1;
-  OracleDataFeedsJobSpec data_feeds_job_spec = 2;
-}
-
-message OracleDataFeedsJobSpec
-{
-  string type = 1;
-  string url = 2;
+  string specific_data = 5;
 }
 
 message JwtIssuerCreated
@@ -511,10 +512,21 @@ message CAHolderErrorOccured {
 message KidPublicKeyOutput {
   string kid = 1;
   string public_key = 2;
+  repeated string public_key_chunks = 3;
+}
+
+message CurrentKids {
+  repeated string kids = 1;
 }
 
 message ZkPublicKeyInfo {
   string kid = 1;
   string public_key = 2;
   repeated string public_key_chunks = 3;
+}
+
+message AppendSingleGuardianPoseidonInput {
+  aelf.Hash ca_hash = 1;
+  aelf.Hash identifier_hash = 2;
+  string poseidon_identifier_hash = 3;
 }

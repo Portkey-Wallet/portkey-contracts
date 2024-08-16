@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using AElf;
 using AElf.Contracts.MultiToken;
 using AElf.Sdk.CSharp;
@@ -239,7 +240,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         {
             IdentifierHash = guardianApproved.IdentifierHash,
             //the original verifier hasn't been verified
-            Salt = string.Empty,
+            Salt = guardianApproved.ZkLoginInfo.Salt,
             Type = guardianApproved.Type,
             //get a verifier from verifier server list verifierId
             VerifierId = guardianApproved.VerificationInfo == null
@@ -247,7 +248,8 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
                 ? GetOneVerifierFromServers() : guardianApproved.VerificationInfo.Id,
             IsLoginGuardian = true,
             ZkLoginInfo = guardianApproved.ZkLoginInfo,
-            ManuallySupportForZk = true //when the new user registered,portkey contract used zklogin as verifier
+            ManuallySupportForZk = true, //when the new user registered,portkey contract used zklogin as verifier
+            PoseidonIdentifierHash = guardianApproved.ZkLoginInfo.PoseidonIdentifierHash
         };
         holderInfo.GuardianList = new GuardianList
         {
@@ -445,15 +447,15 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         Assert(IsValidGuardianType(input.Type), "Invalid guardian input when adding jwt issuer.");
         Assert(input.Issuer != null, "Invalid Issuer input when adding jwt issuer.");
         Assert(input.JwksEndpoint != null, "Invalid JwksEndpoint input when adding jwt issuer.");
-        State.OidcProviderAdminData[input.Type] = new ZkBasicAdminData()
+        State.OidcProviderData[input.Type] = new ZkBasicAdminData()
         {
             Issuer = input.Issuer,
             JwksEndpoint = input.JwksEndpoint
         };
         Context.Fire(new JwtIssuerCreated
         {
-            Issuer = State.OidcProviderAdminData[input.Type].Issuer,
-            JwksEndpoint = State.OidcProviderAdminData[input.Type].JwksEndpoint
+            Issuer = State.OidcProviderData[input.Type].Issuer,
+            JwksEndpoint = State.OidcProviderData[input.Type].JwksEndpoint
         });
         return new Empty();
     }
@@ -464,11 +466,11 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         Assert(input != null, "Invalid JwtIssuerInput in IsValidIssuer method.");
         Assert(input.Issuer != null, "Invalid Issuer in IsValidIssuer method.");
         Assert(IsValidGuardianType(input.Type), "Invalid Type in IsValidIssuer method.");
-        Assert(State.OidcProviderAdminData[input.Type] != null, "guardian type doesn't exist.");
-        Assert(State.OidcProviderAdminData[input.Type].Issuer != null, "verifying key doesn't exist.");
+        Assert(State.OidcProviderData[input.Type] != null, "guardian type doesn't exist.");
+        Assert(State.OidcProviderData[input.Type].Issuer != null, "verifying key doesn't exist.");
         return new BoolValue
         {
-            Value = State.OidcProviderAdminData[input.Type].Issuer == input.Issuer
+            Value = State.OidcProviderData[input.Type].Issuer == input.Issuer
         };
     }
 
@@ -492,7 +494,8 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         return new KidPublicKeyOutput
         {
             Kid = input.Value,
-            PublicKey = State.PublicKeysChunksByKid[GuardianType.OfGoogle][input.Value].PublicKey
+            PublicKey = State.PublicKeysChunksByKid[GuardianType.OfGoogle][input.Value].PublicKey,
+            PublicKeyChunks = { State.PublicKeysChunksByKid[GuardianType.OfGoogle][input.Value].PublicKeyChunks }
         };
     }
     
@@ -504,19 +507,8 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         return new KidPublicKeyOutput
         {
             Kid = input.Value,
-            PublicKey = State.PublicKeysChunksByKid[GuardianType.OfApple][input.Value].PublicKey
-        };
-    }
-    
-    public override KidPublicKeyOutput GetFacebookPublicKeyByKid(StringValue input)
-    {
-        Assert(Context.Sender == State.Admin.Value, "No GetGooglePublicKeyByKid permission.");
-        Assert(input != null, "Invalid kid.");
-        Assert(State.PublicKeysChunksByKid[GuardianType.OfFacebook][input.Value] != null, "the public key of kid not exists.");
-        return new KidPublicKeyOutput
-        {
-            Kid = input.Value,
-            PublicKey = State.PublicKeysChunksByKid[GuardianType.OfFacebook][input.Value].PublicKey
+            PublicKey = State.PublicKeysChunksByKid[GuardianType.OfApple][input.Value].PublicKey,
+            PublicKeyChunks = { State.PublicKeysChunksByKid[GuardianType.OfApple][input.Value].PublicKeyChunks }
         };
     }
 
@@ -546,29 +538,22 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         return new Empty();
     }
     
+    //new version that supports trace id that differentiate google apple
     public override Empty StartOracleDataFeedsTask(StartOracleDataFeedsTaskRequest input)
     {
         Assert(Context.Sender == State.Admin.Value, "No StartOracleRequest permission.");
         Assert(input != null, "Invalid StartOracleDataFeedsTaskRequest input.");
         Assert(IsValidGuardianType(input.Type), "Invalid input type.");
         Assert(input.SubscriptionId > 0, "Invalid input subscription id.");
-        Assert(State.OidcProviderAdminData[input.Type] != null, "StartOracleDataFeedsTaskRequest OidcProviderAdminData doesn't exist");
-        Assert(!(State.OidcProviderAdminData[input.Type].SubscriptionId.Equals(input.SubscriptionId)
-            && State.OidcProviderAdminData[input.Type].SpecificData != null
-            && State.OidcProviderAdminData[input.Type].SpecificData.DataFeedsJobSpec != null), "the SubscriptionId has started before");
+        Assert(State.OidcProviderData[input.Type] != null, "StartOracleDataFeedsTaskRequest OidcProviderData doesn't exist");
+        Assert(State.OracleContract.Value != null, "Oracle contract should be set.");
+        Assert(!(State.OidcProviderData[input.Type].SubscriptionId.Equals(input.SubscriptionId)
+            && State.OidcProviderData[input.Type].SpecificData != null), "the SubscriptionId has started before");
 
-        var specificData = new OracleDataFeedsSpecificData()
-        {
-            Cron = "0 */10 * * * ?",
-            DataFeedsJobSpec = new OracleDataFeedsJobSpec()
-            {
-                Type = "PlainDataFeeds",
-                Url = State.OidcProviderAdminData[input.Type].JwksEndpoint
-            }
-        };
+        var specificData = GetJobSepc(State.OidcProviderData[input.Type].JwksEndpoint);
         var specificDataWrapper = new AetherLink.Contracts.DataFeeds.Coordinator.SpecificData
         {
-            Data = specificData.ToByteString(),
+            Data = ByteString.CopyFromUtf8(specificData),
             DataVersion = 0
         }.ToByteString();
         State.OracleContract.SendRequest.Send(new SendRequestInput
@@ -576,37 +561,93 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
             SubscriptionId = input.SubscriptionId,
             RequestTypeIndex = 1,
             SpecificData = specificDataWrapper,
+            TraceId = HashHelper.ComputeFrom(State.OidcProviderData[input.Type].Issuer)
         });
         
-        State.OidcProviderAdminData[input.Type].SubscriptionId = input.SubscriptionId;
-        State.OidcProviderAdminData[input.Type].RequestTypeIndex = 1;
-        State.OidcProviderAdminData[input.Type].SpecificData = specificData;
+        State.OidcProviderData[input.Type].SubscriptionId = input.SubscriptionId;
+        State.OidcProviderData[input.Type].RequestTypeIndex = 1;
+        State.OidcProviderData[input.Type].SpecificData = specificData;
         
         Context.Fire(new OracleDataFeedsTaskStarted
         {
-            SubscriptionId = State.OidcProviderAdminData[input.Type].SubscriptionId,
-            RequestTypeIndex = State.OidcProviderAdminData[input.Type].RequestTypeIndex,
-            SpecificData = State.OidcProviderAdminData[input.Type].SpecificData.ToByteString()
+            SubscriptionId = State.OidcProviderData[input.Type].SubscriptionId,
+            RequestTypeIndex = State.OidcProviderData[input.Type].RequestTypeIndex
         });
         return new Empty();
     }
-
+    
+    private string GetJobSepc(string jwksEndpoint)
+    {
+        var jobSpecPrefix ="{\"Cron\":\"0 */2 * * * ?\",\"DataFeedsJobSpec\":{\"Type\":\"PlainDataFeeds\",\"Url\":\"";
+        var jobSpecSuffix = "\"}}";
+        return jobSpecPrefix + jwksEndpoint + jobSpecSuffix;
+    }
+    
     public override Empty HandleOracleFulfillment(HandleOracleFulfillmentInput input)
     {
         Assert(State.OracleContract.Value == Context.Sender, "Only oracle contract can invoke.");
         Assert(input != null, "Invalid input.");
         Assert(input.RequestTypeIndex > 0, "Invalid request type index.");
-        Assert(!input.Response.IsNullOrEmpty() || !input.Err.IsNullOrEmpty(), "Invalid input response or err.");
-        //check the input.Response input.Response.ToBase64() or input.Response.ToHex() or input.Response.ToPlainBase58()
-        var response = Jwks.Parser.ParseFrom(input.Response.ToByteArray());
+        Assert(!input.Response.IsNullOrEmpty(), "Invalid input response.");
+        Assert(input.TraceId != null, "Invalid trace id.");
+        
+        var response = Jwks.Parser.ParseJson(input.Response.ToStringUtf8());
         Assert(response != null, "Invalid HandleOracleFulfillmentInput response input.");
-        //todo aetherlink can't differentiate apple/google/facebook
-        foreach (var googleKeyDto in response.Keys)
+        
+        if (input.TraceId.Equals(HashHelper.ComputeFrom(State.OidcProviderData[GuardianType.OfGoogle].Issuer)))
         {
-            //for test env, only support google guardian
-            SetPublicKeyAndChunks(GuardianType.OfGoogle, googleKeyDto.Kid, googleKeyDto.N);
+            foreach (var keyDto in response.Keys)
+            {
+                SetPublicKeyAndChunks(GuardianType.OfGoogle, keyDto.Kid, keyDto.N);
+            }
+            ClearCurrentKids(GuardianType.OfGoogle, response.Keys);
         }
-
+        else if (input.TraceId.Equals(HashHelper.ComputeFrom(State.OidcProviderData[GuardianType.OfApple].Issuer)))
+        {
+            foreach (var keyDto in response.Keys)
+            {
+                SetPublicKeyAndChunks(GuardianType.OfApple, keyDto.Kid, keyDto.N);
+            }
+            ClearCurrentKids(GuardianType.OfApple, response.Keys);
+        }
+        else
+        {
+            Assert(false, "Invalid trace id input.");
+        }
+    
         return new Empty();
+    }
+
+    private void ClearCurrentKids(GuardianType type, RepeatedField<JwkRecord> jwkRecords)
+    {
+        State.KidsByGuardianType[type] ??= new CurrentKids()
+        {
+            Kids = { }
+        };
+        var currentKids = jwkRecords.Select(jwk => jwk.Kid).ToList();
+        var removingKids = State.KidsByGuardianType[type].Kids.Where(kid => !currentKids.Contains(kid)).ToList();
+        foreach (var removingKid in removingKids)
+        {
+            State.KidsByGuardianType[type].Kids.Remove(removingKid);
+        }
+    }
+    
+    public override CurrentKids GetGoogleKids(Empty input)
+    {
+        Assert(Context.Sender == State.Admin.Value, "No GetGoogleKids permission.");
+        return State.KidsByGuardianType[GuardianType.OfGoogle];
+    }
+    
+    public override CurrentKids GetAppleKids(Empty input)
+    {
+        Assert(Context.Sender == State.Admin.Value, "No GetAppleKids permission.");
+        return State.KidsByGuardianType[GuardianType.OfApple];
+    }
+
+    public override ZkNonceList GetZkNonceListByCaHash(Hash input)
+    {
+        Assert(Context.Sender == State.Admin.Value, "No SetCircomBigInt permission.");
+        Assert(input != null, "Invalid GetZkNonceListByCaHash input.");
+        return State.ZkNonceInfosByCaHash[input];
     }
 }
