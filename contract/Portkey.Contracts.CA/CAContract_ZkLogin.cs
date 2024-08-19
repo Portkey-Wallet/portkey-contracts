@@ -217,7 +217,7 @@ public partial class CAContract
         return new List<string>{ identifierHash };
     }
     
-    private static string HexToBigInt(byte[] hex)
+    private string HexToBigInt(byte[] hex)
     {
         return HexHelper.ConvertBigEndianToDecimalString(hex);
     }

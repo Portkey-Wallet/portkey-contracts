@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <RootNamespace>Portkey.Contracts.CA</RootNamespace>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
@@ -25,7 +25,7 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Google.Protobuf" Version="3.26.0" />
+        <PackageReference Include="Google.Protobuf" Version="3.27.2" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.3.0" />
         <PackageReference Include="Shouldly" Version="4.0.3" />
         <PackageReference Include="xunit" Version="2.4.1" />

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <PackageId>Portkey.Contracts.CA</PackageId>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <Description>Portkey Contracts</Description>
@@ -94,7 +94,7 @@
         </ContractBase>
     </ItemGroup>
     <ItemGroup>
-      <PackageReference Include="Google.Protobuf" Version="3.26.0" />
-      <PackageReference Include="Groth16.Net" Version="1.0.3" />
+      <PackageReference Include="Google.Protobuf" Version="3.27.2" />
+      <PackageReference Include="Groth16.Net" Version="1.1.0" />
     </ItemGroup>
 </Project>
