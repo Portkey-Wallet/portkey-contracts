@@ -34,7 +34,7 @@ public partial class CAContract
         var guardians = holderInfo.GuardianList!.Guardians;
 
         Assert(input.GuardiansApproved.Count > 0, "invalid input Guardians Approved");
-
+        
         var operationDetails = input.ManagerInfo.Address.ToBase58();
         var guardianApprovedCount = GetGuardianApprovedCount(caHash, input.GuardiansApproved,
             nameof(OperationType.SocialRecovery).ToLower(), operationDetails);
@@ -380,6 +380,10 @@ public partial class CAContract
 
         foreach (var guardianInfo in guardianApproved)
         {
+            if (CanZkLoginExecute(guardianInfo))
+            {
+                continue;
+            }
             if (guardianInfo?.VerificationInfo == null ||
                 string.IsNullOrWhiteSpace(guardianInfo.VerificationInfo.VerificationDoc) ||
                 GetVerificationDocLength(guardianInfo.VerificationInfo.VerificationDoc) < 8)

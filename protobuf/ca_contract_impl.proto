@@ -11,12 +11,14 @@ import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 import "ca_contract.proto";
+import "request_interface.proto";
 
 option csharp_namespace = "Portkey.Contracts.CA";
 
 service CAContractImpl {
   option (aelf.base) = "acs12.proto";
   option (aelf.base) = "ca_contract.proto";
+  option (aelf.base) = "request_interface.proto";
   option (aelf.csharp_state) = "Portkey.Contracts.CA.CAContractState";
   // approve
   rpc ManagerApprove(ManagerApproveInput) returns (google.protobuf.Empty) {}
@@ -72,6 +74,60 @@ service CAContractImpl {
   rpc AddManagerApproveSpenderWhitelist (AddManagerApproveSpenderWhitelistInput) returns (google.protobuf.Empty){}
   rpc RemoveManagerApproveSpenderWhitelist(RemoveManagerApproveSpenderWhitelistInput) returns (google.protobuf.Empty){}
   rpc CheckInManagerApproveSpenderWhitelist (aelf.Address) returns (google.protobuf.BoolValue) {option (aelf.is_view) = true;}
+  
+  //CAServer
+  rpc AddCAServer (AddCAServerInput) returns (google.protobuf.Empty){}
+  //CAServer
+  rpc RemoveCAServer (RemoveCAServerInput) returns (google.protobuf.Empty){}
+  //CAServer
+  rpc GetCAServers (google.protobuf.Empty) returns (GetCAServersOutput) {option (aelf.is_view) = true;}
+  
+  //Verifier If End Points already exists, return true
+  rpc AddVerifierServerEndPoints (AddVerifierServerEndPointsInput) returns (google.protobuf.Empty) {}
+
+  //Verifier If End Points does not exists, return true
+  rpc RemoveVerifierServerEndPoints (RemoveVerifierServerEndPointsInput) returns (google.protobuf.Empty) {}
+
+  //Verifier if Verifier Server does not exists, return true
+  rpc RemoveVerifierServer (RemoveVerifierServerInput) returns (google.protobuf.Empty) {}
+  //Verifier
+  rpc GetVerifierServers (google.protobuf.Empty) returns (GetVerifierServersOutput) {option (aelf.is_view) = true;}
+  
+  // add a verifying key for a circuit or update the old one
+  rpc AddOrUpdateVerifyingKey (VerifyingKey) returns (google.protobuf.Empty);
+
+  rpc AppendGoogleGuardianPoseidon(AppendSingleGuardianPoseidonInput) returns (google.protobuf.Empty) {}
+
+  rpc AppendAppleGuardianPoseidon(AppendSingleGuardianPoseidonInput) returns (google.protobuf.Empty) {}
+  
+  // query the verifying key of a circuit (by circuit_id)
+  rpc GetVerifyingKey (google.protobuf.StringValue) returns (VerifyingKey) {
+    option (aelf.is_view) = true;
+  }
+  
+  rpc GetGooglePublicKeyByKid(google.protobuf.StringValue) returns (KidPublicKeyOutput) {
+    option (aelf.is_view) = true;
+  }
+
+  rpc GetApplePublicKeyByKid(google.protobuf.StringValue) returns (KidPublicKeyOutput) {
+    option (aelf.is_view) = true;
+  }
+  
+  //set oracle address in portkey contract
+  rpc SetOracleAddress (aelf.Address) returns (google.protobuf.Empty);
+  
+  //get zk nonce list by caHash
+  rpc GetZkNonceListByCaHash(aelf.Hash) returns (ZkNonceList) {
+    option (aelf.is_view) = true;
+  }
+  //get google kids
+  rpc GetGoogleKids(google.protobuf.Empty) returns (CurrentKids) {
+    option (aelf.is_view) = true;
+  }
+  //get apple kids
+  rpc GetAppleKids(google.protobuf.Empty) returns (CurrentKids) {
+    option (aelf.is_view) = true;
+  }
 }
 
 message AddManagerApproveSpenderWhitelistInput {
@@ -302,7 +358,175 @@ message ProjectDelegateeRegistered {
   DelegateeAddressList delegatee_address_list = 4 [(aelf.is_indexed) = true];
 }
 
-
 message SetTokenInitialTransferLimitInput {
   int64 token_initial_transfer_limit = 1;
+}
+
+message AddCAServerInput{
+  string name = 1;
+  string end_points = 2;
+}
+
+message RemoveCAServerInput {
+  string name = 1;
+}
+
+message CAServer {
+  string name = 1;
+  string end_point = 2;
+}
+
+message CAServerList {
+  repeated CAServer ca_servers = 1;
+}
+
+message GetCAServersOutput {
+  repeated CAServer ca_servers = 1;
+}
+
+message CAServerAdded {
+  option (aelf.is_event) = true;
+  CAServer ca_sever_added = 1;
+}
+
+message CAServerRemoved {
+  option (aelf.is_event) = true;
+  CAServer ca_server_removed = 1;
+}
+
+message VerifierServer {
+  aelf.Hash id = 1;
+  string name = 2;
+  string image_url = 3;
+  repeated string end_points = 4;
+  repeated aelf.Address verifier_addresses = 5;
+}
+
+message VerifierServerList {
+  repeated VerifierServer verifier_servers = 1;
+}
+
+message GetVerifierServersOutput {
+  repeated VerifierServer verifier_servers = 1;
+}
+
+// VerifierServerEndPoints added
+message VerifierServerEndPointsAdded {
+  option (aelf.is_event) = true;
+  VerifierServer verifier_server = 1 [(aelf.is_indexed) = true];
+}
+
+// VerifierServerEndPoints removed
+message VerifierServerEndPointsRemoved {
+  option (aelf.is_event) = true;
+  VerifierServer verifier_server = 1 [(aelf.is_indexed) = true];
+}
+
+// VerifierServer removed
+message VerifierServerRemoved {
+  option (aelf.is_event) = true;
+  VerifierServer verifier_server = 1 [(aelf.is_indexed) = true];
+}
+
+message AddVerifierServerEndPointsInput {
+  // If not exists, add; If does, insert
+  string name = 1;
+  string image_url = 2;
+  // Add all, ignore if has duplicates
+  repeated string end_points = 3;
+  repeated aelf.Address verifier_address_list = 4;
+  aelf.Hash verifier_id = 5;
+}
+
+message RemoveVerifierServerInput {
+  // If not exists, add; If does, insert
+  aelf.Hash id = 1;
+}
+
+message RemoveVerifierServerEndPointsInput {
+  // If not exists, ignore
+  aelf.Hash id = 1;
+  // Remove all, ignore if do not exist
+  repeated string end_points = 2;
+}
+
+message VerifyingKey {
+  string circuit_id = 1; // use the hash of VerifyingKey as the circuit_id
+  string verifying_key = 2; // VerifyingKey in hex format
+  string description = 3;
+}
+
+message ZkNonceList {
+  repeated ZkNonceInfo zk_nonce_infos = 1;
+}
+
+message ZkNonceInfo {
+  string nonce = 1;
+  string datetime = 2;
+}
+
+message Jwks
+{
+  repeated JwkRecord keys = 1;
+}
+
+message JwkRecord
+{
+  string n = 1;
+  string kid = 2;
+  string e = 3;
+  string alg = 4;
+  string kty = 5;
+  string use = 6;
+}
+
+message ZkBasicAdminData
+{
+  string issuer = 1;
+  string jwks_endpoint = 2; //the url that can get kid and public key from third party
+  int64 subscription_id = 3;
+  int32 request_type_index = 4;
+  string specific_data = 5;
+}
+
+message JwtIssuerCreated
+{
+  option (aelf.is_event) = true;
+  string issuer = 1;
+  string jwks_endpoint = 2;
+}
+
+message OracleDataFeedsTaskStarted
+{
+  option (aelf.is_event) = true;
+  int64 subscription_id = 1;
+  int32 request_type_index = 2;
+  bytes specific_data = 3;
+}
+
+message CAHolderErrorOccured {
+  option (aelf.is_event) = true;
+  string error_message = 1;
+}
+
+message KidPublicKeyOutput {
+  string kid = 1;
+  string public_key = 2;
+  repeated string public_key_chunks = 3;
+}
+
+message CurrentKids {
+  repeated string kids = 1;
+}
+
+message ZkPublicKeyInfo {
+  string kid = 1;
+  string public_key = 2;
+  repeated string public_key_chunks = 3;
+}
+
+message AppendSingleGuardianPoseidonInput {
+  aelf.Hash ca_hash = 1;
+  aelf.Hash identifier_hash = 2;
+  string poseidon_identifier_hash = 3;
 }

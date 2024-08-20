@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AElf;
 using AElf.Contracts.MultiToken;
 using AElf.Types;
+using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using Shouldly;
 using Xunit;
@@ -1740,7 +1741,7 @@ public partial class CAContractTests
         var approveVerifyTime = DateTime.UtcNow;
         var salt = Guid.NewGuid().ToString("N");
         var approveOpType = Convert.ToInt32(OperationType.Approve).ToString();
-        var operateDetails = $"{User2Address.ToBase58()}_ELF_10000"; 
+        var operateDetails = $"{User2Address.ToBase58()}_ELF_9223372036854000000"; 
         var approveSign = GenerateSignature(VerifierKeyPair, VerifierAddress, approveVerifyTime, _guardian, 0, salt,
             approveOpType, MainChainId, operateDetails);
         await CaContractStubManagerInfo1.ManagerApprove.SendAsync(new ManagerApproveInput
@@ -1758,6 +1759,63 @@ public partial class CAContractTests
                         Id = _verifierServers[0].Id,
                         Signature = approveSign,
                         VerificationDoc =
+                            $"{0},{_guardian.ToHex()},{approveVerifyTime},{VerifierAddress.ToBase58()},{salt},{approveOpType}," +
+                            $"{MainChainId},{HashHelper.ComputeFrom(operateDetails).ToHex()}"
+                    }
+                }
+            },
+            Symbol = "ELF",
+            Amount = 9223372036854000000
+        });
+        
+        var executionResult = await CaContractStubManagerInfo1.ManagerApprove.SendWithExceptionAsync(new ManagerApproveInput
+        {
+            CaHash = _transferLimitTestCaHash,
+            Spender = User2Address,
+            Symbol = "ELF",
+            Amount = 9223372036854000000
+        });
+        executionResult.TransactionResult.Error.ShouldContain("invalid input Guardians Approved");
+        await CaContractStub.AddManagerApproveSpenderWhitelist.SendAsync(
+            new AddManagerApproveSpenderWhitelistInput
+            {
+                SpenderList = { User2Address }
+            });
+        await CaContractStubManagerInfo1.ManagerApprove.SendAsync(new ManagerApproveInput
+        {
+            CaHash = _transferLimitTestCaHash,
+            Spender = User2Address,
+            Symbol = "ELF",
+            Amount = 9223372036854000000
+        });
+    }
+    
+    [Fact]
+    public async Task ManagerApproveTest1()
+    {
+        await InitTransferLimitTest();
+
+        var approveVerifyTime = DateTime.UtcNow;
+        var salt = Guid.NewGuid().ToString("N");
+        var approveOpType = Convert.ToInt32(OperationType.Approve).ToString();
+        var operateDetails = $"{User2Address.ToBase58()}_ELF_10000"; 
+        var approveSign = GenerateSignature(VerifierKeyPair, VerifierAddress, approveVerifyTime, _guardian, 0, salt,
+            approveOpType, MainChainId, operateDetails);
+        await CaContractStubManagerInfo1.ManagerApprove.SendAsync(new ManagerApproveInput
+        {
+            CaHash = _transferLimitTestCaHash,
+            Spender = User2Address,
+            GuardiansApproved =
+            {
+                new GuardianInfo
+                {
+                    IdentifierHash = _guardian,
+                    Type = GuardianType.OfEmail,
+                    VerificationInfo = new VerificationInfo
+                    {
+                        Id = _verifierServers[0].Id,
+                        Signature = approveSign, //ByteStringHelper.FromHexString("b7MwMhTPeviGfdvMqXS3g8MRgHniT7eSqjx+gicQoYJlgebeK/uUlIb8SpHNZm9D9mK48dhbjMdSnkUaNr1zzgE="),
+                        VerificationDoc = //"4,7f628b376d070601f27e3d6480457672cc9dc93523104ad7729e3c3f8c2b919f,2024/07/25 05:43:33.901,5M5sG4v1H9cdB4HKsmGrPyyeoNBAEbj2moMarNidzp7xyVDZ7,bd65634147278b41a3826e09492a1f3d,8,1931928,de0508a8d7308ba4715494a9c27e2dcc26d50d4283703698e1b3b6301321787c"
                             $"{0},{_guardian.ToHex()},{approveVerifyTime},{VerifierAddress.ToBase58()},{salt},{approveOpType}," +
                             $"{MainChainId},{HashHelper.ComputeFrom(operateDetails).ToHex()}"
                     }
