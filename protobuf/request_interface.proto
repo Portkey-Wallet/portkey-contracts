@@ -1,0 +1,46 @@
+// the version of the language, use proto3 for contracts
+syntax = "proto3";
+
+// some core imports for AElf chain types
+import "aelf/core.proto";
+import "aelf/options.proto";
+import "acs12.proto";
+
+package oracle;
+
+// import for using the google.protobuf.* type.
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/timestamp.proto";
+
+// the name of the C# namespace in which the contract code will be,
+// generated code will also be in this namespace.
+option csharp_namespace = "AetherLink.Contracts.Consumer";
+
+// the contract definition: a gRPC service definition.
+service RequestInterface {
+
+  // the full name of the C# class that will contain the state (here <namespace>.<state-class-name> format).
+  rpc StartOracleRequest(StartOracleRequestInput) returns (google.protobuf.Empty);
+  rpc HandleOracleFulfillment(HandleOracleFulfillmentInput) returns (google.protobuf.Empty);
+}
+
+message StartOracleRequestInput {
+  int64 subscription_id = 1;
+  int32 request_type_index = 2;
+  bytes specific_data = 3;
+  aelf.Hash trace_id = 4;
+}
+
+message HandleOracleFulfillmentInput {
+  aelf.Hash request_id = 1;
+  bytes response = 2;
+  bytes err = 3;
+  int32 request_type_index = 4;
+  aelf.Hash trace_id = 5;
+}
+
+message OracleResponse {
+  bytes response = 1;
+  bytes err = 2;
+}

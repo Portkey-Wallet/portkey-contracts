@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <PackageId>Portkey.Contracts.CA</PackageId>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <Description>Portkey Contracts</Description>
@@ -17,6 +17,9 @@
     <ItemGroup>
         <CommonMessage Include="..\..\protobuf\authority_info.proto">
             <Link>Protobuf\Proto\authority_info.proto</Link>
+        </CommonMessage>
+	<CommonMessage Include="..\..\protobuf\oracle_common_message.proto">
+            <Link>Protobuf\Proto\oracle_common_message.proto</Link>
         </CommonMessage>
     </ItemGroup>
     <ItemGroup>
@@ -50,6 +53,9 @@
         <ContractReference Include="..\..\protobuf\configuration_contract.proto">
             <Link>Protobuf\Proto\reference\configuration_contract.proto</Link>
         </ContractReference>
+	    <ContractReference Include="..\..\protobuf\oracle_contract.proto">
+            <Link>Protobuf\Proto\reference\oracle_contract.proto</Link>
+        </ContractReference>
     </ItemGroup>
     
     <ItemGroup>
@@ -75,5 +81,20 @@
         <ContractReference Include="..\..\protobuf\token_contract_impl.proto">
             <Link>Protobuf\Proto\reference\token_contract_impl.proto</Link>
         </ContractReference>
+    </ItemGroup>
+    <ItemGroup>
+    	<ContractBase Include="..\..\protobuf\request_interface.proto">
+           <Link>Protobuf\Proto\request_interface.proto</Link>
+        </ContractBase>
+        <ContractBase Include="..\..\protobuf\coordinator_contract.proto">
+            <Link>Protobuf\Proto\coordinator_contract.proto</Link>
+        </ContractBase>
+        <ContractBase Include="..\..\protobuf\data_feeds_coordinator_contract.proto">
+            <Link>Protobuf\Proto\data_feeds_coordinator_contract.proto</Link>
+        </ContractBase>
+    </ItemGroup>
+    <ItemGroup>
+      <PackageReference Include="Google.Protobuf" Version="3.27.2" />
+      <PackageReference Include="Groth16.Net" Version="1.1.0" />
     </ItemGroup>
 </Project>

@@ -1,0 +1,122 @@
+// the version of the language, use proto3 for contracts
+syntax = "proto3";
+
+// some core imports for AElf chain types
+import "aelf/core.proto";
+import "aelf/options.proto";
+import "acs12.proto";
+import "oracle_common_message.proto";
+
+package coordinator;
+
+// import for using the google.protobuf.* type.
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/timestamp.proto";
+
+// the contract definition: a gRPC service definition.
+service CoordinatorInterface {
+
+  // Action
+  // Admin
+  rpc Initialize(InitializeInput) returns (google.protobuf.Empty) {}
+  rpc TransferAdmin(aelf.Address) returns (google.protobuf.Empty) {}
+  rpc AcceptAdmin(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+  rpc Pause (google.protobuf.Empty) returns (google.protobuf.Empty) {}
+  rpc Unpause (google.protobuf.Empty) returns (google.protobuf.Empty) {}
+
+  // Config
+  rpc SetOracleContractAddress (aelf.Address) returns (google.protobuf.Empty) {}
+  rpc SetRequestTypeIndex(google.protobuf.Int32Value) returns (google.protobuf.Empty) {}
+
+  // Request
+  rpc SendRequest (Request) returns (google.protobuf.Empty) {}
+  rpc Report (ReportInput) returns (google.protobuf.Empty) {}
+  rpc DeleteCommitment (aelf.Hash) returns (google.protobuf.Empty) {}
+
+  // View
+  rpc GetAdmin (google.protobuf.Empty) returns (aelf.Address) { option (aelf.is_view) = true; }
+  rpc IsPaused (google.protobuf.Empty) returns (google.protobuf.BoolValue) { option (aelf.is_view) = true; }
+  rpc GetOracleContractAddress (google.protobuf.Empty) returns (aelf.Address) { option (aelf.is_view) = true; }
+  rpc GetRequestTypeIndex (google.protobuf.Empty) returns (google.protobuf.Int32Value) { option (aelf.is_view) = true; }
+  rpc GetCommitmentHash (aelf.Hash) returns (aelf.Hash) { option (aelf.is_view) = true; }
+}
+
+//Data structure
+message InitializeInput {
+  aelf.Address admin = 1;
+  aelf.Address oracle = 2;
+  int32 request_type_index = 3;
+}
+
+message Request {
+  aelf.Address requesting_contract = 1;
+  int64 subscription_id = 2;
+  int64 initiated_requests = 3;
+  int64 completed_requests = 4;
+  aelf.Address subscription_owner = 5;
+  bytes specific_data = 6;
+}
+
+message RequestInfo {
+  aelf.Address coordinator = 1;
+  aelf.Address requesting_contract = 2;
+  int64 subscription_id = 3;
+  int64 nonce = 4;
+  google.protobuf.Timestamp timeout_timestamp = 5;
+  aelf.Address request_initiator = 6;
+}
+
+message ReportInput {
+  aelf.Address transmitter = 1;
+  repeated aelf.Hash report_context = 2;
+  bytes report = 3;
+  repeated bytes signatures = 4;
+}
+
+// log event
+message AdminTransferRequested {
+  option (aelf.is_event) = true;
+  aelf.Address from = 1;
+  aelf.Address to = 2;
+}
+
+message AdminTransferred {
+  option (aelf.is_event) = true;
+  aelf.Address from = 1;
+  aelf.Address to = 2;
+}
+
+message Paused {
+  option (aelf.is_event) = true;
+  aelf.Address account = 1;  // the address called Pause()
+}
+
+message Unpaused {
+  option (aelf.is_event) = true;
+  aelf.Address account = 1;  // the address called Unpause()
+}
+
+message RequestSent {
+  option (aelf.is_event) = true;
+  aelf.Hash request_id = 1;
+  aelf.Address requesting_contract = 2;
+  aelf.Address requesting_initiator = 3;
+  bytes commitment = 4;
+}
+
+message Reported {
+  option (aelf.is_event) = true;
+  aelf.Hash request_id = 1;
+  aelf.Address transmitter = 2;
+}
+
+message RequestTypeIndexSet {
+  option (aelf.is_event) = true;
+  int32 request_type_index = 1;
+}
+
+message CommitmentDeleted {
+  option (aelf.is_event) = true;
+  aelf.Hash request_id = 1;
+}

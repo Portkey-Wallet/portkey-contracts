@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using AElf.Contracts.MultiToken;
 using Shouldly;
 using Xunit;
 
@@ -18,7 +17,7 @@ public partial class  CAContractTests
         var salt = Guid.NewGuid().ToString("N");
         var opType = Convert.ToInt32(OperationType.CreateCaholder).ToString();
         var id = _verifierServers[0].Id;
-
+    
         var manager = new ManagerInfo
         {
             Address = User1Address,

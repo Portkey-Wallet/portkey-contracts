@@ -32,6 +32,8 @@ service CAContract {
   rpc RemoveGuardian (RemoveGuardianInput) returns (google.protobuf.Empty) {}
 
   rpc UpdateGuardian (UpdateGuardianInput) returns (google.protobuf.Empty) {}
+  
+  rpc AppendGuardianPoseidonHash(AppendGuardianRequest) returns (google.protobuf.Empty) {}
 
   // If Guardian is already setted, return true
   rpc SetGuardianForLogin (SetGuardianForLoginInput) returns (google.protobuf.Empty) {}
@@ -61,24 +63,7 @@ service CAContract {
   
   rpc UpdateManagerInfos (UpdateManagerInfosInput) returns (google.protobuf.Empty) {}
 
-  // If End Points already exists, return true
-  rpc AddVerifierServerEndPoints (AddVerifierServerEndPointsInput) returns (google.protobuf.Empty) {}
-
-  // If End Points does not exists, return true
-  rpc RemoveVerifierServerEndPoints (RemoveVerifierServerEndPointsInput) returns (google.protobuf.Empty) {}
-
-  // if Verifier Server does not exists, return true
-  rpc RemoveVerifierServer (RemoveVerifierServerInput) returns (google.protobuf.Empty) {}
-
-  rpc AddCAServer (AddCAServerInput) returns (google.protobuf.Empty){}
-
-  rpc RemoveCAServer (RemoveCAServerInput) returns (google.protobuf.Empty){}
-  
   rpc GetHolderInfo(GetHolderInfoInput) returns (GetHolderInfoOutput) {option (aelf.is_view) = true;}
-
-  rpc GetVerifierServers (google.protobuf.Empty) returns (GetVerifierServersOutput) {option (aelf.is_view) = true;}
-  
-  rpc GetCAServers (google.protobuf.Empty) returns (GetCAServersOutput) {option (aelf.is_view) = true;}
   
   // Validates CAHolder with ManagerInfos
   rpc ValidateCAHolderInfoWithManagerInfosExists (ValidateCAHolderInfoWithManagerInfosExistsInput) returns (google.protobuf.Empty) {}
@@ -112,6 +97,19 @@ service CAContract {
   rpc SetCheckOperationDetailsInSignatureEnabled (SetCheckOperationDetailsInSignatureEnabledInput) returns (google.protobuf.Empty) {}
 
   rpc GetCheckOperationDetailsInSignatureEnabled (google.protobuf.Empty) returns (GetCheckOperationDetailsInSignatureEnabledOutput) {option (aelf.is_view) = true;}
+
+  // add a jwt issuer
+  rpc AddOrUpdateJwtIssuer (JwtIssuerAndEndpointInput) returns (google.protobuf.Empty);
+
+  // query whether an issuer is valid
+  rpc IsValidIssuer (JwtIssuerAndEndpointInput) returns (google.protobuf.BoolValue) {
+    option (aelf.is_view) = true;
+  }
+  
+  rpc AddKidPublicKey(KidPublicKeyInput) returns (google.protobuf.Empty);
+  
+  //start oracle data feeds task by subscription_id and guardian_type
+  rpc StartOracleDataFeedsTask (StartOracleDataFeedsTaskRequest) returns (google.protobuf.Empty);
 }
 
 //Data structure
@@ -151,6 +149,9 @@ message Guardian {
   aelf.Hash identifier_hash = 3;
   string salt = 4;
   bool is_login_guardian = 5;
+  ZkLoginInfo zk_login_info = 6;
+  bool manuallySupportForZk = 7;
+  string poseidon_identifier_hash = 8;
 }
 
 enum GuardianType {
@@ -160,27 +161,6 @@ enum GuardianType {
   GUARDIAN_TYPE_OF_TELEGRAM = 4;
   GUARDIAN_TYPE_OF_FACEBOOK = 5;
   GUARDIAN_TYPE_OF_TWITTER = 6;
-}
-
-message VerifierServer {
-  aelf.Hash id = 1;
-  string name = 2;
-  string image_url = 3;
-  repeated string end_points = 4;
-  repeated aelf.Address verifier_addresses = 5;
-}
-
-message CAServer {
-  string name = 1;
-  string end_point = 2;
-}
-
-message VerifierServerList {
-  repeated VerifierServer verifier_servers = 1;
-}
-
-message CAServerList {
-  repeated CAServer ca_servers = 1;
 }
 
 message ControllerList {
@@ -237,11 +217,88 @@ message GuardianInfo {
   GuardianType type = 1;
   aelf.Hash identifier_hash = 2;
   VerificationInfo verification_info = 3;
+  ZkLoginInfo zk_login_info = 4;
+  bool update_support_zk = 5;
 }
+
 message VerificationInfo {
   aelf.Hash id = 1;
   bytes signature = 2;
   string verification_doc = 3;
+}
+
+message ZkLoginInfo {
+  // the type may be changed if we decide to use Poseidon hash function later
+  aelf.Hash identifier_hash = 1;
+  // salt used to generate the identifier_hash, it has to be 16 bytes
+  string salt = 2;
+  // extract kid from jwt head
+  string kid = 3;
+  // the identifier of the circuit
+  string circuit_id = 4;
+  // zk_proof is the serialized zk proof
+  string zk_proof = 5;
+  // the issuer of the jwt
+  string issuer = 6;
+  // nonce associated with the jwt
+  string nonce = 7;
+  // the payload that is used to calculate the nonce, where nonce = hash(serialize(non 
+  NoncePayload nonce_payload = 8;
+  ZkProofInfo zk_proof_info = 9;
+  string poseidon_identifier_hash = 10;
+  IdentifierHashType identifier_hash_type = 11;
+}
+
+enum IdentifierHashType{
+  SHA_256_HASH = 0;
+  POSEIDON_HASH = 1;
+}
+
+message ZkProofInfo {
+  repeated string zk_proof_pi_a = 1;
+  repeated string zk_proof_pi_b1 = 2;
+  repeated string zk_proof_pi_b2 = 3;
+  repeated string zk_proof_pi_b3 = 4;
+  repeated string zk_proof_pi_c = 5;
+}
+
+message NoncePayload {
+  oneof operation {
+    AddManager add_manager_address = 1;
+    RemoveManager remove_manager_address = 2;
+  }
+}
+
+message AddManager {
+  // used to differentiate the operation that may have same parameters
+  google.protobuf.Timestamp timestamp = 1;
+  aelf.Hash ca_hash = 2;
+  aelf.Address manager_address = 3; // ？？ Or use ManagerInfo here ？？ 
+}
+
+message RemoveManager {
+  // used to differentiate the operation that may have same parameters 
+  google. protobuf. Timestamp timestamp = 1;
+  aelf.Hash ca_hash = 2;
+  aelf.Address manager_address = 3; // ？？ Or use ManagerInfo here ？？ 
+}
+
+message JwtIssuerAndEndpointInput {
+  GuardianType type = 1;
+  string issuer = 2;
+  string jwks_endpoint = 3;
+}
+
+message KidPublicKeyInput {
+  GuardianType type = 1;
+  string kid = 2;
+  string public_key = 3;
+}
+
+message StartOracleDataFeedsTaskRequest
+{
+  GuardianType type = 1;
+  int64 subscription_id = 2;
 }
 
 enum StrategyValueType {
@@ -299,6 +356,20 @@ message UpdateGuardianInput{
   GuardianInfo guardian_to_update_pre = 2;
   GuardianInfo guardian_to_update_new = 3;
   repeated GuardianInfo guardians_approved = 4;
+}
+
+message AppendGuardianRequest{
+  repeated AppendGuardianInput input = 1;
+}
+message AppendGuardianInput {
+  aelf.Hash ca_hash = 1;
+  repeated PoseidonGuardian guardians = 2;
+}
+
+message PoseidonGuardian {
+  GuardianType type = 1;
+  aelf.Hash identifier_hash = 2;
+  string poseidon_identifier_hash = 3;
 }
 
 message SetGuardianForLoginInput {
@@ -389,45 +460,6 @@ message RemoveOtherManagerInfoInput {
 message UpdateManagerInfosInput {
   aelf.Hash ca_hash = 1;
   repeated ManagerInfo manager_infos = 2;
-}
-
-message AddVerifierServerEndPointsInput {
-  // If not exists, add; If does, insert
-  string name = 1;
-  string image_url = 2;
-  // Add all, ignore if has duplicates
-  repeated string end_points = 3;
-  repeated aelf.Address verifier_address_list = 4;
-  aelf.Hash verifier_id = 5;
-}
-
-message RemoveVerifierServerInput {
-  // If not exists, add; If does, insert
-  aelf.Hash id = 1;
-}
-
-message RemoveVerifierServerEndPointsInput {
-  // If not exists, ignore
-  aelf.Hash id = 1;
-  // Remove all, ignore if do not exist
-  repeated string end_points = 2;
-}
-
-message AddCAServerInput{
-  string name = 1;
-  string end_points = 2;
-}
-
-message RemoveCAServerInput {
-  string name = 1;
-}
-
-message GetVerifierServersOutput {
-  repeated VerifierServer verifier_servers = 1;
-}
-
-message GetCAServersOutput {
-  repeated CAServer ca_servers = 1;
 }
 
 message ValidateCAHolderInfoWithManagerInfosExistsInput {
@@ -591,33 +623,6 @@ message LoginGuardianRemoved {
   Guardian login_guardian = 4 [(aelf.is_indexed) = true];
 }
 
-// VerifierServerEndPoints added
-message VerifierServerEndPointsAdded {
-  option (aelf.is_event) = true;
-  VerifierServer verifier_server = 1 [(aelf.is_indexed) = true];
-}
-
-// VerifierServerEndPoints removed
-message VerifierServerEndPointsRemoved {
-  option (aelf.is_event) = true;
-  VerifierServer verifier_server = 1 [(aelf.is_indexed) = true];
-}
-
-// VerifierServer removed
-message VerifierServerRemoved {
-  option (aelf.is_event) = true;
-  VerifierServer verifier_server = 1 [(aelf.is_indexed) = true];
-}
-
-message CAServerAdded {
-  option (aelf.is_event) = true;
-  CAServer ca_sever_added = 1;
-}
-
-message CAServerRemoved {
-  option (aelf.is_event) = true;
-  CAServer ca_server_removed = 1;
-}
 message CAHolderSynced {
   option (aelf.is_event) = true;
   aelf.Address creator = 1 [(aelf.is_indexed) = true];

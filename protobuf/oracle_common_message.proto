@@ -1,0 +1,34 @@
+// the version of the language, use proto3 for contracts
+syntax = "proto3";
+
+// some core imports for AElf chain types
+import "aelf/core.proto";
+import "aelf/options.proto";
+import "acs12.proto";
+
+package oracle;
+
+// import for using the google.protobuf.* type.
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/timestamp.proto";
+
+// the name of the C# namespace in which the contract code will be,
+
+message Commitment {
+  aelf.Hash request_id = 1;                         
+  aelf.Address coordinator = 2;                     // coordinator contract address
+  aelf.Address client = 3;                          // consumer contract address
+  int64 subscription_id = 4;
+  google.protobuf.Timestamp timeout_timestamp = 5;
+  bytes specific_data = 6;
+  int32 request_type_index = 7;
+  aelf.Hash trace_id = 8;
+}
+
+message Report {
+  bytes result = 1;
+  bytes error = 2;
+  bytes on_chain_metadata = 3;   // serialized Commitment
+  bytes off_chain_metadata = 4;  // TODO use in getDonFee() for dynamic billing
+}

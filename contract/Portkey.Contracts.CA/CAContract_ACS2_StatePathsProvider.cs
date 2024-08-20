@@ -79,7 +79,7 @@ public partial class CAContract
         if (delegateeList.Count <= 0) return;
         var secondDelegateeList = new List<string>();
         //get and add second-level delegatee list
-        foreach (var delegateeAddress in delegateeList.Select(Address.FromBase58))
+        foreach (var delegateeAddress in delegateeList.Select(ConvertAddress))
         {
             //delegatee of the first-level delegate is delegator of the second-level delegate
             secondDelegateeList.AddRange(GetDelegateeList(delegateeAddress, to, methodName));
@@ -91,6 +91,12 @@ public partial class CAContract
             AddPathForTransactionFee(resourceInfo, delegatee, methodName);
             AddPathForTransactionFeeFreeAllowance(resourceInfo, Address.FromBase58(delegatee));
         }
+    }
+    
+    //code check not supports static invocation in linq
+    private Address ConvertAddress(string address)
+    {
+        return Address.FromBase58(address);
     }
 
     private void AddPathForTransactionFee(ResourceInfo resourceInfo, string from, string methodName)
