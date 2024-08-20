@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net6.0</TargetFramework>
         <ServerGarbageCollection>true</ServerGarbageCollection>
     </PropertyGroup>
 
@@ -26,11 +26,11 @@
 
     <ItemGroup>
         <PackageReference Include="AElf.WebApp.Application.Chain" Version="1.3.0">
-            <CopyToOutputDirectory>lib\net8.0\*.xml</CopyToOutputDirectory>
+            <CopyToOutputDirectory>lib\net6.0\*.xml</CopyToOutputDirectory>
             <PackageName>aelf.webapp.application.chain</PackageName>
         </PackageReference>
         <PackageReference Include="AElf.WebApp.Application.Net" Version="1.3.0">
-            <CopyToOutputDirectory>lib\net8.0\*.xml</CopyToOutputDirectory>
+            <CopyToOutputDirectory>lib\net6.0\*.xml</CopyToOutputDirectory>
             <PackageName>aelf.webapp.application.net</PackageName>
         </PackageReference>
     </ItemGroup>
