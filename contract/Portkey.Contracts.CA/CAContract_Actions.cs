@@ -477,7 +477,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
     public override Empty AddKidPublicKey(KidPublicKeyInput input)
     {
         Assert(Context.Sender == State.Admin.Value, "No AddKidPublicKey permission.");
-        Assert(input != null, "Invalid input when AddJwtIssuer.");
+        Assert(input != null, "Invalid input when AddKidPublicKey.");
         Assert(IsValidGuardianType(input.Type), "Invalid guardian input when adding kid public key.");
         Assert(input.Kid != null, "Invalid kid input when adding kid public key.");
         Assert(input.PublicKey != null, "Invalid PublicKey input when adding kid public key.");
@@ -646,7 +646,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
 
     public override ZkNonceList GetZkNonceListByCaHash(Hash input)
     {
-        Assert(Context.Sender == State.Admin.Value, "No SetCircomBigInt permission.");
+        Assert(Context.Sender == State.Admin.Value, "No GetZkNonceListByCaHash permission.");
         Assert(input != null, "Invalid GetZkNonceListByCaHash input.");
         return State.ZkNonceInfosByCaHash[input];
     }
