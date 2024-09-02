@@ -27,6 +27,7 @@ public partial class CAContract
         }
         var guardianToAddSupportZk = CheckZkParams(input.GuardianToAdd);
         var methodName = nameof(OperationType.AddGuardian).ToLower();
+        string operateDetails = null;
         //for the guardian supporting zk, the front end inputs zk params, portkey contract verifies with zk
         if (guardianToAddSupportZk)
         {
@@ -34,10 +35,12 @@ public partial class CAContract
         }
         else //otherwise portkey contract uses the original verifier
         {
+            Assert(input.GuardianToAdd.VerificationInfo != null, "input.GuardianToAdd verification is null");
+            operateDetails = $"{input.GuardianToAdd.IdentifierHash.ToHex()}_{(int)input.GuardianToAdd.Type}_{input.GuardianToAdd.VerificationInfo.Id.ToHex()}";
             Assert(CheckVerifierSignatureAndData(input.GuardianToAdd, methodName, input.CaHash), "CheckVerifierSignatureAndData error ");
         }
         //Check the verifier signature and data of the guardian to be added.
-        var operateDetails = $"{input.GuardianToAdd.IdentifierHash.ToHex()}_{(int)input.GuardianToAdd.Type}_{input.GuardianToAdd.VerificationInfo.Id.ToHex()}";
+        
         var guardianApprovedCount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved, methodName, operateDetails);
 
         //Whether the approved guardians count is satisfied.
