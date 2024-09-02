@@ -54,17 +54,18 @@ public partial class CAContract
         Assert(!string.IsNullOrWhiteSpace(guardianInfo.ZkLoginInfo.Nonce), "zkLogin nonce is null");
         
         //check nonce wasn't used before
+        Assert(guardianInfo.ZkLoginInfo.NoncePayload is { AddManagerAddress: not null }, "zkLogin addManagerAddress is invalid");
         var currentTime =  Context.CurrentBlockTime;
         var nonces = InitZkNonceInfos(caHash, currentTime);
         Assert(!nonces.Contains(guardianInfo.ZkLoginInfo.Nonce), "zkLogin nonce exists, please don't use nonce more than once");
         State.ZkNonceInfosByCaHash[caHash].ZkNonceInfos.Add(new ZkNonceInfo
         {
             Nonce = guardianInfo.ZkLoginInfo.Nonce,
-            Datetime = DateTime.SpecifyKind(currentTime.ToDateTime(), DateTimeKind.Utc).ToString()
+            Datetime = DateTime.SpecifyKind(guardianInfo.ZkLoginInfo.NoncePayload.AddManagerAddress.Timestamp.ToDateTime(), DateTimeKind.Utc).ToString()
         });
     
         // check nonce = sha256(nonce_payload.to_bytes())
-        Assert(guardianInfo.ZkLoginInfo.NoncePayload is { AddManagerAddress: not null }, "zkLogin addManagerAddress is invalid");
+        Assert(CheckNonceNotExpired(guardianInfo.ZkLoginInfo.NoncePayload.AddManagerAddress.Timestamp, currentTime), "zklogin nonce was expired");
         var noncePayload = guardianInfo.ZkLoginInfo.NoncePayload.AddManagerAddress.Timestamp.Seconds +
                            guardianInfo.ZkLoginInfo.NoncePayload.AddManagerAddress.ManagerAddress.ToBase58();
         if (guardianInfo.Type.Equals(GuardianType.OfGoogle))
@@ -86,13 +87,18 @@ public partial class CAContract
         foreach (var zkNonceInfo in State.ZkNonceInfosByCaHash[caHash].ZkNonceInfos)
         {
             var nonceDatetime = DateTime.SpecifyKind(Convert.ToDateTime(zkNonceInfo.Datetime), DateTimeKind.Utc);
-            if (nonceDatetime.ToTimestamp().AddDays(1) <= currentTime)
+            if (nonceDatetime.ToTimestamp().AddMinutes(30) <= currentTime)
             {
                 State.ZkNonceInfosByCaHash[caHash].ZkNonceInfos.Remove(zkNonceInfo);
             }
         }
 
         return State.ZkNonceInfosByCaHash[caHash].ZkNonceInfos.Select(nonce => nonce.Nonce).ToList();
+    }
+
+    private bool CheckNonceNotExpired(Timestamp nonceCreatedTime, Timestamp currentTime)
+    {
+        return nonceCreatedTime.AddMinutes(30) >= currentTime;
     }
 
     private bool VerifyZkProof(GuardianType type, ZkLoginInfo zkLoginInfo, string verifyingKey, string pubkey)
@@ -263,10 +269,11 @@ public partial class CAContract
         return HashHelper.ComputeFrom(input).ToHex();
     }
 
-    private Hash GetOneVerifierFromServers()
+    private Hash GetRandomVerifierFromServers()
     {
         var verifiers = State.VerifiersServerList.Value.VerifierServers;
-        return verifiers[0].Id;
+        var index = (int)Context.CurrentBlockTime.Seconds % verifiers.Count;
+        return verifiers[index].Id;
     }
     
     private bool CheckZkParams(GuardianInfo guardianInfo)

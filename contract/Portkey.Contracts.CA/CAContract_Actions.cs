@@ -245,7 +245,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
             //get a verifier from verifier server list verifierId
             VerifierId = guardianApproved.VerificationInfo == null
                          || Hash.Empty.Equals(guardianApproved.VerificationInfo.Id)
-                ? GetOneVerifierFromServers() : guardianApproved.VerificationInfo.Id,
+                ? GetRandomVerifierFromServers() : guardianApproved.VerificationInfo.Id,
             IsLoginGuardian = true,
             ZkLoginInfo = guardianApproved.ZkLoginInfo,
             ManuallySupportForZk = true, //when the new user registered,portkey contract used zklogin as verifier
