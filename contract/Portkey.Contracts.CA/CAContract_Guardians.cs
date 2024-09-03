@@ -325,14 +325,13 @@ public partial class CAContract
         var guardianOfHolder= guardiansOfHolder.FirstOrDefault(g =>
             g.Type.Equals(GuardianType.OfGoogle) && g.IdentifierHash.Equals(input.IdentifierHash));
         Assert(guardianOfHolder != null, "guardianOfHolder of Google not exists");
-        input.PoseidonIdentifierHash.Contains("");
         SetPoseidonHash(input, guardianOfHolder);
         return new Empty();
     }
 
     private static void SetPoseidonHash(AppendSingleGuardianPoseidonInput input, Guardian guardianOfHolder)
     {
-        guardianOfHolder.PoseidonIdentifierHash = input.PoseidonIdentifierHash.Replace("_", "");
+        guardianOfHolder.PoseidonIdentifierHash = input.PoseidonIdentifierHash;
     }
 
     public override Empty AppendAppleGuardianPoseidon(AppendSingleGuardianPoseidonInput input)
