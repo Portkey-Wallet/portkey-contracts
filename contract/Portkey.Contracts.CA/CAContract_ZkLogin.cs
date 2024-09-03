@@ -184,8 +184,7 @@ public partial class CAContract
     private RepeatedField<string> GeneratePublicKeyChunks(string pubkey)
     {
         var result = new RepeatedField<string>();
-        result.AddRange(Decode(pubkey)
-            .ToChunked(CircomBigIntN, CircomBigIntK)
+        result.AddRange(ToChunked(Decode(pubkey), CircomBigIntN, CircomBigIntK)
             .Select(HexToBigInt));
         return result;
     }

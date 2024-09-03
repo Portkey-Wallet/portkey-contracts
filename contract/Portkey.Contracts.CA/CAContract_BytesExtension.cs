@@ -2,10 +2,11 @@ using System.Collections.Generic;
 
 namespace Portkey.Contracts.CA;
 
-public static class BytesExtension
+public partial class CAContract
 {
-    private static void ShiftArrayRight(byte[] array, int shiftBits)
+    private void ShiftArrayRight(byte[] array, int shiftBits)
     {
+      Assert(shiftBits >= 0 && shiftBits <= array.Length * 8, nameof(shiftBits) + "Invalid shift bits.");
       int shiftBytes = shiftBits / 8;
       int num1 = shiftBits % 8;
       if (num1 == 0)
@@ -34,8 +35,9 @@ public static class BytesExtension
       }
     }
 
-    private static void ShiftBytesRight(byte[] array, int shiftBytes)
+    private void ShiftBytesRight(byte[] array, int shiftBytes)
     {
+      Assert(shiftBytes >= 0 && shiftBytes <= array.Length, nameof(shiftBytes) + "Invalid shift bytes.");
       int length = array.Length;
       int num1 = length - shiftBytes;
       int num2 = length - 1;
@@ -50,8 +52,9 @@ public static class BytesExtension
         array[index] = (byte) 0;
     }
     
-    private static byte[] Mask(byte[] array, int maskBits)
+    private byte[] Mask(byte[] array, int maskBits)
     {
+      Assert(maskBits >= 0 && maskBits <= array.Length * 8, nameof(maskBits) + "Invalid mask bits.");
       int length1 = (maskBits - 1) / 8 + 1;
       int num1 = maskBits % 8;
       int length2 = array.Length;
@@ -70,7 +73,7 @@ public static class BytesExtension
       return numList.ToArray();
     }
 
-    public static IList<byte[]> ToChunked(this byte[] bytes, int bytesPerChunk, int numOfChunks)
+    public IList<byte[]> ToChunked(byte[] bytes, int bytesPerChunk, int numOfChunks)
     {
       List<byte[]> chunked = new List<byte[]>();
       for (int index = 0; index < numOfChunks; ++index)
