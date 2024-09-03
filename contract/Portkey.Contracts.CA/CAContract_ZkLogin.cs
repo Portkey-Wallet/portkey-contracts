@@ -153,6 +153,10 @@ public partial class CAContract
 
     private void SetPublicKeyAndChunks(GuardianType type, string kid, string publicKey)
     {
+        if (string.IsNullOrWhiteSpace(kid) || string.IsNullOrWhiteSpace(publicKey))
+        {
+            return;
+        }
         State.KidsByGuardianType[type] ??= new CurrentKids()
         {
             Kids = { }
