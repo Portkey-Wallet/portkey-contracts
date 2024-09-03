@@ -37,7 +37,7 @@ public partial class CAContract
         {
             Assert(input.GuardianToAdd.VerificationInfo != null, "input.GuardianToAdd verification is null");
             operateDetails = $"{input.GuardianToAdd.IdentifierHash.ToHex()}_{(int)input.GuardianToAdd.Type}_{input.GuardianToAdd.VerificationInfo.Id.ToHex()}";
-            Assert(CheckVerifierSignatureAndData(input.GuardianToAdd, methodName, input.CaHash), "CheckVerifierSignatureAndData error ");
+            Assert(CheckVerifierSignatureAndData(input.GuardianToAdd, methodName, input.CaHash, operateDetails), "CheckVerifierSignatureAndData error ");
         }
         //Check the verifier signature and data of the guardian to be added.
         
