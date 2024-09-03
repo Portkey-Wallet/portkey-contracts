@@ -64,6 +64,7 @@ public partial class CAContract
                 VerifierId = input.GuardianToAdd.VerificationInfo.Id,
                 IsLoginGuardian = false,
                 ZkLoginInfo = input.GuardianToAdd.ZkLoginInfo,
+                ManuallySupportForZk = true,
                 PoseidonIdentifierHash = input.GuardianToAdd.ZkLoginInfo.PoseidonIdentifierHash
             };
         }
