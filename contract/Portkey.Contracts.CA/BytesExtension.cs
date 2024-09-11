@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using AElf.Sdk.CSharp;
 
 namespace Portkey.Contracts.CA;
 
@@ -7,6 +8,10 @@ public static class BytesExtension
     private static void ShiftArrayRight(byte[] array, int shiftBits)
     {
       int shiftBytes = shiftBits / 8;
+      if (shiftBytes < 0 || shiftBytes > array.Length)
+      {
+        throw new AssertionException("Invalid shift bits.");
+      }
       int num1 = shiftBits % 8;
       if (num1 == 0)
       {
@@ -70,13 +75,13 @@ public static class BytesExtension
       return numList.ToArray();
     }
 
-    public static IList<byte[]> ToChunked(this byte[] bytes, int bytesPerChunk, int numOfChunks)
+    public static IList<byte[]> ToChunked(this byte[] bytes, int bitsPerChunk, int numOfChunks)
     {
       List<byte[]> chunked = new List<byte[]>();
       for (int index = 0; index < numOfChunks; ++index)
       {
-        chunked.Add(Mask(bytes, bytesPerChunk));
-        ShiftArrayRight(bytes, bytesPerChunk);
+        chunked.Add(Mask(bytes, bitsPerChunk));
+        ShiftArrayRight(bytes, bitsPerChunk);
       }
       return chunked;
     }

@@ -26,6 +26,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Portkey.Contracts.CA.Tests"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AElf.Boilerplate.PortkeyContracts.Launcher", "src\AElf.Boilerplate.PortkeyContracts.Launcher\AElf.Boilerplate.PortkeyContracts.Launcher.csproj", "{C1C14D1E-0000-43B6-B436-FDC74B2AE22B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZkTreeVerifier", "contract\ZkTreeVerifier\ZkTreeVerifier.csproj", "{0037BE38-2BDC-429D-9046-9214C35B0DEB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZkTreeVerifier.Tests", "test\ZkTreeVerifier.Tests\ZkTreeVerifier.Tests.csproj", "{214FFF9B-C367-4CBE-84CB-88C93451E652}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,10 +40,6 @@ Global
 		{F5B9CE98-80B4-46F0-A040-1BE75C276411}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F5B9CE98-80B4-46F0-A040-1BE75C276411}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F5B9CE98-80B4-46F0-A040-1BE75C276411}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9484A7A9-CA57-4FF4-9FD8-27BFEF92EDBC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-								{9484A7A9-CA57-4FF4-9FD8-27BFEF92EDBC}.Debug|Any CPU.Build.0 = Debug|Any CPU
-								{9484A7A9-CA57-4FF4-9FD8-27BFEF92EDBC}.Release|Any CPU.ActiveCfg = Release|Any CPU
-								{9484A7A9-CA57-4FF4-9FD8-27BFEF92EDBC}.Release|Any CPU.Build.0 = Release|Any CPU
 		{217599C5-2CF0-411E-97B5-5657739CEE5D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{217599C5-2CF0-411E-97B5-5657739CEE5D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{217599C5-2CF0-411E-97B5-5657739CEE5D}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -60,6 +60,14 @@ Global
 		{C1C14D1E-0000-43B6-B436-FDC74B2AE22B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C1C14D1E-0000-43B6-B436-FDC74B2AE22B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C1C14D1E-0000-43B6-B436-FDC74B2AE22B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0037BE38-2BDC-429D-9046-9214C35B0DEB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0037BE38-2BDC-429D-9046-9214C35B0DEB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0037BE38-2BDC-429D-9046-9214C35B0DEB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0037BE38-2BDC-429D-9046-9214C35B0DEB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{214FFF9B-C367-4CBE-84CB-88C93451E652}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{214FFF9B-C367-4CBE-84CB-88C93451E652}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{214FFF9B-C367-4CBE-84CB-88C93451E652}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{214FFF9B-C367-4CBE-84CB-88C93451E652}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -72,6 +80,8 @@ Global
 		{3069D63D-47F8-48FA-B7F8-0FAE4F075A2D} = {5C980166-C987-470D-AEE0-3858A170A903}
 		{F0D4D672-4C9C-4987-AED9-C01966FEEF25} = {DBC47323-E6A2-42A2-A624-CE2EE6139567}
 		{C1C14D1E-0000-43B6-B436-FDC74B2AE22B} = {21D85A91-5BB8-4912-8107-49435A461AAC}
+		{0037BE38-2BDC-429D-9046-9214C35B0DEB} = {5C980166-C987-470D-AEE0-3858A170A903}
+		{214FFF9B-C367-4CBE-84CB-88C93451E652} = {DBC47323-E6A2-42A2-A624-CE2EE6139567}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D7426B41-E959-40E4-9ED8-ED8D9C50F133}
