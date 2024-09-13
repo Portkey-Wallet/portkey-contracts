@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+import "aelf/options.proto";
+import "google/protobuf/wrappers.proto";
+// The namespace of this class
+option csharp_namespace = "AElf.Contracts.ZkTreeVerifier";
+
+service ZkTreeVerifier {
+  // The name of the state class the smart contract is going to use to access blockchain state
+  option (aelf.csharp_state) = "AElf.Contracts.ZkTreeVerifier.ZkTreeVerifierState";
+
+  // Views (methods that don't modify contract state)
+  // Get the value stored from contract state
+  rpc VerifyProof (VerifyProofInput) returns (google.protobuf.BoolValue) {
+    option (aelf.is_view) = true;
+  }
+}
+
+// An event that will be emitted from contract method call
+message VerifyProofInput {
+  message G1Point {
+    string x = 1;
+    string y = 2;
+  }
+  message Fp2 {
+    string first = 1;
+    string second = 2;
+  }
+  message G2Point {
+    Fp2 x = 1;
+    Fp2 y = 2;
+  }
+  message Proof {
+    G1Point a = 1;
+    G2Point b = 2;
+    G1Point c = 3;
+  }
+  Proof proof = 1;
+  repeated string input = 2;
+}
