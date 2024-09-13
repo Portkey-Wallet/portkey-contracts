@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package VoteImp;
+
+import "acs1.proto";
+import "groth16_verifier.proto";
+
+option csharp_namespace = "ZkLoginVerifier";
+
+service ZkLoginVerifierContract {
+  option (aelf.csharp_state) = "ZkLoginVerifierContractState";
+  option (aelf.base) = "acs1.proto";
+  option (aelf.base) = "groth16_verifier.proto";
+}
