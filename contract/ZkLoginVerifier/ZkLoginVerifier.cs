@@ -19,6 +19,40 @@ namespace ZkLoginVerifier
 
     public class ZkLoginVerifier : ZkLoginVerifierContractContainer.ZkLoginVerifierContractBase
     {
+        #region API
+
+        public override BoolValue VerifyProof(VerifyProofInput input)
+        {
+            var vk = GetVerifyingKey();
+
+            var pubSignals = input.Input.Select(x => x.ToBigIntValue()).ToArray();
+            var proof = TransformProof(input);
+
+            var vkX = vk.IC.First();
+
+            foreach (var (p, s) in vk.IC.Skip(1).Zip(pubSignals))
+            {
+                vkX = Context.Addition(vkX, Context.ScalarMul(p, s));
+            }
+
+            var verified = Context.PairingProd4(
+                Context.Negate(proof.A), proof.B,
+                vk.alfa1, vk.beta2,
+                vkX, vk.gamma2,
+                proof.C, vk.delta2
+            );
+            return new BoolValue { Value = verified };
+        }
+
+        #endregion
+
+
+        static G1Point MakeG1(BigIntValue x, BigIntValue y) => new G1Point() { X = x, Y = y };
+        static Fp2 MakeFp2(BigIntValue x, BigIntValue y) => new Fp2() { A = x, B = y };
+
+        static G2Point MakeG2(BigIntValue x1, BigIntValue x2, BigIntValue y1, BigIntValue y2) =>
+            new G2Point() { X = MakeFp2(x1, x2), Y = MakeFp2(y1, y2), };
+
         #region VerifyingKey Configuration
 
         private VerifyingKey GetVerifyingKey()
@@ -504,66 +538,34 @@ namespace ZkLoginVerifier
 
         #endregion
 
-        public override BoolValue VerifyProof(VerifyProofInput input)
+        private Proof TransformProof(VerifyProofInput input)
         {
-            BigIntValue r = "21888242871839275222246405745257275088548364400416034343698204186575808495617";
-            // Base field size
-            BigIntValue q = "21888242871839275222246405745257275088696311157297823662689037894645226208583";
-            BigIntValue IC0x = "427741589347770495043146057105414562424320145275836496042307567377824204436";
-            BigIntValue IC0y = "12818993707642268278649794198797182816165336810203087090654304031168019698726";
-
-            BigIntValue alphax = "16428432848801857252194528405604668803277877773566238944394625302971855135431";
-            BigIntValue alphay = "16846502678714586896801519656441059708016666274385668027902869494772365009666";
-            BigIntValue betax1 = "3182164110458002340215786955198810119980427837186618912744689678939861918171";
-            BigIntValue betax2 = "16348171800823588416173124589066524623406261996681292662100840445103873053252";
-            BigIntValue betay1 = "4920802715848186258981584729175884379674325733638798907835771393452862684714";
-            BigIntValue betay2 = "19687132236965066906216944365591810874384658708175106803089633851114028275753";
-            BigIntValue gammax1 = "11559732032986387107991004021392285783925812861821192530917403151452391805634";
-            BigIntValue gammax2 = "10857046999023057135944570762232829481370756359578518086990519993285655852781";
-            BigIntValue gammay1 = "4082367875863433681332203403145435568316851327593401208105741076214120093531";
-            BigIntValue gammay2 = "8495653923123431417604973247489272438418190587263600148770280649306958101930";
-            BigIntValue deltax1 = "4621943136495297496172388303688540143319528504666994925544464718586576536560";
-            BigIntValue deltax2 = "5017277663082314331131747048393658218159822228355427800831944208891408728943";
-            BigIntValue deltay1 = "10000639143585566667476793266440075499289328631382182782329187714909281179590";
-            BigIntValue deltay2 = "14159334682885746769362770069145275157958227234997361141781014757308595025199";
-
-            var vk = GetVerifyingKey();
-            var pubSignals = input.Input.Select(x => x.ToBigIntValue());
-            var vkX = MakeG1(IC0x, IC0y);
-
-            foreach (var (p, s) in vk.IC.Skip(1).Zip(pubSignals))
+            return new Proof()
             {
-                vkX = Context.Addition(vkX, Context.ScalarMul(p, s));
-            }
-
-            var minusA = MakeG1(input.Proof.A.X, q - input.Proof.A.Y);
-            var alpha = MakeG1(alphax, alphay);
-            var beta = MakeG2(betax1, betax2, betay1, betay2);
-            var gamma = MakeG2(gammax1, gammax2, gammay1, gammay2);
-            var delta = MakeG2(deltax1, deltax2, deltay1, deltay2);
-            var B = MakeG2(input.Proof.B.X.First, input.Proof.B.X.Second, input.Proof.B.Y.First,
-                input.Proof.B.Y.Second);
-            var C = MakeG1(input.Proof.C.X, input.Proof.C.Y);
-            /*
-             *
-               Context.Negate(proof.A), proof.B,
-               vk.alfa1, vk.beta2,
-               vkX, vk.gamma2,
-               proof.C, vk.delta2
-             */
-            var verified = Context.PairingProd4(minusA, B, alpha, beta, vkX, gamma, C, delta);
-            return new BoolValue { Value = verified };
+                A = new G1Point()
+                {
+                    X = input.Proof.A.X,
+                    Y = input.Proof.A.Y,
+                },
+                B = new G2Point()
+                {
+                    X = new Fp2()
+                    {
+                        A = input.Proof.B.X.First,
+                        B = input.Proof.B.X.Second,
+                    },
+                    Y = new Fp2()
+                    {
+                        A = input.Proof.B.Y.First,
+                        B = input.Proof.B.Y.Second,
+                    }
+                },
+                C = new G1Point()
+                {
+                    X = input.Proof.C.X,
+                    Y = input.Proof.C.Y,
+                }
+            };
         }
-
-        #region Private Methods
-
-        static G1Point MakeG1(BigIntValue x, BigIntValue y) => new G1Point() { X = x, Y = y };
-        static Fp2 MakeFp2(BigIntValue x, BigIntValue y) => new Fp2() { A = x, B = y };
-        G1Point MakeG1(string x, string y) => new G1Point() { X = x, Y = y };
-
-        G2Point MakeG2(BigIntValue x1, BigIntValue x2, BigIntValue y1, BigIntValue y2) =>
-            new G2Point() { X = MakeFp2(x1, x2), Y = MakeFp2(y1, y2), };
-
-        #endregion
     }
 }
