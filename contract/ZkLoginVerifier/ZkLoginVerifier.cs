@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using AElf.Sdk.CSharp;
 using AElf.Types;
 using Google.Protobuf.WellKnownTypes;
 using Groth16Verifier;
@@ -25,6 +26,7 @@ namespace ZkLoginVerifier
 
         public override BoolValue VerifyProof(VerifyProofInput input)
         {
+            AssertInputIsValid(input);
             var vk = GetVerifyingKey();
 
             var pubSignals = input.Input.Select(x => x.ToBigIntValue()).ToArray();
@@ -585,6 +587,59 @@ namespace ZkLoginVerifier
                     Y = input.Proof.C.Y,
                 }
             };
+        }
+
+        private void AssertInputIsValid(VerifyProofInput input)
+        {
+            var zero = "0".ToBigIntValue();
+            var snarkScalarField = "21888242871839275222246405745257275088548364400416034343698204186575808495617"
+                .ToBigIntValue();
+            foreach (var s in input.Input)
+            {
+                AssertStringIsValid(s);
+                AssertValidBigInt(s.ToBigIntValue());
+            }
+
+            var stringsInProof = new List<string>()
+            {
+                input.Proof.A.X,
+                input.Proof.A.Y,
+                input.Proof.B.X.First,
+                input.Proof.B.X.Second,
+                input.Proof.B.Y.First,
+                input.Proof.B.Y.Second,
+                input.Proof.C.X,
+                input.Proof.C.Y,
+            };
+            foreach (var s in stringsInProof)
+            {
+                AssertStringIsValid(s);
+                AssertValidBigInt(s.ToBigIntValue());
+            }
+
+            void AssertStringIsValid(string value)
+            {
+                if (string.IsNullOrEmpty(value))
+                {
+                    throw new AssertionException($"invalid value: {value}");
+                }
+
+                foreach (var x in value)
+                {
+                    if (x < '0' || x > '9')
+                    {
+                        throw new AssertionException($"invalid value: {value}");
+                    }
+                }
+            }
+
+            void AssertValidBigInt(BigIntValue value)
+            {
+                if (value <= zero || value >= snarkScalarField)
+                {
+                    throw new AssertionException($"invalid value: {value.Value}");
+                }
+            }
         }
 
         #endregion
