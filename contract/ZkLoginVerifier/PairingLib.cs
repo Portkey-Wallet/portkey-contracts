@@ -185,7 +185,7 @@ public static class PairingLib
         });
     }
 
-    public static byte[] ToBytes32(this BigIntValue value)
+    private static byte[] ToBytes32(this BigIntValue value)
     {
         var bytes = value.ToBigEndianBytes();
         var newArray = new byte[32];

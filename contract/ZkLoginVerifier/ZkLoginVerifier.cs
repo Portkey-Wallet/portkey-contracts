@@ -10,10 +10,12 @@ namespace ZkLoginVerifier
 {
     class VerifyingKey
     {
-        public G1Point alfa1;
-        public G2Point beta2;
-        public G2Point gamma2;
-        public G2Point delta2;
+        public G1Point Alpha1;
+        public G2Point Beta2;
+        public G2Point Gamma2;
+        public G2Point Delta2;
+
+        // ReSharper disable once InconsistentNaming
         public List<G1Point> IC;
     }
 
@@ -37,21 +39,14 @@ namespace ZkLoginVerifier
 
             var verified = Context.PairingProd4(
                 Context.Negate(proof.A), proof.B,
-                vk.alfa1, vk.beta2,
-                vkX, vk.gamma2,
-                proof.C, vk.delta2
+                vk.Alpha1, vk.Beta2,
+                vkX, vk.Gamma2,
+                proof.C, vk.Delta2
             );
             return new BoolValue { Value = verified };
         }
 
         #endregion
-
-
-        static G1Point MakeG1(BigIntValue x, BigIntValue y) => new G1Point() { X = x, Y = y };
-        static Fp2 MakeFp2(BigIntValue x, BigIntValue y) => new Fp2() { A = x, B = y };
-
-        static G2Point MakeG2(BigIntValue x1, BigIntValue x2, BigIntValue y1, BigIntValue y2) =>
-            new G2Point() { X = MakeFp2(x1, x2), Y = MakeFp2(y1, y2), };
 
         #region VerifyingKey Configuration
 
@@ -59,21 +54,28 @@ namespace ZkLoginVerifier
         {
             return new VerifyingKey()
             {
-                alfa1 = MakeG1("16428432848801857252194528405604668803277877773566238944394625302971855135431",
-                    "16846502678714586896801519656441059708016666274385668027902869494772365009666"),
-                beta2 = MakeG2("3182164110458002340215786955198810119980427837186618912744689678939861918171",
+                Alpha1 = MakeG1(
+                    "16428432848801857252194528405604668803277877773566238944394625302971855135431",
+                    "16846502678714586896801519656441059708016666274385668027902869494772365009666"
+                ),
+                Beta2 = MakeG2(
+                    "3182164110458002340215786955198810119980427837186618912744689678939861918171",
                     "16348171800823588416173124589066524623406261996681292662100840445103873053252",
                     "4920802715848186258981584729175884379674325733638798907835771393452862684714",
-                    "19687132236965066906216944365591810874384658708175106803089633851114028275753"),
-                gamma2 = MakeG2("11559732032986387107991004021392285783925812861821192530917403151452391805634",
+                    "19687132236965066906216944365591810874384658708175106803089633851114028275753"
+                ),
+                Gamma2 = MakeG2(
+                    "11559732032986387107991004021392285783925812861821192530917403151452391805634",
                     "10857046999023057135944570762232829481370756359578518086990519993285655852781",
                     "4082367875863433681332203403145435568316851327593401208105741076214120093531",
-                    "8495653923123431417604973247489272438418190587263600148770280649306958101930"),
-                delta2 = MakeG2(
+                    "8495653923123431417604973247489272438418190587263600148770280649306958101930"
+                ),
+                Delta2 = MakeG2(
                     "4621943136495297496172388303688540143319528504666994925544464718586576536560",
                     "5017277663082314331131747048393658218159822228355427800831944208891408728943",
                     "10000639143585566667476793266440075499289328631382182782329187714909281179590",
-                    "14159334682885746769362770069145275157958227234997361141781014757308595025199"),
+                    "14159334682885746769362770069145275157958227234997361141781014757308595025199"
+                ),
                 IC = new List<G1Point>()
                 {
                     MakeG1(
@@ -538,6 +540,23 @@ namespace ZkLoginVerifier
 
         #endregion
 
+        #region Helper Methods
+
+        private static G1Point MakeG1(BigIntValue x, BigIntValue y)
+        {
+            return new G1Point() { X = x, Y = y };
+        }
+
+        private static Fp2 MakeFp2(BigIntValue x, BigIntValue y)
+        {
+            return new Fp2() { A = x, B = y };
+        }
+
+        private static G2Point MakeG2(BigIntValue x1, BigIntValue x2, BigIntValue y1, BigIntValue y2)
+        {
+            return new G2Point() { X = MakeFp2(x1, x2), Y = MakeFp2(y1, y2), };
+        }
+
         private Proof TransformProof(VerifyProofInput input)
         {
             return new Proof()
@@ -567,5 +586,7 @@ namespace ZkLoginVerifier
                 }
             };
         }
+
+        #endregion
     }
 }
