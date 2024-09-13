@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using AElf.Types;
 using Groth16Verifier;
@@ -13,6 +15,43 @@ public class ZkLoginVerifierTest : ZkLoginVerifierTestBase
     {
         var result = await ZkLoginVerifierStub.VerifyProof.SendAsync(GetInput());
         result.TransactionResult.Status.ShouldBe(TransactionResultStatus.Mined);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("a")]
+    [InlineData("-1")]
+    [InlineData("21888242871839275222246405745257275088548364400416034343698204186575808495617")]
+    public async Task ZkWasmVerifier_Verify_InvalidStrings_Test(string invalidString)
+    {
+        async Task RunTest(Func<VerifyProofInput, VerifyProofInput> tweak)
+        {
+            var input = GetInput();
+            var result = await ZkLoginVerifierStub.VerifyProof.SendWithExceptionAsync(tweak(input));
+            result.TransactionResult.Status.ShouldBe(TransactionResultStatus.Failed);
+        }
+
+        // ReSharper disable once ComplexConditionExpression
+        List<Action<VerifyProofInput, string>> tweaks = new List<Action<VerifyProofInput, string>>()
+        {
+            (input, value) => input.Proof.A.X = value,
+            (input, value) => input.Proof.A.Y = value,
+            (input, value) => input.Proof.B.X.First = value,
+            (input, value) => input.Proof.B.X.Second = value,
+            (input, value) => input.Proof.B.Y.First = value,
+            (input, value) => input.Proof.B.Y.Second = value,
+            (input, value) => input.Proof.C.X = value,
+            (input, value) => input.Proof.C.Y = value,
+            (input, value) => input.Input[0] = value,
+        };
+        foreach (var tweak in tweaks)
+        {
+            await RunTest(input =>
+            {
+                tweak(input, invalidString);
+                return input;
+            });
+        }
     }
 
     [Fact]
