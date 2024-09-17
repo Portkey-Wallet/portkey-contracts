@@ -87,7 +87,7 @@ public partial class CAContract
         foreach (var zkNonceInfo in State.ZkNonceInfosByCaHash[caHash].ZkNonceInfos)
         {
             var nonceDatetime = DateTime.SpecifyKind(Convert.ToDateTime(zkNonceInfo.Datetime), DateTimeKind.Utc);
-            if (nonceDatetime.ToTimestamp().AddMinutes(30) <= currentTime)
+            if (nonceDatetime.ToTimestamp().AddMinutes(30) < currentTime)
             {
                 State.ZkNonceInfosByCaHash[caHash].ZkNonceInfos.Remove(zkNonceInfo);
             }
