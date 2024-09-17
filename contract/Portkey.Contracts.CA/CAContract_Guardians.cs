@@ -1,6 +1,7 @@
 using System.Linq;
 using AElf.CSharp.Core;
 using AElf.Sdk.CSharp;
+using AElf.Types;
 using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
 
@@ -13,6 +14,8 @@ public partial class CAContract
     {
         Assert(input.CaHash != null && input.GuardianToAdd != null && input.GuardiansApproved.Count != 0,
             "Invalid input.");
+        Assert(input.GuardianToAdd.VerificationInfo != null, "input.GuardianToAdd verification is null");
+        Assert(input.GuardianToAdd.VerificationInfo.Id != null && !Hash.Empty.Equals(input.GuardianToAdd.VerificationInfo.Id), "input.GuardianToAdd verification id is invalid");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
         AssertWhenVerifierIdInValid(holderInfo.GuardianList.Guardians, input.GuardianToAdd);
@@ -35,7 +38,6 @@ public partial class CAContract
         }
         else //otherwise portkey contract uses the original verifier
         {
-            Assert(input.GuardianToAdd.VerificationInfo != null, "input.GuardianToAdd verification is null");
             operateDetails = $"{input.GuardianToAdd.IdentifierHash.ToHex()}_{(int)input.GuardianToAdd.Type}_{input.GuardianToAdd.VerificationInfo.Id.ToHex()}";
             Assert(CheckVerifierSignatureAndData(input.GuardianToAdd, methodName, input.CaHash, operateDetails), "CheckVerifierSignatureAndData error ");
         }
