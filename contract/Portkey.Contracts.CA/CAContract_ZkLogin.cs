@@ -87,7 +87,7 @@ public partial class CAContract
         foreach (var zkNonceInfo in State.ZkNonceInfosByCaHash[caHash].ZkNonceInfos)
         {
             var nonceDatetime = DateTime.SpecifyKind(Convert.ToDateTime(zkNonceInfo.Datetime), DateTimeKind.Utc);
-            if (nonceDatetime.ToTimestamp().AddMinutes(30) < currentTime)
+            if (nonceDatetime.ToTimestamp().AddHours(1) < currentTime)
             {
                 State.ZkNonceInfosByCaHash[caHash].ZkNonceInfos.Remove(zkNonceInfo);
             }
@@ -98,7 +98,7 @@ public partial class CAContract
 
     private bool CheckNonceNotExpired(Timestamp nonceCreatedTime, Timestamp currentTime)
     {
-        return nonceCreatedTime.AddMinutes(30) >= currentTime;
+        return nonceCreatedTime.AddHours(1) >= currentTime;
     }
 
     private bool VerifyZkProof(GuardianType type, ZkLoginInfo zkLoginInfo, string verifyingKey, string pubkey)
