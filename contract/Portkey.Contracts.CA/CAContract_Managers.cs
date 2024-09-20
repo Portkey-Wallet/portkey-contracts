@@ -258,7 +258,6 @@ public partial class CAContract
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
         Assert(input.From != null && input.To != null && !string.IsNullOrWhiteSpace(input.Symbol),
             "Invalid input.");
-        UpdateDailyTransferredAmount(input.CaHash, new RepeatedField<GuardianInfo>(), input.Symbol, input.Amount, input.To);
         Context.SendVirtualInline(input.CaHash, State.TokenContract.Value,
             nameof(State.TokenContract.TransferFrom),
             new TransferFromInput
