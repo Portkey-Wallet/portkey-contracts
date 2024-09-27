@@ -17,7 +17,6 @@ public partial class CAContract
     
     public override BoolValue VerifyZkLogin(VerifyZkLoginRequest request)
     {
-        Assert(State.CreatorControllers.Value.Controllers.Contains(Context.Sender), "No VerifyZkLogin permission");
         Assert(request != null, "Invalid VerifyZkLogin request.");
         Assert(request!.GuardianApproved != null, "invalid input guardian");
         Assert(request!.CaHash != null, "invalid input guardian");
