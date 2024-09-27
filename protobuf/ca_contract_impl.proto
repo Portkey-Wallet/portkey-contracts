@@ -77,10 +77,22 @@ service CAContractImpl {
   
   //CAServer
   rpc AddCAServer (AddCAServerInput) returns (google.protobuf.Empty){}
-  //CAServer
   rpc RemoveCAServer (RemoveCAServerInput) returns (google.protobuf.Empty){}
-  //CAServer
   rpc GetCAServers (google.protobuf.Empty) returns (GetCAServersOutput) {option (aelf.is_view) = true;}
+
+  //Sync holder info
+  rpc SyncHolderInfo (SyncHolderInfoInput) returns (google.protobuf.Empty) {}
+  rpc SyncHolderInfos (SyncHolderInfosInput) returns (google.protobuf.Empty) {}
+
+  //creator controller
+  rpc AddCreatorController (ControllerInput) returns (google.protobuf.Empty) {}
+  rpc RemoveCreatorController (ControllerInput) returns (google.protobuf.Empty) {}
+  rpc GetCreatorControllers (google.protobuf.Empty) returns (ControllerOutput) {option (aelf.is_view) = true;}
+
+  //server controller
+  rpc AddServerController (ControllerInput) returns (google.protobuf.Empty) {}
+  rpc RemoveServerController (ControllerInput) returns (google.protobuf.Empty) {}
+  rpc GetServerControllers (google.protobuf.Empty) returns (ControllerOutput) {option (aelf.is_view) = true;}
   
   //Verifier If End Points already exists, return true
   rpc AddVerifierServerEndPoints (AddVerifierServerEndPointsInput) returns (google.protobuf.Empty) {}
@@ -529,4 +541,27 @@ message AppendSingleGuardianPoseidonInput {
   aelf.Hash ca_hash = 1;
   aelf.Hash identifier_hash = 2;
   string poseidon_identifier_hash = 3;
+}
+
+message VerificationTransactionInfo {
+  int32 from_chain_id = 1;
+  int64 parent_chain_height = 2;
+  bytes transaction_bytes = 3;
+  aelf.MerklePath merkle_path = 4;
+}
+
+message SyncHolderInfoInput {
+  VerificationTransactionInfo verification_transaction_info = 1;
+}
+
+message SyncHolderInfosInput {
+  repeated VerificationTransactionInfo verification_transaction_infos = 1;
+}
+
+message ControllerInput{
+  aelf.Address address = 1;
+}
+
+message ControllerOutput{
+  repeated aelf.Address addresses = 1;
 }

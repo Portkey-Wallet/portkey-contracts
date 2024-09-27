@@ -14,6 +14,18 @@ public partial class CAContract
 {
     private const int CircomBigIntN = 64;
     private const int CircomBigIntK = 32;
+    
+    public override BoolValue VerifyZkLogin(VerifyZkLoginRequest request)
+    {
+        Assert(State.CreatorControllers.Value.Controllers.Contains(Context.Sender), "No VerifyZkLogin permission");
+        Assert(request != null, "Invalid VerifyZkLogin request.");
+        Assert(request!.GuardianApproved != null, "invalid input guardian");
+        Assert(request!.CaHash != null, "invalid input guardian");
+        return new BoolValue
+        {
+            Value = CheckZkLoginVerifierAndData(request.GuardianApproved, request.CaHash)
+        };
+    }
 
     private bool CheckZkLoginVerifierAndData(GuardianInfo guardianInfo, Hash caHash)
     {
@@ -30,7 +42,7 @@ public partial class CAContract
         var verifyingKey = State.CircuitVerifyingKeys[guardianInfo.ZkLoginInfo.CircuitId];
         Assert(verifyingKey != null, "zkLogin verifyingKey invalid");
 
-        var result = VerifyZkProof(guardianInfo.Type, guardianInfo.ZkLoginInfo, verifyingKey.VerifyingKey_, publicKey.PublicKey);
+        var result = VerifyZkProof(guardianInfo.Type, guardianInfo.ZkLoginInfo, verifyingKey?.VerifyingKey_, publicKey.PublicKey);
         Assert(result, "zkLogin VerifyZkProof error");
         
         return true;
