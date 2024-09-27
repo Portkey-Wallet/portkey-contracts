@@ -64,11 +64,11 @@ public partial class CAContract
         // check nonce
         Assert(!string.IsNullOrWhiteSpace(guardianInfo.ZkLoginInfo.Nonce), "zkLogin nonce is null");
         
+        var currentTime =  Context.CurrentBlockTime;
+        Assert(guardianInfo.ZkLoginInfo.NoncePayload is { AddManagerAddress: not null }, "zkLogin addManagerAddress is invalid");
         if (!preValidation)
         {
             //check nonce wasn't used before
-            Assert(guardianInfo.ZkLoginInfo.NoncePayload is { AddManagerAddress: not null }, "zkLogin addManagerAddress is invalid");
-            var currentTime =  Context.CurrentBlockTime;
             var nonces = InitZkNonceInfos(caHash, currentTime);
             Assert(!nonces.Contains(guardianInfo.ZkLoginInfo.Nonce), "zkLogin nonce exists, please don't use nonce more than once");
             State.ZkNonceInfosByCaHash[caHash].ZkNonceInfos.Add(new ZkNonceInfo
@@ -76,9 +76,10 @@ public partial class CAContract
                 Nonce = guardianInfo.ZkLoginInfo.Nonce,
                 Datetime = DateTime.SpecifyKind(guardianInfo.ZkLoginInfo.NoncePayload.AddManagerAddress.Timestamp.ToDateTime(), DateTimeKind.Utc).ToString()
             });
-            // check nonce = sha256(nonce_payload.to_bytes())
-            Assert(CheckNonceNotExpired(guardianInfo.ZkLoginInfo.NoncePayload.AddManagerAddress.Timestamp, currentTime), "zklogin nonce was expired");
         }
+        
+        // check nonce = sha256(nonce_payload.to_bytes())
+        Assert(CheckNonceNotExpired(guardianInfo.ZkLoginInfo.NoncePayload.AddManagerAddress.Timestamp, currentTime), "zklogin nonce was expired");
         
         var noncePayload = guardianInfo.ZkLoginInfo.NoncePayload.AddManagerAddress.Timestamp.Seconds +
                            guardianInfo.ZkLoginInfo.NoncePayload.AddManagerAddress.ManagerAddress.ToBase58();
