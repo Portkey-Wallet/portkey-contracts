@@ -16,9 +16,9 @@ public partial class CAContract
     {
         Assert(request != null, "Invalid VerifySignature request.");
         Assert(request?.GuardianApproved != null, "invalid input guardian");
-        Assert(string.IsNullOrWhiteSpace(request?.MethodName), "invalid input method name");
+        Assert(!string.IsNullOrWhiteSpace(request?.MethodName), "invalid input method name");
         Assert(request?.CaHash != null, "invalid input caHash");
-        Assert(string.IsNullOrWhiteSpace(request?.OperationDetails), "invalid input operation details");
+        Assert(!string.IsNullOrWhiteSpace(request?.OperationDetails), "invalid input operation details");
         return new BoolValue
         {
             Value = CheckVerifierSignatureAndData(request.GuardianApproved, request.MethodName, request.CaHash, request.OperationDetails, true)
