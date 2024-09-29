@@ -18,8 +18,8 @@ public partial class CAContract
     public override BoolValue VerifyZkLogin(VerifyZkLoginRequest request)
     {
         Assert(request != null, "Invalid VerifyZkLogin request.");
-        Assert(request!.GuardianApproved != null, "invalid input guardian");
-        Assert(request!.CaHash != null, "invalid input guardian");
+        Assert(request?.GuardianApproved != null, "invalid input guardian");
+        Assert(request?.CaHash != null, "invalid input caHash");
         return new BoolValue
         {
             Value = CheckZkLoginVerifierAndData(request.GuardianApproved, request.CaHash, true)

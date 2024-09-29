@@ -93,6 +93,7 @@ service CAContract {
   //start oracle data feeds task by subscription_id and guardian_type
   rpc StartOracleDataFeedsTask (StartOracleDataFeedsTaskRequest) returns (google.protobuf.Empty);
   rpc VerifyZkLogin(VerifyZkLoginRequest) returns (google.protobuf.BoolValue) { option (aelf.is_view) = true; }
+  rpc VerifySignature(VerifySignatureRequest) returns (google.protobuf.BoolValue) { option (aelf.is_view) = true; }
 }
 
 //Data structure
@@ -280,6 +281,14 @@ message VerifyZkLoginRequest
 {
   GuardianInfo guardian_approved = 1;
   aelf.Hash ca_hash = 2;
+}
+
+message VerifySignatureRequest
+{
+  GuardianInfo guardian_approved = 1;
+  string methodName = 2;
+  aelf.Hash caHash = 3;
+  string operationDetails = 4;
 }
 
 enum StrategyValueType {
