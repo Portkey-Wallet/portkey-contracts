@@ -66,11 +66,11 @@ public partial class CAContract
         
         var currentTime =  Context.CurrentBlockTime;
         Assert(guardianInfo.ZkLoginInfo.NoncePayload is { AddManagerAddress: not null }, "zkLogin addManagerAddress is invalid");
+        var nonces = InitZkNonceInfos(caHash, currentTime);
+        Assert(!nonces.Contains(guardianInfo.ZkLoginInfo.Nonce), "zkLogin nonce exists, please don't use nonce more than once");
         if (!preValidation)
         {
             //check nonce wasn't used before
-            var nonces = InitZkNonceInfos(caHash, currentTime);
-            Assert(!nonces.Contains(guardianInfo.ZkLoginInfo.Nonce), "zkLogin nonce exists, please don't use nonce more than once");
             State.ZkNonceInfosByCaHash[caHash].ZkNonceInfos.Add(new ZkNonceInfo
             {
                 Nonce = guardianInfo.ZkLoginInfo.Nonce,
