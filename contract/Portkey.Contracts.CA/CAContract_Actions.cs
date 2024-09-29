@@ -245,7 +245,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
             //get a verifier from verifier server list verifierId
             VerifierId = guardianApproved.VerificationInfo == null
                          || Hash.Empty.Equals(guardianApproved.VerificationInfo.Id)
-                ? GetOneVerifierFromServers() : guardianApproved.VerificationInfo.Id,
+                ? GetRandomVerifierFromServers() : guardianApproved.VerificationInfo.Id,
             IsLoginGuardian = true,
             ZkLoginInfo = guardianApproved.ZkLoginInfo,
             ManuallySupportForZk = true, //when the new user registered,portkey contract used zklogin as verifier
@@ -462,7 +462,6 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
     
     public override BoolValue IsValidIssuer(JwtIssuerAndEndpointInput input)
     {
-        Assert(Context.Sender == State.Admin.Value, "No IsValidIssuer permission.");
         Assert(input != null, "Invalid JwtIssuerInput in IsValidIssuer method.");
         Assert(input.Issuer != null, "Invalid Issuer in IsValidIssuer method.");
         Assert(IsValidGuardianType(input.Type), "Invalid Type in IsValidIssuer method.");
@@ -477,7 +476,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
     public override Empty AddKidPublicKey(KidPublicKeyInput input)
     {
         Assert(Context.Sender == State.Admin.Value, "No AddKidPublicKey permission.");
-        Assert(input != null, "Invalid input when AddJwtIssuer.");
+        Assert(input != null, "Invalid input when AddKidPublicKey.");
         Assert(IsValidGuardianType(input.Type), "Invalid guardian input when adding kid public key.");
         Assert(input.Kid != null, "Invalid kid input when adding kid public key.");
         Assert(input.PublicKey != null, "Invalid PublicKey input when adding kid public key.");
@@ -488,7 +487,6 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
 
     public override KidPublicKeyOutput GetGooglePublicKeyByKid(StringValue input)
     {
-        Assert(Context.Sender == State.Admin.Value, "No GetGooglePublicKeyByKid permission.");
         Assert(input != null, "Invalid kid.");
         Assert(State.PublicKeysChunksByKid[GuardianType.OfGoogle][input.Value] != null, "the public key of kid not exists.");
         return new KidPublicKeyOutput
@@ -501,7 +499,6 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
     
     public override KidPublicKeyOutput GetApplePublicKeyByKid(StringValue input)
     {
-        Assert(Context.Sender == State.Admin.Value, "No GetGooglePublicKeyByKid permission.");
         Assert(input != null, "Invalid kid.");
         Assert(State.PublicKeysChunksByKid[GuardianType.OfApple][input.Value] != null, "the public key of kid not exists.");
         return new KidPublicKeyOutput
@@ -634,19 +631,16 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
     
     public override CurrentKids GetGoogleKids(Empty input)
     {
-        Assert(Context.Sender == State.Admin.Value, "No GetGoogleKids permission.");
         return State.KidsByGuardianType[GuardianType.OfGoogle];
     }
     
     public override CurrentKids GetAppleKids(Empty input)
     {
-        Assert(Context.Sender == State.Admin.Value, "No GetAppleKids permission.");
         return State.KidsByGuardianType[GuardianType.OfApple];
     }
 
     public override ZkNonceList GetZkNonceListByCaHash(Hash input)
     {
-        Assert(Context.Sender == State.Admin.Value, "No SetCircomBigInt permission.");
         Assert(input != null, "Invalid GetZkNonceListByCaHash input.");
         return State.ZkNonceInfosByCaHash[input];
     }

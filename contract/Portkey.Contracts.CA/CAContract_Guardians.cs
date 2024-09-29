@@ -1,6 +1,7 @@
 using System.Linq;
 using AElf.CSharp.Core;
 using AElf.Sdk.CSharp;
+using AElf.Types;
 using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
 
@@ -13,6 +14,8 @@ public partial class CAContract
     {
         Assert(input.CaHash != null && input.GuardianToAdd != null && input.GuardiansApproved.Count != 0,
             "Invalid input.");
+        Assert(input.GuardianToAdd.VerificationInfo != null, "input.GuardianToAdd verification is null");
+        Assert(input.GuardianToAdd.VerificationInfo.Id != null && !Hash.Empty.Equals(input.GuardianToAdd.VerificationInfo.Id), "input.GuardianToAdd verification id is invalid");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
         AssertWhenVerifierIdInValid(holderInfo.GuardianList.Guardians, input.GuardianToAdd);
@@ -27,6 +30,7 @@ public partial class CAContract
         }
         var guardianToAddSupportZk = CheckZkParams(input.GuardianToAdd);
         var methodName = nameof(OperationType.AddGuardian).ToLower();
+        string operateDetails = null;
         //for the guardian supporting zk, the front end inputs zk params, portkey contract verifies with zk
         if (guardianToAddSupportZk)
         {
@@ -34,10 +38,11 @@ public partial class CAContract
         }
         else //otherwise portkey contract uses the original verifier
         {
-            Assert(CheckVerifierSignatureAndData(input.GuardianToAdd, methodName, input.CaHash), "CheckVerifierSignatureAndData error ");
+            operateDetails = $"{input.GuardianToAdd.IdentifierHash.ToHex()}_{(int)input.GuardianToAdd.Type}_{input.GuardianToAdd.VerificationInfo.Id.ToHex()}";
+            Assert(CheckVerifierSignatureAndData(input.GuardianToAdd, methodName, input.CaHash, operateDetails), "CheckVerifierSignatureAndData error ");
         }
         //Check the verifier signature and data of the guardian to be added.
-        var operateDetails = $"{input.GuardianToAdd.IdentifierHash.ToHex()}_{(int)input.GuardianToAdd.Type}_{input.GuardianToAdd.VerificationInfo.Id.ToHex()}";
+        
         var guardianApprovedCount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved, methodName, operateDetails);
 
         //Whether the approved guardians count is satisfied.
@@ -61,6 +66,7 @@ public partial class CAContract
                 VerifierId = input.GuardianToAdd.VerificationInfo.Id,
                 IsLoginGuardian = false,
                 ZkLoginInfo = input.GuardianToAdd.ZkLoginInfo,
+                ManuallySupportForZk = true,
                 PoseidonIdentifierHash = input.GuardianToAdd.ZkLoginInfo.PoseidonIdentifierHash
             };
         }
@@ -321,14 +327,13 @@ public partial class CAContract
         var guardianOfHolder= guardiansOfHolder.FirstOrDefault(g =>
             g.Type.Equals(GuardianType.OfGoogle) && g.IdentifierHash.Equals(input.IdentifierHash));
         Assert(guardianOfHolder != null, "guardianOfHolder of Google not exists");
-        input.PoseidonIdentifierHash.Contains("");
         SetPoseidonHash(input, guardianOfHolder);
         return new Empty();
     }
 
     private static void SetPoseidonHash(AppendSingleGuardianPoseidonInput input, Guardian guardianOfHolder)
     {
-        guardianOfHolder.PoseidonIdentifierHash = input.PoseidonIdentifierHash.Replace("_", "");
+        guardianOfHolder.PoseidonIdentifierHash = input.PoseidonIdentifierHash;
     }
 
     public override Empty AppendAppleGuardianPoseidon(AppendSingleGuardianPoseidonInput input)

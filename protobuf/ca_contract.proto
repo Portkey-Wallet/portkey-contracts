@@ -68,23 +68,7 @@ service CAContract {
   // Validates CAHolder with ManagerInfos
   rpc ValidateCAHolderInfoWithManagerInfosExists (ValidateCAHolderInfoWithManagerInfosExistsInput) returns (google.protobuf.Empty) {}
 
-  rpc SyncHolderInfo (SyncHolderInfoInput) returns (google.protobuf.Empty) {}
-  
-  rpc SyncHolderInfos (SyncHolderInfosInput) returns (google.protobuf.Empty) {}
-
   rpc ValidateStrategy (ValidateStrategyInput) returns (ValidateStrategyOutput) {option (aelf.is_view) = true;}
-  
-  rpc AddCreatorController (ControllerInput) returns (google.protobuf.Empty) {}
-
-  rpc RemoveCreatorController (ControllerInput) returns (google.protobuf.Empty) {}
-  
-  rpc GetCreatorControllers (google.protobuf.Empty) returns (ControllerOutput) {option (aelf.is_view) = true;}
-
-  rpc AddServerController (ControllerInput) returns (google.protobuf.Empty) {}
-  
-  rpc RemoveServerController (ControllerInput) returns (google.protobuf.Empty) {}
-  
-  rpc GetServerControllers (google.protobuf.Empty) returns (ControllerOutput) {option (aelf.is_view) = true;}
   
   rpc ChangeAdmin (AdminInput) returns (google.protobuf.Empty) {}
   
@@ -98,18 +82,18 @@ service CAContract {
 
   rpc GetCheckOperationDetailsInSignatureEnabled (google.protobuf.Empty) returns (GetCheckOperationDetailsInSignatureEnabledOutput) {option (aelf.is_view) = true;}
 
-  // add a jwt issuer
+  // zk login
+  // add or update jwt issuer and jwks endpoint
   rpc AddOrUpdateJwtIssuer (JwtIssuerAndEndpointInput) returns (google.protobuf.Empty);
-
   // query whether an issuer is valid
   rpc IsValidIssuer (JwtIssuerAndEndpointInput) returns (google.protobuf.BoolValue) {
     option (aelf.is_view) = true;
   }
-  
   rpc AddKidPublicKey(KidPublicKeyInput) returns (google.protobuf.Empty);
-  
   //start oracle data feeds task by subscription_id and guardian_type
   rpc StartOracleDataFeedsTask (StartOracleDataFeedsTaskRequest) returns (google.protobuf.Empty);
+  rpc VerifyZkLogin(VerifyZkLoginRequest) returns (google.protobuf.BoolValue) { option (aelf.is_view) = true; }
+  rpc VerifySignature(VerifySignatureRequest) returns (google.protobuf.BoolValue) { option (aelf.is_view) = true; }
 }
 
 //Data structure
@@ -178,14 +162,6 @@ message LoginGuardianList {
 //Input
 message InitializeInput{
   aelf.Address contract_admin = 1;
-}
-
-message ControllerInput{
-  aelf.Address address = 1;
-}
-
-message ControllerOutput{
-  repeated aelf.Address addresses = 1;
 }
 
 message AdminInput{
@@ -299,6 +275,20 @@ message StartOracleDataFeedsTaskRequest
 {
   GuardianType type = 1;
   int64 subscription_id = 2;
+}
+
+message VerifyZkLoginRequest
+{
+  GuardianInfo guardian_approved = 1;
+  aelf.Hash ca_hash = 2;
+}
+
+message VerifySignatureRequest
+{
+  GuardianInfo guardian_approved = 1;
+  string methodName = 2;
+  aelf.Hash caHash = 3;
+  string operationDetails = 4;
 }
 
 enum StrategyValueType {
@@ -469,21 +459,6 @@ message ValidateCAHolderInfoWithManagerInfosExistsInput {
   repeated aelf.Hash not_login_guardians = 4;
   GuardianList guardian_list = 5;
   int32 create_chain_id = 6;
-}
-
-message VerificationTransactionInfo {
-  int32 from_chain_id = 1;
-  int64 parent_chain_height = 2;
-  bytes transaction_bytes = 3;
-  aelf.MerklePath merkle_path = 4;
-}
-
-message SyncHolderInfoInput {
-  VerificationTransactionInfo verification_transaction_info = 1;
-}
-
-message SyncHolderInfosInput {
-  repeated VerificationTransactionInfo verification_transaction_infos = 1;
 }
 
 message ValidateStrategyInput {

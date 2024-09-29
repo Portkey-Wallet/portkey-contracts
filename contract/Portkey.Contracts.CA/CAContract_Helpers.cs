@@ -12,8 +12,21 @@ namespace Portkey.Contracts.CA;
 
 public partial class CAContract
 {
+    public override BoolValue VerifySignature(VerifySignatureRequest request)
+    {
+        Assert(request != null, "Invalid VerifySignature request.");
+        Assert(request?.GuardianApproved != null, "invalid input guardian");
+        Assert(!string.IsNullOrWhiteSpace(request?.MethodName), "invalid input method name");
+        Assert(request?.CaHash != null, "invalid input caHash");
+        Assert(!string.IsNullOrWhiteSpace(request?.OperationDetails), "invalid input operation details");
+        return new BoolValue
+        {
+            Value = CheckVerifierSignatureAndData(request.GuardianApproved, request.MethodName, request.CaHash, request.OperationDetails, true)
+        };
+    }
+    
     private bool CheckVerifierSignatureAndData(GuardianInfo guardianInfo, string methodName, Hash caHash = null,
-        string operationDetails = null)
+        string operationDetails = null, bool preValidation = false)
     {
         var verifierDocLength = GetVerificationDocLength(guardianInfo.VerificationInfo.VerificationDoc);
 
@@ -22,11 +35,11 @@ public partial class CAContract
             return false;
         }
 
-        return CheckVerifierSignatureAndDataWithCreateChainId(guardianInfo, methodName, caHash, operationDetails);
+        return CheckVerifierSignatureAndDataWithCreateChainId(guardianInfo, methodName, caHash, operationDetails, preValidation);
     }
 
     private bool CheckVerifierSignatureAndDataWithCreateChainId(GuardianInfo guardianInfo, string methodName,
-        Hash caHash, string operationDetails = null)
+        Hash caHash, string operationDetails = null, bool preValidation = false)
     {
         //[type,guardianIdentifierHash,verificationTime,verifierAddress,salt,operationType,createChainId<,operationHash>]
         var verificationDoc = guardianInfo.VerificationInfo.VerificationDoc;
@@ -94,7 +107,11 @@ public partial class CAContract
         {
             return false;
         }
-        State.VerifierDocMap[key] = true;
+
+        if (!preValidation)
+        {
+            State.VerifierDocMap[key] = true;
+        }
 
         if (operationTypeName == nameof(OperationType.AddGuardian).ToLower() &&
             !CheckOnCreateChain(State.HolderInfoMap[caHash]))
