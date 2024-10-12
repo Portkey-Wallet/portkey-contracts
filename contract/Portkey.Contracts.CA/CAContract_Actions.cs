@@ -113,7 +113,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         }
 
         State.PreCrossChainSyncHolderInfoMarks.Remove(guardianIdentifierHash);
-
+        UpdateManagerTransactionStatistics(holderId, input.ManagerInfo!.Address);
         // Log Event
         Context.Fire(new CAHolderCreated
         {
@@ -201,7 +201,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
                 return new Empty();
             }
         }
-
+        UpdateManagerTransactionStatistics(input.CaHash, input.ManagerInfo?.Address);
         SetProjectDelegator(caAddress);
 
         State.PreCrossChainSyncHolderInfoMarks[guardianIdentifierHash] = input.CaHash;

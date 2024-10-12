@@ -20,6 +20,7 @@ service CAContractImpl {
   option (aelf.base) = "ca_contract.proto";
   option (aelf.base) = "request_interface.proto";
   option (aelf.csharp_state) = "Portkey.Contracts.CA.CAContractState";
+  rpc SetManagerMaxCount(ManagerMaxCountInput) returns (google.protobuf.Empty) {}
   // approve
   rpc ManagerApprove(ManagerApproveInput) returns (google.protobuf.Empty) {}
         
@@ -140,6 +141,9 @@ service CAContractImpl {
   rpc GetAppleKids(google.protobuf.Empty) returns (CurrentKids) {
     option (aelf.is_view) = true;
   }
+}
+message ManagerMaxCountInput {
+  int32 max_count = 1;
 }
 
 message AddManagerApproveSpenderWhitelistInput {
@@ -564,4 +568,14 @@ message ControllerInput{
 
 message ControllerOutput{
   repeated aelf.Address addresses = 1;
+}
+
+message ManagerStatisticsInfoList{
+  repeated ManagerStatisticsInfo manager_statistics_infos = 1;
+}
+
+message ManagerStatisticsInfo {
+  aelf.Address address = 1;
+  google.protobuf.Timestamp latest_transaction_timestamp = 2;
+  int32 transaction_frequency = 3;
 }

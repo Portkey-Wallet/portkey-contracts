@@ -50,7 +50,9 @@ public partial class CAContract
         // ManagerInfo exists
         var managerInfo = FindManagerInfo(holderInfo.ManagerInfos, input.ManagerInfo.Address);
         Assert(managerInfo == null, $"ManagerInfo exists");
-        Assert(holderInfo.ManagerInfos.Count < CAContractConstants.ManagerMaxCount,
+        UpdateManagerTransactionStatistics(caHash, input.ManagerInfo.Address);
+        ClearNonTransactionManager(caHash);
+        Assert(holderInfo.ManagerInfos.Count < GetManagerMaxCount(),
             "The amount of ManagerInfos out of limit");
 
         var caAddress = Context.ConvertVirtualAddressToContractAddress(caHash);
@@ -80,7 +82,8 @@ public partial class CAContract
         // ManagerInfo exists
         var managerInfo = FindManagerInfo(holderInfo.ManagerInfos, input.ManagerInfo.Address);
         Assert(managerInfo == null, $"ManagerInfo address exists");
-        Assert(holderInfo.ManagerInfos.Count < CAContractConstants.ManagerMaxCount,
+        ClearNonTransactionManager(input.CaHash);
+        Assert(holderInfo.ManagerInfos.Count < GetManagerMaxCount(),
             "The amount of ManagerInfos out of limit");
 
         var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
@@ -357,8 +360,102 @@ public partial class CAContract
 
     private void CheckManagerInfoPermission(Hash caHash, Address address)
     {
+        UpdateManagerTransactionStatistics(caHash, address);
         Assert(State.HolderInfoMap[caHash] != null, $"CA holder is null.CA hash:{caHash}");
         Assert(State.HolderInfoMap[caHash].ManagerInfos.Any(m => m.Address == address), "No permission.");
+    }
+
+    private void ClearNonTransactionManager(Hash caHash)
+    {
+        var maxCount = GetManagerMaxCount();
+        var managerInfos = State.HolderInfoMap[caHash].ManagerInfos;
+        if (managerInfos == null)
+        {
+            return;
+        }
+
+        var existedManagerCount = managerInfos.Count;
+        if (existedManagerCount + 1 < maxCount)
+        {
+            return;
+        }
+        var managerStatisticsInfoList = State.ManagerTransactionStatistics[caHash];
+        //if there was no transaction data, remove the earliest manager
+        if (managerStatisticsInfoList?.ManagerStatisticsInfos == null)
+        {
+            managerInfos.RemoveAt(0);
+            return;
+        }
+
+        var transactionManagerAddresses = managerStatisticsInfoList?.ManagerStatisticsInfos.Select(msi => msi.Address).ToList();
+        var nonTransactionManagers = managerInfos.Where(mg => !transactionManagerAddresses.Contains(mg.Address)).ToList();
+        switch (nonTransactionManagers.Count)
+        {
+            //if there were no transaction data, remove the earliest manager
+            case 0:
+                managerInfos.RemoveAt(0);
+                return;
+            //if non transaction managers number is lower than 10, remove all of them
+            case <= CAContractConstants.CanRemoveManagerMaxCount:
+            {
+                foreach (var nonTransactionManager in nonTransactionManagers)
+                {
+                    managerInfos.Remove(nonTransactionManager);
+                }
+                return;
+            }
+            //if non transaction managers number is larger than 10, remove the first 10 managers that had no transactions
+            default:
+            {
+                for (var i = 0; i < CAContractConstants.CanRemoveManagerMaxCount; i++)
+                {
+                    managerInfos.Remove(nonTransactionManagers[i]);
+                }
+                break;
+            }
+        }
+    }
+
+    private void UpdateManagerTransactionStatistics(Hash caHash, Address manager)
+    {
+        if (caHash == null || manager == null)
+        {
+            return;
+        }
+        if (State.ManagerTransactionStatistics[caHash] == null)
+        {
+            State.ManagerTransactionStatistics[caHash] = new ManagerStatisticsInfoList()
+            {
+                ManagerStatisticsInfos =
+                {
+                    MakeNewManagerStatisticsInfo(manager)
+                }
+            };
+            return;
+        }
+        
+        var managerStatisticsInfos = State.ManagerTransactionStatistics[caHash];
+        var existedManager = managerStatisticsInfos.ManagerStatisticsInfos
+            .FirstOrDefault(mg => mg.Address.Equals(manager));
+        if (existedManager == null)
+        {
+            managerStatisticsInfos.ManagerStatisticsInfos.Add(MakeNewManagerStatisticsInfo(manager));
+        }
+        else
+        {
+            existedManager.TransactionFrequency++;
+            existedManager.LatestTransactionTimestamp = Context.CurrentBlockTime;
+        }
+    }
+
+    private ManagerStatisticsInfo MakeNewManagerStatisticsInfo(Address manager)
+    {
+        return new ManagerStatisticsInfo
+        {
+            Address = manager,
+            LatestTransactionTimestamp = Context.CurrentBlockTime,
+            TransactionFrequency = 1
+        };
     }
 
     private ManagerInfo FindManagerInfo(RepeatedField<ManagerInfo> managerInfos, Address address)
@@ -393,5 +490,20 @@ public partial class CAContract
         }
 
         return false;
+    }
+
+    private int GetManagerMaxCount()
+    {
+        return State.ManagerMaxCount?.Value is not > CAContractConstants.ManagerMaxCount 
+            ? CAContractConstants.ManagerMaxCount : State.ManagerMaxCount.Value;
+    }
+
+    public override Empty SetManagerMaxCount(ManagerMaxCountInput input)
+    {
+        Assert(Context.Sender == State.Admin.Value, "No SetManagerMaxCount permission.");
+        Assert(input != null, "Invalid input when SetManagerMaxCount.");
+        Assert(input?.MaxCount is > 0 and < 100, "Invalid max count scope when SetManagerMaxCount.");
+        State.ManagerMaxCount.Value = input.MaxCount;
+        return new Empty();
     }
 }
