@@ -51,11 +51,10 @@ public partial class CAContract
         var managerInfo = FindManagerInfo(holderInfo.ManagerInfos, input.ManagerInfo.Address);
         Assert(managerInfo == null, $"ManagerInfo exists");
         UpdateManagerTransactionStatistics(caHash, input.ManagerInfo.Address);
-        ClearNonTransactionManager(caHash);
+        var caAddress = Context.ConvertVirtualAddressToContractAddress(caHash);
+        ClearNonTransactionManager(caHash, caAddress);
         Assert(holderInfo.ManagerInfos.Count < GetManagerMaxCount(),
             "The amount of ManagerInfos out of limit");
-
-        var caAddress = Context.ConvertVirtualAddressToContractAddress(caHash);
 
         State.HolderInfoMap[caHash].ManagerInfos.Add(input.ManagerInfo);
         SetDelegator(caHash, input.ManagerInfo);
@@ -82,11 +81,10 @@ public partial class CAContract
         // ManagerInfo exists
         var managerInfo = FindManagerInfo(holderInfo.ManagerInfos, input.ManagerInfo.Address);
         Assert(managerInfo == null, $"ManagerInfo address exists");
-        ClearNonTransactionManager(input.CaHash);
+        var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
+        ClearNonTransactionManager(input.CaHash, caAddress);
         Assert(holderInfo.ManagerInfos.Count < GetManagerMaxCount(),
             "The amount of ManagerInfos out of limit");
-
-        var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
 
         holderInfo.ManagerInfos.Add(input.ManagerInfo);
         SetDelegator(input.CaHash, input.ManagerInfo);
@@ -365,9 +363,8 @@ public partial class CAContract
         Assert(State.HolderInfoMap[caHash].ManagerInfos.Any(m => m.Address == address), "No permission.");
     }
 
-    private void ClearNonTransactionManager(Hash caHash)
+    private void ClearNonTransactionManager(Hash caHash, Address caAddress)
     {
-        var maxCount = GetManagerMaxCount();
         var managerInfos = State.HolderInfoMap[caHash].ManagerInfos;
         if (managerInfos == null)
         {
@@ -375,7 +372,7 @@ public partial class CAContract
         }
 
         var existedManagerCount = managerInfos.Count;
-        if (existedManagerCount + 1 < maxCount)
+        if (existedManagerCount + 2 < GetManagerMaxCount())
         {
             return;
         }
@@ -387,33 +384,62 @@ public partial class CAContract
             return;
         }
 
-        var transactionManagerAddresses = managerStatisticsInfoList?.ManagerStatisticsInfos.Select(msi => msi.Address).ToList();
+        var canRemoveManagerMaxCount = GetCanRemoveManagerMaxCount();
+        var transactionManagerAddresses = managerStatisticsInfoList.ManagerStatisticsInfos.Select(msi => msi.Address).ToList();
         var nonTransactionManagers = managerInfos.Where(mg => !transactionManagerAddresses.Contains(mg.Address)).ToList();
-        switch (nonTransactionManagers.Count)
+        //if non transaction managers number is lower than 10, remove all of them
+        if(nonTransactionManagers.Count < canRemoveManagerMaxCount)
         {
-            //if there were no transaction data, remove the earliest manager
-            case 0:
-                managerInfos.RemoveAt(0);
-                return;
-            //if non transaction managers number is lower than 10, remove all of them
-            case <= CAContractConstants.CanRemoveManagerMaxCount:
+            var nonTransactionManagerCount = nonTransactionManagers.Count;
+            foreach (var nonTransactionManager in nonTransactionManagers)
             {
-                foreach (var nonTransactionManager in nonTransactionManagers)
-                {
-                    managerInfos.Remove(nonTransactionManager);
-                }
+                //part1: remove non-transaction managers
+                DoRemoveManager(caHash, caAddress, managerInfos, nonTransactionManager);
+            }
+
+            var removingTransactionCount = canRemoveManagerMaxCount - nonTransactionManagerCount;
+            var sortedByTransactions = managerStatisticsInfoList.ManagerStatisticsInfos
+                .OrderBy(msi => msi.TransactionFrequency).ToList();
+            var managerStatisticsInfos = sortedByTransactions.GetRange(0, removingTransactionCount);
+            if (managerStatisticsInfos.Count == 0)
+            {
                 return;
             }
-            //if non transaction managers number is larger than 10, remove the first 10 managers that had no transactions
-            default:
+
+            var leastManagerAddresses = managerStatisticsInfos.Select(msi => msi.Address).ToList();
+            if (leastManagerAddresses.Count == 0)
             {
-                for (var i = 0; i < CAContractConstants.CanRemoveManagerMaxCount; i++)
-                {
-                    managerInfos.Remove(nonTransactionManagers[i]);
-                }
-                break;
+                return;
+            }
+
+            var removingManagerInfos = managerInfos.Where(mg => leastManagerAddresses.Contains(mg.Address)).ToList();
+            foreach (var removingManagerInfo in removingManagerInfos)
+            {
+                //part2: remove managers that have transaction record and less transaction frequency
+                DoRemoveManager(caHash, caAddress, managerInfos, removingManagerInfo);
             }
         }
+        //if non transaction managers number is larger than 10, remove the first 10 managers that had no transactions
+        else
+        {
+            for (var i = 0; i < canRemoveManagerMaxCount; i++)
+            {
+                //nonTransactionManagers are also sorted by transaction time
+                DoRemoveManager(caHash, caAddress, managerInfos, nonTransactionManagers[i]);
+            }
+        }
+    }
+
+    private void DoRemoveManager(Hash caHash, Address caAddress, RepeatedField<ManagerInfo> managerInfos, ManagerInfo removingManager)
+    {
+        managerInfos.Remove(removingManager);
+        Context.Fire(new ManagerInfoRemoved
+        {
+            CaHash = caHash,
+            CaAddress = caAddress,
+            Manager = removingManager.Address,
+            ExtraData = removingManager.ExtraData
+        });
     }
 
     private void UpdateManagerTransactionStatistics(Hash caHash, Address manager)
@@ -496,6 +522,36 @@ public partial class CAContract
     {
         return State.ManagerMaxCount?.Value is not > CAContractConstants.ManagerMaxCount 
             ? CAContractConstants.ManagerMaxCount : State.ManagerMaxCount.Value;
+    }
+    
+    private int GetCanRemoveManagerMaxCount()
+    {
+        return State.CanRemoveManagerMaxCount?.Value ?? CAContractConstants.CanRemoveManagerMaxCount;
+    }
+
+    public override Int32Value GetCanRemoveManagerMaxCount(Empty input)
+    {
+        return new Int32Value()
+        {
+            Value = State.CanRemoveManagerMaxCount.Value
+        };
+    }
+
+    public override Empty SetCanRemoveManagerMaxCount(CanRemoveManagerMaxCountInput input)
+    {
+        Assert(Context.Sender == State.Admin.Value, "No SetCanRemoveManagerMaxCount permission.");
+        Assert(input != null, "Invalid input when SetCanRemoveManagerMaxCount.");
+        Assert(input?.CanRemoveMaxCount is > 0 and < 30, "Invalid can-remove-max-count scope when SetCanRemoveManagerMaxCount.");
+        State.CanRemoveManagerMaxCount.Value = input.CanRemoveMaxCount;
+        return new Empty();
+    }
+    
+    public override Int32Value GetManagerMaxCount(Empty input)
+    {
+        return new Int32Value()
+        {
+            Value = State.ManagerMaxCount.Value
+        };
     }
 
     public override Empty SetManagerMaxCount(ManagerMaxCountInput input)

@@ -21,6 +21,9 @@ service CAContractImpl {
   option (aelf.base) = "request_interface.proto";
   option (aelf.csharp_state) = "Portkey.Contracts.CA.CAContractState";
   rpc SetManagerMaxCount(ManagerMaxCountInput) returns (google.protobuf.Empty) {}
+  rpc SetCanRemoveManagerMaxCount(CanRemoveManagerMaxCountInput) returns (google.protobuf.Empty) {}
+  rpc GetManagerMaxCount(google.protobuf.Empty) returns (google.protobuf.Int32Value) { option (aelf.is_view) = true; }
+  rpc GetCanRemoveManagerMaxCount(google.protobuf.Empty) returns (google.protobuf.Int32Value) { option (aelf.is_view) = true; }
   // approve
   rpc ManagerApprove(ManagerApproveInput) returns (google.protobuf.Empty) {}
         
@@ -144,6 +147,10 @@ service CAContractImpl {
 }
 message ManagerMaxCountInput {
   int32 max_count = 1;
+}
+
+message CanRemoveManagerMaxCountInput{
+  int32 can_remove_max_count = 1;
 }
 
 message AddManagerApproveSpenderWhitelistInput {
