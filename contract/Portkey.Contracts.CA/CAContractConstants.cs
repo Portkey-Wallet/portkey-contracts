@@ -14,6 +14,7 @@ public static class CAContractConstants
     public const long DefaultProjectDelegationFee = 100_00000000;
 
     public const int ManagerMaxCount = 70;
+    public const int CanRemoveManagerMaxCount = 10;
 
     public const long TokenDefaultTransferLimitAmount = 100000000000000000;
     public const int DelegateeListMaxCount = 10;

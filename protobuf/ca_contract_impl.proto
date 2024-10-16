@@ -20,6 +20,11 @@ service CAContractImpl {
   option (aelf.base) = "ca_contract.proto";
   option (aelf.base) = "request_interface.proto";
   option (aelf.csharp_state) = "Portkey.Contracts.CA.CAContractState";
+  rpc SetManagerMaxCount(ManagerMaxCountInput) returns (google.protobuf.Empty) {}
+  rpc SetCanRemoveManagerMaxCount(CanRemoveManagerMaxCountInput) returns (google.protobuf.Empty) {}
+  rpc GetManagerMaxCount(google.protobuf.Empty) returns (google.protobuf.Int32Value) { option (aelf.is_view) = true; }
+  rpc GetCanRemoveManagerMaxCount(google.protobuf.Empty) returns (google.protobuf.Int32Value) { option (aelf.is_view) = true; }
+  rpc GetManagerTransactionStatistics(ManagerStatisticsInput) returns (ManagerStatisticsInfoList) { option (aelf.is_view) = true; }
   // approve
   rpc ManagerApprove(ManagerApproveInput) returns (google.protobuf.Empty) {}
         
@@ -140,6 +145,13 @@ service CAContractImpl {
   rpc GetAppleKids(google.protobuf.Empty) returns (CurrentKids) {
     option (aelf.is_view) = true;
   }
+}
+message ManagerMaxCountInput {
+  int32 max_count = 1;
+}
+
+message CanRemoveManagerMaxCountInput{
+  int32 can_remove_max_count = 1;
 }
 
 message AddManagerApproveSpenderWhitelistInput {
@@ -564,4 +576,18 @@ message ControllerInput{
 
 message ControllerOutput{
   repeated aelf.Address addresses = 1;
+}
+
+message ManagerStatisticsInput {
+  aelf.Hash ca_hash = 1;
+}
+
+message ManagerStatisticsInfoList{
+  repeated ManagerStatisticsInfo manager_statistics_infos = 1;
+}
+
+message ManagerStatisticsInfo {
+  aelf.Address address = 1;
+  google.protobuf.Timestamp latest_transaction_timestamp = 2;
+  int32 transaction_frequency = 3;
 }

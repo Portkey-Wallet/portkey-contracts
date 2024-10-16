@@ -84,4 +84,11 @@ public partial class CAContractState : ContractState
     
     //differentiate the used nonce by caHash
     public MappedState<Hash, ZkNonceList> ZkNonceInfosByCaHash { get; set; }
+    
+    public SingletonState<int> ManagerMaxCount { get; set; }
+    
+    public SingletonState<int> CanRemoveManagerMaxCount { get; set; }
+    
+    //cash => {(manager address,transaction count,latest timestamp)}
+    public MappedState<Hash, ManagerStatisticsInfoList> ManagerTransactionStatistics { get; set; }
 }
