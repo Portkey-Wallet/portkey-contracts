@@ -562,4 +562,13 @@ public partial class CAContract
         State.ManagerMaxCount.Value = input.MaxCount;
         return new Empty();
     }
+    
+    public override ManagerStatisticsInfoList GetManagerTransactionStatistics(ManagerStatisticsInput input)
+    {
+        Assert(input != null, "Invalid input when GetManagerTransactionStatistics.");
+        Assert(input?.CaHash != null, "Invalid caHash when GetManagerTransactionStatistics.");
+        var managerStatisticsInfoList = State.ManagerTransactionStatistics[input?.CaHash];
+        Assert(managerStatisticsInfoList is { ManagerStatisticsInfos.Count: > 0 }, "There's no manager statistics");
+        return managerStatisticsInfoList;
+    }
 }
