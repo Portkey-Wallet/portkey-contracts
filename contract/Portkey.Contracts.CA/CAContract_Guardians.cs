@@ -206,6 +206,18 @@ public partial class CAContract
         Assert(input.GuardianToUpdatePre?.Type == input.GuardianToUpdateNew?.Type &&
                input.GuardianToUpdatePre?.IdentifierHash == input.GuardianToUpdateNew?.IdentifierHash,
             "Inconsistent guardian.");
+        if (!IsZkLoginSupported(input.GuardianToUpdatePre.Type))
+        {
+            Assert(!input.GuardianToUpdatePre.UpdateSupportZk, "Invalid updateSupportZk when the pre guardian doesn't support zk");
+        }
+        if (IsZkLoginSupported(input.GuardianToUpdateNew.Type))
+        {
+            Assert(input.GuardianToUpdateNew.UpdateSupportZk, "Invalid updateSupportZk when the new guardian supports zk");
+        }
+        else
+        {
+            Assert(!input.GuardianToUpdateNew.UpdateSupportZk, "Invalid updateSupportZk when the new guardian doesn't support zk");
+        }
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
         AssertCreateChain(holderInfo);
