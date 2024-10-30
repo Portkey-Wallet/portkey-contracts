@@ -95,10 +95,6 @@ service CAContractImpl {
   
   // add a verifying key for a circuit or update the old one
   rpc AddOrUpdateVerifyingKey (VerifyingKey) returns (google.protobuf.Empty);
-
-  rpc AppendGoogleGuardianPoseidon(AppendSingleGuardianPoseidonInput) returns (google.protobuf.Empty) {}
-
-  rpc AppendAppleGuardianPoseidon(AppendSingleGuardianPoseidonInput) returns (google.protobuf.Empty) {}
   
   // query the verifying key of a circuit (by circuit_id)
   rpc GetVerifyingKey (google.protobuf.StringValue) returns (VerifyingKey) {
@@ -523,10 +519,4 @@ message ZkPublicKeyInfo {
   string kid = 1;
   string public_key = 2;
   repeated string public_key_chunks = 3;
-}
-
-message AppendSingleGuardianPoseidonInput {
-  aelf.Hash ca_hash = 1;
-  aelf.Hash identifier_hash = 2;
-  string poseidon_identifier_hash = 3;
 }
