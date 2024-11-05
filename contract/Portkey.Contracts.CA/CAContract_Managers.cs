@@ -36,17 +36,28 @@ public partial class CAContract
         Assert(input.GuardiansApproved.Count > 0, "invalid input Guardians Approved");
         
         var operationDetails = input.ManagerInfo.Address.ToBase58();
-        var guardianApprovedCount = GetGuardianApprovedCount(caHash, input.GuardiansApproved,
-            nameof(OperationType.SocialRecovery).ToLower(), operationDetails);
-
-        var strategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
-        var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(guardians.Count, guardianApprovedCount,
-            strategy);
-        if (!isJudgementStrategySatisfied)
+        var methodName = nameof(OperationType.SocialRecovery).ToLower();
+        int guardianApprovedCount;
+        int guardianCount;
+        var readOnlyManager = IsReadOnlyManager(input.Platform, guardians.Count, input.GuardiansApproved); 
+        if (readOnlyManager)
         {
-            return new Empty();
+            var telegramApprovedGuardians = input.GuardiansApproved.Where(g => g.Type.Equals(GuardianType.OfTelegram)).ToList();
+            guardianApprovedCount = telegramApprovedGuardians.Count(telegramApprovedGuardian =>
+                IsApprovedGuardian(caHash, methodName, operationDetails, telegramApprovedGuardian));
+            guardianCount = telegramApprovedGuardians.Count;
         }
-
+        else
+        {
+            guardianApprovedCount = GetGuardianApprovedCount(caHash, input.GuardiansApproved, methodName, operationDetails);
+            guardianCount = guardians.Count;
+        }
+        var strategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
+        var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(guardianCount, guardianApprovedCount, strategy, caHash:null, clearReadOnlyManager:false);
+        Assert(isJudgementStrategySatisfied, "Please complete the approval of all guardians");
+        //set manager read-only status when the only telegram guardian of guardians is approved
+        SetManagerReadOnlyStatus(input.ManagerInfo.Address, readOnlyManager, caHash);
+        
         // ManagerInfo exists
         var managerInfo = FindManagerInfo(holderInfo.ManagerInfos, input.ManagerInfo.Address);
         Assert(managerInfo == null, $"ManagerInfo exists");
@@ -68,6 +79,17 @@ public partial class CAContract
         });
         FireInvitedLogEvent(caHash, nameof(SocialRecovery), input.ReferralCode, input.ProjectCode);
         return new Empty();
+    }
+
+    private void SetManagerReadOnlyStatus(Address manager, bool readOnlyManager, Hash caHash)
+    {
+        if (!readOnlyManager || caHash == null || manager == null)
+            return;
+        State.CaHashToReadOnlyStatusManagers[caHash] ??= new ReadOnlyStatusManagers();
+        if (!State.CaHashToReadOnlyStatusManagers[caHash].ManagerAddresses.Any(mg => mg.Equals(manager)))
+        {
+            State.CaHashToReadOnlyStatusManagers[caHash].ManagerAddresses.Add(manager);
+        }
     }
 
     public override Empty AddManagerInfo(AddManagerInfoInput input)
@@ -126,7 +148,7 @@ public partial class CAContract
 
         //Whether the approved guardians count is satisfied.
         var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count,
-            guardianApprovedCount, holderInfo.JudgementStrategy);
+            guardianApprovedCount, holderInfo.JudgementStrategy, input.CaHash);
         return !isJudgementStrategySatisfied ? new Empty() : RemoveManager(input.CaHash, input.ManagerInfo.Address);
     }
 
@@ -146,7 +168,8 @@ public partial class CAContract
 
         holderInfo.ManagerInfos.Remove(managerInfo);
         RemoveDelegator(caHash, managerInfo);
-
+        //remove read-only manager when logging out
+        State.CaHashToReadOnlyStatusManagers[caHash].ManagerAddresses.Remove(address);
         Context.Fire(new ManagerInfoRemoved
         {
             CaHash = caHash,
@@ -162,6 +185,7 @@ public partial class CAContract
     {
         Assert(input != null, "invalid input");
         CheckManagerInfosInput(input!.CaHash, input.ManagerInfos);
+        Assert(!IsManagerReadOnly(input.CaHash, Context.Sender), "your manager has no permission");
 
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
         AssertCreateChain(holderInfo);
@@ -230,6 +254,16 @@ public partial class CAContract
             var transferInput = TransferInput.Parser.ParseFrom(input.Args);
             UpdateDailyTransferredAmount(input.CaHash, input.GuardiansApproved, transferInput.Symbol,
                 transferInput.Amount, transferInput.To);
+        }
+        else
+        {
+            if (IsManagerReadOnly(input.CaHash, Context.Sender))
+            {
+                var operationDetails = Context.Sender.ToBase58();
+                var methodName = nameof(OperationType.SocialRecovery).ToLower();
+                GuardianApprovedCheck(input.CaHash, input.GuardiansApproved, OperationType.SocialRecovery,
+                    methodName, operationDetails);
+            }
         }
 
         Context.SendVirtualInline(input.CaHash, input.ContractAddress, input.MethodName, input.Args, true);
@@ -570,5 +604,26 @@ public partial class CAContract
         var managerStatisticsInfoList = State.ManagerTransactionStatistics[input?.CaHash];
         Assert(managerStatisticsInfoList is { ManagerStatisticsInfos.Count: > 0 }, "There's no manager statistics");
         return managerStatisticsInfoList;
+    }
+
+    public override BoolValue IsManagerReadOnly(IsManagerReadOnlyInput input)
+    {
+        Assert(input != null, "Invalid input.");
+        Assert(input?.CaHash != null, "Invalid caHash.");
+        Assert(input?.Manager != null, "Invalid manager.");
+        return new BoolValue()
+        {
+            Value = IsManagerReadOnly(input.CaHash, input.Manager)
+        };
+    }
+
+    private bool IsManagerReadOnly(Hash caHash, Address manager)
+    {
+        var readOnlyStatusManagers = State.CaHashToReadOnlyStatusManagers[caHash];
+        if (readOnlyStatusManagers == null || readOnlyStatusManagers.ManagerAddresses.Count == 0)
+        {
+            return false;
+        }
+        return readOnlyStatusManagers.ManagerAddresses.Any(mg => mg.Equals(manager));
     }
 }

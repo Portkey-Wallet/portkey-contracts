@@ -33,8 +33,6 @@ service CAContract {
 
   rpc UpdateGuardian (UpdateGuardianInput) returns (google.protobuf.Empty) {}
   
-  rpc AppendGuardianPoseidonHash(AppendGuardianRequest) returns (google.protobuf.Empty) {}
-
   // If Guardian is already setted, return true
   rpc SetGuardianForLogin (SetGuardianForLoginInput) returns (google.protobuf.Empty) {}
 
@@ -52,6 +50,8 @@ service CAContract {
 
   // If ManagerInfo is already binded, return true
   rpc SocialRecovery (SocialRecoveryInput) returns (google.protobuf.Empty) {}
+  
+  rpc IsManagerReadOnly (IsManagerReadOnlyInput) returns (google.protobuf.BoolValue) {option (aelf.is_view) = true;}
 
   // If the managerInfo is already exists, return true
   rpc AddManagerInfo (AddManagerInfoInput) returns (google.protobuf.Empty) {}
@@ -348,20 +348,6 @@ message UpdateGuardianInput{
   repeated GuardianInfo guardians_approved = 4;
 }
 
-message AppendGuardianRequest{
-  repeated AppendGuardianInput input = 1;
-}
-message AppendGuardianInput {
-  aelf.Hash ca_hash = 1;
-  repeated PoseidonGuardian guardians = 2;
-}
-
-message PoseidonGuardian {
-  GuardianType type = 1;
-  aelf.Hash identifier_hash = 2;
-  string poseidon_identifier_hash = 3;
-}
-
 message SetGuardianForLoginInput {
   aelf.Hash ca_hash = 1;
   Guardian guardian = 2;
@@ -430,6 +416,12 @@ message SocialRecoveryInput {
   ManagerInfo manager_info = 3;
   string referral_code = 4;
   string project_code = 5;
+  int32 platform = 6;
+}
+
+message IsManagerReadOnlyInput {
+  aelf.Hash ca_hash = 1;
+  aelf.Address manager = 2;
 }
 
 message AddManagerInfoInput {

@@ -112,10 +112,6 @@ service CAContractImpl {
   
   // add a verifying key for a circuit or update the old one
   rpc AddOrUpdateVerifyingKey (VerifyingKey) returns (google.protobuf.Empty);
-
-  rpc AppendGoogleGuardianPoseidon(AppendSingleGuardianPoseidonInput) returns (google.protobuf.Empty) {}
-
-  rpc AppendAppleGuardianPoseidon(AppendSingleGuardianPoseidonInput) returns (google.protobuf.Empty) {}
   
   // query the verifying key of a circuit (by circuit_id)
   rpc GetVerifyingKey (google.protobuf.StringValue) returns (VerifyingKey) {
@@ -549,12 +545,6 @@ message ZkPublicKeyInfo {
   repeated string public_key_chunks = 3;
 }
 
-message AppendSingleGuardianPoseidonInput {
-  aelf.Hash ca_hash = 1;
-  aelf.Hash identifier_hash = 2;
-  string poseidon_identifier_hash = 3;
-}
-
 message VerificationTransactionInfo {
   int32 from_chain_id = 1;
   int64 parent_chain_height = 2;
@@ -590,4 +580,16 @@ message ManagerStatisticsInfo {
   aelf.Address address = 1;
   google.protobuf.Timestamp latest_transaction_timestamp = 2;
   int32 transaction_frequency = 3;
+}
+
+message ReadOnlyStatusManagers {
+  repeated aelf.Address manager_addresses = 1;
+}
+
+enum PlatformSource {
+  UNDEFINED = 0;
+  ANDROID = 1;
+  IOS = 2;
+  WEB = 3;
+  SDK = 4;
 }

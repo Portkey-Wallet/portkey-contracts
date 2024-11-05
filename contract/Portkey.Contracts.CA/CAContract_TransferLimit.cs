@@ -106,7 +106,7 @@ public partial class CAContract
         var holderJudgementStrategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
         var onSyncChain = holderInfo.CreateChainId != 0 && holderInfo.CreateChainId != Context.ChainId;
         Assert(IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count, guardianApprovedCount,
-                holderJudgementStrategy),
+                holderJudgementStrategy, caHash:caHash),
             onSyncChain ? "Processing on the chain..." : "JudgementStrategy validate failed");
     }
 
