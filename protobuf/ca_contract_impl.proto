@@ -592,4 +592,5 @@ enum PlatformSource {
   IOS = 2;
   WEB = 3;
   SDK = 4;
+  TELEGRAM = 5;
 }

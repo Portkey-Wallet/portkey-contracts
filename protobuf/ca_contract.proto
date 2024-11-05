@@ -52,6 +52,8 @@ service CAContract {
   rpc SocialRecovery (SocialRecoveryInput) returns (google.protobuf.Empty) {}
   
   rpc IsManagerReadOnly (IsManagerReadOnlyInput) returns (google.protobuf.BoolValue) {option (aelf.is_view) = true;}
+  
+  rpc RemoveReadOnlyManager (IsManagerReadOnlyInput) returns (google.protobuf.Empty) {}
 
   // If the managerInfo is already exists, return true
   rpc AddManagerInfo (AddManagerInfoInput) returns (google.protobuf.Empty) {}

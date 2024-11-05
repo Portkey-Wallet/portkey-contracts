@@ -25,10 +25,9 @@ public partial class CAContract
         };
     }
 
-    private static bool IsReadOnlyManager(int platform, int guardiansCount, IEnumerable<GuardianInfo> approvedGuardians)
+    private static bool IsReadOnlyManager(int platform, IEnumerable<GuardianInfo> approvedGuardians)
     {
-        var readOnlyManager = platform == (int)PlatformSource.Sdk && guardiansCount > 1;
-        if (!readOnlyManager)
+        if (platform != (int)PlatformSource.Telegram)
         {
             return false;
         }
