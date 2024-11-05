@@ -39,8 +39,8 @@ public partial class CAContract
         var methodName = nameof(OperationType.SocialRecovery).ToLower();
         int guardianApprovedCount;
         int guardianCount;
-        var readOnlyManager = IsReadOnlyManager(input.Platform, guardians.Count, input.GuardiansApproved); 
-        if (readOnlyManager)
+        var isReadOnlyManager = IsReadOnlyManager(input.Platform, guardians.Count, input.GuardiansApproved); 
+        if (isReadOnlyManager)
         {
             var telegramApprovedGuardians = input.GuardiansApproved.Where(g => g.Type.Equals(GuardianType.OfTelegram)).ToList();
             guardianApprovedCount = telegramApprovedGuardians.Count(telegramApprovedGuardian =>
@@ -56,7 +56,7 @@ public partial class CAContract
         var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(guardianCount, guardianApprovedCount, strategy, caHash:null, clearReadOnlyManager:false);
         Assert(isJudgementStrategySatisfied, "Please complete the approval of all guardians");
         //set manager read-only status when the only telegram guardian of guardians is approved
-        SetManagerReadOnlyStatus(input.ManagerInfo.Address, readOnlyManager, caHash);
+        SetManagerReadOnlyStatus(input.ManagerInfo.Address, isReadOnlyManager, caHash);
         
         // ManagerInfo exists
         var managerInfo = FindManagerInfo(holderInfo.ManagerInfos, input.ManagerInfo.Address);
@@ -85,8 +85,7 @@ public partial class CAContract
     {
         if (!readOnlyManager || caHash == null || manager == null)
             return;
-        State.CaHashToReadOnlyStatusManagers[caHash] ??= new ReadOnlyStatusManagers();
-        if (!State.CaHashToReadOnlyStatusManagers[caHash].ManagerAddresses.Any(mg => mg.Equals(manager)))
+        if (!IsManagerReadOnly(caHash, manager))
         {
             State.CaHashToReadOnlyStatusManagers[caHash].ManagerAddresses.Add(manager);
         }
@@ -169,7 +168,10 @@ public partial class CAContract
         holderInfo.ManagerInfos.Remove(managerInfo);
         RemoveDelegator(caHash, managerInfo);
         //remove read-only manager when logging out
-        State.CaHashToReadOnlyStatusManagers[caHash].ManagerAddresses.Remove(address);
+        if (IsManagerReadOnly(caHash, address))
+        {
+            State.CaHashToReadOnlyStatusManagers[caHash].ManagerAddresses.Remove(address);
+        }
         Context.Fire(new ManagerInfoRemoved
         {
             CaHash = caHash,
@@ -620,10 +622,11 @@ public partial class CAContract
     private bool IsManagerReadOnly(Hash caHash, Address manager)
     {
         var readOnlyStatusManagers = State.CaHashToReadOnlyStatusManagers[caHash];
-        if (readOnlyStatusManagers == null || readOnlyStatusManagers.ManagerAddresses.Count == 0)
-        {
-            return false;
-        }
-        return readOnlyStatusManagers.ManagerAddresses.Any(mg => mg.Equals(manager));
+        if (readOnlyStatusManagers != null)
+            return readOnlyStatusManagers.ManagerAddresses.Count != 0 &&
+                   readOnlyStatusManagers.ManagerAddresses.Any(mg => mg.Equals(manager));
+        State.CaHashToReadOnlyStatusManagers[caHash] ??= new ReadOnlyStatusManagers();
+        return false;
+
     }
 }

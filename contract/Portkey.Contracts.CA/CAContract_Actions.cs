@@ -359,11 +359,11 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         var judgementStrategy = StrategyFactory.Create(strategyNode);
         var judgementResult = (bool)judgementStrategy.Validate(context);
         //after guardian approved, read-only status manager should be cleared.
-        if (clearReadOnlyManager && caHash != null && judgementResult)
-        {
+        if (!clearReadOnlyManager || caHash == null || !judgementResult)
+            return judgementResult;
+        if (IsManagerReadOnly(caHash, Context.Sender))
             State.CaHashToReadOnlyStatusManagers[caHash].ManagerAddresses.Remove(Context.Sender);
-        }
-        return judgementResult;
+        return true;
     }
 
     private void SetDelegator(Hash holderId, ManagerInfo managerInfo)
