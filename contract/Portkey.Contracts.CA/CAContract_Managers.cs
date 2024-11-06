@@ -39,7 +39,7 @@ public partial class CAContract
         var methodName = nameof(OperationType.SocialRecovery).ToLower();
         int guardianApprovedCount;
         int guardianCount;
-        var isReadOnlyManager = IsReadOnlyManager(input.Platform, input.GuardiansApproved); 
+        var isReadOnlyManager = IsReadOnlyManager(input.Platform, guardians.Count, input.GuardiansApproved); 
         if (isReadOnlyManager)
         {
             var telegramApprovedGuardians = input.GuardiansApproved.Where(g => g.Type.Equals(GuardianType.OfTelegram)).ToList();
@@ -608,15 +608,15 @@ public partial class CAContract
         return managerStatisticsInfoList;
     }
     
-    public override Empty RemoveReadOnlyManager(IsManagerReadOnlyInput input)
+    public override Empty RemoveReadOnlyManager(RemoveReadOnlyManagerInput input)
     {
-        Assert(Context.Sender == State.Admin.Value, "No SetManagerMaxCount permission.");
         Assert(input != null, "Invalid input.");
         Assert(input?.CaHash != null, "Invalid caHash.");
-        Assert(input?.Manager != null, "Invalid manager.");
+        CheckManagerInfoPermission(input.CaHash, Context.Sender);
+        
         if (State.CaHashToReadOnlyStatusManagers[input.CaHash] != null)
         {
-            State.CaHashToReadOnlyStatusManagers[input.CaHash].ManagerAddresses.Remove(input.Manager);
+            State.CaHashToReadOnlyStatusManagers[input.CaHash].ManagerAddresses.Remove(Context.Sender);
         }
         return new Empty();
     }
