@@ -428,6 +428,7 @@ message IsManagerReadOnlyInput {
 
 message RemoveReadOnlyManagerInput{
   aelf.Hash ca_hash = 1;
+  repeated ca.GuardianInfo guardians_approved = 2;
 }
 
 message AddManagerInfoInput {

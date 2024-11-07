@@ -612,12 +612,14 @@ public partial class CAContract
     {
         Assert(input != null, "Invalid input.");
         Assert(input?.CaHash != null, "Invalid caHash.");
+        Assert(input.GuardiansApproved is { Count: > 0 }, "Invalid approved guardians.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
         
-        if (State.CaHashToReadOnlyStatusManagers[input.CaHash] != null)
-        {
-            State.CaHashToReadOnlyStatusManagers[input.CaHash].ManagerAddresses.Remove(Context.Sender);
-        }
+        if (!IsManagerReadOnly(input.CaHash, Context.Sender))
+            return new Empty();
+        var operationDetails = Context.Sender.ToBase58();
+        var methodName = nameof(OperationType.SocialRecovery).ToLower();
+        GuardianApprovedCheck(input.CaHash, input.GuardiansApproved, OperationType.SocialRecovery, methodName, operationDetails);
         return new Empty();
     }
 
