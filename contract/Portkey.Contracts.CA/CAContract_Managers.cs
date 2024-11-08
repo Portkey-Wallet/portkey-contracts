@@ -69,7 +69,7 @@ public partial class CAContract
 
         State.HolderInfoMap[caHash].ManagerInfos.Add(input.ManagerInfo);
         SetDelegator(caHash, input.ManagerInfo);
-
+        ClearRemovedManagerTransactionData(caHash, holderInfo);
         Context.Fire(new ManagerInfoSocialRecovered()
         {
             CaHash = caHash,
@@ -172,6 +172,8 @@ public partial class CAContract
         {
             State.CaHashToReadOnlyStatusManagers[caHash].ManagerAddresses.Remove(address);
         }
+        ClearRemovedManagerTransactionData(caHash, holderInfo);
+
         Context.Fire(new ManagerInfoRemoved
         {
             CaHash = caHash,
@@ -180,6 +182,43 @@ public partial class CAContract
             ExtraData = managerInfo.ExtraData
         });
 
+        return new Empty();
+    }
+
+    public override Empty RemoveOtherManagerInfos(RemoveOtherManagerInfosInput input)
+    {
+        Assert(input != null, "invalid input");
+        CheckManagerInfosInput(input!.CaHash, input.ManagerInfos);
+        Assert(input.ManagerInfos.All(mg => !Context.Sender.Equals(mg.Address)), "One should not remove itself");
+        Assert(input.GuardiansApproved is { Count: > 0 }, "invalid input guardiansApproved");
+
+        var holderInfo = GetHolderInfoByCaHash(input.CaHash);
+        AssertCreateChain(holderInfo);
+        var guardianApprovedCount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved,
+            nameof(OperationType.RemoveOtherManagerInfo).ToLower());
+        var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count,
+            guardianApprovedCount, holderInfo.JudgementStrategy);
+        Assert(isJudgementStrategySatisfied, "guardian approved failed.");
+        
+        var caAddress = Context.ConvertVirtualAddressToContractAddress(input!.CaHash);
+        foreach (var inputManagerInfo in input.ManagerInfos)
+        {
+            var managerInfo = FindManagerInfo(holderInfo.ManagerInfos, inputManagerInfo.Address);
+            if (managerInfo == null)
+                continue;
+
+            holderInfo.ManagerInfos.Remove(managerInfo);
+            RemoveDelegator(input!.CaHash, managerInfo);
+
+            Context.Fire(new ManagerInfoRemoved
+            {
+                CaHash = input!.CaHash,
+                CaAddress = caAddress,
+                Manager = managerInfo.Address,
+                ExtraData = managerInfo.ExtraData
+            });
+        }
+        ClearRemovedManagerTransactionData(input!.CaHash, holderInfo);
         return new Empty();
     }
 
@@ -643,5 +682,27 @@ public partial class CAContract
         State.CaHashToReadOnlyStatusManagers[caHash] ??= new ReadOnlyStatusManagers();
         return false;
 
+    }
+
+    private void ClearRemovedManagerTransactionData(Hash caHash, HolderInfo holderInfo = null)
+    {
+        var managerStatisticsInfoList = State.ManagerTransactionStatistics[caHash];
+        if (managerStatisticsInfoList == null)
+        {
+            return;
+        }
+        holderInfo ??= State.HolderInfoMap[caHash];
+        if (holderInfo == null)
+        {
+            return;
+        }
+        foreach (var managerStatisticsInfo in managerStatisticsInfoList.ManagerStatisticsInfos.ToList())
+        {
+            if (holderInfo.ManagerInfos.Any(mg => mg.Address.Equals(managerStatisticsInfo.Address)))
+            {
+                continue;
+            }
+            managerStatisticsInfoList.ManagerStatisticsInfos.Remove(managerStatisticsInfo);
+        }
     }
 }

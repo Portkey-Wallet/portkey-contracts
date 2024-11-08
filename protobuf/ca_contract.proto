@@ -63,6 +63,8 @@ service CAContract {
   
   rpc RemoveOtherManagerInfo (RemoveOtherManagerInfoInput) returns (google.protobuf.Empty) {}
   
+  rpc RemoveOtherManagerInfos (RemoveOtherManagerInfosInput) returns (google.protobuf.Empty) {}
+  
   rpc UpdateManagerInfos (UpdateManagerInfosInput) returns (google.protobuf.Empty) {}
 
   rpc GetHolderInfo(GetHolderInfoInput) returns (GetHolderInfoOutput) {option (aelf.is_view) = true;}
@@ -443,6 +445,12 @@ message RemoveManagerInfoInput {
 message RemoveOtherManagerInfoInput {
   aelf.Hash ca_hash = 1;
   ManagerInfo manager_info = 2;
+  repeated GuardianInfo guardians_approved = 3;
+}
+
+message RemoveOtherManagerInfosInput {
+  aelf.Hash ca_hash = 1;
+  repeated ManagerInfo manager_infos = 2;
   repeated GuardianInfo guardians_approved = 3;
 }
 
