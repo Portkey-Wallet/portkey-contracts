@@ -24,6 +24,26 @@ public partial class CAContract
             Value = CheckVerifierSignatureAndData(request.GuardianApproved, request.MethodName, request.CaHash, request.OperationDetails, true)
         };
     }
+
+    private static bool IsReadOnlyManager(Platform platform, int guardiansCount, IReadOnlyCollection<GuardianInfo> approvedGuardians)
+    {
+        if (platform != Platform.Telegram || guardiansCount <= 1)
+        {
+            return false;
+        }
+        var telegramApprovedGuardians = approvedGuardians.Where(g => g.Type.Equals(GuardianType.OfTelegram)).ToList();
+        if (telegramApprovedGuardians.Count == 0)
+        {
+            return false;
+        }
+
+        return telegramApprovedGuardians.Select(telegramApprovedGuardian => 
+            telegramApprovedGuardian?.VerificationInfo != null 
+            && telegramApprovedGuardian.VerificationInfo.Id != null 
+            && telegramApprovedGuardian?.VerificationInfo.Signature != null 
+            && telegramApprovedGuardian?.VerificationInfo.VerificationDoc != null)
+            .All(valid => valid);
+    }
     
     private bool CheckVerifierSignatureAndData(GuardianInfo guardianInfo, string methodName, Hash caHash = null,
         string operationDetails = null, bool preValidation = false)
