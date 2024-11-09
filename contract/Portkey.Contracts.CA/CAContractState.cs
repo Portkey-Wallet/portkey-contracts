@@ -89,6 +89,8 @@ public partial class CAContractState : ContractState
     
     public SingletonState<int> CanRemoveManagerMaxCount { get; set; }
     
-    //cash => {(manager address,transaction count,latest timestamp)}
+    //ca hash => {(manager address,transaction count,latest timestamp)}
     public MappedState<Hash, ManagerStatisticsInfoList> ManagerTransactionStatistics { get; set; }
+    //ca hash => read only status managers for multi-guardian users
+    public MappedState<Hash, ReadOnlyStatusManagers> CaHashToReadOnlyStatusManagers { get; set; }
 }

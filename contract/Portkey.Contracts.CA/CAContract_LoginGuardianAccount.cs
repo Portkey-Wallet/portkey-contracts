@@ -54,7 +54,7 @@ public partial class CAContract
         var guardianApprovedCount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved, methodName, operateDetails);
         var holderJudgementStrategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
         Assert(IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count, guardianApprovedCount,
-            holderJudgementStrategy), "JudgementStrategy validate failed");
+            holderJudgementStrategy, input.CaHash), "JudgementStrategy validate failed");
 
         guardian.IsLoginGuardian = true;
 
@@ -78,21 +78,20 @@ public partial class CAContract
     private int GetGuardianApprovedCount(Hash caHash, RepeatedField<GuardianInfo> guardianApproved, string methodName,
         string operationDetails = null)
     {
-        var guardianApprovedCount = 0;
         var guardianApprovedList = guardianApproved
             .DistinctBy(g => $"{g.Type}{g.IdentifierHash}{g.VerificationInfo.Id}")
             .ToList();
-        foreach (var guardianInfo in guardianApprovedList)
-        {
-            if (!IsGuardianExist(caHash, guardianInfo)) continue;
-            bool isApproved = CanZkLoginExecute(guardianInfo) 
-                ? CheckZkLoginVerifierAndData(guardianInfo, caHash) 
-                : CheckVerifierSignatureAndData(guardianInfo, methodName, caHash, operationDetails);
-            if (!isApproved) continue;
-            guardianApprovedCount++;
-        }
 
-        return guardianApprovedCount;
+        return guardianApprovedList.Count(guardianInfo => IsApprovedGuardian(caHash, methodName, operationDetails, guardianInfo));
+    }
+
+    private bool IsApprovedGuardian(Hash caHash, string methodName, string operationDetails, GuardianInfo approvedGuardian)
+    {
+        if (!IsGuardianExist(caHash, approvedGuardian))
+            return false;
+        return CanZkLoginExecute(approvedGuardian) 
+            ? CheckZkLoginVerifierAndData(approvedGuardian, caHash) 
+            : CheckVerifierSignatureAndData(approvedGuardian, methodName, caHash, operationDetails);
     }
 
     // Unset a Guardian for login, if already unset, return ture
@@ -128,7 +127,7 @@ public partial class CAContract
         var guardianApprovedCount = GetGuardianApprovedCount(input.CaHash, input.GuardiansApproved, methodName, operateDetails);
         var holderJudgementStrategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
         Assert(IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count, guardianApprovedCount,
-            holderJudgementStrategy), "JudgementStrategy validate failed");
+            holderJudgementStrategy, input.CaHash), "JudgementStrategy validate failed");
 
         guardian.IsLoginGuardian = false;
 

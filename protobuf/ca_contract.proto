@@ -33,8 +33,6 @@ service CAContract {
 
   rpc UpdateGuardian (UpdateGuardianInput) returns (google.protobuf.Empty) {}
   
-  rpc AppendGuardianPoseidonHash(AppendGuardianRequest) returns (google.protobuf.Empty) {}
-
   // If Guardian is already setted, return true
   rpc SetGuardianForLogin (SetGuardianForLoginInput) returns (google.protobuf.Empty) {}
 
@@ -52,6 +50,10 @@ service CAContract {
 
   // If ManagerInfo is already binded, return true
   rpc SocialRecovery (SocialRecoveryInput) returns (google.protobuf.Empty) {}
+  
+  rpc IsManagerReadOnly (IsManagerReadOnlyInput) returns (google.protobuf.BoolValue) {option (aelf.is_view) = true;}
+  
+  rpc RemoveReadOnlyManager (RemoveReadOnlyManagerInput) returns (google.protobuf.Empty) {}
 
   // If the managerInfo is already exists, return true
   rpc AddManagerInfo (AddManagerInfoInput) returns (google.protobuf.Empty) {}
@@ -348,20 +350,6 @@ message UpdateGuardianInput{
   repeated GuardianInfo guardians_approved = 4;
 }
 
-message AppendGuardianRequest{
-  repeated AppendGuardianInput input = 1;
-}
-message AppendGuardianInput {
-  aelf.Hash ca_hash = 1;
-  repeated PoseidonGuardian guardians = 2;
-}
-
-message PoseidonGuardian {
-  GuardianType type = 1;
-  aelf.Hash identifier_hash = 2;
-  string poseidon_identifier_hash = 3;
-}
-
 message SetGuardianForLoginInput {
   aelf.Hash ca_hash = 1;
   Guardian guardian = 2;
@@ -430,6 +418,17 @@ message SocialRecoveryInput {
   ManagerInfo manager_info = 3;
   string referral_code = 4;
   string project_code = 5;
+  Platform platform = 6;
+}
+
+message IsManagerReadOnlyInput {
+  aelf.Hash ca_hash = 1;
+  aelf.Address manager = 2;
+}
+
+message RemoveReadOnlyManagerInput{
+  aelf.Hash ca_hash = 1;
+  repeated ca.GuardianInfo guardians_approved = 2;
 }
 
 message AddManagerInfoInput {
@@ -641,17 +640,11 @@ message Invited {
   string project_code = 5;
 }
 
-enum OperationType {
-  Unknown = 0;
-  CreateCAHolder = 1;
-  SocialRecovery = 2;
-  AddGuardian = 3;
-  RemoveGuardian = 4;
-  UpdateGuardian = 5;
-  RemoveOtherManagerInfo = 6;
-  SetLoginAccount = 7;
-  Approve = 8;
-  ModifyTransferLimit = 9;
-  GuardianApproveTransfer = 10;
-  UnSetLoginAccount = 11;
+enum Platform {
+  UNDEFINED = 0;
+  ANDROID = 1;
+  IOS = 2;
+  WEB = 3;
+  SDK = 4;
+  TELEGRAM = 5;
 }

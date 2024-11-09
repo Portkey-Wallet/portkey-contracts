@@ -261,7 +261,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         // Where is the code for double check approved guardians?
         // Don't forget to assign GuardianApprovedCount
         var isJudgementStrategySatisfied =
-            IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count, 1, holderInfo.JudgementStrategy);
+            IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count, 1, holderInfo.JudgementStrategy, caHash:null, clearReadOnlyManager:false);
         if (!isJudgementStrategySatisfied)
         {
             caAddress = null;
@@ -321,7 +321,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         // Where is the code for double check approved guardians?
         // Don't forget to assign GuardianApprovedCount
         var isJudgementStrategySatisfied =
-            IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count, 1, holderInfo.JudgementStrategy);
+            IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count, 1, holderInfo.JudgementStrategy, caHash:null, clearReadOnlyManager:false);
         if (!isJudgementStrategySatisfied)
         {
             caAddress = null;
@@ -344,7 +344,8 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         Assert(holderInfo.CreateChainId == Context.ChainId, "Not on registered chain");
     }
 
-    private bool IsJudgementStrategySatisfied(int guardianCount, int guardianApprovedCount, StrategyNode strategyNode)
+    private bool IsJudgementStrategySatisfied(int guardianCount, int guardianApprovedCount, StrategyNode strategyNode,
+        Hash caHash = null, bool clearReadOnlyManager = true)
     {
         var context = new StrategyContext()
         {
@@ -356,7 +357,13 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         };
 
         var judgementStrategy = StrategyFactory.Create(strategyNode);
-        return (bool)judgementStrategy.Validate(context);
+        var judgementResult = (bool)judgementStrategy.Validate(context);
+        //after guardian approved, read-only status manager should be cleared.
+        if (!clearReadOnlyManager || caHash == null || !judgementResult)
+            return judgementResult;
+        if (IsManagerReadOnly(caHash, Context.Sender))
+            State.CaHashToReadOnlyStatusManagers[caHash].ManagerAddresses.Remove(Context.Sender);
+        return true;
     }
 
     private void SetDelegator(Hash holderId, ManagerInfo managerInfo)
@@ -544,8 +551,6 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         Assert(input.SubscriptionId > 0, "Invalid input subscription id.");
         Assert(State.OidcProviderData[input.Type] != null, "StartOracleDataFeedsTaskRequest OidcProviderData doesn't exist");
         Assert(State.OracleContract.Value != null, "Oracle contract should be set.");
-        Assert(!(State.OidcProviderData[input.Type].SubscriptionId.Equals(input.SubscriptionId)
-            && State.OidcProviderData[input.Type].SpecificData != null), "the SubscriptionId has started before");
 
         var specificData = GetJobSepc(State.OidcProviderData[input.Type].JwksEndpoint);
         var specificDataWrapper = new AetherLink.Contracts.DataFeeds.Coordinator.SpecificData

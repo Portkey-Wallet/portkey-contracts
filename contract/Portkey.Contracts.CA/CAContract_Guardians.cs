@@ -46,7 +46,7 @@ public partial class CAContract
         //Whether the approved guardians count is satisfied.
         var holderJudgementStrategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
         var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count,
-            guardianApprovedCount, holderJudgementStrategy);
+            guardianApprovedCount, holderJudgementStrategy, input.CaHash);
         Assert(isJudgementStrategySatisfied, "The number of approved guardians does not meet the requirements ");
         
         //var loginGuardians = GetLoginGuardians(holderInfo.GuardianList);
@@ -155,7 +155,7 @@ public partial class CAContract
 
         //Whether the approved guardians count is satisfied.
         var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count.Sub(1),
-            guardianApprovedCount, holderInfo.JudgementStrategy);
+            guardianApprovedCount, holderInfo.JudgementStrategy, input.CaHash);
         if (!isJudgementStrategySatisfied)
         {
             return new Empty();
@@ -253,7 +253,7 @@ public partial class CAContract
 
         //Whether the approved guardians count is satisfied.
         var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count.Sub(1),
-            guardianApprovedCount, holderInfo.JudgementStrategy);
+            guardianApprovedCount, holderInfo.JudgementStrategy, input.CaHash);
         Assert(isJudgementStrategySatisfied, "guardian approved is" + guardianApprovedCount + ", not satisfied strategy");
 
         existPreGuardian.VerifierId = input.GuardianToUpdateNew?.VerificationInfo.Id;
@@ -278,85 +278,5 @@ public partial class CAContract
         });
 
         return new Empty();
-    }
-
-    public override Empty AppendGuardianPoseidonHash(AppendGuardianRequest request)
-    {
-        Assert(State.CreatorControllers.Value.Controllers.Contains(Context.Sender), "No AppendGuardianPoseidonHash permission");
-        Assert(request != null, "Invalid request.");
-        Assert(request.Input != null, "Invalid input.");
-        Assert(request.Input.Count <= 30, "input count is more than 30.");
-        foreach (var appendGuardianInput in request.Input)
-        {
-            Assert(appendGuardianInput != null && appendGuardianInput.CaHash != null, "Invalid appendGuardianInput.");
-            foreach (var guardian in appendGuardianInput.Guardians)
-            {
-                Assert(guardian?.Type != null && guardian?.IdentifierHash != null, "guardian type identifierHash invalid.");
-            }
-        }
-
-        foreach (var appendGuardianInput in request.Input)
-        {
-            var holderInfo = State.HolderInfoMap[appendGuardianInput.CaHash];
-            var guardiansOfHolder = holderInfo?.GuardianList?.Guardians;
-            if (guardiansOfHolder == null || guardiansOfHolder.Count == 0)
-            {
-                continue;
-            }
-            foreach (var guardianInfoWithPoseidon in appendGuardianInput.Guardians)
-            {
-                var guardianOfHolder= guardiansOfHolder.FirstOrDefault(g =>
-                    g.Type.Equals(guardianInfoWithPoseidon.Type) && g.IdentifierHash.Equals(guardianInfoWithPoseidon.IdentifierHash));
-                if (guardianOfHolder == null)
-                {
-                    continue;
-                }
-                guardianOfHolder.PoseidonIdentifierHash = guardianInfoWithPoseidon.PoseidonIdentifierHash;
-            }
-        }
-    
-        return new Empty();
-    }
-
-    public override Empty AppendGoogleGuardianPoseidon(AppendSingleGuardianPoseidonInput input)
-    {
-        var guardiansOfHolder = CheckAppendGuardianPoseidon(input);
-
-        var guardianOfHolder= guardiansOfHolder.FirstOrDefault(g =>
-            g.Type.Equals(GuardianType.OfGoogle) && g.IdentifierHash.Equals(input.IdentifierHash));
-        Assert(guardianOfHolder != null, "guardianOfHolder of Google not exists");
-        SetPoseidonHash(input, guardianOfHolder);
-        return new Empty();
-    }
-
-    private static void SetPoseidonHash(AppendSingleGuardianPoseidonInput input, Guardian guardianOfHolder)
-    {
-        guardianOfHolder.PoseidonIdentifierHash = input.PoseidonIdentifierHash;
-    }
-
-    public override Empty AppendAppleGuardianPoseidon(AppendSingleGuardianPoseidonInput input)
-    {
-        var guardiansOfHolder = CheckAppendGuardianPoseidon(input);
-        
-        var guardianOfHolder= guardiansOfHolder.FirstOrDefault(g =>
-            g.Type.Equals(GuardianType.OfApple) && g.IdentifierHash.Equals(input.IdentifierHash));
-        Assert(guardianOfHolder != null, "guardianOfHolder of Apple not exist");
-        SetPoseidonHash(input, guardianOfHolder);
-        return new Empty();
-    }
-    
-    private RepeatedField<Guardian> CheckAppendGuardianPoseidon(AppendSingleGuardianPoseidonInput input)
-    {
-        Assert(State.CreatorControllers.Value.Controllers.Contains(Context.Sender)
-               || Context.Sender == State.Admin.Value, "No AppendSingleGuardianPoseidonInput permission");
-        Assert(input != null, "Invalid request.");
-        Assert(input.CaHash != null, "Invalid CaHash.");
-        Assert(input.IdentifierHash != null, "Invalid IdentifierHash.");
-        Assert(!string.IsNullOrWhiteSpace(input.PoseidonIdentifierHash), "Invalid PoseidonIdentifierHash.");
-        var holderInfo = State.HolderInfoMap[input.CaHash];
-        Assert(holderInfo != null, "holderInfo not exist.");
-        var guardiansOfHolder = holderInfo?.GuardianList?.Guardians;
-        Assert(guardiansOfHolder != null && guardiansOfHolder.Count != 0, "guardiansOfHolder not exists.");
-        return guardiansOfHolder;
     }
 }
