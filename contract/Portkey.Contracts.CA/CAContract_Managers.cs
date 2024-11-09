@@ -67,6 +67,7 @@ public partial class CAContract
         Assert(holderInfo.ManagerInfos.Count < GetManagerMaxCount(),
             "The amount of ManagerInfos out of limit");
 
+        input.ManagerInfo.Platform = input.Platform;
         State.HolderInfoMap[caHash].ManagerInfos.Add(input.ManagerInfo);
         SetDelegator(caHash, input.ManagerInfo);
         ClearRemovedManagerTransactionData(caHash, holderInfo);
@@ -75,7 +76,8 @@ public partial class CAContract
             CaHash = caHash,
             CaAddress = caAddress,
             Manager = input.ManagerInfo.Address,
-            ExtraData = input.ManagerInfo.ExtraData
+            ExtraData = input.ManagerInfo.ExtraData,
+            Platform = (int)input.Platform
         });
         FireInvitedLogEvent(caHash, nameof(SocialRecovery), input.ReferralCode, input.ProjectCode);
         return new Empty();
@@ -115,7 +117,8 @@ public partial class CAContract
             CaHash = input.CaHash,
             CaAddress = caAddress,
             Manager = input.ManagerInfo.Address,
-            ExtraData = input.ManagerInfo.ExtraData
+            ExtraData = input.ManagerInfo.ExtraData,
+            Platform = (int)input.ManagerInfo.Platform
         });
 
         return new Empty();
@@ -179,7 +182,8 @@ public partial class CAContract
             CaHash = caHash,
             CaAddress = caAddress,
             Manager = managerInfo.Address,
-            ExtraData = managerInfo.ExtraData
+            ExtraData = managerInfo.ExtraData,
+            Platform = GetPlatformFromCurrentSender(caHash, holderInfo)
         });
 
         return new Empty();
@@ -215,7 +219,8 @@ public partial class CAContract
                 CaHash = input!.CaHash,
                 CaAddress = caAddress,
                 Manager = managerInfo.Address,
-                ExtraData = managerInfo.ExtraData
+                ExtraData = managerInfo.ExtraData,
+                Platform = GetPlatformFromCurrentSender(input.CaHash, holderInfo)
             });
         }
         ClearRemovedManagerTransactionData(input!.CaHash, holderInfo);
@@ -325,6 +330,15 @@ public partial class CAContract
                 Symbol = input.Symbol,
                 Memo = input.Memo
             }.ToByteString(), true);
+        Context.Fire(new ManagerTransferred
+        {
+            CaHash = input.CaHash,
+            To = input.To,
+            Symbol = input.Symbol,
+            Amount = input.Amount,
+            Memo = input.Memo,
+            Platform = GetPlatformFromCurrentSender(input.CaHash)
+        });
         return new Empty();
     }
 
@@ -379,6 +393,7 @@ public partial class CAContract
             Spender = input.Spender,
             Amount = input.Amount,
             Symbol = input.Symbol,
+            Platform = GetPlatformFromCurrentSender(input.CaHash)
         });
         return new Empty();
     }
@@ -704,5 +719,21 @@ public partial class CAContract
             }
             managerStatisticsInfoList.ManagerStatisticsInfos.Remove(managerStatisticsInfo);
         }
+    }
+
+    private int GetPlatformFromCurrentSender(Hash caHash, HolderInfo holderInfo = null)
+    {
+        if (caHash == null)
+        {
+            return (int)Platform.Undefined;
+        }
+        holderInfo ??= State.HolderInfoMap[caHash];
+        var managerInfo = holderInfo.ManagerInfos.FirstOrDefault(mg => mg.Address.Equals(Context.Sender));
+        if (managerInfo == null)
+        {
+            return (int)Platform.Undefined;
+        }
+
+        return (int)managerInfo.Platform;
     }
 }

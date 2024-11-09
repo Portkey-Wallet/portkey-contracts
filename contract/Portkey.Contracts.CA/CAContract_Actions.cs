@@ -70,6 +70,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         holderId = HashHelper.ConcatAndCompute(Context.TransactionId, Context.PreviousBlockHash);
         Guardian guardian;
         Address caAddress;
+        input.ManagerInfo.Platform = input.Platform;
         if (CanZkLoginExecute(input.GuardianApproved))
         {
             if (!CreateCaHolderInfoWithCaHashAndCreateChainIdForZkLogin(input.ManagerInfo, input.GuardianApproved,
@@ -121,7 +122,8 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
             CaHash = holderId,
             CaAddress = caAddress,
             Manager = input.ManagerInfo!.Address,
-            ExtraData = input.ManagerInfo.ExtraData
+            ExtraData = input.ManagerInfo.ExtraData,
+            Platform = (int)input.Platform
         });
 
         Context.Fire(new LoginGuardianAdded

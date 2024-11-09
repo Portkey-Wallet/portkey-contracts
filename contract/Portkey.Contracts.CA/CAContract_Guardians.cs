@@ -87,7 +87,8 @@ public partial class CAContract
         {
             CaHash = input.CaHash,
             CaAddress = caAddress,
-            GuardianAdded_ = guardianAdded
+            GuardianAdded_ = guardianAdded,
+            Platform = GetPlatformFromCurrentSender(input.CaHash, holderInfo)
         });
         return new Empty();
     }
@@ -180,7 +181,8 @@ public partial class CAContract
         {
             CaHash = input.CaHash,
             CaAddress = caAddress,
-            GuardianRemoved_ = toRemoveGuardian
+            GuardianRemoved_ = toRemoveGuardian,
+            Platform = GetPlatformFromCurrentSender(input.CaHash, holderInfo)
         });
 
         return new Empty();
@@ -274,7 +276,8 @@ public partial class CAContract
             CaHash = input.CaHash,
             CaAddress = caAddress,
             GuardianUpdatedPre = preGuardian,
-            GuardianUpdatedNew = existPreGuardian
+            GuardianUpdatedNew = existPreGuardian,
+            Platform = GetPlatformFromCurrentSender(input.CaHash, holderInfo)
         });
 
         return new Empty();

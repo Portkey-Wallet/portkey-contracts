@@ -69,7 +69,8 @@ public partial class CAContract
             CaHash = input.CaHash,
             CaAddress = caAddress,
             LoginGuardian = guardian,
-            Manager = Context.Sender
+            Manager = Context.Sender,
+            Platform = GetPlatformFromCurrentSender(input.CaHash, holderInfo)
         });
 
         return new Empty();
@@ -139,7 +140,8 @@ public partial class CAContract
             CaHash = input.CaHash,
             CaAddress = caAddress,
             LoginGuardian = guardian,
-            Manager = Context.Sender
+            Manager = Context.Sender,
+            Platform = GetPlatformFromCurrentSender(input.CaHash, holderInfo)
         });
 
         
