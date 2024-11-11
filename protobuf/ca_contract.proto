@@ -605,6 +605,7 @@ message LoginGuardianUnbound {
   aelf.Address ca_address = 2;
   aelf.Address manager = 3 [(aelf.is_indexed) = true];
   aelf.Hash login_guardian_identifier_hash = 4 [(aelf.is_indexed) = true];
+  int32 platform = 5 [(aelf.is_indexed) = true];
 }
 
 // LoginGuardian removed

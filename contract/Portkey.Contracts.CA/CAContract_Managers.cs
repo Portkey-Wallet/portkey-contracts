@@ -209,7 +209,17 @@ public partial class CAContract
         {
             var managerInfo = FindManagerInfo(holderInfo.ManagerInfos, inputManagerInfo.Address);
             if (managerInfo == null)
+            {
+                Context.Fire(new ManagerInfoRemoved
+                {
+                    CaHash = input!.CaHash,
+                    CaAddress = caAddress,
+                    Manager = inputManagerInfo.Address,
+                    ExtraData = inputManagerInfo.ExtraData,
+                    Platform = GetPlatformFromCurrentSender(input.CaHash, holderInfo)
+                });
                 continue;
+            }
 
             holderInfo.ManagerInfos.Remove(managerInfo);
             RemoveDelegator(input!.CaHash, managerInfo);
@@ -277,7 +287,7 @@ public partial class CAContract
     {
         Assert(hash != null, "invalid input CaHash");
         CheckManagerInfoPermission(hash, Context.Sender);
-        Assert(managerInfos != null && managerInfos.Count > 0, "invalid input managerInfo");
+        Assert(managerInfos != null && managerInfos.Count > 0, "invalid input managerInfos");
 
         foreach (var managerInfo in managerInfos!)
         {

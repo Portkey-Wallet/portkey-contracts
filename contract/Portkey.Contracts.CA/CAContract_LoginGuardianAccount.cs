@@ -156,7 +156,8 @@ public partial class CAContract
                 CaHash = input.CaHash,
                 CaAddress = caAddress,
                 LoginGuardianIdentifierHash = input.GuardianToUnsetLogin.IdentifierHash,
-                Manager = Context.Sender
+                Manager = Context.Sender,
+                Platform = GetPlatformFromCurrentSender(input.CaHash, holderInfo)
             });
         }
         
