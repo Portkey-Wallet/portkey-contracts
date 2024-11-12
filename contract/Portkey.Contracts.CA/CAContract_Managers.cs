@@ -168,6 +168,8 @@ public partial class CAContract
 
         var caAddress = Context.ConvertVirtualAddressToContractAddress(caHash);
 
+        var isCurrentSender = Context.Sender.Equals(address);
+        var platform = (int)managerInfo.Platform;
         holderInfo.ManagerInfos.Remove(managerInfo);
         RemoveDelegator(caHash, managerInfo);
         //remove read-only manager when logging out
@@ -183,7 +185,7 @@ public partial class CAContract
             CaAddress = caAddress,
             Manager = managerInfo.Address,
             ExtraData = managerInfo.ExtraData,
-            Platform = GetPlatformFromCurrentSender(caHash, holderInfo)
+            Platform = isCurrentSender ? platform : GetPlatformFromCurrentSender(caHash, holderInfo)
         });
 
         return new Empty();
@@ -205,6 +207,7 @@ public partial class CAContract
         Assert(isJudgementStrategySatisfied, "guardian approved failed.");
         
         var caAddress = Context.ConvertVirtualAddressToContractAddress(input!.CaHash);
+        var currentSenderPlatform = GetPlatformFromCurrentSender(input.CaHash, holderInfo);
         foreach (var inputManagerInfo in input.ManagerInfos)
         {
             var managerInfo = FindManagerInfo(holderInfo.ManagerInfos, inputManagerInfo.Address);
@@ -215,8 +218,7 @@ public partial class CAContract
                     CaHash = input!.CaHash,
                     CaAddress = caAddress,
                     Manager = inputManagerInfo.Address,
-                    ExtraData = inputManagerInfo.ExtraData,
-                    Platform = GetPlatformFromCurrentSender(input.CaHash, holderInfo)
+                    ExtraData = inputManagerInfo.ExtraData
                 });
                 continue;
             }
@@ -230,7 +232,7 @@ public partial class CAContract
                 CaAddress = caAddress,
                 Manager = managerInfo.Address,
                 ExtraData = managerInfo.ExtraData,
-                Platform = GetPlatformFromCurrentSender(input.CaHash, holderInfo)
+                Platform = currentSenderPlatform
             });
         }
         ClearRemovedManagerTransactionData(input!.CaHash, holderInfo);
