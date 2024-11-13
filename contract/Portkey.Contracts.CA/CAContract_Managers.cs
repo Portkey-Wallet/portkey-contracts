@@ -70,7 +70,7 @@ public partial class CAContract
         input.ManagerInfo.Platform = input.Platform;
         State.HolderInfoMap[caHash].ManagerInfos.Add(input.ManagerInfo);
         SetDelegator(caHash, input.ManagerInfo);
-        ClearRemovedManagerTransactionData(caHash, holderInfo);
+        DoClearRemovedManagerTransactionData(caHash, holderInfo);
         Context.Fire(new ManagerInfoSocialRecovered()
         {
             CaHash = caHash,
@@ -177,7 +177,7 @@ public partial class CAContract
         {
             State.CaHashToReadOnlyStatusManagers[caHash].ManagerAddresses.Remove(address);
         }
-        ClearRemovedManagerTransactionData(caHash, holderInfo);
+        DoClearRemovedManagerTransactionData(caHash, holderInfo);
 
         Context.Fire(new ManagerInfoRemoved
         {
@@ -235,7 +235,7 @@ public partial class CAContract
                 Platform = currentSenderPlatform
             });
         }
-        ClearRemovedManagerTransactionData(input!.CaHash, holderInfo);
+        DoClearRemovedManagerTransactionData(input!.CaHash, holderInfo);
         return new Empty();
     }
 
@@ -711,7 +711,7 @@ public partial class CAContract
 
     }
 
-    private void ClearRemovedManagerTransactionData(Hash caHash, HolderInfo holderInfo = null)
+    private void DoClearRemovedManagerTransactionData(Hash caHash, HolderInfo holderInfo = null)
     {
         var managerStatisticsInfoList = State.ManagerTransactionStatistics[caHash];
         if (managerStatisticsInfoList == null)
@@ -723,13 +723,15 @@ public partial class CAContract
         {
             return;
         }
-        foreach (var managerStatisticsInfo in managerStatisticsInfoList.ManagerStatisticsInfos.ToList())
+
+        var originalInfos = managerStatisticsInfoList.ManagerStatisticsInfos;
+        foreach (var managerStatisticsInfo in originalInfos.ToList())
         {
             if (holderInfo.ManagerInfos.Any(mg => mg.Address.Equals(managerStatisticsInfo.Address)))
             {
                 continue;
             }
-            managerStatisticsInfoList.ManagerStatisticsInfos.Remove(managerStatisticsInfo);
+            originalInfos.Remove(managerStatisticsInfo);
         }
     }
 
