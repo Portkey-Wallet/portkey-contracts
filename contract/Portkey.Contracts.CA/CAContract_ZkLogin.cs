@@ -269,7 +269,7 @@ public partial class CAContract
     
     private static bool CanGuardianZkLoginExecute(Guardian guardian)
     {
-        return guardian is not null && IsZkLoginSupported(guardian.Type) && IsValidZkOidcInfoSupportZkLogin(guardian.ZkLoginInfo);
+        return guardian is not null && (guardian.ManuallySupportForZk || (IsZkLoginSupported(guardian.Type) && IsValidZkOidcInfoSupportZkLogin(guardian.ZkLoginInfo)));
     }
 
     private static bool IsValidGuardianType(GuardianType type)

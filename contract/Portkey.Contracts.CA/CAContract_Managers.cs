@@ -57,7 +57,7 @@ public partial class CAContract
         Assert(isJudgementStrategySatisfied, "Please complete the approval of all guardians");
         //set manager read-only status when the only telegram guardian of guardians is approved
         SetManagerReadOnlyStatus(input.ManagerInfo.Address, isReadOnlyManager, caHash);
-        
+        UpdateManuallySupportForZk(caHash, input.GuardiansApproved, holderInfo);
         // ManagerInfo exists
         var managerInfo = FindManagerInfo(holderInfo.ManagerInfos, input.ManagerInfo.Address);
         Assert(managerInfo == null, $"ManagerInfo exists");
@@ -90,6 +90,34 @@ public partial class CAContract
         if (!IsManagerReadOnly(caHash, manager))
         {
             State.CaHashToReadOnlyStatusManagers[caHash].ManagerAddresses.Add(manager);
+        }
+    }
+
+    private void UpdateManuallySupportForZk(Hash caHash, RepeatedField<GuardianInfo> guardianApproved, HolderInfo holderInfo = null)
+    {
+        if (caHash == null || guardianApproved == null)
+        {
+            return;
+        }
+
+        holderInfo = holderInfo ?? State.HolderInfoMap[caHash];
+        if (holderInfo == null || holderInfo.GuardianList == null)
+        {
+            return;
+        }
+        foreach (var guardian in holderInfo.GuardianList.Guardians)
+        {
+            if (guardian.ManuallySupportForZk)
+            {
+                continue;
+            }
+
+            var approvedGuardian  = guardianApproved.FirstOrDefault(g => g.IdentifierHash.Equals(guardian.IdentifierHash));
+            if (approvedGuardian == null)
+            {
+                continue;
+            }
+            guardian.ManuallySupportForZk = CanZkLoginExecute(approvedGuardian);
         }
     }
 
@@ -177,7 +205,7 @@ public partial class CAContract
         {
             State.CaHashToReadOnlyStatusManagers[caHash].ManagerAddresses.Remove(address);
         }
-        DoClearRemovedManagerTransactionData(caHash, holderInfo);
+        DoClearRemovedManagerTransactionData(caHash, holderInfo, 50);
 
         Context.Fire(new ManagerInfoRemoved
         {
@@ -235,7 +263,7 @@ public partial class CAContract
                 Platform = currentSenderPlatform
             });
         }
-        DoClearRemovedManagerTransactionData(input!.CaHash, holderInfo);
+        DoClearRemovedManagerTransactionData(input!.CaHash, holderInfo, 50);
         return new Empty();
     }
 
@@ -711,7 +739,16 @@ public partial class CAContract
 
     }
 
-    private void DoClearRemovedManagerTransactionData(Hash caHash, HolderInfo holderInfo = null)
+    public override Empty ClearRemovedManagerTransactionData(ClearManagerStatisticsInput input)
+    {
+        Assert(Context.Sender == State.Admin.Value, "No ClearRemovedManagerTransactionData permission.");
+        Assert(input != null, "Invalid input when ClearRemovedManagerTransactionData.");
+        Assert(input.CaHash != null, "Invalid caHash when ClearRemovedManagerTransactionData.");
+        DoClearRemovedManagerTransactionData(input.CaHash, null, input.ClearLimit);
+        return new Empty();
+    }
+
+    private void DoClearRemovedManagerTransactionData(Hash caHash, HolderInfo holderInfo = null, int clearLimit = 30)
     {
         var managerStatisticsInfoList = State.ManagerTransactionStatistics[caHash];
         if (managerStatisticsInfoList == null)
@@ -723,9 +760,12 @@ public partial class CAContract
         {
             return;
         }
-
+        
         var originalInfos = managerStatisticsInfoList.ManagerStatisticsInfos;
-        foreach (var managerStatisticsInfo in originalInfos.ToList())
+        var managerStatisticsInfos = originalInfos.Count > clearLimit
+            ? originalInfos.Take(clearLimit).ToList()
+            : originalInfos.ToList();
+        foreach (var managerStatisticsInfo in managerStatisticsInfos.ToList())
         {
             if (holderInfo.ManagerInfos.Any(mg => mg.Address.Equals(managerStatisticsInfo.Address)))
             {

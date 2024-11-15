@@ -55,7 +55,7 @@ public partial class CAContract
         var holderJudgementStrategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
         Assert(IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count, guardianApprovedCount,
             holderJudgementStrategy, input.CaHash), "JudgementStrategy validate failed");
-
+        UpdateManuallySupportForZk(input.CaHash, input.GuardiansApproved, holderInfo);
         guardian.IsLoginGuardian = true;
 
         State.LoginGuardianMap[input.GuardianToSetLogin.IdentifierHash][input.GuardianToSetLogin.VerificationInfo.Id] = input.CaHash;
@@ -129,7 +129,7 @@ public partial class CAContract
         var holderJudgementStrategy = holderInfo.JudgementStrategy ?? Strategy.DefaultStrategy();
         Assert(IsJudgementStrategySatisfied(holderInfo.GuardianList!.Guardians.Count, guardianApprovedCount,
             holderJudgementStrategy, input.CaHash), "JudgementStrategy validate failed");
-
+        UpdateManuallySupportForZk(input.CaHash, input.GuardiansApproved, holderInfo);
         guardian.IsLoginGuardian = false;
 
         State.LoginGuardianMap[input.GuardianToUnsetLogin.IdentifierHash].Remove(input.GuardianToUnsetLogin.VerificationInfo.Id);

@@ -25,6 +25,7 @@ service CAContractImpl {
   rpc GetManagerMaxCount(google.protobuf.Empty) returns (google.protobuf.Int32Value) { option (aelf.is_view) = true; }
   rpc GetCanRemoveManagerMaxCount(google.protobuf.Empty) returns (google.protobuf.Int32Value) { option (aelf.is_view) = true; }
   rpc GetManagerTransactionStatistics(ManagerStatisticsInput) returns (ManagerStatisticsInfoList) { option (aelf.is_view) = true; }
+  rpc ClearRemovedManagerTransactionData(ClearManagerStatisticsInput) returns (google.protobuf.Empty) {}
   // approve
   rpc ManagerApprove(ManagerApproveInput) returns (google.protobuf.Empty) {}
         
@@ -101,7 +102,7 @@ service CAContractImpl {
   
   //Verifier If End Points already exists, return true
   rpc AddVerifierServerEndPoints (AddVerifierServerEndPointsInput) returns (google.protobuf.Empty) {}
-
+  rpc UpdateVerifierServerImageUrl(UpdateVerifierServerImageUrlInput) returns (google.protobuf.Empty) {}
   //Verifier If End Points does not exists, return true
   rpc RemoveVerifierServerEndPoints (RemoveVerifierServerEndPointsInput) returns (google.protobuf.Empty) {}
 
@@ -460,6 +461,11 @@ message VerifierServerRemoved {
   VerifierServer verifier_server = 1 [(aelf.is_indexed) = true];
 }
 
+message VerifierServerImageUpdated {
+  option (aelf.is_event) = true;
+  VerifierServer verifier_server = 1 [(aelf.is_indexed) = true];
+}
+
 message AddVerifierServerEndPointsInput {
   // If not exists, add; If does, insert
   string name = 1;
@@ -468,6 +474,11 @@ message AddVerifierServerEndPointsInput {
   repeated string end_points = 3;
   repeated aelf.Address verifier_address_list = 4;
   aelf.Hash verifier_id = 5;
+}
+
+message UpdateVerifierServerImageUrlInput {
+  aelf.Hash id = 1;
+  string image_url = 2;
 }
 
 message RemoveVerifierServerInput {
@@ -582,6 +593,11 @@ message ControllerOutput{
 
 message ManagerStatisticsInput {
   aelf.Hash ca_hash = 1;
+}
+
+message ClearManagerStatisticsInput {
+  aelf.Hash ca_hash = 1;
+  int32 clear_limit = 2;
 }
 
 message ManagerStatisticsInfoList{

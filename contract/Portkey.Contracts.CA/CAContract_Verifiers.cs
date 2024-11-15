@@ -156,6 +156,31 @@ public partial class CAContract
 
         return new Empty();
     }
+    
+    public override Empty UpdateVerifierServerImageUrl(UpdateVerifierServerImageUrlInput input)
+    {
+        Assert(State.Admin.Value == Context.Sender, "No permission");
+        Assert(input != null, "invalid input");
+        Assert(input.ImageUrl != null, "invalid image url");
+        Assert(IsValidHash(input!.Id), "invalid input id");
+        if (State.VerifiersServerList.Value == null || State.VerifiersServerList.Value.VerifierServers.Count == 0) return new Empty();
+    
+        var server = State.VerifiersServerList.Value.VerifierServers
+            .FirstOrDefault(server => server.Id == input.Id);
+        if (server == null)
+        {
+            return new Empty();
+        }
+    
+        server.ImageUrl = input.ImageUrl;
+    
+        Context.Fire(new VerifierServerImageUpdated
+        {
+            VerifierServer = server
+        });
+    
+        return new Empty();
+    }
 
     public override GetVerifierServersOutput GetVerifierServers(Empty input)
     {
