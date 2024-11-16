@@ -171,6 +171,7 @@ message ManagerApproved {
     aelf.Address spender = 2;
     string symbol = 3;
     int64 amount = 4;
+    int32 platform = 5 [(aelf.is_indexed) = true];
 }
 
 message SetTransferLimitInput {
@@ -238,6 +239,17 @@ message TransferLimitChanged{
     string symbol = 2 [(aelf.is_indexed) = true];
     int64 single_limit = 3 [(aelf.is_indexed) = true];
     int64 daily_limit = 4 [(aelf.is_indexed) = true];
+    int32 platform = 5 [(aelf.is_indexed) = true];
+}
+
+message ManagerTransferred {
+  option (aelf.is_event) = true;
+  aelf.Hash ca_hash = 1 [(aelf.is_indexed) = true];
+  aelf.Address to = 2 [(aelf.is_indexed) = true];
+  string symbol = 3 [(aelf.is_indexed) = true];
+  int64 amount = 4;
+  string memo = 5;
+  int32 platform = 6 [(aelf.is_indexed) = true];
 }
 
 message SetTransferSecurityThresholdInput{

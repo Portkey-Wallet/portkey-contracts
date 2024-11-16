@@ -63,6 +63,8 @@ service CAContract {
   
   rpc RemoveOtherManagerInfo (RemoveOtherManagerInfoInput) returns (google.protobuf.Empty) {}
   
+  rpc RemoveOtherManagerInfos (RemoveOtherManagerInfosInput) returns (google.protobuf.Empty) {}
+  
   rpc UpdateManagerInfos (UpdateManagerInfosInput) returns (google.protobuf.Empty) {}
 
   rpc GetHolderInfo(GetHolderInfoInput) returns (GetHolderInfoOutput) {option (aelf.is_view) = true;}
@@ -123,6 +125,7 @@ message DelegateInfo {
 message ManagerInfo {
   aelf.Address address = 1;
   string extra_data = 2;
+  Platform platform = 3;
 }
 
 message GuardianList {
@@ -181,6 +184,7 @@ message CreateCAHolderInput {
   string referral_code = 4;
   string project_code = 5;
   DelegateInfo delegate_info = 6;
+  Platform platform = 7;
 }
 
 message ReportPreCrossChainSyncHolderInfoInput {
@@ -446,6 +450,12 @@ message RemoveOtherManagerInfoInput {
   repeated GuardianInfo guardians_approved = 3;
 }
 
+message RemoveOtherManagerInfosInput {
+  aelf.Hash ca_hash = 1;
+  repeated ManagerInfo manager_infos = 2;
+  repeated GuardianInfo guardians_approved = 3;
+}
+
 message UpdateManagerInfosInput {
   aelf.Hash ca_hash = 1;
   repeated ManagerInfo manager_infos = 2;
@@ -496,6 +506,7 @@ message CAHolderCreated {
   aelf.Address ca_address = 3 [(aelf.is_indexed) = true];
   aelf.Address manager = 4 [(aelf.is_indexed) = true];
   string extra_data = 5;
+  int32 platform = 6 [(aelf.is_indexed) = true];
 }
 
 message PreCrossChainSyncHolderInfoCreated {
@@ -514,6 +525,7 @@ message GuardianAdded{
   aelf.Hash ca_hash = 1[(aelf.is_indexed) = true];
   aelf.Address ca_address = 2;
   Guardian guardian_added = 3;
+  int32 platform = 4 [(aelf.is_indexed) = true];
 }
 
 //Guardian removed
@@ -522,6 +534,7 @@ message GuardianRemoved{
   aelf.Hash ca_hash = 1[(aelf.is_indexed) = true];
   aelf.Address ca_address = 2;
   Guardian guardian_removed = 3;
+  int32 platform = 4 [(aelf.is_indexed) = true];
 }
 
 //Guardian updated
@@ -531,6 +544,7 @@ message GuardianUpdated{
   aelf.Address ca_address = 2;
   Guardian guardian_updated_pre = 3;
   Guardian guardian_updated_new = 4;
+  int32 platform = 5 [(aelf.is_indexed) = true];
 }
 
 // LoginGuardian added
@@ -541,6 +555,7 @@ message LoginGuardianAdded {
   aelf.Address manager = 3 [(aelf.is_indexed) = true];
   Guardian login_guardian = 4 [(aelf.is_indexed) = true];
   bool is_create_holder = 5;
+  int32 platform = 6 [(aelf.is_indexed) = true];
 }
 
 // SocialRecovery
@@ -550,6 +565,7 @@ message ManagerInfoSocialRecovered {
   aelf.Address ca_address = 2 [(aelf.is_indexed) = true];
   aelf.Address manager = 3 [(aelf.is_indexed) = true];
   string extra_data = 4;
+  int32 platform = 5 [(aelf.is_indexed) = true];
 }
 
 // ManagerInfo added
@@ -559,6 +575,7 @@ message ManagerInfoAdded {
   aelf.Address ca_address = 2 [(aelf.is_indexed) = true];
   aelf.Address manager = 3 [(aelf.is_indexed) = true];
   string extra_data = 4;
+  int32 platform = 5 [(aelf.is_indexed) = true];
 }
 
 // ManagerInfo removed
@@ -568,6 +585,7 @@ message ManagerInfoRemoved {
   aelf.Address ca_address = 2 [(aelf.is_indexed) = true];
   aelf.Address manager = 3 [(aelf.is_indexed) = true];
   string extra_data = 4;
+  int32 platform = 5 [(aelf.is_indexed) = true];
 }
 
 // ManagerInfo updated
@@ -577,6 +595,7 @@ message ManagerInfoUpdated {
   aelf.Address ca_address = 2 [(aelf.is_indexed) = true];
   aelf.Address manager = 3 [(aelf.is_indexed) = true];
   string extra_data = 4;
+  int32 platform = 5 [(aelf.is_indexed) = true];
 }
 
 // LoginGuardian unset
@@ -586,6 +605,7 @@ message LoginGuardianUnbound {
   aelf.Address ca_address = 2;
   aelf.Address manager = 3 [(aelf.is_indexed) = true];
   aelf.Hash login_guardian_identifier_hash = 4 [(aelf.is_indexed) = true];
+  int32 platform = 5 [(aelf.is_indexed) = true];
 }
 
 // LoginGuardian removed
@@ -595,6 +615,7 @@ message LoginGuardianRemoved {
   aelf.Address ca_address = 2;
   aelf.Address manager = 3 [(aelf.is_indexed) = true];
   Guardian login_guardian = 4 [(aelf.is_indexed) = true];
+  int32 platform = 5 [(aelf.is_indexed) = true];
 }
 
 message CAHolderSynced {

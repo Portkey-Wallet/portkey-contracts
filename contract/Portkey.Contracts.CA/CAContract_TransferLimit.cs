@@ -29,7 +29,8 @@ public partial class CAContract
             CaHash = input.CaHash,
             Symbol = input.Symbol,
             SingleLimit = input.SingleLimit,
-            DailyLimit = input.DailyLimit
+            DailyLimit = input.DailyLimit,
+            Platform = GetPlatformFromCurrentSender(input.CaHash)
         });
         return new Empty();
     }
