@@ -398,4 +398,32 @@ public partial class CAContractTests
         var result = CaContractStub.GetVerifierServers.CallAsync(new Empty());
         result.Result.VerifierServers[0].EndPoints.ShouldContain("127.0.0.1");
     }
+    
+    [Fact]
+    public async Task UpdateVerifierServerEndPointsTest()
+    {
+        await CaContractStub.Initialize.SendAsync(new InitializeInput
+        {
+            ContractAdmin = DefaultAddress,
+        });
+        await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
+        {
+            Name = "test",
+            ImageUrl = "url",
+            VerifierAddressList = { new Address() },
+            EndPoints = { "127.0.0.1" }
+        });
+        var result = CaContractStub.GetVerifierServers.CallAsync(new Empty());
+        result.Result.VerifierServers[0].EndPoints.ShouldContain("127.0.0.1");
+        result.Result.VerifierServers[0].EndPoints.Count.ShouldBe(1);
+
+        await CaContractStub.UpdateVerifierServerEndPoints.SendAsync(new UpdateVerifierServerEndPointsInput()
+        {
+            Id = result.Result.VerifierServers[0].Id,
+            EndPoints = { "local" }
+        });
+        result = CaContractStub.GetVerifierServers.CallAsync(new Empty());
+        result.Result.VerifierServers[0].EndPoints.Count.ShouldBe(1);
+        result.Result.VerifierServers[0].EndPoints.ShouldContain("local");
+    }
 }
