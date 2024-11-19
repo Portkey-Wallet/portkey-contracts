@@ -257,7 +257,8 @@ public partial class CAContract
         var isJudgementStrategySatisfied = IsJudgementStrategySatisfied(holderInfo.GuardianList.Guardians.Count.Sub(1),
             guardianApprovedCount, holderInfo.JudgementStrategy, input.CaHash);
         Assert(isJudgementStrategySatisfied, "guardian approved is" + guardianApprovedCount + ", not satisfied strategy");
-
+        UpdateManuallySupportForZk(input.CaHash, input.GuardiansApproved, holderInfo);
+        
         existPreGuardian.VerifierId = input.GuardianToUpdateNew?.VerificationInfo.Id;
         //when the user changed the verifier to zk,the front end would show zk verifier totally, not show zk+original verifier
         existPreGuardian.ManuallySupportForZk = IsZkLoginSupported(input.GuardianToUpdateNew.Type)
