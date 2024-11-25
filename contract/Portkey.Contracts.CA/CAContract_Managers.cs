@@ -441,7 +441,8 @@ public partial class CAContract
     public override Empty AddManagerApproveSpenderWhitelist(AddManagerApproveSpenderWhitelistInput input)
     {
         Assert(input != null && input.SpenderList.Count > 0, "Invalid input");
-        Assert(Context.Sender == State.Admin.Value, "No permission.");
+        // Assert(Context.Sender == State.Admin.Value, "No permission.");
+        Assert(Context.Sender == State.SecondaryAdmin.Value, "No permission.");
         foreach (var spender in input.SpenderList)
         {
             Assert(!spender.Value.IsNullOrEmpty(), "Invalid input");
@@ -453,7 +454,8 @@ public partial class CAContract
     public override Empty RemoveManagerApproveSpenderWhitelist(RemoveManagerApproveSpenderWhitelistInput input)
     {
         Assert(input != null && input.SpenderList.Count > 0, "Invalid input");
-        Assert(Context.Sender == State.Admin.Value, "No permission.");
+        // Assert(Context.Sender == State.Admin.Value, "No permission.");
+        Assert(Context.Sender == State.SecondaryAdmin.Value, "No permission.");
         foreach (var spender in input.SpenderList)
         {
             Assert(!spender.Value.IsNullOrEmpty(), "Invalid input");
