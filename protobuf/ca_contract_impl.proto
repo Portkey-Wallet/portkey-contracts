@@ -547,6 +547,15 @@ message OracleDataFeedsTaskStarted
   bytes specific_data = 3;
 }
 
+message OracleNoticeReceived {
+  option (aelf.is_event) = true;
+  aelf.Hash request_id = 1 [(aelf.is_indexed) = true];
+  string response = 2;
+  int32 request_type_index = 4;
+  aelf.Hash trace_id = 5 [(aelf.is_indexed) = true];
+  int64 timestamp = 6;
+}
+
 message CAHolderErrorOccured {
   option (aelf.is_event) = true;
   string error_message = 1;

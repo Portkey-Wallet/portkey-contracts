@@ -594,10 +594,12 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         Assert(input.RequestTypeIndex > 0, "Invalid request type index.");
         Assert(!input.Response.IsNullOrEmpty(), "Invalid input response.");
         Assert(input.TraceId != null, "Invalid trace id.");
-        
-        var response = Jwks.Parser.ParseJson(input.Response.ToStringUtf8());
+
+        var responseJson = input.Response.ToStringUtf8();
+        var response = Jwks.Parser.ParseJson(responseJson);
         Assert(response != null, "Invalid HandleOracleFulfillmentInput response input.");
         
+        SendOracleNoticeReceivedEvent(input, responseJson);
         if (input.TraceId.Equals(HashHelper.ComputeFrom(State.OidcProviderData[GuardianType.OfGoogle].Issuer)))
         {
             foreach (var keyDto in response.Keys)
@@ -605,6 +607,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
                 SetPublicKeyAndChunks(GuardianType.OfGoogle, keyDto.Kid, keyDto.N);
             }
             ClearCurrentKids(GuardianType.OfGoogle, response.Keys);
+            SendOracleNoticeFinished(GuardianType.OfGoogle, responseJson);
         }
         else if (input.TraceId.Equals(HashHelper.ComputeFrom(State.OidcProviderData[GuardianType.OfApple].Issuer)))
         {
@@ -613,6 +616,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
                 SetPublicKeyAndChunks(GuardianType.OfApple, keyDto.Kid, keyDto.N);
             }
             ClearCurrentKids(GuardianType.OfApple, response.Keys);
+            SendOracleNoticeFinished(GuardianType.OfApple, responseJson);
         }
         else
         {
@@ -620,6 +624,28 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         }
     
         return new Empty();
+    }
+
+    private void SendOracleNoticeReceivedEvent(HandleOracleFulfillmentInput input, string response)
+    {
+        Context.Fire(new OracleNoticeReceived
+        {
+            RequestId = input.RequestId,
+            Response = response,
+            RequestTypeIndex = input.RequestTypeIndex,
+            TraceId = input.TraceId,
+            Timestamp = Context.CurrentBlockTime.Seconds
+        });
+    }
+
+    private void SendOracleNoticeFinished(GuardianType guardianType, string response)
+    {
+        Context.Fire(new OracleNoticeFinished
+        {
+            GuardianType = guardianType,
+            Response = response,
+            Timestamp = Context.CurrentBlockTime.Seconds
+        });
     }
 
     private void ClearCurrentKids(GuardianType type, RepeatedField<JwkRecord> jwkRecords)
@@ -633,6 +659,10 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         foreach (var removingKid in removingKids)
         {
             State.KidsByGuardianType[type].Kids.Remove(removingKid);
+            if (State.PublicKeysChunksByKid[type][removingKid] != null)
+            {
+                State.PublicKeysChunksByKid[type].Remove(removingKid);
+            }
         }
     }
     
