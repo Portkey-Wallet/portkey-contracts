@@ -642,7 +642,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
     {
         Context.Fire(new OracleNoticeFinished
         {
-            GuardianType = guardianType,
+            GuardianType = (int)guardianType,
             Response = response,
             Timestamp = Context.CurrentBlockTime.Seconds
         });

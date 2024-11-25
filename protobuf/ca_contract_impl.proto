@@ -551,9 +551,16 @@ message OracleNoticeReceived {
   option (aelf.is_event) = true;
   aelf.Hash request_id = 1 [(aelf.is_indexed) = true];
   string response = 2;
-  int32 request_type_index = 4;
-  aelf.Hash trace_id = 5 [(aelf.is_indexed) = true];
-  int64 timestamp = 6;
+  int32 request_type_index = 3;
+  aelf.Hash trace_id = 4 [(aelf.is_indexed) = true];
+  int64 timestamp = 5;
+}
+
+message OracleNoticeFinished {
+  option (aelf.is_event) = true;
+  int32 guardian_type = 1 [(aelf.is_indexed) = true];
+  string response = 2;
+  int64 timestamp = 3;
 }
 
 message CAHolderErrorOccured {

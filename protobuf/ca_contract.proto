@@ -669,10 +669,3 @@ enum Platform {
   SDK = 4;
   TELEGRAM = 5;
 }
-
-message OracleNoticeFinished {
-  option (aelf.is_event) = true;
-  GuardianType guardian_type = 1 [(aelf.is_indexed) = true];
-  string response = 2;
-  int64 timestamp = 3;
-}
