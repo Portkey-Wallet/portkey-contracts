@@ -59,7 +59,7 @@ public partial class CAContract
 
     public override Empty SetDefaultTokenTransferLimit(SetDefaultTokenTransferLimitInput input)
     {
-        Assert(Context.Sender == State.Admin.Value, "No permission.");
+        Assert(State.OrganizationAddress.Value == Context.Sender, "No permission.");
         Assert(!string.IsNullOrEmpty(input.Symbol), "Invalid symbol.");
         Assert(GetTokenInfo(input.Symbol) != null, $"Not exist symbol {input.Symbol}");
         Assert(input.TransferLimit.SingleLimit > 0, "SingleLimit cannot be less than 0.");
@@ -168,7 +168,7 @@ public partial class CAContract
 
     public override Empty SetTransferSecurityThreshold(SetTransferSecurityThresholdInput input)
     {
-        Assert(Context.Sender == State.Admin.Value, "No permission.");
+        Assert(State.OrganizationAddress.Value == Context.Sender, "No permission.");
         Assert(input.TransferSecurityThreshold != null, "Security threshold cannot be null.");
         Assert(input.TransferSecurityThreshold.BalanceThreshold > 0, "Token threshold cannot be less than 0.");
         Assert(input.TransferSecurityThreshold.GuardianThreshold > 0, "Guardian threshold cannot be less than 0.");
@@ -225,7 +225,7 @@ public partial class CAContract
     public override Empty SetTokenInitialTransferLimit(
         SetTokenInitialTransferLimitInput input)
     {
-        Assert(Context.Sender == State.Admin.Value, "No permission.");
+        Assert(State.OrganizationAddress.Value == Context.Sender, "No permission.");
         Assert(input.TokenInitialTransferLimit >= 0, "Token initial transfer limit cannot be less than 0.");
         State.TokenInitialTransferLimit.Value = input.TokenInitialTransferLimit;
         return new Empty();
