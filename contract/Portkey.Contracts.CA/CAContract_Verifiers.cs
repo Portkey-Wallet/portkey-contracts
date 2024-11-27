@@ -184,7 +184,7 @@ public partial class CAContract
     
     public override Empty UpdateVerifierServerEndPoints(UpdateVerifierServerEndPointsInput input)
     {
-        Assert(State.Admin.Value == Context.Sender, "No permission");
+        Assert(State.OrganizationAddress.Value == Context.Sender, "No permission");
         Assert(input != null, "invalid input");
         Assert(input!.EndPoints != null && input.EndPoints.Count != 0, "invalid input endPoints");
         Assert(IsValidHash(input!.Id), "invalid input id");
