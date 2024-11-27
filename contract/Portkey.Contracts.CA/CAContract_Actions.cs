@@ -413,7 +413,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
 
     public override Empty SetProjectDelegationFee(SetProjectDelegationFeeInput input)
     {
-        Assert(State.Admin.Value == Context.Sender, "No permission");
+        Assert(State.OrganizationAddress.Value == Context.Sender, "No permission.");
         Assert(input != null && input.DelegationFee != null, "Invalid input");
         Assert(input.DelegationFee.Amount >= 0, "Amount can not be less than 0");
 
@@ -432,7 +432,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
     public override Empty SetCheckOperationDetailsInSignatureEnabled(
         SetCheckOperationDetailsInSignatureEnabledInput input)
     {
-        Assert(State.Admin.Value == Context.Sender, "No permission");
+        Assert(State.OrganizationAddress.Value == Context.Sender, "No permission.");
         Assert(State.CheckOperationDetailsInSignatureEnabled.Value != input.CheckOperationDetailsEnabled,
             $"It is already {input.CheckOperationDetailsEnabled}");
         State.CheckOperationDetailsInSignatureEnabled.Value = input.CheckOperationDetailsEnabled;
@@ -451,7 +451,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
 
     public override Empty AddOrUpdateJwtIssuer(JwtIssuerAndEndpointInput input)
     {
-        Assert(Context.Sender == State.Admin.Value, "No AddJwtIssuer permission.");
+        Assert(State.OrganizationAddress.Value == Context.Sender, "No AddJwtIssuer permission.");
         Assert(input != null, "Invalid input when AddJwtIssuer.");
         Assert(IsValidGuardianType(input.Type), "Invalid guardian input when adding jwt issuer.");
         Assert(input.Issuer != null, "Invalid Issuer input when adding jwt issuer.");
@@ -484,7 +484,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
 
     public override Empty AddKidPublicKey(KidPublicKeyInput input)
     {
-        Assert(Context.Sender == State.Admin.Value, "No AddKidPublicKey permission.");
+        Assert(State.OrganizationAddress.Value == Context.Sender, "No AddKidPublicKey permission.");
         Assert(input != null, "Invalid input when AddKidPublicKey.");
         Assert(IsValidGuardianType(input.Type), "Invalid guardian input when adding kid public key.");
         Assert(input.Kid != null, "Invalid kid input when adding kid public key.");
@@ -520,7 +520,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
 
     public override Empty AddOrUpdateVerifyingKey(VerifyingKey input)
     {
-        Assert(Context.Sender == State.Admin.Value, "no addVerifyingKey permission.");
+        Assert(State.OrganizationAddress.Value == Context.Sender, "No addVerifyingKey permission.");
         Assert(input != null, "Invalid verifying key input.");
         Assert(!string.IsNullOrEmpty(input.CircuitId), "circuitId is required.");
         Assert(!string.IsNullOrEmpty(input.VerifyingKey_), "verifying key is required.");
@@ -530,7 +530,6 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
 
     public override VerifyingKey GetVerifyingKey(StringValue input)
     {
-        Assert(Context.Sender == State.Admin.Value, "No GetVerifyingKey permission.");
         Assert(input != null, "Invalid circuit id.");
         Assert(State.CircuitVerifyingKeys[input.Value] != null, "circuitId not exist");
         return State.CircuitVerifyingKeys[input.Value];
@@ -538,7 +537,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
 
     public override Empty SetOracleAddress(Address input)
     {
-        Assert(Context.Sender == State.Admin.Value, "No SetOracleAddress permission.");
+        Assert(State.OrganizationAddress.Value == Context.Sender, "No SetOracleAddress permission.");
         Assert(input != null, "Invalid address input");
         State.OracleContract.Value = input;
         return new Empty();
@@ -547,7 +546,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
     //new version that supports trace id that differentiate google apple
     public override Empty StartOracleDataFeedsTask(StartOracleDataFeedsTaskRequest input)
     {
-        Assert(Context.Sender == State.Admin.Value, "No StartOracleRequest permission.");
+        Assert(State.OrganizationAddress.Value == Context.Sender, "No StartOracleDataFeedsTask permission.");
         Assert(input != null, "Invalid StartOracleDataFeedsTaskRequest input.");
         Assert(IsValidGuardianType(input.Type), "Invalid input type.");
         Assert(input.SubscriptionId > 0, "Invalid input subscription id.");
@@ -594,10 +593,12 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         Assert(input.RequestTypeIndex > 0, "Invalid request type index.");
         Assert(!input.Response.IsNullOrEmpty(), "Invalid input response.");
         Assert(input.TraceId != null, "Invalid trace id.");
-        
-        var response = Jwks.Parser.ParseJson(input.Response.ToStringUtf8());
+
+        var responseJson = input.Response.ToStringUtf8();
+        var response = Jwks.Parser.ParseJson(responseJson);
         Assert(response != null, "Invalid HandleOracleFulfillmentInput response input.");
         
+        SendOracleNoticeReceivedEvent(input, responseJson);
         if (input.TraceId.Equals(HashHelper.ComputeFrom(State.OidcProviderData[GuardianType.OfGoogle].Issuer)))
         {
             foreach (var keyDto in response.Keys)
@@ -605,6 +606,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
                 SetPublicKeyAndChunks(GuardianType.OfGoogle, keyDto.Kid, keyDto.N);
             }
             ClearCurrentKids(GuardianType.OfGoogle, response.Keys);
+            SendOracleNoticeFinished(GuardianType.OfGoogle, responseJson);
         }
         else if (input.TraceId.Equals(HashHelper.ComputeFrom(State.OidcProviderData[GuardianType.OfApple].Issuer)))
         {
@@ -613,6 +615,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
                 SetPublicKeyAndChunks(GuardianType.OfApple, keyDto.Kid, keyDto.N);
             }
             ClearCurrentKids(GuardianType.OfApple, response.Keys);
+            SendOracleNoticeFinished(GuardianType.OfApple, responseJson);
         }
         else
         {
@@ -620,6 +623,28 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         }
     
         return new Empty();
+    }
+
+    private void SendOracleNoticeReceivedEvent(HandleOracleFulfillmentInput input, string response)
+    {
+        Context.Fire(new OracleNoticeReceived
+        {
+            RequestId = input.RequestId,
+            Response = response,
+            RequestTypeIndex = input.RequestTypeIndex,
+            TraceId = input.TraceId,
+            Timestamp = Context.CurrentBlockTime.Seconds
+        });
+    }
+
+    private void SendOracleNoticeFinished(GuardianType guardianType, string response)
+    {
+        Context.Fire(new OracleNoticeFinished
+        {
+            GuardianType = (int)guardianType,
+            Response = response,
+            Timestamp = Context.CurrentBlockTime.Seconds
+        });
     }
 
     private void ClearCurrentKids(GuardianType type, RepeatedField<JwkRecord> jwkRecords)
@@ -633,6 +658,10 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         foreach (var removingKid in removingKids)
         {
             State.KidsByGuardianType[type].Kids.Remove(removingKid);
+            if (State.PublicKeysChunksByKid[type][removingKid] != null)
+            {
+                State.PublicKeysChunksByKid[type].Remove(removingKid);
+            }
         }
     }
     

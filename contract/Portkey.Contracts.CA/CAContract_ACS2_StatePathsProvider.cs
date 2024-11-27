@@ -253,7 +253,7 @@ public partial class CAContract
 
     public override Empty SetManagerForwardCallParallelInfo(SetManagerForwardCallParallelInfoInput input)
     {
-        Assert(State.Admin.Value.Equals(Context.Sender), "No permission.");
+        Assert(State.OrganizationAddress.Value == Context.Sender, "No permission.");
         Assert(input.ContractAddress != null, "Invalid input.");
         Assert(!string.IsNullOrWhiteSpace(input.MethodName), "Invalid input.");
         if (State.ConfigurationContract.Value == null)

@@ -441,7 +441,7 @@ public partial class CAContract
     public override Empty AddManagerApproveSpenderWhitelist(AddManagerApproveSpenderWhitelistInput input)
     {
         Assert(input != null && input.SpenderList.Count > 0, "Invalid input");
-        Assert(Context.Sender == State.Admin.Value, "No permission.");
+        Assert(Context.Sender == State.OrganizationAddress.Value, "No permission.");
         foreach (var spender in input.SpenderList)
         {
             Assert(!spender.Value.IsNullOrEmpty(), "Invalid input");
@@ -453,7 +453,7 @@ public partial class CAContract
     public override Empty RemoveManagerApproveSpenderWhitelist(RemoveManagerApproveSpenderWhitelistInput input)
     {
         Assert(input != null && input.SpenderList.Count > 0, "Invalid input");
-        Assert(Context.Sender == State.Admin.Value, "No permission.");
+        Assert(Context.Sender == State.OrganizationAddress.Value, "No permission.");
         foreach (var spender in input.SpenderList)
         {
             Assert(!spender.Value.IsNullOrEmpty(), "Invalid input");
@@ -474,7 +474,7 @@ public partial class CAContract
     public override Empty SetForbiddenForwardCallContractMethod(SetForbiddenForwardCallContractMethodInput input)
     {
         Assert(input != null && input.Address != null, "Invalid input");
-        Assert(Context.Sender == State.Admin.Value, "No permission.");
+        Assert(State.OrganizationAddress.Value == Context.Sender, "No permission.");
         Assert(!string.IsNullOrWhiteSpace(input.MethodName), "MethodName cannot be empty");
         State.ForbiddenForwardCallContractMethod[input.Address][input.MethodName.ToLower()] = input.Forbidden;
         Context.Fire(new ForbiddenForwardCallContractMethodChanged
@@ -658,40 +658,6 @@ public partial class CAContract
     {
         return State.CanRemoveManagerMaxCount?.Value ?? CAContractConstants.CanRemoveManagerMaxCount;
     }
-
-    public override Int32Value GetCanRemoveManagerMaxCount(Empty input)
-    {
-        return new Int32Value()
-        {
-            Value = State.CanRemoveManagerMaxCount.Value
-        };
-    }
-
-    public override Empty SetCanRemoveManagerMaxCount(CanRemoveManagerMaxCountInput input)
-    {
-        Assert(Context.Sender == State.Admin.Value, "No SetCanRemoveManagerMaxCount permission.");
-        Assert(input != null, "Invalid input when SetCanRemoveManagerMaxCount.");
-        Assert(input?.CanRemoveMaxCount is > 0 and < 30, "Invalid can-remove-max-count scope when SetCanRemoveManagerMaxCount.");
-        State.CanRemoveManagerMaxCount.Value = input.CanRemoveMaxCount;
-        return new Empty();
-    }
-    
-    public override Int32Value GetManagerMaxCount(Empty input)
-    {
-        return new Int32Value()
-        {
-            Value = State.ManagerMaxCount.Value
-        };
-    }
-
-    public override Empty SetManagerMaxCount(ManagerMaxCountInput input)
-    {
-        Assert(Context.Sender == State.Admin.Value, "No SetManagerMaxCount permission.");
-        Assert(input != null, "Invalid input when SetManagerMaxCount.");
-        Assert(input?.MaxCount is > 0 and < 100, "Invalid max count scope when SetManagerMaxCount.");
-        State.ManagerMaxCount.Value = input.MaxCount;
-        return new Empty();
-    }
     
     public override ManagerStatisticsInfoList GetManagerTransactionStatistics(ManagerStatisticsInput input)
     {
@@ -741,7 +707,7 @@ public partial class CAContract
 
     public override Empty ClearRemovedManagerTransactionData(ClearManagerStatisticsInput input)
     {
-        Assert(Context.Sender == State.Admin.Value, "No ClearRemovedManagerTransactionData permission.");
+        Assert(State.OrganizationAddress.Value == Context.Sender, "No ClearRemovedManagerTransactionData permission.");
         Assert(input != null, "Invalid input when ClearRemovedManagerTransactionData.");
         Assert(input.CaHash != null, "Invalid caHash when ClearRemovedManagerTransactionData.");
         DoClearRemovedManagerTransactionData(input.CaHash, null, input.ClearLimit);

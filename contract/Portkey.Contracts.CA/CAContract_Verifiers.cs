@@ -159,7 +159,7 @@ public partial class CAContract
     
     public override Empty UpdateVerifierServerImageUrl(UpdateVerifierServerImageUrlInput input)
     {
-        Assert(State.Admin.Value == Context.Sender, "No permission");
+        Assert(State.OrganizationAddress.Value == Context.Sender, "No permission.");
         Assert(input != null, "invalid input");
         Assert(input.ImageUrl != null, "invalid image url");
         Assert(IsValidHash(input!.Id), "invalid input id");
@@ -175,6 +175,35 @@ public partial class CAContract
         server.ImageUrl = input.ImageUrl;
     
         Context.Fire(new VerifierServerImageUpdated
+        {
+            VerifierServer = server
+        });
+    
+        return new Empty();
+    }
+    
+    public override Empty UpdateVerifierServerEndPoints(UpdateVerifierServerEndPointsInput input)
+    {
+        Assert(State.Admin.Value == Context.Sender, "No permission");
+        Assert(input != null, "invalid input");
+        Assert(input!.EndPoints != null && input.EndPoints.Count != 0, "invalid input endPoints");
+        Assert(IsValidHash(input!.Id), "invalid input id");
+        if (State.VerifiersServerList.Value == null || State.VerifiersServerList.Value.VerifierServers.Count == 0) return new Empty();
+    
+        var server = State.VerifiersServerList.Value.VerifierServers
+            .FirstOrDefault(server => server.Id == input.Id);
+        if (server == null)
+        {
+            return new Empty();
+        }
+    
+        server.EndPoints.Clear();
+        foreach (var endPoint in input.EndPoints)
+        {
+            server.EndPoints.Add(endPoint);
+        }
+    
+        Context.Fire(new VerifierServerEndPointsUpdated
         {
             VerifierServer = server
         });

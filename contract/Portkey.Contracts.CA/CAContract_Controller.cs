@@ -8,7 +8,7 @@ public partial class CAContract
 {
     public override Empty AddCreatorController(ControllerInput input)
     {
-        Assert(State.Admin.Value == Context.Sender, "No permission");
+        Assert(State.OrganizationAddress.Value == Context.Sender, "No permission.");
         Assert(input != null && input.Address != null, "Invalid input");
 
         var controller = State.CreatorControllers.Value.Controllers.FirstOrDefault(c => c == input!.Address);
@@ -28,7 +28,7 @@ public partial class CAContract
 
     public override Empty RemoveCreatorController(ControllerInput input)
     {
-        Assert(State.Admin.Value == Context.Sender, "No permission");
+        Assert(State.OrganizationAddress.Value == Context.Sender, "No permission.");
         Assert(input != null && input.Address != null, "Invalid input");
 
         var controller = State.CreatorControllers.Value.Controllers.FirstOrDefault(c => c == input!.Address);
@@ -57,7 +57,7 @@ public partial class CAContract
 
     public override Empty AddServerController(ControllerInput input)
     {
-        Assert(State.Admin.Value == Context.Sender, "No permission");
+        Assert(State.OrganizationAddress.Value == Context.Sender, "No permission.");
         Assert(input != null && input.Address != null, "Invalid input");
 
         var controller = State.ServerControllers.Value.Controllers.FirstOrDefault(c => c == input!.Address);
@@ -77,7 +77,7 @@ public partial class CAContract
 
     public override Empty RemoveServerController(ControllerInput input)
     {
-        Assert(State.Admin.Value == Context.Sender, "No permission");
+        Assert(State.OrganizationAddress.Value == Context.Sender, "No permission.");
         Assert(input != null && input.Address != null, "Invalid input");
 
         var controller = State.ServerControllers.Value.Controllers.FirstOrDefault(c => c == input!.Address);
@@ -129,6 +129,22 @@ public partial class CAContract
         return new AdminOutput
         {
             Address = State.Admin.Value
+        };
+    }
+
+    public override Empty SetOrganizationAddress(AdminInput input)
+    {
+        Assert(State.Admin.Value == Context.Sender, "No permission");
+        Assert(input != null && input.Address != null, "Invalid input");
+        State.OrganizationAddress.Value = input?.Address;
+        return new Empty();
+    }
+
+    public override AdminOutput GetOrganizationAddress(Empty input)
+    {
+        return new AdminOutput()
+        {
+            Address = State.OrganizationAddress.Value
         };
     }
 }
