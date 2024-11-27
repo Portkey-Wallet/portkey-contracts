@@ -131,4 +131,20 @@ public partial class CAContract
             Address = State.Admin.Value
         };
     }
+
+    public override Empty SetSecondaryAdmin(AdminInput input)
+    {
+        Assert(State.Admin.Value == Context.Sender, "No permission");
+        Assert(input != null && input.Address != null, "Invalid input");
+        State.SecondaryAdmin.Value = input?.Address;
+        return new Empty();
+    }
+
+    public override AdminOutput GetSecondaryAdmin(Empty input)
+    {
+        return new AdminOutput()
+        {
+            Address = State.SecondaryAdmin.Value
+        };
+    }
 }
