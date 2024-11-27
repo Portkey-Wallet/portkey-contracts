@@ -159,7 +159,7 @@ public partial class CAContract
     
     public override Empty UpdateVerifierServerImageUrl(UpdateVerifierServerImageUrlInput input)
     {
-        Assert(State.Admin.Value == Context.Sender, "No permission");
+        Assert(State.OrganizationAddress.Value == Context.Sender, "No permission.");
         Assert(input != null, "invalid input");
         Assert(input.ImageUrl != null, "invalid image url");
         Assert(IsValidHash(input!.Id), "invalid input id");

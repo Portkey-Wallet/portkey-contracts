@@ -158,7 +158,7 @@ public partial class CAContract
     public override Empty SetCaProjectDelegateHash(Hash input)
     {
         Assert(IsValidHash(input), "Invalid input.");
-        Assert(Context.Sender == State.Admin.Value, "No permission");
+        Assert(State.OrganizationAddress.Value == Context.Sender, "No permission.");
         State.CaProjectDelegateHash.Value = input;
         return new Empty();
     }
@@ -309,7 +309,7 @@ public partial class CAContract
 
     public override Empty AddTransactionWhitelist(WhitelistTransactions input)
     {
-        Assert(Context.Sender == State.Admin.Value, "No permission.");
+        Assert(State.OrganizationAddress.Value == Context.Sender, "No permission.");
         Assert(input.MethodNames.Count > 0, "Invalid input.");
         var whitelistTransactions = State.DelegateWhitelistTransactions.Value ?? new WhitelistTransactions();
         var addMethodNames = input.MethodNames.Except(whitelistTransactions.MethodNames);
@@ -324,7 +324,7 @@ public partial class CAContract
 
     public override Empty RemoveTransactionWhitelist(WhitelistTransactions input)
     {
-        Assert(Context.Sender == State.Admin.Value, "No permission.");
+        Assert(State.OrganizationAddress.Value == Context.Sender, "No permission.");
         Assert(input.MethodNames.Count > 0, "Invalid input.");
         var removeMethodNames = input.MethodNames.Intersect(State.DelegateWhitelistTransactions.Value.MethodNames);
         if (removeMethodNames.Count() == 0)
