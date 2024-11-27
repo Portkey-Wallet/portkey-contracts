@@ -658,40 +658,6 @@ public partial class CAContract
     {
         return State.CanRemoveManagerMaxCount?.Value ?? CAContractConstants.CanRemoveManagerMaxCount;
     }
-
-    public override Int32Value GetCanRemoveManagerMaxCount(Empty input)
-    {
-        return new Int32Value()
-        {
-            Value = State.CanRemoveManagerMaxCount.Value
-        };
-    }
-
-    public override Empty SetCanRemoveManagerMaxCount(CanRemoveManagerMaxCountInput input)
-    {
-        Assert(State.OrganizationAddress.Value == Context.Sender, "No SetCanRemoveManagerMaxCount permission.");
-        Assert(input != null, "Invalid input when SetCanRemoveManagerMaxCount.");
-        Assert(input?.CanRemoveMaxCount is > 0 and < 30, "Invalid can-remove-max-count scope when SetCanRemoveManagerMaxCount.");
-        State.CanRemoveManagerMaxCount.Value = input.CanRemoveMaxCount;
-        return new Empty();
-    }
-    
-    public override Int32Value GetManagerMaxCount(Empty input)
-    {
-        return new Int32Value()
-        {
-            Value = State.ManagerMaxCount.Value
-        };
-    }
-
-    public override Empty SetManagerMaxCount(ManagerMaxCountInput input)
-    {
-        Assert(State.OrganizationAddress.Value == Context.Sender, "No SetManagerMaxCount permission.");
-        Assert(input != null, "Invalid input when SetManagerMaxCount.");
-        Assert(input?.MaxCount is > 0 and < 100, "Invalid max count scope when SetManagerMaxCount.");
-        State.ManagerMaxCount.Value = input.MaxCount;
-        return new Empty();
-    }
     
     public override ManagerStatisticsInfoList GetManagerTransactionStatistics(ManagerStatisticsInput input)
     {
