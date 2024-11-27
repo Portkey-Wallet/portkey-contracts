@@ -103,6 +103,7 @@ service CAContractImpl {
   //Verifier If End Points already exists, return true
   rpc AddVerifierServerEndPoints (AddVerifierServerEndPointsInput) returns (google.protobuf.Empty) {}
   rpc UpdateVerifierServerImageUrl(UpdateVerifierServerImageUrlInput) returns (google.protobuf.Empty) {}
+  rpc UpdateVerifierServerEndPoints(UpdateVerifierServerEndPointsInput) returns (google.protobuf.Empty) {}
   //Verifier If End Points does not exists, return true
   rpc RemoveVerifierServerEndPoints (RemoveVerifierServerEndPointsInput) returns (google.protobuf.Empty) {}
 
@@ -466,6 +467,11 @@ message VerifierServerImageUpdated {
   VerifierServer verifier_server = 1 [(aelf.is_indexed) = true];
 }
 
+message VerifierServerEndPointsUpdated {
+  option (aelf.is_event) = true;
+  VerifierServer verifier_server = 1 [(aelf.is_indexed) = true];
+}
+
 message AddVerifierServerEndPointsInput {
   // If not exists, add; If does, insert
   string name = 1;
@@ -479,6 +485,11 @@ message AddVerifierServerEndPointsInput {
 message UpdateVerifierServerImageUrlInput {
   aelf.Hash id = 1;
   string image_url = 2;
+}
+
+message UpdateVerifierServerEndPointsInput {
+  aelf.Hash id = 1;
+  repeated string end_points = 2;
 }
 
 message RemoveVerifierServerInput {
