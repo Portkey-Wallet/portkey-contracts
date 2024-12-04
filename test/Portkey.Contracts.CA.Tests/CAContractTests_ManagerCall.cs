@@ -320,6 +320,44 @@ public partial class CAContractTests
             executionResult.TransactionResult.Error.ShouldContain("Invalid input.");
         }
     }
+    
+    [Fact]
+    public async Task ManagerTransferTest_Failed_Invalid_Symbol()
+    {
+        var caHash = await CreateHolder();
+        Address caAddress;
+        {
+            var holderInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput
+            {
+                CaHash = caHash
+            });
+            caAddress = holderInfo.CaAddress;
+        }
+        await TokenContractStub.Transfer.SendAsync(new TransferInput
+        {
+            Amount = 1_0000000_00000000,
+            Symbol = "ELF",
+            To = caAddress
+        });
+        var executionResult = await CaContractStubManagerInfo1.ManagerTransfer.SendWithExceptionAsync(new ManagerTransferInput
+        {
+            CaHash = caHash,
+            To = User2Address,
+            Symbol = "",
+            Amount = 10000,
+            Memo = "ca transfer."
+        });
+        executionResult.TransactionResult.Error.ShouldContain("Invalid input.");
+        var executionResult1 = await CaContractStubManagerInfo1.ManagerTransfer.SendWithExceptionAsync(new ManagerTransferInput
+        {
+            CaHash = caHash,
+            To = User2Address,
+            Symbol = "XXX",
+            Amount = 10000,
+            Memo = "ca transfer."
+        });
+        executionResult1.TransactionResult.Error.ShouldContain("Token is not found. XXX");
+    }
 
     [Fact]
     public async Task ManagerTransferFromTest()
@@ -509,6 +547,33 @@ public partial class CAContractTests
                     Memo = "ca transfer."
                 });
             executionResult.TransactionResult.Error.ShouldContain("Invalid input.");
+        }
+    }
+    
+    [Fact]
+    public async Task ManagerTransferFromTest_Failed_InvalidSymbol()
+    {
+        var caHash = await CreateHolder();
+        Address caAddress;
+        {
+            var holderInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput
+            {
+                CaHash = caHash
+            });
+            caAddress = holderInfo.CaAddress;
+        }
+        {
+            var executionResult = await CaContractStubManagerInfo1.ManagerTransferFrom.SendWithExceptionAsync(
+                new ManagerTransferFromInput
+                {
+                    CaHash = caHash,
+                    From = DefaultAddress,
+                    To = User2Address,
+                    Symbol = "",
+                    Amount = 1_00000000,
+                    Memo = "ca transfer."
+                });
+            executionResult.TransactionResult.Error.ShouldContain("Invalid symbol.");
         }
     }
 }
