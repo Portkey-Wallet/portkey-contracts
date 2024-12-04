@@ -361,6 +361,7 @@ public partial class CAContract
         Assert(input.CaHash != null, "CA hash is null.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
         Assert(input.To != null && !string.IsNullOrWhiteSpace(input.Symbol), "Invalid input.");
+        Assert(GetTokenInfo(input.Symbol) != null, $"Not exist symbol {input.Symbol}");
         UpdateDailyTransferredAmount(input.CaHash, input.GuardiansApproved, input.Symbol, input.Amount, input.To);
         Context.SendVirtualInline(input.CaHash, State.TokenContract.Value, nameof(State.TokenContract.Transfer),
             new TransferInput
@@ -385,6 +386,8 @@ public partial class CAContract
     public override Empty ManagerTransferFrom(ManagerTransferFromInput input)
     {
         Assert(input.CaHash != null, "CA hash is null.");
+        Assert(!string.IsNullOrWhiteSpace(input.Symbol), "Invalid symbol.");
+        Assert(GetTokenInfo(input.Symbol) != null, $"Not exist symbol {input.Symbol}");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
         Assert(input.From != null && input.To != null && !string.IsNullOrWhiteSpace(input.Symbol),
             "Invalid input.");
