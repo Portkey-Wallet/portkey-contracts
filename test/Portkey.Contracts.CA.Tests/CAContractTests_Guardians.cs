@@ -2431,6 +2431,172 @@ public partial class CAContractTests
                 $"CA holder is null.CA hash:{HashHelper.ComputeFrom("111111")}");
         }
     }
+    
+    [Fact]
+    public async Task UpdateGuardianTest_UpdateSupportZk()
+    {
+        var caHash = await AddGuardianTest();
+        var verificationTime = DateTime.UtcNow;
+        var salt = Guid.NewGuid().ToString("N");
+        var operationType = Convert.ToInt32(OperationType.UpdateGuardian).ToString();
+        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(6), _guardian,
+            0, salt, operationType);
+        var guardianApprove = new List<GuardianInfo>
+        {
+            new GuardianInfo
+            {
+                Type = GuardianType.OfEmail,
+                IdentifierHash = _guardian,
+                VerificationInfo = new VerificationInfo
+                {
+                    Id = _verifierId,
+                    Signature = signature,
+                    VerificationDoc =
+                        $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(6)},{VerifierAddress.ToBase58()},{salt},{operationType},{MainChainId}",
+                }
+            }
+        };
+        await CaContractStub.UpdateGuardian.SendAsync(new UpdateGuardianInput
+        {
+            CaHash = caHash,
+            GuardianToUpdatePre = new GuardianInfo
+            {
+                Type = GuardianType.OfEmail,
+                IdentifierHash = _guardian1,
+                VerificationInfo = new VerificationInfo
+                {
+                    Id = _verifierId1
+                },
+                UpdateSupportZk = false
+            },
+            GuardianToUpdateNew = new GuardianInfo
+            {
+                Type = GuardianType.OfEmail,
+                IdentifierHash = _guardian1,
+                VerificationInfo = new VerificationInfo
+                {
+                    Id = _verifierId2
+                },
+                UpdateSupportZk = false
+            },
+            GuardiansApproved = { guardianApprove }
+        });
+        {
+            var guardian = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput
+            {
+                CaHash = caHash
+            });
+            guardian.GuardianList.Guardians.Count.ShouldBe(2);
+            guardian.GuardianList.Guardians.Last().IdentifierHash.ShouldBe(_guardian1);
+            guardian.GuardianList.Guardians.Last().VerifierId.ShouldBe(_verifierId2);
+        }
+    }
+    
+    [Fact]
+    public async Task UpdateGuardianTest_Failed_InvalidUpdatePre_UpdateSupportZk()
+    {
+        var caHash = await AddGuardianTest();
+        var verificationTime = DateTime.UtcNow;
+        var salt = Guid.NewGuid().ToString("N");
+        var operationType = Convert.ToInt32(OperationType.UpdateGuardian).ToString();
+        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(6), _guardian,
+            0, salt, operationType);
+        var guardianApprove = new List<GuardianInfo>
+        {
+            new GuardianInfo
+            {
+                Type = GuardianType.OfEmail,
+                IdentifierHash = _guardian,
+                VerificationInfo = new VerificationInfo
+                {
+                    Id = _verifierId,
+                    Signature = signature,
+                    VerificationDoc =
+                        $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(6)},{VerifierAddress.ToBase58()},{salt},{operationType},{MainChainId}",
+                }
+            }
+        };
+        var executionResult = await CaContractStub.UpdateGuardian.SendWithExceptionAsync(new UpdateGuardianInput
+        {
+            CaHash = caHash,
+            GuardianToUpdatePre = new GuardianInfo
+            {
+                Type = GuardianType.OfEmail,
+                IdentifierHash = _guardian1,
+                VerificationInfo = new VerificationInfo
+                {
+                    Id = _verifierId1
+                },
+                UpdateSupportZk = true
+            },
+            GuardianToUpdateNew = new GuardianInfo
+            {
+                Type = GuardianType.OfEmail,
+                IdentifierHash = _guardian1,
+                VerificationInfo = new VerificationInfo
+                {
+                    Id = _verifierId2
+                },
+                UpdateSupportZk = false
+            },
+            GuardiansApproved = { guardianApprove }
+        });
+        executionResult.TransactionResult.Error.ShouldContain(
+            "Invalid updateSupportZk when the pre guardian doesn't support zk");
+    }
+    
+    [Fact]
+    public async Task UpdateGuardianTest_Failed_InvalidUpdateNew_UpdateSupportZk()
+    {
+        var caHash = await AddGuardianTest();
+        var verificationTime = DateTime.UtcNow;
+        var salt = Guid.NewGuid().ToString("N");
+        var operationType = Convert.ToInt32(OperationType.UpdateGuardian).ToString();
+        var signature = GenerateSignature(VerifierKeyPair, VerifierAddress, verificationTime.AddSeconds(6), _guardian,
+            0, salt, operationType);
+        var guardianApprove = new List<GuardianInfo>
+        {
+            new GuardianInfo
+            {
+                Type = GuardianType.OfEmail,
+                IdentifierHash = _guardian,
+                VerificationInfo = new VerificationInfo
+                {
+                    Id = _verifierId,
+                    Signature = signature,
+                    VerificationDoc =
+                        $"{0},{_guardian.ToHex()},{verificationTime.AddSeconds(6)},{VerifierAddress.ToBase58()},{salt},{operationType},{MainChainId}",
+                }
+            }
+        };
+        var executionResult = await CaContractStub.UpdateGuardian.SendWithExceptionAsync(new UpdateGuardianInput
+        {
+            CaHash = caHash,
+            GuardianToUpdatePre = new GuardianInfo
+            {
+                Type = GuardianType.OfEmail,
+                IdentifierHash = _guardian1,
+                VerificationInfo = new VerificationInfo
+                {
+                    Id = _verifierId1
+                },
+                UpdateSupportZk = false
+            },
+            GuardianToUpdateNew = new GuardianInfo
+            {
+                Type = GuardianType.OfEmail,
+                IdentifierHash = _guardian1,
+                VerificationInfo = new VerificationInfo
+                {
+                    Id = _verifierId2
+                },
+                UpdateSupportZk = true
+            },
+            GuardiansApproved = { guardianApprove }
+        });
+        executionResult.TransactionResult.Error.ShouldContain(
+            "Invalid updateSupportZk when the new guardian doesn't support zk");
+    }
 
     [Fact]
     public async Task UpdateGuardian_GuardianTypeDiff_Test()

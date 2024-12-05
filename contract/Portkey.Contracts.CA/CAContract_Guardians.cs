@@ -200,13 +200,19 @@ public partial class CAContract
     {
         //for guardian supporting zk,users mustn't update verifier
         //for guardian not supporting zk,users can update verifier except zk
-        Assert(input.CaHash != null && input.GuardianToUpdatePre != null
-                                    && input.GuardianToUpdateNew != null && input.GuardiansApproved.Count != 0,
+        Assert(input != null && input.CaHash != null && input.GuardianToUpdatePre != null
+                                         && input.GuardianToUpdateNew != null && input.GuardiansApproved.Count != 0,
             "Invalid input.");
         Assert(input.GuardianToUpdatePre?.Type == input.GuardianToUpdateNew?.Type &&
                input.GuardianToUpdatePre?.IdentifierHash == input.GuardianToUpdateNew?.IdentifierHash,
             "Inconsistent guardian.");
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
+        if (!IsZkLoginSupported(input.GuardianToUpdatePre.Type))
+            Assert(!input.GuardianToUpdatePre.UpdateSupportZk, "Invalid updateSupportZk when the pre guardian doesn't support zk");
+        if (IsZkLoginSupported(input.GuardianToUpdateNew.Type))
+            Assert(input.GuardianToUpdateNew.UpdateSupportZk, "Invalid updateSupportZk when the new guardian supports zk");
+        else
+            Assert(!input.GuardianToUpdateNew.UpdateSupportZk, "Invalid updateSupportZk when the new guardian doesn't support zk");
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
         AssertCreateChain(holderInfo);
         //Whether the guardian to be updated in the holder info.
