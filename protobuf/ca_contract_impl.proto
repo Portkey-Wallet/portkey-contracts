@@ -90,11 +90,6 @@ service CAContractImpl {
   rpc AddCreatorController (ControllerInput) returns (google.protobuf.Empty) {}
   rpc RemoveCreatorController (ControllerInput) returns (google.protobuf.Empty) {}
   rpc GetCreatorControllers (google.protobuf.Empty) returns (ControllerOutput) {option (aelf.is_view) = true;}
-
-  //server controller
-  rpc AddServerController (ControllerInput) returns (google.protobuf.Empty) {}
-  rpc RemoveServerController (ControllerInput) returns (google.protobuf.Empty) {}
-  rpc GetServerControllers (google.protobuf.Empty) returns (ControllerOutput) {option (aelf.is_view) = true;}
   
   //Verifier If End Points already exists, return true
   rpc AddVerifierServerEndPoints (AddVerifierServerEndPointsInput) returns (google.protobuf.Empty) {}
