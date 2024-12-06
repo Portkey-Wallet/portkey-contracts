@@ -8,7 +8,7 @@ public partial class CAContract
 {
     public override Empty AddCAServer(AddCAServerInput input)
     {
-        Assert(State.ServerControllers.Value.Controllers.Contains(Context.Sender), "No permission");
+        Assert(State.OrganizationAddress.Value == Context.Sender, "No permission.");
         Assert(!string.IsNullOrWhiteSpace(input.Name) && !string.IsNullOrWhiteSpace(input.EndPoints), "Invalid input.");
         State.CaServerList.Value ??= new CAServerList();
         var existServer = State.CaServerList.Value.CaServers.FirstOrDefault(s => s.Name == input.Name);
@@ -38,7 +38,7 @@ public partial class CAContract
 
     public override Empty RemoveCAServer(RemoveCAServerInput input)
     {
-        Assert(State.ServerControllers.Value.Controllers.Contains(Context.Sender), "No permission");
+        Assert(State.OrganizationAddress.Value == Context.Sender, "No permission.");
         Assert(!string.IsNullOrWhiteSpace(input.Name), "Invalid input.");
         var existServer = State.CaServerList.Value.CaServers.FirstOrDefault(s => s.Name == input.Name);
         if (existServer == null) return new Empty();

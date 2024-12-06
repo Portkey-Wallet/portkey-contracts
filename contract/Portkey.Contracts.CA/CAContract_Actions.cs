@@ -22,9 +22,8 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         var contractInfo = State.GenesisContract.GetContractInfo.Call(Context.Self);
         Assert(contractInfo.Deployer == Context.Sender, "No permission");
 
-        State.Admin.Value = input.ContractAdmin ?? Context.Sender;
+        State.OrganizationAddress.Value = input.ContractAdmin ?? Context.Sender;
         State.CreatorControllers.Value = new ControllerList { Controllers = { input.ContractAdmin ?? Context.Sender } };
-        State.ServerControllers.Value = new ControllerList { Controllers = { input.ContractAdmin ?? Context.Sender } };
         State.TokenContract.Value =
             Context.GetContractAddressByName(SmartContractConstants.TokenContractSystemName);
         State.Initialized.Value = true;

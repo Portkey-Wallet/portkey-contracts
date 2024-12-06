@@ -10,7 +10,7 @@ public partial class CAContract
 {
     public override Empty AddVerifierServerEndPoints(AddVerifierServerEndPointsInput input)
     {
-        Assert(State.ServerControllers.Value.Controllers.Contains(Context.Sender), "No permission");
+        Assert(State.OrganizationAddress.Value == Context.Sender, "No permission.");
         Assert(input != null, "invalid input");
         Assert(!string.IsNullOrWhiteSpace(input!.Name), "invalid input name");
         Assert(input!.EndPoints != null && input.EndPoints.Count != 0, "invalid input endPoints");
@@ -95,7 +95,7 @@ public partial class CAContract
 
     public override Empty RemoveVerifierServerEndPoints(RemoveVerifierServerEndPointsInput input)
     {
-        Assert(State.ServerControllers.Value.Controllers.Contains(Context.Sender), "No permission");
+        Assert(State.OrganizationAddress.Value == Context.Sender, "No permission.");
         Assert(input != null, "invalid input");
         Assert(IsValidHash(input!.Id), "invalid input id");
         Assert(input.EndPoints != null && input.EndPoints.Count > 0, "invalid input endPoints");
@@ -135,7 +135,7 @@ public partial class CAContract
 
     public override Empty RemoveVerifierServer(RemoveVerifierServerInput input)
     {
-        Assert(State.ServerControllers.Value.Controllers.Contains(Context.Sender), "No permission");
+        Assert(State.OrganizationAddress.Value == Context.Sender, "No permission.");
         Assert(input != null, "invalid input");
         Assert(IsValidHash(input!.Id), "invalid input id");
         if (State.VerifiersServerList.Value == null || State.VerifiersServerList.Value.VerifierServers.Count == 0) return new Empty();
