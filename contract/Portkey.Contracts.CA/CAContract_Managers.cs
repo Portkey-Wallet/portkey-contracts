@@ -334,12 +334,11 @@ public partial class CAContract
         CheckManagerInfoPermission(input.CaHash, Context.Sender);
         Assert(!State.ForbiddenForwardCallContractMethod[input.ContractAddress][input.MethodName.ToLower()],
             $"Does not have permission for {input.MethodName}.");
-        if (input.MethodName == nameof(State.TokenContract.Transfer) &&
+        if (input.MethodName == nameof(State.TokenContract.Transfer) ||
+            input.MethodName == $".{nameof(State.TokenContract.CrossChainTransfer)}" &&
             input.ContractAddress == State.TokenContract.Value)
         {
-            var transferInput = TransferInput.Parser.ParseFrom(input.Args);
-            UpdateDailyTransferredAmount(input.CaHash, input.GuardiansApproved, transferInput.Symbol,
-                transferInput.Amount, transferInput.To);
+            UpdateDailyTransferredAmount(input);
         }
         else
         {
@@ -758,5 +757,22 @@ public partial class CAContract
         }
 
         return (int)managerInfo.Platform;
+    }
+    
+    private void UpdateDailyTransferredAmount(ManagerForwardCallInput input)
+    {
+        switch (input.MethodName)
+        {
+            case nameof(State.TokenContract.Transfer):
+                var transferInput = TransferInput.Parser.ParseFrom(input.Args);
+                UpdateDailyTransferredAmount(input.CaHash, input.GuardiansApproved, transferInput.Symbol,
+                    transferInput.Amount, transferInput.To);
+                break;
+            case $".{nameof(State.TokenContract.CrossChainTransfer)}":
+                var crossChainTransferInput = CrossChainTransferInput.Parser.ParseFrom(input.Args);
+                UpdateDailyTransferredAmount(input.CaHash, input.GuardiansApproved, crossChainTransferInput.Symbol,
+                    crossChainTransferInput.Amount, crossChainTransferInput.To);
+                break;
+        }
     }
 }
