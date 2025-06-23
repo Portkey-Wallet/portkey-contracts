@@ -97,10 +97,7 @@ public partial class CAContractTests : CAContractTestBase
     [Fact]
     public async Task ReportPreCrossChainSyncHolderInfoTest_Fail_NoPermission()
     {
-        await CaContractStub.Initialize.SendAsync(new InitializeInput
-        {
-            ContractAdmin = DefaultAddress,
-        });
+        await Initiate();
         await SetCheckOperationDetailsInSignatureEnabled(true);
         await CaContractStub.AddCreatorController.SendAsync(new ControllerInput
         {

@@ -546,7 +546,7 @@ public partial class CAContractTests
                     Amount = 1_00000000,
                     Memo = "ca transfer."
                 });
-            executionResult.TransactionResult.Error.ShouldContain("Invalid input.");
+            executionResult.TransactionResult.Error.ShouldContain("Invalid symbol.");
         }
     }
     

@@ -77,10 +77,7 @@ public partial class CAContractTests
     {
         var verificationTime = DateTime.UtcNow;
 
-        await CaContractStub.Initialize.SendAsync(new InitializeInput
-        {
-            ContractAdmin = DefaultAddress,
-        });
+        await Initiate();
         {
             await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
             {
@@ -482,8 +479,8 @@ public partial class CAContractTests
             },
             GuardiansApproved = { guardianApprove }
         };
-        var exceptionResult = await CaContractStubManagerInfo1.AddGuardian.SendAsync(input);
-        exceptionResult.TransactionResult.Error.ShouldContain("");
+        var exceptionResult = await CaContractStubManagerInfo1.AddGuardian.SendWithExceptionAsync(input);
+        exceptionResult.TransactionResult.Error.ShouldContain("CheckVerifierSignatureAndData error ");
     }
 
 
@@ -837,8 +834,8 @@ public partial class CAContractTests
             },
             GuardiansApproved = { guardianApprove }
         };
-        var executionResult = await CaContractStub.AddGuardian.SendAsync(input);
-        executionResult.TransactionResult.Error.ShouldContain("");
+        var executionResult = await CaContractStub.AddGuardian.SendWithExceptionAsync(input);
+        executionResult.TransactionResult.Error.ShouldContain("The number of approved guardians does not meet the requirements");
     }
 
     [Fact]
@@ -1005,7 +1002,7 @@ public partial class CAContractTests
             }
         });
         executionResult.TransactionResult.Error.ShouldContain(
-            $"CA holder is null.CA hash:{HashHelper.ComputeFrom("aaa")}");
+            $"input.GuardianToAdd verification id is invalid");
     }
 
     [Fact]
@@ -2211,7 +2208,7 @@ public partial class CAContractTests
             //     }
             // },
         };
-        await CaContractStub.UpdateGuardian.SendAsync(new UpdateGuardianInput
+        await CaContractStub.UpdateGuardian.SendWithExceptionAsync(new UpdateGuardianInput
         {
             CaHash = caHash,
             GuardianToUpdatePre = new GuardianInfo
@@ -2230,7 +2227,8 @@ public partial class CAContractTests
                 VerificationInfo = new VerificationInfo
                 {
                     Id = _verifierId4
-                }
+                },
+                UpdateSupportZk = true
             },
             GuardiansApproved = { guardianApprove }
         });
@@ -2243,7 +2241,7 @@ public partial class CAContractTests
             guardian.GuardianList.Guardians[1].IdentifierHash.ShouldBe(_guardian1);
             guardian.GuardianList.Guardians[1].VerifierId.ShouldBe(_verifierId1);
             guardian.GuardianList.Guardians.Last().IdentifierHash.ShouldBe(_guardian1);
-            guardian.GuardianList.Guardians.Last().VerifierId.ShouldBe(_verifierId4);
+            guardian.GuardianList.Guardians.Last().VerifierId.ShouldBe(_verifierId2);
         }
     }
 

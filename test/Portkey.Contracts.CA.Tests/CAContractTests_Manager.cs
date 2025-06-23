@@ -17,10 +17,7 @@ public partial class CAContractTests
     private async Task CreateHolderDefault()
     {
         var verificationTime = DateTime.UtcNow;
-        await CaContractStub.Initialize.SendAsync(new InitializeInput
-        {
-            ContractAdmin = DefaultAddress,
-        });
+        await Initiate();
 
         {
             await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
@@ -185,7 +182,7 @@ public partial class CAContractTests
             }
         };
 
-        var result = await CaContractStub.SocialRecovery.SendAsync(new SocialRecoveryInput
+        var result = await CaContractStub.SocialRecovery.SendWithExceptionAsync(new SocialRecoveryInput
         {
             ManagerInfo = new ManagerInfo
             {
@@ -195,7 +192,7 @@ public partial class CAContractTests
             LoginGuardianIdentifierHash = _guardian,
             GuardiansApproved = { guardianApprove }
         });
-        result.TransactionResult.Error.ShouldContain("");
+        result.TransactionResult.Error.ShouldContain("Please complete the approval of all guardians");
     }
 
     [Fact]
@@ -231,7 +228,7 @@ public partial class CAContractTests
             }
         };
 
-        var result = await CaContractStub.SocialRecovery.SendAsync(new SocialRecoveryInput()
+        var result = await CaContractStub.SocialRecovery.SendWithExceptionAsync(new SocialRecoveryInput()
         {
             ManagerInfo = new ManagerInfo
             {
@@ -241,7 +238,7 @@ public partial class CAContractTests
             LoginGuardianIdentifierHash = _guardian,
             GuardiansApproved = { guardianApprove }
         });
-        result.TransactionResult.Error.ShouldContain("");
+        result.TransactionResult.Error.ShouldContain("Please complete the approval of all guardians");
     }
 
     [Fact]
@@ -270,7 +267,7 @@ public partial class CAContractTests
             }
         };
 
-        var result = await CaContractStub.SocialRecovery.SendAsync(new SocialRecoveryInput()
+        var result = await CaContractStub.SocialRecovery.SendWithExceptionAsync(new SocialRecoveryInput()
         {
             ManagerInfo = new ManagerInfo
             {
@@ -280,7 +277,7 @@ public partial class CAContractTests
             LoginGuardianIdentifierHash = _guardian,
             GuardiansApproved = { guardianApprove }
         });
-        result.TransactionResult.Error.ShouldBe("");
+        result.TransactionResult.Error.ShouldContain("Please complete the approval of all guardians");
 
         var guardianApprove1 = new List<GuardianInfo>
         {
@@ -296,7 +293,7 @@ public partial class CAContractTests
             }
         };
 
-        var executionResult = await CaContractStub.SocialRecovery.SendAsync(new SocialRecoveryInput()
+        var executionResult = await CaContractStub.SocialRecovery.SendWithExceptionAsync(new SocialRecoveryInput()
         {
             ManagerInfo = new ManagerInfo
             {
@@ -306,7 +303,7 @@ public partial class CAContractTests
             LoginGuardianIdentifierHash = _guardian,
             GuardiansApproved = { guardianApprove1 }
         });
-        executionResult.TransactionResult.Error.ShouldContain("");
+        executionResult.TransactionResult.Error.ShouldContain("Please complete the approval of all guardians");
     }
 
     [Fact]
@@ -412,7 +409,7 @@ public partial class CAContractTests
             }
         };
 
-        var executionResult = await CaContractStub.SocialRecovery.SendAsync(new SocialRecoveryInput()
+        var executionResult = await CaContractStub.SocialRecovery.SendWithExceptionAsync(new SocialRecoveryInput()
         {
             ManagerInfo = new ManagerInfo
             {
@@ -422,7 +419,7 @@ public partial class CAContractTests
             LoginGuardianIdentifierHash = _guardian,
             GuardiansApproved = { guardianApprove1 }
         });
-        executionResult.TransactionResult.Error.ShouldContain("");
+        executionResult.TransactionResult.Error.ShouldContain("Please complete the approval of all guardians");
 
         //Invalid guardian type.
         var guardianApprove2 = new List<GuardianInfo>
@@ -441,7 +438,7 @@ public partial class CAContractTests
             }
         };
 
-        var exeRsult = await CaContractStub.SocialRecovery.SendAsync(new SocialRecoveryInput()
+        var exeRsult = await CaContractStub.SocialRecovery.SendWithExceptionAsync(new SocialRecoveryInput()
         {
             ManagerInfo = new ManagerInfo
             {
@@ -451,7 +448,7 @@ public partial class CAContractTests
             LoginGuardianIdentifierHash = _guardian,
             GuardiansApproved = { guardianApprove2 }
         });
-        exeRsult.TransactionResult.Error.ShouldBe("");
+        exeRsult.TransactionResult.Error.ShouldContain("Please complete the approval of all guardians");
 
         var guardianApprove3 = new List<GuardianInfo>
         {
@@ -469,7 +466,7 @@ public partial class CAContractTests
             }
         };
 
-        var eresult = await CaContractStub.SocialRecovery.SendAsync(new SocialRecoveryInput()
+        var eresult = await CaContractStub.SocialRecovery.SendWithExceptionAsync(new SocialRecoveryInput()
         {
             ManagerInfo = new ManagerInfo
             {
@@ -479,7 +476,7 @@ public partial class CAContractTests
             LoginGuardianIdentifierHash = _guardian,
             GuardiansApproved = { guardianApprove3 }
         });
-        eresult.TransactionResult.Error.ShouldBe("");
+        eresult.TransactionResult.Error.ShouldContain("Please complete the approval of all guardians");
 
         var guardianApprove4 = new List<GuardianInfo>
         {
@@ -496,7 +493,7 @@ public partial class CAContractTests
             }
         };
 
-        var inputResult = await CaContractStub.SocialRecovery.SendAsync(new SocialRecoveryInput()
+        var inputResult = await CaContractStub.SocialRecovery.SendWithExceptionAsync(new SocialRecoveryInput()
         {
             ManagerInfo = new ManagerInfo
             {
@@ -506,7 +503,7 @@ public partial class CAContractTests
             LoginGuardianIdentifierHash = _guardian,
             GuardiansApproved = { guardianApprove4 }
         });
-        inputResult.TransactionResult.Error.ShouldBe("");
+        inputResult.TransactionResult.Error.ShouldContain("Please complete the approval of all guardians");
     }
 
 
@@ -788,7 +785,7 @@ public partial class CAContractTests
             }
         };
 
-        await CaContractStub.SocialRecovery.SendAsync(new SocialRecoveryInput
+        await CaContractStub.SocialRecovery.SendWithExceptionAsync(new SocialRecoveryInput
         {
             ManagerInfo = new ManagerInfo
             {
@@ -884,7 +881,7 @@ public partial class CAContractTests
             }
         };
 
-        await CaContractStub.SocialRecovery.SendAsync(new SocialRecoveryInput
+        await CaContractStub.SocialRecovery.SendWithExceptionAsync(new SocialRecoveryInput
         {
             ManagerInfo = new ManagerInfo
             {
@@ -1720,10 +1717,7 @@ public partial class CAContractTests
     [Fact]
     public async Task SetForbiddenForwardCallContractMethodTest()
     {
-        await CaContractStub.Initialize.SendAsync(new InitializeInput
-        {
-            ContractAdmin = DefaultAddress,
-        });
+        await Initiate();
         await CaContractStub.SetForbiddenForwardCallContractMethod.SendAsync(
             new SetForbiddenForwardCallContractMethodInput
             {
@@ -1850,10 +1844,7 @@ public partial class CAContractTests
     [Fact]
     public async Task ManagerApproveSpenderWhitelistTest()
     {
-        await CaContractStub.Initialize.SendAsync(new InitializeInput
-        {
-            ContractAdmin = DefaultAddress,
-        });
+        await Initiate();
         await TokenContractStub.Transfer.SendAsync(new TransferInput()
         {
             Symbol = "ELF",

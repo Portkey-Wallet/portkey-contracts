@@ -386,10 +386,7 @@ public partial class CAContractTests
     [Fact]
     public async Task SetSecondaryDelegationFeeTest_Fail_InvalidInput()
     {
-        await CaContractStub.Initialize.SendAsync(new InitializeInput
-        {
-            ContractAdmin = DefaultAddress,
-        });
+        await Initiate();
         var secondaryDelegationFee = await CaContractStub.GetProjectDelegationFee.CallAsync(new Empty());
         secondaryDelegationFee.Amount.ShouldBe(0);
         await CaContractStub.SetProjectDelegationFee.SendAsync(new SetProjectDelegationFeeInput()
