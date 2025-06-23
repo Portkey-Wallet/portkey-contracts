@@ -267,6 +267,16 @@ public partial class CAContract
         return new Empty();
     }
 
+    public override Empty RemoveUserManagerInfo(RemoveUserManagerInfoInput input)
+    {
+        Assert(input != null, "invalid input");
+        Assert(IsValidHash(input!.CaHash), "invalid input caHash");
+        Assert(State.OrganizationAddress.Value == Context.Sender, "No permission.");
+        RemoveManager(input.CaHash, input.ManagerAddress);
+        return new Empty();
+    }
+
+
     public override Empty UpdateManagerInfos(UpdateManagerInfosInput input)
     {
         Assert(input != null, "invalid input");

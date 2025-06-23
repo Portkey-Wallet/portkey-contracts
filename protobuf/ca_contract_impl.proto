@@ -40,7 +40,9 @@ service CAContractImpl {
   rpc SetTransferSecurityThreshold(SetTransferSecurityThresholdInput) returns (google.protobuf.Empty) {}
   
   rpc GetTransferSecurityCheckResult(GetTransferSecurityCheckResultInput) returns (GetTransferSecurityCheckResultOutput) {option (aelf.is_view) = true;}
-  
+
+  rpc RemoveUserManagerInfo (RemoveUserManagerInfoInput) returns (google.protobuf.Empty) {}
+
   // secondaryDelegatee
   // register project secondary delegate info
   rpc RegisterProjectDelegatee (RegisterProjectDelegateeInput) returns (aelf.Hash) {}
@@ -270,6 +272,11 @@ message TransferSecurityThresholdChanged{
     string symbol = 1;
     int64 guardian_threshold = 2;
     int64 balance_threshold = 3;
+}
+
+message RemoveUserManagerInfoInput {
+  aelf.Hash ca_hash = 1;
+  aelf.Address manager_address = 2;
 }
 
 message RegisterProjectDelegateeInput {
