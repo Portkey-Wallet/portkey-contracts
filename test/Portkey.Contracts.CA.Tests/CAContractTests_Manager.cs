@@ -1986,4 +1986,43 @@ public partial class CAContractTests
             }
         });
     }
+
+    [Fact]
+    public async Task RemoveUserManagerInfoTest()
+    {
+        var caHash = await CreateHolder();
+        var result = await CaContractUser1Stub.RemoveUserManagerInfo.SendWithExceptionAsync(new RemoveUserManagerInfoInput()
+        {
+            CaHash = caHash,
+            RemoveAllManager = true
+        });
+        result.TransactionResult.Error.ShouldContain("No permission");
+        var holderInfo = await CaContractUser1Stub.GetHolderInfo.CallAsync(new GetHolderInfoInput()
+        {
+            CaHash = caHash
+        });
+        holderInfo.ManagerInfos.Count.ShouldBe(2);
+
+        await CaContractStub.RemoveUserManagerInfo.SendAsync(new RemoveUserManagerInfoInput()
+        {
+            CaHash = caHash,
+            ManagerAddresses = { User1Address }
+        });
+        holderInfo = await CaContractUser1Stub.GetHolderInfo.CallAsync(new GetHolderInfoInput()
+        {
+            CaHash = caHash
+        });
+        holderInfo.ManagerInfos.Count.ShouldBe(1);
+        
+        await CaContractStub.RemoveUserManagerInfo.SendAsync(new RemoveUserManagerInfoInput()
+        {
+            CaHash = caHash,
+            RemoveAllManager = true
+        });
+        holderInfo = await CaContractUser1Stub.GetHolderInfo.CallAsync(new GetHolderInfoInput()
+        {
+            CaHash = caHash
+        });
+        holderInfo.ManagerInfos.Count.ShouldBe(0);
+    }
 }

@@ -86,7 +86,6 @@ service CAContractImpl {
 
   //Sync holder info
   rpc SyncHolderInfo (SyncHolderInfoInput) returns (google.protobuf.Empty) {}
-  rpc SyncHolderInfos (SyncHolderInfosInput) returns (google.protobuf.Empty) {}
 
   //creator controller
   rpc AddCreatorController (ControllerInput) returns (google.protobuf.Empty) {}
@@ -276,7 +275,8 @@ message TransferSecurityThresholdChanged{
 
 message RemoveUserManagerInfoInput {
   aelf.Hash ca_hash = 1;
-  aelf.Address manager_address = 2;
+  repeated aelf.Address manager_addresses = 2;
+  bool remove_all_manager = 3;
 }
 
 message RegisterProjectDelegateeInput {
@@ -600,10 +600,6 @@ message VerificationTransactionInfo {
 
 message SyncHolderInfoInput {
   VerificationTransactionInfo verification_transaction_info = 1;
-}
-
-message SyncHolderInfosInput {
-  repeated VerificationTransactionInfo verification_transaction_infos = 1;
 }
 
 message ControllerInput{
