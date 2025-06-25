@@ -17,6 +17,10 @@ public partial class CAContractTests
         {
             ContractAdmin = DefaultAddress,
         });
+        await CaContractStub.SetOrganizationAddress.SendAsync(new AdminInput()
+        {
+            Address = DefaultAddress
+        });
     }
 
     [Fact]

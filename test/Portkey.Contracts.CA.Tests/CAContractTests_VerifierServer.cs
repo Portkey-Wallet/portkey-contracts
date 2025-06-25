@@ -402,10 +402,7 @@ public partial class CAContractTests
     [Fact]
     public async Task UpdateVerifierServerEndPointsTest()
     {
-        await CaContractStub.Initialize.SendAsync(new InitializeInput
-        {
-            ContractAdmin = DefaultAddress,
-        });
+        await Initiate();
         await CaContractStub.AddVerifierServerEndPoints.SendAsync(new AddVerifierServerEndPointsInput
         {
             Name = "test",

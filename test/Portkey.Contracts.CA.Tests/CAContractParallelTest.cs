@@ -56,7 +56,7 @@ public partial class  CAContractTests
     [Fact]
     public async Task SetManagerForwardCallParallel_Test()
     {
-        await Init();
+        await Initiate();
         await TokenContractStub.Transfer.SendAsync(new TransferInput
         {
             Amount = 1000000000000,

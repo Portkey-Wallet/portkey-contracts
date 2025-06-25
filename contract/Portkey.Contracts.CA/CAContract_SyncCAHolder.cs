@@ -107,16 +107,6 @@ public partial class CAContract
         }
     }
 
-    public override Empty SyncHolderInfos(SyncHolderInfosInput input)
-    {
-        foreach (var verificationTransactionInfo in input.VerificationTransactionInfos)
-        {
-            SyncHolderInfo(verificationTransactionInfo);
-        }
-
-        return new Empty();
-    }
-
     public override Empty SyncHolderInfo(SyncHolderInfoInput input)
     {
         SyncHolderInfo(input.VerificationTransactionInfo);

@@ -40,7 +40,9 @@ service CAContractImpl {
   rpc SetTransferSecurityThreshold(SetTransferSecurityThresholdInput) returns (google.protobuf.Empty) {}
   
   rpc GetTransferSecurityCheckResult(GetTransferSecurityCheckResultInput) returns (GetTransferSecurityCheckResultOutput) {option (aelf.is_view) = true;}
-  
+
+  rpc RemoveUserManagerInfo (RemoveUserManagerInfoInput) returns (google.protobuf.Empty) {}
+
   // secondaryDelegatee
   // register project secondary delegate info
   rpc RegisterProjectDelegatee (RegisterProjectDelegateeInput) returns (aelf.Hash) {}
@@ -84,7 +86,6 @@ service CAContractImpl {
 
   //Sync holder info
   rpc SyncHolderInfo (SyncHolderInfoInput) returns (google.protobuf.Empty) {}
-  rpc SyncHolderInfos (SyncHolderInfosInput) returns (google.protobuf.Empty) {}
 
   //creator controller
   rpc AddCreatorController (ControllerInput) returns (google.protobuf.Empty) {}
@@ -270,6 +271,12 @@ message TransferSecurityThresholdChanged{
     string symbol = 1;
     int64 guardian_threshold = 2;
     int64 balance_threshold = 3;
+}
+
+message RemoveUserManagerInfoInput {
+  aelf.Hash ca_hash = 1;
+  repeated aelf.Address manager_addresses = 2;
+  bool remove_all_manager = 3;
 }
 
 message RegisterProjectDelegateeInput {
@@ -593,10 +600,6 @@ message VerificationTransactionInfo {
 
 message SyncHolderInfoInput {
   VerificationTransactionInfo verification_transaction_info = 1;
-}
-
-message SyncHolderInfosInput {
-  repeated VerificationTransactionInfo verification_transaction_infos = 1;
 }
 
 message ControllerInput{

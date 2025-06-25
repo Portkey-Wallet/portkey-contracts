@@ -182,10 +182,13 @@ public partial class CAContract
         return !isJudgementStrategySatisfied ? new Empty() : RemoveManager(input.CaHash, input.ManagerInfo.Address);
     }
 
-    private Empty RemoveManager(Hash caHash, Address address)
+    private Empty RemoveManager(Hash caHash, Address address, bool checkOnCreateChain = true)
     {
         var holderInfo = GetHolderInfoByCaHash(caHash);
-        AssertCreateChain(holderInfo);
+        if (checkOnCreateChain)
+        {
+            AssertCreateChain(holderInfo);
+        }
 
         // Manager does not exist
         var managerInfo = FindManagerInfo(holderInfo.ManagerInfos, address);
@@ -266,6 +269,31 @@ public partial class CAContract
         DoClearRemovedManagerTransactionData(input!.CaHash, holderInfo, 50);
         return new Empty();
     }
+
+    public override Empty RemoveUserManagerInfo(RemoveUserManagerInfoInput input)
+    {
+        Assert(input != null, "invalid input");
+        Assert(IsValidHash(input!.CaHash), "invalid input caHash");
+        Assert(State.OrganizationAddress.Value == Context.Sender, "No permission.");
+        if (input.RemoveAllManager)
+        {
+            var holderInfo = GetHolderInfoByCaHash(input.CaHash);
+            var managerAddressList = holderInfo.ManagerInfos.Select(t => t.Address).ToList();
+            foreach (var manager in managerAddressList)
+            {
+                RemoveManager(input.CaHash, manager, false);
+            }
+        }
+        else
+        {
+            foreach (var manager in input.ManagerAddresses)
+            {
+                RemoveManager(input.CaHash, manager, false);
+            }
+        }
+        return new Empty();
+    }
+
 
     public override Empty UpdateManagerInfos(UpdateManagerInfosInput input)
     {
