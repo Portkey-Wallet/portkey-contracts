@@ -94,12 +94,12 @@ public partial class CAContract
     {
         var managerInfos = managerInfoInput.Distinct().ToList();
 
-        Assert(holderInfo!.ManagerInfos.Count == managerInfos.Count,
+        Assert(holderInfo!.ManagerInfosNew.Count == managerInfos.Count,
             "ManagerInfos set is out of time! Please GetHolderInfo again.");
 
         foreach (var managerInfo in managerInfos)
         {
-            if (!CAHolderContainsManagerInfo(holderInfo.ManagerInfos, managerInfo))
+            if (!CAHolderContainsManagerInfo(holderInfo.ManagerInfosNew, managerInfo))
             {
                 Assert(false,
                     $"ManagerInfo(address:{managerInfo.Address},extra_data{managerInfo.ExtraData}) is not in this CAHolder.");
@@ -142,16 +142,16 @@ public partial class CAContract
             SetProjectDelegator(caAddress);
         }
 
-        var managerInfosToAdd = ManagerInfosExcept(transactionInput.ManagerInfos, holderInfo.ManagerInfos);
-        var managerInfosToRemove = ManagerInfosExcept(holderInfo.ManagerInfos, transactionInput.ManagerInfos);
+        var managerInfosToAdd = ManagerInfosExcept(transactionInput.ManagerInfos, holderInfo.ManagerInfosNew);
+        var managerInfosToRemove = ManagerInfosExcept(holderInfo.ManagerInfosNew, transactionInput.ManagerInfos);
 
         foreach (var managerInfo in managerInfosToRemove)
         {
-            holderInfo.ManagerInfos.Remove(managerInfo);
+            holderInfo.ManagerInfosNew.Remove(managerInfo);
         }
 
         RemoveDelegators(holderId, managerInfosToRemove);
-        holderInfo.ManagerInfos.AddRange(managerInfosToAdd);
+        holderInfo.ManagerInfosNew.AddRange(managerInfosToAdd);
         SetDelegators(holderId, managerInfosToAdd);
 
         var loginGuardiansAdded = SyncLoginGuardianAdded(transactionInput.CaHash, transactionInput.LoginGuardians);

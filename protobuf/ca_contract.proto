@@ -107,6 +107,7 @@ message HolderInfo {
   GuardianList guardian_list = 3;
   StrategyNode judgement_strategy = 4;
   int32 create_chain_id = 5;
+  repeated ManagerInfo manager_infos_new = 6;
 }
 
 message DelegateInfo {

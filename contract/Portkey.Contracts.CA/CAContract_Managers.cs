@@ -59,16 +59,16 @@ public partial class CAContract
         SetManagerReadOnlyStatus(input.ManagerInfo.Address, isReadOnlyManager, caHash);
         UpdateManuallySupportForZk(caHash, input.GuardiansApproved, holderInfo);
         // ManagerInfo exists
-        var managerInfo = FindManagerInfo(holderInfo.ManagerInfos, input.ManagerInfo.Address);
+        var managerInfo = FindManagerInfo(holderInfo.ManagerInfosNew, input.ManagerInfo.Address);
         Assert(managerInfo == null, $"ManagerInfo exists");
         UpdateManagerTransactionStatistics(caHash, input.ManagerInfo.Address);
         var caAddress = Context.ConvertVirtualAddressToContractAddress(caHash);
         ClearNonTransactionManager(caHash, caAddress);
-        Assert(holderInfo.ManagerInfos.Count < GetManagerMaxCount(),
+        Assert(holderInfo.ManagerInfosNew.Count < GetManagerMaxCount(),
             "The amount of ManagerInfos out of limit");
 
         input.ManagerInfo.Platform = input.Platform;
-        State.HolderInfoMap[caHash].ManagerInfos.Add(input.ManagerInfo);
+        State.HolderInfoMap[caHash].ManagerInfosNew.Add(input.ManagerInfo);
         SetDelegator(caHash, input.ManagerInfo);
         DoClearRemovedManagerTransactionData(caHash, holderInfo);
         Context.Fire(new ManagerInfoSocialRecovered()
@@ -130,14 +130,14 @@ public partial class CAContract
         var holderInfo = GetHolderInfoByCaHash(input.CaHash);
 
         // ManagerInfo exists
-        var managerInfo = FindManagerInfo(holderInfo.ManagerInfos, input.ManagerInfo.Address);
+        var managerInfo = FindManagerInfo(holderInfo.ManagerInfosNew, input.ManagerInfo.Address);
         Assert(managerInfo == null, $"ManagerInfo address exists");
         var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
         ClearNonTransactionManager(input.CaHash, caAddress);
-        Assert(holderInfo.ManagerInfos.Count < GetManagerMaxCount(),
+        Assert(holderInfo.ManagerInfosNew.Count < GetManagerMaxCount(),
             "The amount of ManagerInfos out of limit");
 
-        holderInfo.ManagerInfos.Add(input.ManagerInfo);
+        holderInfo.ManagerInfosNew.Add(input.ManagerInfo);
         SetDelegator(input.CaHash, input.ManagerInfo);
 
         Context.Fire(new ManagerInfoAdded
@@ -191,7 +191,7 @@ public partial class CAContract
         }
 
         // Manager does not exist
-        var managerInfo = FindManagerInfo(holderInfo.ManagerInfos, address);
+        var managerInfo = FindManagerInfo(holderInfo.ManagerInfosNew, address);
         if (managerInfo == null)
         {
             return new Empty();
@@ -201,7 +201,7 @@ public partial class CAContract
 
         var isCurrentSender = Context.Sender.Equals(address);
         var platform = (int)managerInfo.Platform;
-        holderInfo.ManagerInfos.Remove(managerInfo);
+        holderInfo.ManagerInfosNew.Remove(managerInfo);
         RemoveDelegator(caHash, managerInfo);
         //remove read-only manager when logging out
         if (IsManagerReadOnly(caHash, address))
@@ -241,7 +241,7 @@ public partial class CAContract
         var currentSenderPlatform = GetPlatformFromCurrentSender(input.CaHash, holderInfo);
         foreach (var inputManagerInfo in input.ManagerInfos)
         {
-            var managerInfo = FindManagerInfo(holderInfo.ManagerInfos, inputManagerInfo.Address);
+            var managerInfo = FindManagerInfo(holderInfo.ManagerInfosNew, inputManagerInfo.Address);
             if (managerInfo == null)
             {
                 Context.Fire(new ManagerInfoRemoved
@@ -254,7 +254,7 @@ public partial class CAContract
                 continue;
             }
 
-            holderInfo.ManagerInfos.Remove(managerInfo);
+            holderInfo.ManagerInfosNew.Remove(managerInfo);
             RemoveDelegator(input!.CaHash, managerInfo);
 
             Context.Fire(new ManagerInfoRemoved
@@ -278,7 +278,7 @@ public partial class CAContract
         if (input.RemoveAllManager)
         {
             var holderInfo = GetHolderInfoByCaHash(input.CaHash);
-            var managerAddressList = holderInfo.ManagerInfos.Select(t => t.Address).ToList();
+            var managerAddressList = holderInfo.ManagerInfosNew.Select(t => t.Address).ToList();
             foreach (var manager in managerAddressList)
             {
                 RemoveManager(input.CaHash, manager, false);
@@ -306,7 +306,7 @@ public partial class CAContract
 
         var managerInfosToUpdate = input.ManagerInfos.Distinct().ToList();
 
-        var managerInfoList = holderInfo.ManagerInfos;
+        var managerInfoList = holderInfo.ManagerInfosNew;
 
         var caAddress = Context.ConvertVirtualAddressToContractAddress(input.CaHash);
 
@@ -521,12 +521,12 @@ public partial class CAContract
     {
         UpdateManagerTransactionStatistics(caHash, address);
         Assert(State.HolderInfoMap[caHash] != null, $"CA holder is null.CA hash:{caHash}");
-        Assert(State.HolderInfoMap[caHash].ManagerInfos.Any(m => m.Address == address), "No permission.");
+        Assert(State.HolderInfoMap[caHash].ManagerInfosNew.Any(m => m.Address == address), "No permission.");
     }
 
     private void ClearNonTransactionManager(Hash caHash, Address caAddress)
     {
-        var managerInfos = State.HolderInfoMap[caHash].ManagerInfos;
+        var managerInfos = State.HolderInfoMap[caHash].ManagerInfosNew;
         if (managerInfos == null)
         {
             return;
@@ -764,7 +764,7 @@ public partial class CAContract
             : originalInfos.ToList();
         foreach (var managerStatisticsInfo in managerStatisticsInfos.ToList())
         {
-            if (holderInfo.ManagerInfos.Any(mg => mg.Address.Equals(managerStatisticsInfo.Address)))
+            if (holderInfo.ManagerInfosNew.Any(mg => mg.Address.Equals(managerStatisticsInfo.Address)))
             {
                 continue;
             }
@@ -779,7 +779,7 @@ public partial class CAContract
             return (int)Platform.Undefined;
         }
         holderInfo ??= State.HolderInfoMap[caHash];
-        var managerInfo = holderInfo.ManagerInfos.FirstOrDefault(mg => mg.Address.Equals(Context.Sender));
+        var managerInfo = holderInfo.ManagerInfosNew.FirstOrDefault(mg => mg.Address.Equals(Context.Sender));
         if (managerInfo == null)
         {
             return (int)Platform.Undefined;

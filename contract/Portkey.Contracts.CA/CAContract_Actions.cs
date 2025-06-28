@@ -236,7 +236,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         var holderInfo = new HolderInfo();
         holderInfo.CreatorAddress = Context.Sender;
         holderInfo.CreateChainId = chainId;
-        holderInfo.ManagerInfos.Add(managerInfo);
+        holderInfo.ManagerInfosNew.Add(managerInfo);
 
         guardian = new Guardian
         {
@@ -300,7 +300,7 @@ public partial class CAContract : CAContractImplContainer.CAContractImplBase
         var holderInfo = new HolderInfo();
         holderInfo.CreatorAddress = Context.Sender;
         holderInfo.CreateChainId = chainId;
-        holderInfo.ManagerInfos.Add(managerInfo);
+        holderInfo.ManagerInfosNew.Add(managerInfo);
 
         var salt = GetSaltFromVerificationDoc(guardianApproved.VerificationInfo.VerificationDoc);
         guardian = new Guardian

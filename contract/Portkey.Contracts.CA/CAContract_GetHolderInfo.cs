@@ -18,7 +18,7 @@ public partial class CAContract
         var holderInfo = State.HolderInfoMap[caHash];
         Assert(holderInfo != null, $"Holder is not found");
         output.CaHash = caHash;
-        output.ManagerInfos.AddRange(holderInfo!.ManagerInfos);
+        output.ManagerInfos.AddRange(holderInfo!.ManagerInfosNew);
 
         output.CaAddress = Context.ConvertVirtualAddressToContractAddress(output.CaHash);
         output.GuardianList = holderInfo.GuardianList ?? new GuardianList();
