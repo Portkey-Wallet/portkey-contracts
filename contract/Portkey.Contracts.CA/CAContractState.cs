@@ -24,12 +24,8 @@ public partial class CAContractState : ContractState
     /// All CA contracts
     /// </summary>
     public MappedState<Hash, HolderInfo> HolderInfoMap { get; set; }
-
-    public SingletonState<Address> Admin { get; set; }
     public SingletonState<Address> OrganizationAddress { get; set; }
     public SingletonState<ControllerList> CreatorControllers { get; set; }
-    public SingletonState<ControllerList> ServerControllers { get; set; }
-
     /// <summary>
     ///  Verifier list
     /// </summary>

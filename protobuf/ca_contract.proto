@@ -74,9 +74,7 @@ service CAContract {
 
   rpc ValidateStrategy (ValidateStrategyInput) returns (ValidateStrategyOutput) {option (aelf.is_view) = true;}
   
-  rpc ChangeAdmin (AdminInput) returns (google.protobuf.Empty) {}
   rpc SetOrganizationAddress(AdminInput) returns (google.protobuf.Empty) {}
-  rpc GetAdmin (google.protobuf.Empty) returns (AdminOutput) {option (aelf.is_view) = true;}
   rpc GetOrganizationAddress (google.protobuf.Empty) returns (AdminOutput) {option (aelf.is_view) = true;}
   rpc SetProjectDelegationFee (SetProjectDelegationFeeInput) returns (google.protobuf.Empty) {}
 
