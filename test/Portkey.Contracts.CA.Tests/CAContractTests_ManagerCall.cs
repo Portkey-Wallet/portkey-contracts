@@ -41,7 +41,7 @@ public partial class CAContractTests
                 Memo = "ca transfer."
             }.ToBytesValue().Value
         };
-        await CaContractStubManagerInfo1.ManagerForwardCall.SendAsync(input);
+        await CaContractStub.ManagerForwardCall.SendAsync(input);
         {
             var balance = await TokenContractStub.GetBalance.CallAsync(new GetBalanceInput
             {
@@ -69,7 +69,20 @@ public partial class CAContractTests
                 Memo = "ca transfer."
             }.ToBytesValue().Value
         };
-        var executionResult = await CaContractStub.ManagerForwardCall.SendWithExceptionAsync(input);
+        
+        var holderInfo = await CaContractStub.GetHolderInfo.CallAsync(new GetHolderInfoInput
+        {
+            CaHash = caHash
+        });
+        
+        await TokenContractStub.Transfer.SendAsync(new TransferInput
+        {
+            Amount = 1_0000000_00000000,
+            Symbol = "ELF",
+            To = holderInfo.CaAddress
+        });
+        
+        var executionResult = await CaContractStubManagerInfo1.ManagerForwardCall.SendWithExceptionAsync(input);
         executionResult.TransactionResult.Error.ShouldContain("No Permission.");
     }
 
@@ -117,7 +130,7 @@ public partial class CAContractTests
                     Memo = "ca transfer."
                 }.ToBytesValue().Value
             };
-            var executionResult = await CaContractStubManagerInfo1.ManagerForwardCall.SendWithExceptionAsync(input);
+            var executionResult = await CaContractStub.ManagerForwardCall.SendWithExceptionAsync(input);
             executionResult.TransactionResult.Error.ShouldContain("Invalid contract address.");
         }
         {
@@ -133,7 +146,7 @@ public partial class CAContractTests
                     Memo = "ca transfer."
                 }.ToBytesValue().Value
             };
-            var executionResult = await CaContractStubManagerInfo1.ManagerForwardCall.SendWithExceptionAsync(input);
+            var executionResult = await CaContractStub.ManagerForwardCall.SendWithExceptionAsync(input);
             executionResult.TransactionResult.Error.ShouldContain("Invalid input.");
         }
         {
@@ -149,7 +162,7 @@ public partial class CAContractTests
                     Memo = "ca transfer."
                 }.ToBytesValue().Value
             };
-            var executionResult = await CaContractStubManagerInfo1.ManagerForwardCall.SendWithExceptionAsync(input);
+            var executionResult = await CaContractStub.ManagerForwardCall.SendWithExceptionAsync(input);
             executionResult.TransactionResult.Error.ShouldContain("CA hash is null.");
         }
         {
@@ -165,7 +178,7 @@ public partial class CAContractTests
                     Memo = "ca transfer."
                 }.ToBytesValue().Value
             };
-            var executionResult = await CaContractStubManagerInfo1.ManagerForwardCall.SendWithExceptionAsync(input);
+            var executionResult = await CaContractStub.ManagerForwardCall.SendWithExceptionAsync(input);
             executionResult.TransactionResult.Error.ShouldContain("Invalid input.");
         }
     }

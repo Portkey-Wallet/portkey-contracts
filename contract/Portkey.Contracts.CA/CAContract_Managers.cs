@@ -242,16 +242,10 @@ public partial class CAContract
         Assert(input.CaHash != null, "CA hash is null.");
         Assert(input.ContractAddress != null && !string.IsNullOrWhiteSpace(input.MethodName),
             "Invalid input.");
-        CheckManagerInfoPermission(input.CaHash, Context.Sender);
+        Assert(State.HolderInfoMap[input.CaHash] != null, $"CA holder is null.CA hash:{input.CaHash}");
+        Assert(State.Admin.Value == Context.Sender, "No permission.");
         Assert(!State.ForbiddenForwardCallContractMethod[input.ContractAddress][input.MethodName.ToLower()],
             $"Does not have permission for {input.MethodName}.");
-        if (input.MethodName == nameof(State.TokenContract.Transfer) &&
-            input.ContractAddress == State.TokenContract.Value)
-        {
-            var transferInput = TransferInput.Parser.ParseFrom(input.Args);
-            UpdateDailyTransferredAmount(input.CaHash, input.GuardiansApproved, transferInput.Symbol, transferInput.Amount);
-        }
-
         Context.SendVirtualInline(input.CaHash, input.ContractAddress, input.MethodName, input.Args, true);
         return new Empty();
     }

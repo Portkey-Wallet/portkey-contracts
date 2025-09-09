@@ -296,18 +296,13 @@ public partial class CAContractTests
         var managerForwardCallSign = GenerateSignature(VerifierKeyPair, VerifierAddress, managerForwardCallVerifyTime,
             _guardian, 0, salt, managerForwardCallOpType);
 
-        var input = new ManagerForwardCallInput
+        var input = new ManagerTransferInput
         {
             CaHash = _transferLimitTestCaHash,
-            ContractAddress = TokenContractAddress,
-            MethodName = nameof(TokenContractContainer.TokenContractStub.Transfer),
-            Args = new TransferInput
-            {
-                To = User2Address,
-                Symbol = "ELF",
-                Amount = 10000,
-                Memo = "ca transfer."
-            }.ToBytesValue().Value,
+            To = User2Address,
+            Symbol = "ELF",
+            Amount = 10000,
+            Memo = "ca transfer.",
             GuardiansApproved =
             {
                 new GuardianInfo
@@ -322,9 +317,9 @@ public partial class CAContractTests
                             $"{0},{_guardian.ToHex()},{managerForwardCallVerifyTime},{VerifierAddress.ToBase58()},{salt},{managerForwardCallOpType}"
                     }
                 }
-            },
+            }
         };
-        await CaContractStubManagerInfo1.ManagerForwardCall.SendAsync(input);
+        await CaContractStubManagerInfo1.ManagerTransfer.SendAsync(input);
         {
             var balance = await TokenContractStub.GetBalance.CallAsync(new GetBalanceInput
             {
@@ -336,17 +331,11 @@ public partial class CAContractTests
     }
 
     [Fact]
-    public async Task ManagerForwardCall_TransferTest_Failed_NotGuardianInfoList()
+    public async Task ManagerForwardCall_TransferTest_Success_NotGuardianInfoList()
     {
         await InitTransferLimitTest();
-        await TokenContractStub.Transfer.SendAsync(new TransferInput
-        {
-            Amount = 1000000000000,
-            Symbol = "ELF",
-            To = User1Address
-        });
 
-        var executionResult = await CaContractStubManagerInfo1.ManagerForwardCall.SendWithExceptionAsync(
+        var executionResult = await CaContractStub.ManagerForwardCall.SendAsync(
             new ManagerForwardCallInput
             {
                 CaHash = _transferLimitTestCaHash,
@@ -361,7 +350,14 @@ public partial class CAContractTests
                 }.ToBytesValue().Value,
                 GuardiansApproved = { },
             });
-        executionResult.TransactionResult.Error.ShouldContain("Low transfer security level");
+        executionResult.TransactionResult.Status.ShouldBe(TransactionResultStatus.Mined);
+        
+        var balance = await TokenContractStub.GetBalance.CallAsync(new GetBalanceInput
+        {
+            Owner = User2Address,
+            Symbol = "ELF"
+        });
+        balance.Balance.ShouldBe(10000);
     }
 
 
