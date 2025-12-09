@@ -1,0 +1,671 @@
+/**
+ * CA contract.
+ */
+syntax = "proto3";
+
+package ca;
+
+import "aelf/core.proto";
+import "aelf/options.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "authority_info.proto";
+import "acs12.proto";
+import "acs2.proto";
+
+option csharp_namespace = "Portkey.Contracts.CA";
+
+service CAContract {
+  option (aelf.base) = "acs2.proto";
+  rpc Initialize(InitializeInput) returns (google.protobuf.Empty){}
+
+  // If the Guardian has CAHolder and Manager, meaning CAHolder created before, return true
+  rpc CreateCAHolder (CreateCAHolderInput) returns (google.protobuf.Empty) {}
+
+  // If the Guardian has CAHolder and Manager, meaning CAHolder created before, return true
+  rpc ReportPreCrossChainSyncHolderInfo (ReportPreCrossChainSyncHolderInfoInput) returns (google.protobuf.Empty) {}
+
+  // If Guardian is already added, return ture
+  rpc AddGuardian (AddGuardianInput) returns (google.protobuf.Empty) {}
+
+  // If Guardian is already removed, return ture
+  rpc RemoveGuardian (RemoveGuardianInput) returns (google.protobuf.Empty) {}
+
+  rpc UpdateGuardian (UpdateGuardianInput) returns (google.protobuf.Empty) {}
+  
+  // If Guardian is already setted, return true
+  rpc SetGuardianForLogin (SetGuardianForLoginInput) returns (google.protobuf.Empty) {}
+
+  // If Guardian is already unsetted, return true
+  rpc UnsetGuardianForLogin (UnsetGuardianForLoginInput) returns (google.protobuf.Empty) {}
+
+  //Manager call other contracts.
+  rpc ManagerForwardCall (ManagerForwardCallInput) returns (google.protobuf.Empty) {}
+
+  //Manager send transfer transaction.
+  rpc ManagerTransfer (ManagerTransferInput) returns (google.protobuf.Empty){}
+
+  //Manager send transfer from transaction.
+  rpc ManagerTransferFrom (ManagerTransferFromInput) returns (google.protobuf.Empty){}
+
+  // If ManagerInfo is already binded, return true
+  rpc SocialRecovery (SocialRecoveryInput) returns (google.protobuf.Empty) {}
+  
+  rpc IsManagerReadOnly (IsManagerReadOnlyInput) returns (google.protobuf.BoolValue) {option (aelf.is_view) = true;}
+  
+  rpc RemoveReadOnlyManager (RemoveReadOnlyManagerInput) returns (google.protobuf.Empty) {}
+
+  // If the managerInfo is already exists, return true
+  rpc AddManagerInfo (AddManagerInfoInput) returns (google.protobuf.Empty) {}
+
+  // If the managerInfo is already removed, return true
+  rpc RemoveManagerInfo (RemoveManagerInfoInput) returns (google.protobuf.Empty) {}
+  
+  rpc RemoveOtherManagerInfo (RemoveOtherManagerInfoInput) returns (google.protobuf.Empty) {}
+  
+  rpc RemoveOtherManagerInfos (RemoveOtherManagerInfosInput) returns (google.protobuf.Empty) {}
+  
+  rpc UpdateManagerInfos (UpdateManagerInfosInput) returns (google.protobuf.Empty) {}
+
+  rpc GetHolderInfo(GetHolderInfoInput) returns (GetHolderInfoOutput) {option (aelf.is_view) = true;}
+  
+  // Validates CAHolder with ManagerInfos
+  rpc ValidateCAHolderInfoWithManagerInfosExists (ValidateCAHolderInfoWithManagerInfosExistsInput) returns (google.protobuf.Empty) {}
+
+  rpc ValidateStrategy (ValidateStrategyInput) returns (ValidateStrategyOutput) {option (aelf.is_view) = true;}
+  
+  rpc ChangeAdmin (AdminInput) returns (google.protobuf.Empty) {}
+  rpc SetOrganizationAddress(AdminInput) returns (google.protobuf.Empty) {}
+  rpc GetAdmin (google.protobuf.Empty) returns (AdminOutput) {option (aelf.is_view) = true;}
+  rpc GetOrganizationAddress (google.protobuf.Empty) returns (AdminOutput) {option (aelf.is_view) = true;}
+  rpc SetProjectDelegationFee (SetProjectDelegationFeeInput) returns (google.protobuf.Empty) {}
+
+  rpc GetProjectDelegationFee (google.protobuf.Empty) returns (ProjectDelegationFee) { option (aelf.is_view) = true; }
+
+  rpc SetCheckOperationDetailsInSignatureEnabled (SetCheckOperationDetailsInSignatureEnabledInput) returns (google.protobuf.Empty) {}
+
+  rpc GetCheckOperationDetailsInSignatureEnabled (google.protobuf.Empty) returns (GetCheckOperationDetailsInSignatureEnabledOutput) {option (aelf.is_view) = true;}
+
+  // zk login
+  // add or update jwt issuer and jwks endpoint
+  rpc AddOrUpdateJwtIssuer (JwtIssuerAndEndpointInput) returns (google.protobuf.Empty);
+  // query whether an issuer is valid
+  rpc IsValidIssuer (JwtIssuerAndEndpointInput) returns (google.protobuf.BoolValue) {
+    option (aelf.is_view) = true;
+  }
+  rpc AddKidPublicKey(KidPublicKeyInput) returns (google.protobuf.Empty);
+  //start oracle data feeds task by subscription_id and guardian_type
+  rpc StartOracleDataFeedsTask (StartOracleDataFeedsTaskRequest) returns (google.protobuf.Empty);
+  rpc VerifyZkLogin(VerifyZkLoginRequest) returns (google.protobuf.BoolValue) { option (aelf.is_view) = true; }
+  rpc VerifySignature(VerifySignatureRequest) returns (google.protobuf.BoolValue) { option (aelf.is_view) = true; }
+}
+
+//Data structure
+message HolderInfo {
+  aelf.Address creator_address = 1;
+  repeated ManagerInfo manager_infos = 2;
+  GuardianList guardian_list = 3;
+  StrategyNode judgement_strategy = 4;
+  int32 create_chain_id = 5;
+}
+
+message DelegateInfo {
+  int32 chain_id = 1;
+  aelf.Hash project_hash = 2;
+  aelf.Hash identifier_hash = 3;
+  google.protobuf.Timestamp timestamp = 4;
+  int32 expiration_time = 5;
+  // symbol -> delegate fee
+  map<string, int64> delegations = 6;
+  //Whether to pay transaction fee continuously
+  bool is_unlimited_delegate = 7;
+  string signature = 1000;
+}
+
+message ManagerInfo {
+  aelf.Address address = 1;
+  string extra_data = 2;
+  Platform platform = 3;
+}
+
+message GuardianList {
+  repeated Guardian guardians = 1;
+}
+
+message Guardian {
+  GuardianType type = 1;
+  aelf.Hash verifier_id = 2;
+  aelf.Hash identifier_hash = 3;
+  string salt = 4;
+  bool is_login_guardian = 5;
+  ZkLoginInfo zk_login_info = 6;
+  bool manuallySupportForZk = 7;
+  string poseidon_identifier_hash = 8;
+}
+
+enum GuardianType {
+  GUARDIAN_TYPE_OF_EMAIL = 0;
+  GUARDIAN_TYPE_OF_GOOGLE = 2;
+  GUARDIAN_TYPE_OF_APPLE = 3;
+  GUARDIAN_TYPE_OF_TELEGRAM = 4;
+  GUARDIAN_TYPE_OF_FACEBOOK = 5;
+  GUARDIAN_TYPE_OF_TWITTER = 6;
+}
+
+message ControllerList {
+  repeated aelf.Address controllers = 1;
+}
+
+message ManagerInfoList {
+  repeated ManagerInfo manager_infos = 1;
+}
+
+message LoginGuardianList {
+  repeated aelf.Hash login_guardians = 1;
+}
+
+//Input
+message InitializeInput{
+  aelf.Address contract_admin = 1;
+}
+
+message AdminInput{
+  aelf.Address address = 1;
+}
+
+message AdminOutput{
+  aelf.Address address = 1;
+}
+
+message CreateCAHolderInput {
+  GuardianInfo guardian_approved = 1;
+  ManagerInfo manager_info = 2;
+  StrategyNode judgement_strategy = 3;
+  string referral_code = 4;
+  string project_code = 5;
+  DelegateInfo delegate_info = 6;
+  Platform platform = 7;
+}
+
+message ReportPreCrossChainSyncHolderInfoInput {
+  GuardianInfo guardian_approved = 1;
+  ManagerInfo manager_info = 2;
+  StrategyNode judgement_strategy = 3;
+  aelf.Hash ca_hash = 4;
+  int32 create_chain_id = 5;
+}
+
+message GuardianInfo {
+  GuardianType type = 1;
+  aelf.Hash identifier_hash = 2;
+  VerificationInfo verification_info = 3;
+  ZkLoginInfo zk_login_info = 4;
+  bool update_support_zk = 5;
+}
+
+message VerificationInfo {
+  aelf.Hash id = 1;
+  bytes signature = 2;
+  string verification_doc = 3;
+}
+
+message ZkLoginInfo {
+  // the type may be changed if we decide to use Poseidon hash function later
+  aelf.Hash identifier_hash = 1;
+  // salt used to generate the identifier_hash, it has to be 16 bytes
+  string salt = 2;
+  // extract kid from jwt head
+  string kid = 3;
+  // the identifier of the circuit
+  string circuit_id = 4;
+  // zk_proof is the serialized zk proof
+  string zk_proof = 5;
+  // the issuer of the jwt
+  string issuer = 6;
+  // nonce associated with the jwt
+  string nonce = 7;
+  // the payload that is used to calculate the nonce, where nonce = hash(serialize(non 
+  NoncePayload nonce_payload = 8;
+  ZkProofInfo zk_proof_info = 9;
+  string poseidon_identifier_hash = 10;
+  IdentifierHashType identifier_hash_type = 11;
+}
+
+enum IdentifierHashType{
+  SHA_256_HASH = 0;
+  POSEIDON_HASH = 1;
+}
+
+message ZkProofInfo {
+  repeated string zk_proof_pi_a = 1;
+  repeated string zk_proof_pi_b1 = 2;
+  repeated string zk_proof_pi_b2 = 3;
+  repeated string zk_proof_pi_b3 = 4;
+  repeated string zk_proof_pi_c = 5;
+}
+
+message NoncePayload {
+  oneof operation {
+    AddManager add_manager_address = 1;
+    RemoveManager remove_manager_address = 2;
+  }
+}
+
+message AddManager {
+  // used to differentiate the operation that may have same parameters
+  google.protobuf.Timestamp timestamp = 1;
+  aelf.Hash ca_hash = 2;
+  aelf.Address manager_address = 3; // ？？ Or use ManagerInfo here ？？ 
+}
+
+message RemoveManager {
+  // used to differentiate the operation that may have same parameters 
+  google. protobuf. Timestamp timestamp = 1;
+  aelf.Hash ca_hash = 2;
+  aelf.Address manager_address = 3; // ？？ Or use ManagerInfo here ？？ 
+}
+
+message JwtIssuerAndEndpointInput {
+  GuardianType type = 1;
+  string issuer = 2;
+  string jwks_endpoint = 3;
+}
+
+message KidPublicKeyInput {
+  GuardianType type = 1;
+  string kid = 2;
+  string public_key = 3;
+}
+
+message StartOracleDataFeedsTaskRequest
+{
+  GuardianType type = 1;
+  int64 subscription_id = 2;
+}
+
+message VerifyZkLoginRequest
+{
+  GuardianInfo guardian_approved = 1;
+  aelf.Hash ca_hash = 2;
+}
+
+message VerifySignatureRequest
+{
+  GuardianInfo guardian_approved = 1;
+  string methodName = 2;
+  aelf.Hash caHash = 3;
+  string operationDetails = 4;
+}
+
+enum StrategyValueType {
+  STRATEGY = 0;
+  LONG = 1;
+  VARIABLE = 2;
+}
+
+enum StrategyName {
+  And = 0;
+  Or = 1;
+  Not = 2;
+  IfElse = 3;
+  LargerThan = 4;
+  NotLargerThan = 5;
+  LessThan = 6;
+  NotLessThan = 7;
+  Equal = 8;
+  NotEqual = 9;
+  RatioByTenThousand = 10;
+}
+
+message StrategyNode {
+  StrategyName name = 1;
+  repeated StrategyValueType type = 2;
+  repeated bytes value = 3;
+}
+
+message StrategyLongWrapper {
+  int64 value = 1;
+}
+
+message StrategyStringWrapper {
+  string value = 1;
+}
+
+message ContractDelegationFee {
+  int64 amount = 1;
+}
+
+message AddGuardianInput {
+  aelf.Hash ca_hash = 1;
+  GuardianInfo guardian_to_add = 2;
+  repeated GuardianInfo guardians_approved = 3;
+}
+
+message RemoveGuardianInput {
+  aelf.Hash ca_hash = 1;
+  GuardianInfo guardian_to_remove = 2;
+  repeated GuardianInfo guardians_approved = 3;
+}
+
+message UpdateGuardianInput{
+  aelf.Hash ca_hash = 1;
+  GuardianInfo guardian_to_update_pre = 2;
+  GuardianInfo guardian_to_update_new = 3;
+  repeated GuardianInfo guardians_approved = 4;
+}
+
+message SetGuardianForLoginInput {
+  aelf.Hash ca_hash = 1;
+  Guardian guardian = 2;
+  GuardianInfo guardian_to_set_login = 3;
+  repeated GuardianInfo guardians_approved = 4;
+}
+
+message UnsetGuardianForLoginInput {
+  aelf.Hash ca_hash = 1;
+  Guardian guardian = 2;
+  GuardianInfo guardian_to_unset_login = 3;
+  repeated GuardianInfo guardians_approved = 4;
+}
+
+message ManagerForwardCallInput {
+  aelf.Hash ca_hash = 1;
+  aelf.Address contract_address = 2;
+  string method_name = 3;
+  bytes args = 4;
+  repeated ca.GuardianInfo guardians_approved = 5;
+}
+
+message ManagerTransferInput{
+  aelf.Hash ca_hash = 1;
+  // The receiver of the token.
+  aelf.Address to = 2;
+  // The token symbol to transfer.
+  string symbol = 3;
+  // The amount to to transfer.
+  int64 amount = 4;
+  // The memo.
+  string memo = 5;
+  repeated ca.GuardianInfo guardians_approved = 6;
+}
+
+message ManagerTransferFromInput{
+  aelf.Hash ca_hash = 1;
+  // The source address of the token.
+  aelf.Address from = 2;
+  // The destination address of the token.
+  aelf.Address to = 3;
+  // The symbol of the token to transfer.
+  string symbol = 4;
+  // The amount to transfer.
+  int64 amount = 5;
+  // The memo.
+  string memo = 6;
+}
+
+message GetHolderInfoInput {
+  aelf.Hash ca_hash = 1;
+  aelf.Hash login_guardian_identifier_hash = 2;
+}
+
+message GetHolderInfoOutput{
+  aelf.Hash ca_hash = 1;
+  aelf.Address ca_address = 2;
+  GuardianList guardian_list = 3;
+  repeated ManagerInfo manager_infos = 4;
+  int32 create_chain_id = 5;
+}
+
+message SocialRecoveryInput {
+  aelf.Hash login_guardian_identifier_hash = 1;
+  repeated GuardianInfo guardians_approved = 2;
+  ManagerInfo manager_info = 3;
+  string referral_code = 4;
+  string project_code = 5;
+  Platform platform = 6;
+}
+
+message IsManagerReadOnlyInput {
+  aelf.Hash ca_hash = 1;
+  aelf.Address manager = 2;
+}
+
+message RemoveReadOnlyManagerInput{
+  aelf.Hash ca_hash = 1;
+  repeated ca.GuardianInfo guardians_approved = 2;
+}
+
+message AddManagerInfoInput {
+  aelf.Hash ca_hash = 1;
+  ManagerInfo manager_info = 2;
+}
+
+message RemoveManagerInfoInput {
+  aelf.Hash ca_hash = 1;
+}
+
+message RemoveOtherManagerInfoInput {
+  aelf.Hash ca_hash = 1;
+  ManagerInfo manager_info = 2;
+  repeated GuardianInfo guardians_approved = 3;
+}
+
+message RemoveOtherManagerInfosInput {
+  aelf.Hash ca_hash = 1;
+  repeated ManagerInfo manager_infos = 2;
+  repeated GuardianInfo guardians_approved = 3;
+}
+
+message UpdateManagerInfosInput {
+  aelf.Hash ca_hash = 1;
+  repeated ManagerInfo manager_infos = 2;
+}
+
+message ValidateCAHolderInfoWithManagerInfosExistsInput {
+  aelf.Hash ca_hash = 1;
+  repeated ManagerInfo manager_infos = 2;
+  repeated aelf.Hash login_guardians = 3;
+  repeated aelf.Hash not_login_guardians = 4;
+  GuardianList guardian_list = 5;
+  int32 create_chain_id = 6;
+}
+
+message ValidateStrategyInput {
+  StrategyNode strategy_node = 1;
+  map<string, int64> variables = 2;
+}
+
+message ValidateStrategyOutput {
+  bool bool_result = 1;
+  int64 int64_result = 2;
+  StrategyNode strategy_output = 3;
+}
+
+message ProjectDelegationFee {
+  int64 amount = 1;
+}
+
+message SetProjectDelegationFeeInput {
+  ProjectDelegationFee delegation_fee = 1;
+}
+
+message SetCheckOperationDetailsInSignatureEnabledInput {
+  bool check_operation_details_enabled = 1;
+}
+
+message GetCheckOperationDetailsInSignatureEnabledOutput {
+  bool check_operation_details_enabled = 1;
+}
+
+// LogEvent
+// CAHolder created
+message CAHolderCreated {
+  option (aelf.is_event) = true;
+  aelf.Address creator = 1 [(aelf.is_indexed) = true];
+  aelf.Hash ca_hash = 2 [(aelf.is_indexed) = true];
+  aelf.Address ca_address = 3 [(aelf.is_indexed) = true];
+  aelf.Address manager = 4 [(aelf.is_indexed) = true];
+  string extra_data = 5;
+  int32 platform = 6 [(aelf.is_indexed) = true];
+}
+
+message PreCrossChainSyncHolderInfoCreated {
+  option (aelf.is_event) = true;
+  aelf.Address creator = 1 [(aelf.is_indexed) = true];
+  aelf.Hash ca_hash = 2 [(aelf.is_indexed) = true];
+  aelf.Address ca_address = 3 [(aelf.is_indexed) = true];
+  aelf.Address manager = 4 [(aelf.is_indexed) = true];
+  string extra_data = 5;
+  int32 create_chain_id = 6 [(aelf.is_indexed) = true];
+}
+
+//Guardian added
+message GuardianAdded{
+  option (aelf.is_event) = true;
+  aelf.Hash ca_hash = 1[(aelf.is_indexed) = true];
+  aelf.Address ca_address = 2;
+  Guardian guardian_added = 3;
+  int32 platform = 4 [(aelf.is_indexed) = true];
+}
+
+//Guardian removed
+message GuardianRemoved{
+  option (aelf.is_event) = true;
+  aelf.Hash ca_hash = 1[(aelf.is_indexed) = true];
+  aelf.Address ca_address = 2;
+  Guardian guardian_removed = 3;
+  int32 platform = 4 [(aelf.is_indexed) = true];
+}
+
+//Guardian updated
+message GuardianUpdated{
+  option (aelf.is_event) = true;
+  aelf.Hash ca_hash = 1[(aelf.is_indexed) = true];
+  aelf.Address ca_address = 2;
+  Guardian guardian_updated_pre = 3;
+  Guardian guardian_updated_new = 4;
+  int32 platform = 5 [(aelf.is_indexed) = true];
+}
+
+// LoginGuardian added
+message LoginGuardianAdded {
+  option (aelf.is_event) = true;
+  aelf.Hash ca_hash = 1 [(aelf.is_indexed) = true];
+  aelf.Address ca_address = 2;
+  aelf.Address manager = 3 [(aelf.is_indexed) = true];
+  Guardian login_guardian = 4 [(aelf.is_indexed) = true];
+  bool is_create_holder = 5;
+  int32 platform = 6 [(aelf.is_indexed) = true];
+}
+
+// SocialRecovery
+message ManagerInfoSocialRecovered {
+  option (aelf.is_event) = true;
+  aelf.Hash ca_hash = 1 [(aelf.is_indexed) = true];
+  aelf.Address ca_address = 2 [(aelf.is_indexed) = true];
+  aelf.Address manager = 3 [(aelf.is_indexed) = true];
+  string extra_data = 4;
+  int32 platform = 5 [(aelf.is_indexed) = true];
+}
+
+// ManagerInfo added
+message ManagerInfoAdded {
+  option (aelf.is_event) = true;
+  aelf.Hash ca_hash = 1 [(aelf.is_indexed) = true];
+  aelf.Address ca_address = 2 [(aelf.is_indexed) = true];
+  aelf.Address manager = 3 [(aelf.is_indexed) = true];
+  string extra_data = 4;
+  int32 platform = 5 [(aelf.is_indexed) = true];
+}
+
+// ManagerInfo removed
+message ManagerInfoRemoved {
+  option (aelf.is_event) = true;
+  aelf.Hash ca_hash = 1 [(aelf.is_indexed) = true];
+  aelf.Address ca_address = 2 [(aelf.is_indexed) = true];
+  aelf.Address manager = 3 [(aelf.is_indexed) = true];
+  string extra_data = 4;
+  int32 platform = 5 [(aelf.is_indexed) = true];
+}
+
+// ManagerInfo updated
+message ManagerInfoUpdated {
+  option (aelf.is_event) = true;
+  aelf.Hash ca_hash = 1 [(aelf.is_indexed) = true];
+  aelf.Address ca_address = 2 [(aelf.is_indexed) = true];
+  aelf.Address manager = 3 [(aelf.is_indexed) = true];
+  string extra_data = 4;
+  int32 platform = 5 [(aelf.is_indexed) = true];
+}
+
+// LoginGuardian unset
+message LoginGuardianUnbound {
+  option (aelf.is_event) = true;
+  aelf.Hash ca_hash = 1 [(aelf.is_indexed) = true];
+  aelf.Address ca_address = 2;
+  aelf.Address manager = 3 [(aelf.is_indexed) = true];
+  aelf.Hash login_guardian_identifier_hash = 4 [(aelf.is_indexed) = true];
+  int32 platform = 5 [(aelf.is_indexed) = true];
+}
+
+// LoginGuardian removed
+message LoginGuardianRemoved {
+  option (aelf.is_event) = true;
+  aelf.Hash ca_hash = 1 [(aelf.is_indexed) = true];
+  aelf.Address ca_address = 2;
+  aelf.Address manager = 3 [(aelf.is_indexed) = true];
+  Guardian login_guardian = 4 [(aelf.is_indexed) = true];
+  int32 platform = 5 [(aelf.is_indexed) = true];
+}
+
+message CAHolderSynced {
+  option (aelf.is_event) = true;
+  aelf.Address creator = 1 [(aelf.is_indexed) = true];
+  aelf.Hash ca_hash = 2 [(aelf.is_indexed) = true];
+  aelf.Address ca_address = 3 [(aelf.is_indexed) = true];
+  ManagerInfoList manager_infos_added = 4 [(aelf.is_indexed) = true];
+  ManagerInfoList manager_infos_removed = 5 [(aelf.is_indexed) = true];
+  LoginGuardianList login_guardians_added = 6 [(aelf.is_indexed) = true];
+  LoginGuardianList login_guardians_unbound = 7 [(aelf.is_indexed) = true];
+  GuardianList guardians_added = 8 [(aelf.is_indexed) = true];
+  GuardianList guardians_removed = 9 [(aelf.is_indexed) = true];
+  int32 create_chain_id = 10 [(aelf.is_indexed) = true];
+}
+message CreatorControllerAdded {
+  option (aelf.is_event) = true;
+  aelf.Address address = 1 [(aelf.is_indexed) = true];
+}
+message CreatorControllerRemoved {
+  option (aelf.is_event) = true;
+  aelf.Address address = 1 [(aelf.is_indexed) = true];
+}
+message ServerControllerAdded {
+  option (aelf.is_event) = true;
+  aelf.Address address = 1 [(aelf.is_indexed) = true];
+}
+message ServerControllerRemoved {
+  option (aelf.is_event) = true;
+  aelf.Address address = 1 [(aelf.is_indexed) = true];
+}
+message AdminChanged {
+  option (aelf.is_event) = true;
+  aelf.Address address = 1 [(aelf.is_indexed) = true];
+}
+
+message Invited {
+  option (aelf.is_event) = true;
+  aelf.Hash ca_hash = 1;
+  aelf.Address contract_address = 2;
+  string method_name = 3;
+  string referral_code = 4;
+  string project_code = 5;
+}
+
+enum Platform {
+  UNDEFINED = 0;
+  ANDROID = 1;
+  IOS = 2;
+  WEB = 3;
+  SDK = 4;
+  TELEGRAM = 5;
+}

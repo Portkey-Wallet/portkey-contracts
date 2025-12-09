@@ -1,0 +1,388 @@
+// the version of the language, use proto3 for contracts
+syntax = "proto3";
+
+// some core imports for AElf chain types
+import "aelf/core.proto";
+import "aelf/options.proto";
+import "acs12.proto";
+import "oracle_common_message.proto";
+
+// import for using the google.protobuf.* type.
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/timestamp.proto";
+
+// the name of the C# namespace in which the contract code will be,
+// generated code will also be in this namespace.
+option csharp_namespace = "AetherLink.Contracts.Oracle";
+
+// the contract definition: a gRPC service definition.
+service OracleContract {
+
+    // the full name of the C# class that will contain the state (here <namespace>.<state-class-name> format).
+    option (aelf.base) = "acs12.proto";
+    option (aelf.csharp_state) = "AetherLink.Contracts.Oracle.OracleContractState";
+    
+    // Action
+    // Admin
+    rpc Initialize(InitializeInput) returns (google.protobuf.Empty) {}
+    rpc TransferAdmin(aelf.Address) returns (google.protobuf.Empty) {}
+    rpc AcceptAdmin(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+    rpc Pause (google.protobuf.Empty) returns (google.protobuf.Empty) {}
+    rpc Unpause (google.protobuf.Empty) returns (google.protobuf.Empty) {}
+
+    // subscription
+    rpc CreateSubscription (google.protobuf.Empty) returns (google.protobuf.Empty) {}
+    rpc CreateSubscriptionWithConsumer (aelf.Address) returns (google.protobuf.Empty) {}
+    rpc CancelSubscription (CancelSubscriptionInput) returns (google.protobuf.Empty) {}
+    rpc AdminCancelSubscription (google.protobuf.Int64Value) returns (google.protobuf.Empty) {}
+    rpc ProposeSubscriptionOwnerTransfer (ProposeSubscriptionOwnerTransferInput) returns (google.protobuf.Empty) {}
+    rpc AcceptSubscriptionOwnerTransfer (google.protobuf.Int64Value) returns (google.protobuf.Empty) {}
+    rpc AddConsumer (AddConsumerInput) returns (google.protobuf.Empty) {}
+    rpc RemoveConsumer (RemoveConsumerInput) returns (google.protobuf.Empty) {}
+
+    // Config
+    rpc AddCoordinator (aelf.Address) returns (google.protobuf.Empty) {}
+    rpc SetCoordinatorStatus (SetCoordinatorStatusInput) returns (google.protobuf.Empty) {}
+    rpc SetConfig (SetConfigInput) returns (google.protobuf.Empty) {}
+    rpc SetSubscriptionConfig (SubscriptionConfig) returns (google.protobuf.Empty) {}
+    rpc SetMaxOracleCount (google.protobuf.Int64Value) returns (google.protobuf.Empty) {}
+    
+    // PK
+    rpc RegisterProvingKey (RegisterProvingKeyInput) returns (google.protobuf.Empty) {}
+    rpc DeregisterProvingKey (DeregisterProvingKeyInput) returns (google.protobuf.Empty) {}
+    
+    // Request
+    rpc SendRequest (SendRequestInput) returns (google.protobuf.Empty) {}
+    rpc StartRequest (StartRequestInput) returns (google.protobuf.Empty) {}
+    rpc Fulfill (FulfillInput) returns (google.protobuf.Empty) {}
+    rpc Transmit (TransmitInput) returns (google.protobuf.Empty) {}
+    rpc CancelRequest (CancelRequestInput) returns (google.protobuf.Empty) {}
+    
+    // View
+    rpc GetAdmin(google.protobuf.Empty) returns (aelf.Address) { option (aelf.is_view) = true; }
+    rpc IsPaused (google.protobuf.Empty) returns (google.protobuf.BoolValue) { option (aelf.is_view) = true; }
+
+    rpc GetConfig (google.protobuf.Empty) returns (GetConfigOutput) { option (aelf.is_view) = true; }
+    rpc GetSubscriptionConfig (google.protobuf.Empty) returns (SubscriptionConfig) { option (aelf.is_view) = true; }
+    rpc GetCoordinatorByIndex (google.protobuf.Int32Value) returns (Coordinator) { option (aelf.is_view) = true; }
+    rpc GetCoordinators (google.protobuf.Empty) returns (CoordinatorList) { option (aelf.is_view) = true; }
+    rpc GetMaxOracleCount (google.protobuf.Empty) returns (google.protobuf.Int64Value) { option (aelf.is_view) = true; }
+    rpc GetLatestConfigDetails (google.protobuf.Empty) returns (GetLatestConfigDetailsOutput) { option (aelf.is_view) = true; }
+    rpc GetLatestRound (google.protobuf.Empty) returns (google.protobuf.Int64Value) { option (aelf.is_view) = true; }
+    rpc GetTransmitters (google.protobuf.Empty) returns (AddressList) { option (aelf.is_view) = true; }
+    rpc GetOracle (aelf.Address) returns (Oracle) { option (aelf.is_view) = true; }
+    
+    rpc GetProvingKeyHashes (google.protobuf.Empty) returns (HashList) { option (aelf.is_view) = true; }
+    rpc GetOracleByProvingKeyHash (google.protobuf.StringValue) returns (aelf.Address) { option (aelf.is_view) = true; }
+    rpc GetHashFromKey (google.protobuf.StringValue) returns (aelf.Hash) { option (aelf.is_view) = true; }
+
+    rpc IsPendingRequestExists (google.protobuf.Int64Value) returns (google.protobuf.BoolValue) { option (aelf.is_view) = true; }
+    rpc GetSubscription (google.protobuf.Int64Value) returns (Subscription) { option (aelf.is_view) = true; }
+    rpc GetConsumer (GetConsumerInput) returns (Consumer) { option (aelf.is_view) = true; }
+    rpc GetSubscriptionCount (google.protobuf.Empty) returns (google.protobuf.Int64Value) { option (aelf.is_view) = true; }
+}
+
+// Data structure
+message InitializeInput {
+    aelf.Address admin = 1;
+}
+
+message Coordinator {
+    int32 request_type_index = 1;
+    aelf.Address coordinator_contract_address = 2;
+    bool status = 3;
+}
+
+message CoordinatorList {
+    repeated Coordinator data = 1;
+}
+
+message SetCoordinatorStatusInput {
+    int32 request_type_index = 1;
+    bool status = 2;
+}
+
+message Config {
+    aelf.Hash latest_config_digest = 1;
+    int32 f = 2;  // // number of faulty oracles the system can tolerate
+    int32 n = 3;  // number of signers/transmitters
+}
+
+message SetConfigInput {
+    repeated aelf.Address signers = 1;
+    repeated aelf.Address transmitters = 2;
+    int32 f = 3;  // number of faulty oracles the system can tolerate
+    int64 off_chain_config_version = 4;  // version of the off-chain configuration
+    bytes off_chain_config = 5;  // serialized configuration used by the oracles exclusively and only passed through
+}
+
+message ConfigData {
+    int32 chain_id = 1;
+    aelf.Address contract_address = 2;  // self
+    int64 config_count = 3;
+    repeated aelf.Address signers = 4;
+    repeated aelf.Address transmitters = 5;
+    int32 f = 6;
+    int64 off_chain_config_version = 7;
+    bytes off_chain_config = 8;
+}
+
+message Oracle {
+    int32 index = 1;  // index of the oracle in the list of signers/transmitters
+    Role role = 2;
+}
+
+enum Role {
+    Unset = 0;
+    Signer = 1;
+    Transmitter = 2;
+}
+
+message AddressList {
+    repeated aelf.Address data = 1;
+}
+
+message GetLatestConfigDetailsOutput {
+    int64 config_count = 1;  // times of config set
+    int64 block_number = 2;  // block number when latest config set
+    aelf.Hash config_digest = 3;
+}
+
+message SendRequestInput {
+    int64 subscription_id = 1;
+    int32 request_type_index = 2;
+    bytes specific_data = 3;
+    aelf.Hash trace_id = 4;
+}
+
+message StartRequestInput {
+    aelf.Hash request_id = 1;
+    aelf.Address requesting_contract = 2;
+    int64 subscription_id = 3;
+    aelf.Address subscription_owner = 4;
+    bytes commitment = 5;
+    int32 request_type_index = 6;
+}
+
+message FulfillInput {
+    bytes response = 1;
+    bytes err = 2;
+    aelf.Address transmitter = 3;
+    oracle.Commitment commitment = 4;
+}
+
+message TransmitInput {
+    repeated aelf.Hash report_context = 1;
+    bytes report = 2;
+    repeated bytes signatures = 3;
+}
+
+message CancelRequestInput {
+    aelf.Hash request_id = 1;
+    int64 subscription_id = 2;
+    aelf.Address consumer = 3;
+    int32 request_type_index = 4;
+}
+
+message RegisterProvingKeyInput {
+    aelf.Address oracle = 1;
+    string public_proving_key = 2;
+}
+
+message DeregisterProvingKeyInput {
+    string public_proving_key = 1;
+}
+
+message SubscriptionConfig {
+    int64 max_consumers_per_subscription = 1;
+}
+
+message Subscription {
+    aelf.Address owner = 1;
+    aelf.Address proposed_owner = 2;
+    repeated aelf.Address consumers = 3;
+    int64 balance = 4;
+    int64 block_balance = 5;
+}
+
+message Consumer {
+    bool allowed = 1;
+    int64 initiated_requests = 2;
+    int64 completed_requests = 3;
+}
+
+message ProposeSubscriptionOwnerTransferInput {
+    int64 subscription_id = 1;
+    aelf.Address to = 2;
+}
+
+message CancelSubscriptionInput {
+    int64 subscription_id = 1;
+    aelf.Address to = 2;
+}
+
+message AddConsumerInput {
+    int64 subscription_id = 1;
+    aelf.Address consumer = 2;
+}
+
+message RemoveConsumerInput {
+    int64 subscription_id = 1;
+    aelf.Address consumer = 2;
+}
+
+message GetConsumerInput {
+    aelf.Address consumer = 1;
+    int64 subscription_id = 2;
+}
+
+message HashList {
+    repeated aelf.Hash data = 1;
+}
+
+message GetConfigOutput {
+    Config config = 1;
+    repeated aelf.Address signers = 2;
+    repeated aelf.Address transmitters = 3;
+}
+
+// Log event
+message AdminTransferRequested {
+    option (aelf.is_event) = true;
+    aelf.Address from = 1;
+    aelf.Address to = 2;
+}
+
+message AdminTransferred {
+    option (aelf.is_event) = true;
+    aelf.Address from = 1;
+    aelf.Address to = 2;
+}
+
+message ConfigSet {
+    option (aelf.is_event) = true;
+    int64 previous_config_block_number = 1;
+    aelf.Hash config_digest = 2;
+    int64 config_count = 3;
+    AddressList signers = 4;
+    AddressList transmitters = 5;
+    int32 f = 6;
+    int64 off_chain_config_version = 7;
+    bytes off_chain_config = 8;
+}
+
+message ProvingKeyRegistered {
+    option (aelf.is_event) = true;
+    aelf.Hash key_hash = 1;
+    aelf.Address oracle = 2;
+}
+
+message ProvingKeyDeregistered {
+    option (aelf.is_event) = true;
+    aelf.Hash key_hash = 1;
+    aelf.Address oracle = 2;
+}
+
+message OracleRequestSent {
+    option (aelf.is_event) = true;
+    int64 subscription_id = 1;
+    aelf.Address subscription_owner = 2;
+    aelf.Address requesting_contract = 3;
+    aelf.Address request_initiator = 4;
+    bytes specific_data = 5;
+}
+
+message RequestStarted {
+    option (aelf.is_event) = true;
+    aelf.Hash request_id = 1;
+    aelf.Address requesting_contract = 2;   // consumer contract address
+    aelf.Address requesting_initiator = 3;  // origin address
+    int64 subscription_id = 4;
+    aelf.Address subscription_owner = 5;
+    bytes commitment = 6;                   // commitment to the request
+    int32 request_type_index = 7;
+}
+
+message RequestProcessed {
+    option (aelf.is_event) = true;
+    aelf.Hash request_id = 1;
+    int64 subscription_id = 2;
+    aelf.Address transmitter = 3;
+    bytes response = 4;
+    bytes err = 5;
+}
+
+message Transmitted {
+    option (aelf.is_event) = true;
+    aelf.Hash request_id = 1;
+    aelf.Hash config_digest = 2;
+    int64 epoch_and_round = 3;
+    aelf.Address transmitter = 4;
+}
+
+message CoordinatorSet {
+    option (aelf.is_event) = true;
+    aelf.Address coordinator_contract_address = 1;
+    int32 request_type_index = 2;
+    bool status = 3;
+}
+
+message SubscriptionCreated {
+    option (aelf.is_event) = true;
+    int64 subscription_id = 1;
+    aelf.Address owner = 2;
+}
+
+message SubscriptionConsumerAdded {
+    option (aelf.is_event) = true;
+    int64 subscription_id = 1;
+    aelf.Address consumer = 2;
+}
+
+message SubscriptionCanceled {
+    option (aelf.is_event) = true;
+    int64 subscription_id = 1;
+    aelf.Address funds_recipient = 2;
+    int64 funds_amount = 3;
+}
+
+message SubscriptionOwnerTransferRequested {
+    option (aelf.is_event) = true;
+    int64 subscription_id = 1;
+    aelf.Address from = 2;
+    aelf.Address to = 3;
+}
+
+message SubscriptionOwnerTransferred {
+    option (aelf.is_event) = true;
+    int64 subscription_id = 1;
+    aelf.Address from = 2;
+    aelf.Address to = 3;
+}
+
+message SubscriptionConsumerRemoved {
+    option (aelf.is_event) = true;
+    int64 subscription_id = 1;
+    aelf.Address consumer = 2;
+}
+
+message SubscriptionConfigSet {
+    option (aelf.is_event) = true;
+    SubscriptionConfig config = 1;
+}
+
+message Paused {
+    option (aelf.is_event) = true;
+    aelf.Address account = 1;  // the address called Pause()
+}
+
+message Unpaused {
+    option (aelf.is_event) = true;
+    aelf.Address account = 1;  // the address called Unpause()
+}
+
+message RequestCancelled {
+    option (aelf.is_event) = true;
+    aelf.Hash request_id = 1;
+}
