@@ -1,0 +1,649 @@
+/**
+ * CA contract.
+ */
+syntax = "proto3";
+
+package caimpl;
+
+import "aelf/core.proto";
+import "aelf/options.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+import "ca_contract.proto";
+import "request_interface.proto";
+
+option csharp_namespace = "Portkey.Contracts.CA";
+
+service CAContractImpl {
+  option (aelf.base) = "acs12.proto";
+  option (aelf.base) = "ca_contract.proto";
+  option (aelf.base) = "request_interface.proto";
+  option (aelf.csharp_state) = "Portkey.Contracts.CA.CAContractState";
+  rpc GetManagerTransactionStatistics(ManagerStatisticsInput) returns (ManagerStatisticsInfoList) { option (aelf.is_view) = true; }
+  rpc ClearRemovedManagerTransactionData(ClearManagerStatisticsInput) returns (google.protobuf.Empty) {}
+  // approve
+  rpc ManagerApprove(ManagerApproveInput) returns (google.protobuf.Empty) {}
+        
+  rpc SetForbiddenForwardCallContractMethod(SetForbiddenForwardCallContractMethodInput) returns (google.protobuf.Empty) {}  
+  
+  rpc SetTransferLimit(SetTransferLimitInput) returns (google.protobuf.Empty) {}
+
+  rpc SetTokenInitialTransferLimit(SetTokenInitialTransferLimitInput) returns (google.protobuf.Empty) {}
+
+  rpc GetTransferLimit(GetTransferLimitInput) returns (GetTransferLimitOutput) {option (aelf.is_view) = true;}
+      
+  rpc SetDefaultTokenTransferLimit(SetDefaultTokenTransferLimitInput) returns (google.protobuf.Empty) {}    
+  
+  rpc GetDefaultTokenTransferLimit(GetDefaultTokenTransferLimitInput) returns (GetDefaultTokenTransferLimitOutput) {option (aelf.is_view) = true;}   
+     
+  rpc SetTransferSecurityThreshold(SetTransferSecurityThresholdInput) returns (google.protobuf.Empty) {}
+  
+  rpc GetTransferSecurityCheckResult(GetTransferSecurityCheckResultInput) returns (GetTransferSecurityCheckResultOutput) {option (aelf.is_view) = true;}
+
+  rpc RemoveUserManagerInfo (RemoveUserManagerInfoInput) returns (google.protobuf.Empty) {}
+
+  // secondaryDelegatee
+  // register project secondary delegate info
+  rpc RegisterProjectDelegatee (RegisterProjectDelegateeInput) returns (aelf.Hash) {}
+  //  add delegatee hash into delegate info
+  rpc AddProjectDelegateeList (AddProjectDelegateeListInput) returns (google.protobuf.Empty) {}
+  // remove delegatee hash from delegate info
+  rpc RemoveProjectDelegateeList (RemoveProjectDelegateeListInput) returns (google.protobuf.Empty) {}
+  // set project delegate controller
+  rpc SetProjectDelegateController(SetProjectDelegateControllerInput) returns (google.protobuf.Empty){}
+  // set project delegate signer
+  rpc SetProjectDelegateSigner(SetProjectDelegateSignerInput) returns (google.protobuf.Empty){}
+  // withdraw project delegatee token
+  rpc WithdrawProjectDelegateeToken(WithdrawProjectDelegateeTokenInput) returns (google.protobuf.Empty){}
+  // set ca project delegate hash
+  rpc SetCaProjectDelegateHash (aelf.Hash) returns (google.protobuf.Empty) {}
+  // get ca project delegate hash
+  rpc GetCaProjectDelegateHash (google.protobuf.Empty) returns (aelf.Hash) {}
+  // get project delegatee info by delegate hash
+  rpc GetProjectDelegatee (aelf.Hash) returns (GetProjectDelegateInfoOutput) { option (aelf.is_view) = true; }
+  
+  rpc SetManagerForwardCallParallelInfo (SetManagerForwardCallParallelInfoInput) returns (google.protobuf.Empty) {}
+
+  rpc GetManagerForwardCallParallelInfo (GetManagerForwardCallParallelInfoInput) returns (GetManagerForwardCallParallelInfoOutput) {option (aelf.is_view) = true;}
+
+  rpc AssignProjectDelegatee (AssignProjectDelegateeInput) returns (google.protobuf.Empty) {}
+
+  rpc RemoveProjectDelegatee (RemoveProjectDelegateeInput) returns (google.protobuf.Empty) {}
+
+  rpc AddTransactionWhitelist (WhitelistTransactions) returns (google.protobuf.Empty){}
+  rpc RemoveTransactionWhitelist (WhitelistTransactions) returns (google.protobuf.Empty){}
+  rpc GetTransactionWhitelist (google.protobuf.Empty) returns (WhitelistTransactions) {option (aelf.is_view) = true;}
+
+  rpc AddManagerApproveSpenderWhitelist (AddManagerApproveSpenderWhitelistInput) returns (google.protobuf.Empty){}
+  rpc RemoveManagerApproveSpenderWhitelist(RemoveManagerApproveSpenderWhitelistInput) returns (google.protobuf.Empty){}
+  rpc CheckInManagerApproveSpenderWhitelist (aelf.Address) returns (google.protobuf.BoolValue) {option (aelf.is_view) = true;}
+  
+  //CAServer
+  rpc AddCAServer (AddCAServerInput) returns (google.protobuf.Empty){}
+  rpc RemoveCAServer (RemoveCAServerInput) returns (google.protobuf.Empty){}
+  rpc GetCAServers (google.protobuf.Empty) returns (GetCAServersOutput) {option (aelf.is_view) = true;}
+
+  //Sync holder info
+  rpc SyncHolderInfo (SyncHolderInfoInput) returns (google.protobuf.Empty) {}
+
+  //creator controller
+  rpc AddCreatorController (ControllerInput) returns (google.protobuf.Empty) {}
+  rpc RemoveCreatorController (ControllerInput) returns (google.protobuf.Empty) {}
+  rpc GetCreatorControllers (google.protobuf.Empty) returns (ControllerOutput) {option (aelf.is_view) = true;}
+
+  //server controller
+  rpc AddServerController (ControllerInput) returns (google.protobuf.Empty) {}
+  rpc RemoveServerController (ControllerInput) returns (google.protobuf.Empty) {}
+  rpc GetServerControllers (google.protobuf.Empty) returns (ControllerOutput) {option (aelf.is_view) = true;}
+  
+  //Verifier If End Points already exists, return true
+  rpc AddVerifierServerEndPoints (AddVerifierServerEndPointsInput) returns (google.protobuf.Empty) {}
+  rpc UpdateVerifierServerImageUrl(UpdateVerifierServerImageUrlInput) returns (google.protobuf.Empty) {}
+  rpc UpdateVerifierServerEndPoints(UpdateVerifierServerEndPointsInput) returns (google.protobuf.Empty) {}
+  //Verifier If End Points does not exists, return true
+  rpc RemoveVerifierServerEndPoints (RemoveVerifierServerEndPointsInput) returns (google.protobuf.Empty) {}
+
+  //Verifier if Verifier Server does not exists, return true
+  rpc RemoveVerifierServer (RemoveVerifierServerInput) returns (google.protobuf.Empty) {}
+  //Verifier
+  rpc GetVerifierServers (google.protobuf.Empty) returns (GetVerifierServersOutput) {option (aelf.is_view) = true;}
+  
+  // add a verifying key for a circuit or update the old one
+  rpc AddOrUpdateVerifyingKey (VerifyingKey) returns (google.protobuf.Empty);
+  
+  // query the verifying key of a circuit (by circuit_id)
+  rpc GetVerifyingKey (google.protobuf.StringValue) returns (VerifyingKey) {
+    option (aelf.is_view) = true;
+  }
+  
+  rpc GetGooglePublicKeyByKid(google.protobuf.StringValue) returns (KidPublicKeyOutput) {
+    option (aelf.is_view) = true;
+  }
+
+  rpc GetApplePublicKeyByKid(google.protobuf.StringValue) returns (KidPublicKeyOutput) {
+    option (aelf.is_view) = true;
+  }
+  
+  //set oracle address in portkey contract
+  rpc SetOracleAddress (aelf.Address) returns (google.protobuf.Empty);
+  
+  //get zk nonce list by caHash
+  rpc GetZkNonceListByCaHash(aelf.Hash) returns (ZkNonceList) {
+    option (aelf.is_view) = true;
+  }
+  //get google kids
+  rpc GetGoogleKids(google.protobuf.Empty) returns (CurrentKids) {
+    option (aelf.is_view) = true;
+  }
+  //get apple kids
+  rpc GetAppleKids(google.protobuf.Empty) returns (CurrentKids) {
+    option (aelf.is_view) = true;
+  }
+}
+
+message AddManagerApproveSpenderWhitelistInput {
+  repeated aelf.Address spender_list = 1;
+}
+
+message RemoveManagerApproveSpenderWhitelistInput {
+  repeated aelf.Address spender_list = 1;
+}
+
+message ManagerApproveInput {
+    aelf.Hash ca_hash = 1;
+    aelf.Address spender = 2;
+    repeated ca.GuardianInfo guardians_approved = 3;
+    string symbol = 4;
+    int64 amount = 5;
+}
+message ManagerApproved {
+    option (aelf.is_event) = true;
+    aelf.Hash ca_hash = 1;
+    aelf.Address spender = 2;
+    string symbol = 3;
+    int64 amount = 4;
+    int32 platform = 5 [(aelf.is_indexed) = true];
+}
+
+message SetTransferLimitInput {
+    aelf.Hash ca_hash = 1;
+    string symbol = 2;
+    repeated ca.GuardianInfo guardians_approved = 3;
+    int64 single_limit = 4;
+    int64 daily_limit = 5;
+}
+
+message GetTransferLimitInput {
+    aelf.Hash ca_hash = 1;
+    string symbol = 2;
+}
+message GetTransferLimitOutput {
+    int64 single_limit = 1;
+    int64 daily_limit = 2;
+    int64 daily_transferred_amount = 3;
+}
+
+message SetDefaultTokenTransferLimitInput {
+    string symbol = 1;
+    TransferLimit transfer_limit = 2;
+}
+message DefaultTokenTransferLimitChanged {
+    option (aelf.is_event) = true;
+    string symbol = 1;
+    TransferLimit transfer_limit = 2;
+}
+message GetDefaultTokenTransferLimitInput {
+    string symbol = 1;
+}
+
+message GetDefaultTokenTransferLimitOutput {
+    string symbol = 1;
+    TransferLimit transfer_limit = 2;
+}
+
+message SetForbiddenForwardCallContractMethodInput {
+    string method_name = 1;
+    aelf.Address address = 2;
+    bool forbidden = 3;
+}
+message ForbiddenForwardCallContractMethodChanged {
+    option (aelf.is_event) = true;
+    string method_name = 1;
+    aelf.Address address = 2;
+    bool forbidden = 3;
+}
+message TransferLimit {
+    int64 single_limit = 1;
+    int64 day_limit = 2;
+}
+message TransferredAmount {
+    int64 daily_transfered = 1;
+    google.protobuf.Timestamp update_time = 2;
+}
+
+message ManagerApproveForbiddenEnabledInput {
+  bool manager_approve_forbidden_enabled = 1;
+}
+message TransferLimitChanged{
+    option (aelf.is_event) = true;
+    aelf.Hash ca_hash = 1 [(aelf.is_indexed) = true];
+    string symbol = 2 [(aelf.is_indexed) = true];
+    int64 single_limit = 3 [(aelf.is_indexed) = true];
+    int64 daily_limit = 4 [(aelf.is_indexed) = true];
+    int32 platform = 5 [(aelf.is_indexed) = true];
+}
+
+message ManagerTransferred {
+  option (aelf.is_event) = true;
+  aelf.Hash ca_hash = 1 [(aelf.is_indexed) = true];
+  aelf.Address to = 2 [(aelf.is_indexed) = true];
+  string symbol = 3 [(aelf.is_indexed) = true];
+  int64 amount = 4;
+  string memo = 5;
+  int32 platform = 6 [(aelf.is_indexed) = true];
+}
+
+message SetTransferSecurityThresholdInput{
+    TransferSecurityThreshold transfer_security_threshold = 1;
+}
+
+message GetTransferSecurityCheckResultInput{
+    aelf.Hash ca_hash = 1;
+}
+
+message GetTransferSecurityCheckResultOutput{
+    bool is_security = 1;
+}
+
+message TransferSecurityThresholdList{
+    repeated TransferSecurityThreshold transfer_security_thresholds = 1;
+}
+
+message TransferSecurityThreshold{
+    string symbol = 1;
+    int64 guardian_threshold = 2;
+    int64 balance_threshold = 3;
+}
+
+message TransferSecurityThresholdChanged{
+    option (aelf.is_event) = true;
+    string symbol = 1;
+    int64 guardian_threshold = 2;
+    int64 balance_threshold = 3;
+}
+
+message RemoveUserManagerInfoInput {
+  aelf.Hash ca_hash = 1;
+  repeated aelf.Address manager_addresses = 2;
+  bool remove_all_manager = 3;
+}
+
+message RegisterProjectDelegateeInput {
+  string project_name = 1;
+  repeated string salts = 2;
+  aelf.Address signer = 3;
+}
+
+message AddProjectDelegateeListInput{
+  aelf.Hash project_hash = 1;
+  repeated string salts = 2;
+}
+
+message RemoveProjectDelegateeListInput{
+  aelf.Hash project_hash = 1;
+  repeated aelf.Hash delegatee_hash_list = 2;
+}
+
+message SetProjectDelegateControllerInput {
+    aelf.Hash project_hash = 1;
+    aelf.Address project_controller = 2;
+}
+
+message SetProjectDelegateSignerInput {
+    aelf.Hash project_hash = 1;
+    aelf.Address signer = 2;
+}
+
+message WithdrawProjectDelegateeTokenInput {
+    aelf.Hash project_hash = 1;
+    aelf.Hash delegatee_hash = 2;
+    int64 amount = 3;
+}
+
+message ProjectDelegateInfo {
+    aelf.Address project_controller = 1;
+    repeated aelf.Hash delegatee_hash_list = 2;
+    aelf.Address signer = 3;
+}
+
+message GetProjectDelegateInfoOutput {
+  aelf.Address project_controller = 1;
+  repeated aelf.Hash delegatee_hash_list = 2;
+  aelf.Address signer = 3;
+  repeated aelf.Address delegatee_address_list = 4;
+}
+
+message SetManagerForwardCallParallelInfoInput {
+    aelf.Address contract_address = 1;
+    string method_name = 2;
+    bool is_parallel = 3;
+}
+
+message GetManagerForwardCallParallelInfoInput {
+    aelf.Address contract_address = 1;
+    string method_name = 2;
+}
+
+message GetManagerForwardCallParallelInfoOutput {
+    aelf.Address contract_address = 1;
+    string method_name = 2;
+    bool is_parallel = 3;
+}
+
+message DelegateeHashList {
+  repeated aelf.Hash hash_list = 1;
+}
+
+message DelegateeAddressList {
+  repeated aelf.Address address_list = 1;
+}
+
+message AssignProjectDelegateeInput{
+  aelf.Hash project_hash = 1;
+  aelf.Address ca_address = 2;
+  repeated AssignDelegateInfo assign_delegate_infos = 3;
+}
+
+message AssignDelegateInfo{
+  //symbol->amount
+  map<string, int64> delegations = 1;
+  aelf.Address contract_address = 2;
+  string method_name = 3;
+  //Whether to pay transaction fee continuously
+  bool is_unlimited_delegate = 4;
+}
+
+message RemoveProjectDelegateeInput{
+  aelf.Hash project_hash = 1;
+  aelf.Address ca_address = 2;
+  repeated DelegateTransaction delegate_transaction_list = 3;
+}
+
+message DelegateTransaction{
+  aelf.Address contract_address = 1;
+  string method_name = 2;
+}
+
+message WhitelistTransactions {
+  repeated string method_names = 1;
+}
+
+// LogEvent
+message ProjectDelegateeRegistered {
+  option (aelf.is_event) = true;
+  aelf.Hash project_delegate_hash = 1 [(aelf.is_indexed) = true];
+  aelf.Address controller = 2 [(aelf.is_indexed) = true];
+  DelegateeHashList delegatee_hash_list = 3 [(aelf.is_indexed) = true];
+  DelegateeAddressList delegatee_address_list = 4 [(aelf.is_indexed) = true];
+}
+
+message SetTokenInitialTransferLimitInput {
+  int64 token_initial_transfer_limit = 1;
+}
+
+message AddCAServerInput{
+  string name = 1;
+  string end_points = 2;
+}
+
+message RemoveCAServerInput {
+  string name = 1;
+}
+
+message CAServer {
+  string name = 1;
+  string end_point = 2;
+}
+
+message CAServerList {
+  repeated CAServer ca_servers = 1;
+}
+
+message GetCAServersOutput {
+  repeated CAServer ca_servers = 1;
+}
+
+message CAServerAdded {
+  option (aelf.is_event) = true;
+  CAServer ca_sever_added = 1;
+}
+
+message CAServerRemoved {
+  option (aelf.is_event) = true;
+  CAServer ca_server_removed = 1;
+}
+
+message VerifierServer {
+  aelf.Hash id = 1;
+  string name = 2;
+  string image_url = 3;
+  repeated string end_points = 4;
+  repeated aelf.Address verifier_addresses = 5;
+}
+
+message VerifierServerList {
+  repeated VerifierServer verifier_servers = 1;
+}
+
+message GetVerifierServersOutput {
+  repeated VerifierServer verifier_servers = 1;
+}
+
+// VerifierServerEndPoints added
+message VerifierServerEndPointsAdded {
+  option (aelf.is_event) = true;
+  VerifierServer verifier_server = 1 [(aelf.is_indexed) = true];
+}
+
+// VerifierServerEndPoints removed
+message VerifierServerEndPointsRemoved {
+  option (aelf.is_event) = true;
+  VerifierServer verifier_server = 1 [(aelf.is_indexed) = true];
+}
+
+// VerifierServer removed
+message VerifierServerRemoved {
+  option (aelf.is_event) = true;
+  VerifierServer verifier_server = 1 [(aelf.is_indexed) = true];
+}
+
+message VerifierServerImageUpdated {
+  option (aelf.is_event) = true;
+  VerifierServer verifier_server = 1 [(aelf.is_indexed) = true];
+}
+
+message VerifierServerEndPointsUpdated {
+  option (aelf.is_event) = true;
+  VerifierServer verifier_server = 1 [(aelf.is_indexed) = true];
+}
+
+message AddVerifierServerEndPointsInput {
+  // If not exists, add; If does, insert
+  string name = 1;
+  string image_url = 2;
+  // Add all, ignore if has duplicates
+  repeated string end_points = 3;
+  repeated aelf.Address verifier_address_list = 4;
+  aelf.Hash verifier_id = 5;
+}
+
+message UpdateVerifierServerImageUrlInput {
+  aelf.Hash id = 1;
+  string image_url = 2;
+}
+
+message UpdateVerifierServerEndPointsInput {
+  aelf.Hash id = 1;
+  repeated string end_points = 2;
+}
+
+message RemoveVerifierServerInput {
+  // If not exists, add; If does, insert
+  aelf.Hash id = 1;
+}
+
+message RemoveVerifierServerEndPointsInput {
+  // If not exists, ignore
+  aelf.Hash id = 1;
+  // Remove all, ignore if do not exist
+  repeated string end_points = 2;
+}
+
+message VerifyingKey {
+  string circuit_id = 1; // use the hash of VerifyingKey as the circuit_id
+  string verifying_key = 2; // VerifyingKey in hex format
+  string description = 3;
+}
+
+message ZkNonceList {
+  repeated ZkNonceInfo zk_nonce_infos = 1;
+}
+
+message ZkNonceInfo {
+  string nonce = 1;
+  string datetime = 2;
+}
+
+message Jwks
+{
+  repeated JwkRecord keys = 1;
+}
+
+message JwkRecord
+{
+  string n = 1;
+  string kid = 2;
+  string e = 3;
+  string alg = 4;
+  string kty = 5;
+  string use = 6;
+}
+
+message ZkBasicAdminData
+{
+  string issuer = 1;
+  string jwks_endpoint = 2; //the url that can get kid and public key from third party
+  int64 subscription_id = 3;
+  int32 request_type_index = 4;
+  string specific_data = 5;
+}
+
+message JwtIssuerCreated
+{
+  option (aelf.is_event) = true;
+  string issuer = 1;
+  string jwks_endpoint = 2;
+}
+
+message OracleDataFeedsTaskStarted
+{
+  option (aelf.is_event) = true;
+  int64 subscription_id = 1;
+  int32 request_type_index = 2;
+  bytes specific_data = 3;
+}
+
+message OracleNoticeReceived {
+  option (aelf.is_event) = true;
+  aelf.Hash request_id = 1 [(aelf.is_indexed) = true];
+  string response = 2;
+  int32 request_type_index = 3;
+  aelf.Hash trace_id = 4 [(aelf.is_indexed) = true];
+  int64 timestamp = 5;
+}
+
+message OracleNoticeFinished {
+  option (aelf.is_event) = true;
+  int32 guardian_type = 1 [(aelf.is_indexed) = true];
+  string response = 2;
+  int64 timestamp = 3;
+}
+
+message CAHolderErrorOccured {
+  option (aelf.is_event) = true;
+  string error_message = 1;
+}
+
+message KidPublicKeyOutput {
+  string kid = 1;
+  string public_key = 2;
+  repeated string public_key_chunks = 3;
+}
+
+message CurrentKids {
+  repeated string kids = 1;
+}
+
+message ZkPublicKeyInfo {
+  string kid = 1;
+  string public_key = 2;
+  repeated string public_key_chunks = 3;
+}
+
+message VerificationTransactionInfo {
+  int32 from_chain_id = 1;
+  int64 parent_chain_height = 2;
+  bytes transaction_bytes = 3;
+  aelf.MerklePath merkle_path = 4;
+}
+
+message SyncHolderInfoInput {
+  VerificationTransactionInfo verification_transaction_info = 1;
+}
+
+message ControllerInput{
+  aelf.Address address = 1;
+}
+
+message ControllerOutput{
+  repeated aelf.Address addresses = 1;
+}
+
+message ManagerStatisticsInput {
+  aelf.Hash ca_hash = 1;
+}
+
+message ClearManagerStatisticsInput {
+  aelf.Hash ca_hash = 1;
+  int32 clear_limit = 2;
+}
+
+message ManagerStatisticsInfoList{
+  repeated ManagerStatisticsInfo manager_statistics_infos = 1;
+}
+
+message ManagerStatisticsInfo {
+  aelf.Address address = 1;
+  google.protobuf.Timestamp latest_transaction_timestamp = 2;
+  int32 transaction_frequency = 3;
+}
+
+message ReadOnlyStatusManagers {
+  repeated aelf.Address manager_addresses = 1;
+}
+
+enum OperationType {
+  Unknown = 0;
+  CreateCAHolder = 1;
+  SocialRecovery = 2;
+  AddGuardian = 3;
+  RemoveGuardian = 4;
+  UpdateGuardian = 5;
+  RemoveOtherManagerInfo = 6;
+  SetLoginAccount = 7;
+  Approve = 8;
+  ModifyTransferLimit = 9;
+  GuardianApproveTransfer = 10;
+  UnSetLoginAccount = 11;
+}

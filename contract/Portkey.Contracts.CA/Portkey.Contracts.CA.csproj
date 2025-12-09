@@ -1,0 +1,100 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <PackageId>Portkey.Contracts.CA</PackageId>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <Description>Portkey Contracts</Description>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+        <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+        <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
+    </PropertyGroup>
+    <ItemGroup>
+        <CommonMessage Include="..\..\protobuf\authority_info.proto">
+            <Link>Protobuf\Proto\authority_info.proto</Link>
+        </CommonMessage>
+	<CommonMessage Include="..\..\protobuf\oracle_common_message.proto">
+            <Link>Protobuf\Proto\oracle_common_message.proto</Link>
+        </CommonMessage>
+    </ItemGroup>
+    <ItemGroup>
+        <ContractReference Include="..\..\protobuf\acs0.proto">
+            <Link>Protobuf\Proto\acs0.proto</Link>
+        </ContractReference>
+        <ContractReference Include="..\..\protobuf\acs1.proto">
+            <Link>Protobuf\Proto\acs1.proto</Link>
+        </ContractReference>
+        <ContractReference Include="..\..\protobuf\acs7.proto">
+            <Link>Protobuf\Proto\acs7.proto</Link>
+        </ContractReference>
+        <ContractReference Include="..\..\protobuf\transaction_fee.proto">
+            <Link>Protobuf\Proto\transaction_fee.proto</Link>
+        </ContractReference>
+        <ContractReference Include="..\..\protobuf\token_contract.proto">
+            <Link>Protobuf\Proto\reference\token_contract.proto</Link>
+        </ContractReference>
+        <ContractReference Include="..\..\protobuf\acs3.proto">
+            <Link>Protobuf\Proto\reference\acs3.proto</Link>
+        </ContractReference>
+        <ContractReference Include="..\..\protobuf\association_contract.proto">
+            <Link>Protobuf\Proto\association_contract.proto</Link>
+        </ContractReference>
+        <ContractReference Include="..\..\protobuf\token_contract_impl.proto">
+            <Link>Protobuf\Proto\reference\token_contract_impl.proto</Link>
+        </ContractReference>
+        <ContractReference Include="..\..\protobuf\transaction_fee.proto">
+            <Link>Protobuf\Proto\reference\transaction_fee.proto</Link>
+        </ContractReference>
+        <ContractReference Include="..\..\protobuf\configuration_contract.proto">
+            <Link>Protobuf\Proto\reference\configuration_contract.proto</Link>
+        </ContractReference>
+	    <ContractReference Include="..\..\protobuf\oracle_contract.proto">
+            <Link>Protobuf\Proto\reference\oracle_contract.proto</Link>
+        </ContractReference>
+    </ItemGroup>
+    
+    <ItemGroup>
+        <ContractBase Include="..\..\protobuf\acs12.proto">
+            <Link>Protobuf\Proto\reference\acs12.proto</Link>
+        </ContractBase>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ContractBase Include="..\..\protobuf\ca_contract.proto">
+            <Link>Protobuf\Proto\ca_contract.proto</Link>
+        </ContractBase>
+    </ItemGroup>
+    <ItemGroup>
+        <ContractBase Include="..\..\protobuf\acs2.proto">
+            <Link>Protobuf\Proto\reference\acs2.proto</Link>
+        </ContractBase>
+    </ItemGroup>
+    <ItemGroup>
+      <ContractCode Include="..\..\protobuf\ca_contract_impl.proto">
+        <Link>Protobuf\Proto\ca_contract_impl.proto</Link>
+      </ContractCode>
+        <ContractReference Include="..\..\protobuf\token_contract_impl.proto">
+            <Link>Protobuf\Proto\reference\token_contract_impl.proto</Link>
+        </ContractReference>
+    </ItemGroup>
+    <ItemGroup>
+    	<ContractBase Include="..\..\protobuf\request_interface.proto">
+           <Link>Protobuf\Proto\request_interface.proto</Link>
+        </ContractBase>
+        <ContractBase Include="..\..\protobuf\coordinator_contract.proto">
+            <Link>Protobuf\Proto\coordinator_contract.proto</Link>
+        </ContractBase>
+        <ContractBase Include="..\..\protobuf\data_feeds_coordinator_contract.proto">
+            <Link>Protobuf\Proto\data_feeds_coordinator_contract.proto</Link>
+        </ContractBase>
+    </ItemGroup>
+    <ItemGroup>
+      <PackageReference Include="Google.Protobuf" Version="3.27.2" />
+      <PackageReference Include="Groth16.Net" Version="1.1.0" />
+    </ItemGroup>
+</Project>
